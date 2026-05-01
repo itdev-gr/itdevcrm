@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { ShellLayout } from './ShellLayout';
+import { SetPasswordLayout } from './SetPasswordLayout';
 import { HomePage } from './routes/HomePage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { NotFoundPage } from './routes/NotFoundPage';
@@ -12,6 +13,6 @@ export const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-  // login is OUTSIDE the shell (no sidebar/topbar on login page)
   { path: '/login', element: <LoginPage /> },
+  { path: '/set-password', element: <SetPasswordLayout /> },
 ]);
