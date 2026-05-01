@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import '@/lib/i18n';
 import { HomePage } from './app/routes/HomePage';
 
 describe('HomePage', () => {

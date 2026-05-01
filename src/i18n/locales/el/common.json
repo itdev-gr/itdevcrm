@@ -1,0 +1,14 @@
+{
+  "app_title": "ITDevCRM",
+  "tagline": "CRM πολλαπλών τμημάτων",
+  "nav": {
+    "home": "Αρχική",
+    "login": "Σύνδεση",
+    "logout": "Αποσύνδεση"
+  },
+  "locale": {
+    "label": "Γλώσσα",
+    "en": "English",
+    "el": "Ελληνικά"
+  }
+}

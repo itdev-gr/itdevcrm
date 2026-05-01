@@ -28,6 +28,9 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
 
+    /* JSON imports */
+    "resolveJsonModule": true,
+
     /* Path aliases */
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",

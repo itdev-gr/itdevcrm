@@ -1,0 +1,14 @@
+{
+  "app_title": "ITDevCRM",
+  "tagline": "Multi-department CRM",
+  "nav": {
+    "home": "Home",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "locale": {
+    "label": "Language",
+    "en": "English",
+    "el": "Ελληνικά"
+  }
+}
