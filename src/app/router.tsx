@@ -1,10 +1,17 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { ShellLayout } from './ShellLayout';
 import { HomePage } from './routes/HomePage';
 import { LoginPage } from './routes/LoginPage';
 import { NotFoundPage } from './routes/NotFoundPage';
 
 export const router = createBrowserRouter([
-  { path: '/', element: <HomePage /> },
+  {
+    element: <ShellLayout />,
+    children: [
+      { path: '/', element: <HomePage /> },
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+  // login is OUTSIDE the shell (no sidebar/topbar on login page)
   { path: '/login', element: <LoginPage /> },
-  { path: '*', element: <NotFoundPage /> },
 ]);
