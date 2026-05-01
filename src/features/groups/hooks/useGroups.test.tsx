@@ -3,12 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { order, eq, select, from } = vi.hoisted(() => {
+const { order, from } = vi.hoisted(() => {
   const order = vi.fn();
   const eq = vi.fn().mockReturnValue({ order });
   const select = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ select });
-  return { order, eq, select, from };
+  return { order, from };
 });
 
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
