@@ -13,6 +13,7 @@ jobs:
     env:
       VITE_SUPABASE_URL: https://test.supabase.co
       VITE_SUPABASE_ANON_KEY: test-anon-key
+      # E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD intentionally unset → auth-flow tests skipped in CI
     steps:
       - uses: actions/checkout@v4
 

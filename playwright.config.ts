@@ -17,5 +17,13 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    env: {
+      ...(process.env.VITE_SUPABASE_URL
+        ? { VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL }
+        : {}),
+      ...(process.env.VITE_SUPABASE_ANON_KEY
+        ? { VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY }
+        : {}),
+    },
   },
 });
