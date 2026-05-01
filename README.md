@@ -1,5 +1,7 @@
 # ITDevCRM
 
+**Live:** https://itdevcrm.vercel.app
+
 Custom CRM with Sales / Accounting / Technical pipelines, group-based permissions, and bilingual UI (EN/EL).
 
 ## Stack

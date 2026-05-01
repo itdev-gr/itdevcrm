@@ -29,3 +29,4 @@ test-results
 supabase/.temp
 # typescript
 *.tsbuildinfo
+.vercel
