@@ -1,0 +1,28 @@
+{
+  "title": "Users",
+  "create": "Invite user",
+  "table": {
+    "name": "Name",
+    "email": "Email",
+    "groups": "Groups",
+    "admin": "Admin",
+    "active": "Active",
+    "actions": "Actions"
+  },
+  "actions": {
+    "view": "View",
+    "deactivate": "Deactivate",
+    "deactivated": "Deactivated"
+  },
+  "create_dialog": {
+    "title": "Invite a new user",
+    "full_name": "Full name",
+    "email": "Email",
+    "temp_password": "Temporary password",
+    "groups": "Groups",
+    "is_admin": "Make this user an admin",
+    "submit": "Send invite",
+    "submitting": "Inviting…",
+    "error_generic": "Could not invite the user."
+  }
+}
