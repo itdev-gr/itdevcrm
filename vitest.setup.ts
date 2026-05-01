@@ -2,6 +2,15 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+// Radix UI requires ResizeObserver (used by @radix-ui/react-use-size)
+if (typeof ResizeObserver === 'undefined') {
+  global.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
 // Radix UI uses pointer capture and scroll APIs not available in jsdom
 if (typeof Element !== 'undefined') {
   if (!Element.prototype.hasPointerCapture) {
