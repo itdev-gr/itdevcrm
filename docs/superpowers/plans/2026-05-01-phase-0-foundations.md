@@ -85,6 +85,7 @@ Each task below builds one part of this. Frequent commits.
 ## Task 1 — Initialize Vite + React + TypeScript scaffold
 
 **Files (create):**
+
 - `package.json`, `tsconfig.json`, `tsconfig.node.json`, `vite.config.ts`, `index.html`
 - `src/main.tsx`, `src/App.tsx`, `src/index.css`, `src/vite-env.d.ts`
 - `public/`
@@ -176,6 +177,7 @@ export default defineConfig({
 - [ ] **Step 3: Add typecheck script to `package.json`**
 
 In `"scripts"`, add:
+
 ```json
 "typecheck": "tsc --noEmit"
 ```
@@ -251,6 +253,7 @@ module.exports = {
 - [ ] **Step 4: Create `.eslintignore` and `.prettierignore`**
 
 Both contain:
+
 ```
 dist
 node_modules
@@ -340,6 +343,7 @@ VITE_SUPABASE_ANON_KEY=YOUR-ANON-KEY
 Custom CRM with Sales / Accounting / Technical pipelines, group-based permissions, and bilingual UI (EN/EL).
 
 ## Stack
+
 Vite + React 18 + TypeScript · Supabase (Postgres/Auth/Realtime/Storage/RLS) · Tailwind + shadcn/ui · TanStack Query · Zustand · React Router · react-i18next
 
 ## Local development
@@ -415,7 +419,10 @@ export default {
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 ```
 
@@ -465,6 +472,7 @@ npx shadcn@latest init
 ```
 
 Answer prompts:
+
 - Style: **Default**
 - Base color: **Slate**
 - CSS variables: **Yes**
@@ -567,6 +575,7 @@ afterEach(() => {
 - [ ] **Step 4: Add `vitest/globals` to `tsconfig.json` types**
 
 Inside `compilerOptions`, add:
+
 ```json
 "types": ["vitest/globals", "@testing-library/jest-dom"]
 ```
@@ -624,6 +633,7 @@ npm init playwright@latest -- --quiet
 ```
 
 Answer:
+
 - TypeScript: **TS**
 - Tests folder: **tests**
 - GitHub Actions: **No** (we'll write our own CI in Task 16)
@@ -645,9 +655,7 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  ],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
@@ -1617,10 +1625,7 @@ describe('RequireAuth', () => {
   });
 
   it('renders children when session present', () => {
-    useAuthStore.getState().setSession(
-      { access_token: 't' } as never,
-      { id: 'u' } as never,
-    );
+    useAuthStore.getState().setSession({ access_token: 't' } as never, { id: 'u' } as never);
     render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>

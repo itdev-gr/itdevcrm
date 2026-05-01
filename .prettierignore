@@ -1,0 +1,8 @@
+dist
+node_modules
+playwright-report
+coverage
+src/types/supabase.ts
+.husky
+*.lock
+package-lock.json

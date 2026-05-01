@@ -1,11 +1,11 @@
 # ITDevCRM — Design Specification
 
-| Field | Value |
-|---|---|
-| **Date** | 2026-05-01 |
-| **Status** | Draft — pending user review |
+| Field                 | Value                                                       |
+| --------------------- | ----------------------------------------------------------- |
+| **Date**              | 2026-05-01                                                  |
+| **Status**            | Draft — pending user review                                 |
 | **Scope (this spec)** | Phases 0–3 in full detail; Phases 4–8 acknowledged as stubs |
-| **Stack** | Vite + React + TypeScript + Supabase + Tailwind + shadcn/ui |
+| **Stack**             | Vite + React + TypeScript + Supabase + Tailwind + shadcn/ui |
 
 ---
 
@@ -68,24 +68,24 @@ Deferred to Phase 8 or later:
 
 ## 4. Tech stack
 
-| Concern | Choice | Why |
-|---|---|---|
-| Build tool | Vite | Fast dev loop, minimal config |
-| UI lib | React 18 | Required by user |
-| Language | TypeScript (strict) | Type safety across permission/data model |
-| Routing | React Router v6 (data routers) | Mature, plays well with Supabase auth gates |
-| Styling | Tailwind CSS | Per-card customisation per department |
-| UI primitives | shadcn/ui (Radix-based, copy-paste) | Own the components, no version lock-in |
-| Server state | TanStack Query v5 | Caching, optimistic kanban updates |
-| Client state | Zustand | Auth user, current group, sidebar |
-| Forms + validation | React Hook Form + Zod | Schemas double as TS types and Supabase validators |
-| Drag & drop | `@dnd-kit/core` + `@dnd-kit/sortable` | Modern, accessible, performant |
-| Tables | TanStack Table v8 | Headless, pairs with Tailwind |
-| Backend | Supabase (Postgres + Auth + Realtime + Storage + RLS) | Locked by user |
-| i18n | react-i18next | EN + EL |
-| Testing | Vitest, React Testing Library, Playwright | Unit, component, e2e |
-| Lint/format | ESLint + Prettier + strict tsconfig | Free quality |
-| Deploy (frontend) | Cloudflare Pages or Netlify | Free, commercial-OK |
+| Concern            | Choice                                                | Why                                                |
+| ------------------ | ----------------------------------------------------- | -------------------------------------------------- |
+| Build tool         | Vite                                                  | Fast dev loop, minimal config                      |
+| UI lib             | React 18                                              | Required by user                                   |
+| Language           | TypeScript (strict)                                   | Type safety across permission/data model           |
+| Routing            | React Router v6 (data routers)                        | Mature, plays well with Supabase auth gates        |
+| Styling            | Tailwind CSS                                          | Per-card customisation per department              |
+| UI primitives      | shadcn/ui (Radix-based, copy-paste)                   | Own the components, no version lock-in             |
+| Server state       | TanStack Query v5                                     | Caching, optimistic kanban updates                 |
+| Client state       | Zustand                                               | Auth user, current group, sidebar                  |
+| Forms + validation | React Hook Form + Zod                                 | Schemas double as TS types and Supabase validators |
+| Drag & drop        | `@dnd-kit/core` + `@dnd-kit/sortable`                 | Modern, accessible, performant                     |
+| Tables             | TanStack Table v8                                     | Headless, pairs with Tailwind                      |
+| Backend            | Supabase (Postgres + Auth + Realtime + Storage + RLS) | Locked by user                                     |
+| i18n               | react-i18next                                         | EN + EL                                            |
+| Testing            | Vitest, React Testing Library, Playwright             | Unit, component, e2e                               |
+| Lint/format        | ESLint + Prettier + strict tsconfig                   | Free quality                                       |
+| Deploy (frontend)  | Cloudflare Pages or Netlify                           | Free, commercial-OK                                |
 
 ### Operational cost (post-launch, baseline)
 
@@ -183,6 +183,7 @@ pipeline_stages
 (Display names below shown in English; Greek translations seeded alongside in `display_names` JSONB. Greek strings to be confirmed by a fluent reviewer — see Risks R2.)
 
 **Sales board:**
+
 1. `new_lead` → New Lead
 2. `no_answer` → No Answer
 3. `constant_na` → Constant NA
@@ -195,6 +196,7 @@ pipeline_stages
 10. `dead_end` → Dead End (terminal=true, outcome=lost)
 
 **Accounting onboarding board:**
+
 1. `new` → New
 2. `documents_verified` → Documents Verified
 3. `invoice_issued` → Invoice Issued
@@ -205,6 +207,7 @@ pipeline_stages
 8. `refunded` → Refunded (terminal=true, outcome=cancelled)
 
 **Web SEO / Local SEO / Social Media boards** (recurring services, identical lifecycle shape):
+
 1. `onboarding` → Onboarding
 2. `audit_strategy` (Web SEO) / `gbp_setup` (Local SEO) / `content_plan_approval` (Social Media) → varies
 3. `active` → Active
@@ -212,6 +215,7 @@ pipeline_stages
 5. `cancelled` → Cancelled (terminal=true, outcome=cancelled)
 
 **Web Dev board** (one-time):
+
 1. `awaiting_brief` → Awaiting Brief
 2. `discovery` → Discovery
 3. `wireframes` → Wireframes
@@ -358,6 +362,7 @@ service_task_templates
 When a job is created (or on the 1st of each month for recurring jobs), `monthly_tasks` is initialised by copying the template for the job's `service_type` from `service_task_templates`. The template is admin-editable in Phase 6 (until then, seeded defaults per service).
 
 **Lock-deal validation (server-side, in `lock_deal` RPC):**
+
 - `deal.one_time_value + deal.recurring_monthly_value > 0`
 - At least one `jobs` row exists for the deal
 - Client has `email` AND (`phone` OR `address`)
@@ -467,6 +472,7 @@ saved_filters
 `notifications` are inserted by a trigger when `mentioned_user_ids` changes on a comment, and on key workflow events (deal locked, accounting completed, client blocked/unblocked). Pushed to clients via Supabase Realtime.
 
 **On the polymorphic `parent_type/parent_id` pattern in `comments`, `attachments`, `activity_log`:** Postgres cannot enforce true FK constraints on a polymorphic relationship. Integrity is maintained by:
+
 - App-side enforcement: only valid `parent_type` values (`'client' | 'deal' | 'job'`) are accepted via Zod schema.
 - A check trigger that validates the `parent_id` exists in the matching parent table before insert/update.
 - Cascading soft-deletes propagated by triggers (when a parent row is archived, its comments/attachments are flagged accordingly).
@@ -667,25 +673,25 @@ supabase/
 
 ## 12. Realtime strategy
 
-| Surface | Realtime? | Notes |
-|---|---|---|
-| Kanban boards | Yes | Subscribe to `deals`/`jobs` filtered by board |
-| Entity detail pages | Yes | Subscribe to row + `comments`/`activity_log` filtered by parent |
-| Notifications | Yes | Subscribe to `notifications WHERE user_id = me` |
-| Tables ("My Clients", admin lists) | No | Refetch on focus only |
-| `activity_log` global views | No | Manual refresh |
+| Surface                            | Realtime? | Notes                                                           |
+| ---------------------------------- | --------- | --------------------------------------------------------------- |
+| Kanban boards                      | Yes       | Subscribe to `deals`/`jobs` filtered by board                   |
+| Entity detail pages                | Yes       | Subscribe to row + `comments`/`activity_log` filtered by parent |
+| Notifications                      | Yes       | Subscribe to `notifications WHERE user_id = me`                 |
+| Tables ("My Clients", admin lists) | No        | Refetch on focus only                                           |
+| `activity_log` global views        | No        | Manual refresh                                                  |
 
 ---
 
 ## 13. Testing strategy
 
-| Level | Tool | Target |
-|---|---|---|
-| Unit | Vitest | Permission-resolution helpers, Zod schemas, pure utilities |
-| Component | RTL | Forms, permission-aware rendering, kanban card behaviour with mocked queries |
-| Integration | Vitest + msw or in-memory Supabase mock | Mutations + cache invalidation paths |
-| E2E | Playwright | Per-phase happy-path scripts: login → create user → assign group → drag card → lock deal → see accounting → block client → unblock |
-| RLS | SQL test suite (Supabase pgtap or hand-rolled) | One test per (role, board, action, scope) combination — non-negotiable |
+| Level       | Tool                                           | Target                                                                                                                             |
+| ----------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Unit        | Vitest                                         | Permission-resolution helpers, Zod schemas, pure utilities                                                                         |
+| Component   | RTL                                            | Forms, permission-aware rendering, kanban card behaviour with mocked queries                                                       |
+| Integration | Vitest + msw or in-memory Supabase mock        | Mutations + cache invalidation paths                                                                                               |
+| E2E         | Playwright                                     | Per-phase happy-path scripts: login → create user → assign group → drag card → lock deal → see accounting → block client → unblock |
+| RLS         | SQL test suite (Supabase pgtap or hand-rolled) | One test per (role, board, action, scope) combination — non-negotiable                                                             |
 
 CI runs Vitest + Playwright against a fresh Supabase test project on every push.
 
@@ -781,14 +787,14 @@ Email infra + verification + email-based password reset; reports/dashboards; glo
 
 ## 15. Risks & open questions
 
-| # | Risk / question | Mitigation |
-|---|---|---|
-| R1 | Field-level enforcement at DB level via security-definer views adds ~5–8 dev days; may slip Phase 3 schedule | Re-audit at end of Phase 2; if blocking, fall back to app-only enforcement and document the trust boundary |
-| R2 | Greek translations require a fluent Greek speaker for review | Confirm with user who handles translation review |
-| R3 | "Generate this month's invoices" is manual in MVP — risk of accountant forgetting | Add a clear dashboard prompt on accounting screens when period rolls over |
-| R4 | RLS performance on tables with many rows + complex permission joins | Index `user_groups`, `group_permissions`; benchmark at end of Phase 2 |
-| R5 | ClickUp API specifics unknown | Defer detailed design until access granted |
-| R6 | Tech kanbans for recurring services may feel "static" since cards stay in `active` for months | Monthly task panel is the dynamic surface; revisit after MVP usage data |
+| #   | Risk / question                                                                                              | Mitigation                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| R1  | Field-level enforcement at DB level via security-definer views adds ~5–8 dev days; may slip Phase 3 schedule | Re-audit at end of Phase 2; if blocking, fall back to app-only enforcement and document the trust boundary |
+| R2  | Greek translations require a fluent Greek speaker for review                                                 | Confirm with user who handles translation review                                                           |
+| R3  | "Generate this month's invoices" is manual in MVP — risk of accountant forgetting                            | Add a clear dashboard prompt on accounting screens when period rolls over                                  |
+| R4  | RLS performance on tables with many rows + complex permission joins                                          | Index `user_groups`, `group_permissions`; benchmark at end of Phase 2                                      |
+| R5  | ClickUp API specifics unknown                                                                                | Defer detailed design until access granted                                                                 |
+| R6  | Tech kanbans for recurring services may feel "static" since cards stay in `active` for months                | Monthly task panel is the dynamic surface; revisit after MVP usage data                                    |
 
 ---
 
