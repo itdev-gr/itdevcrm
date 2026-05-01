@@ -9,6 +9,7 @@ export default mergeConfig(
       environment: 'jsdom',
       setupFiles: './vitest.setup.ts',
       css: true,
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'lcov'],
