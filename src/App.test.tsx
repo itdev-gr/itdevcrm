@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import App from './App';
+import { HomePage } from './app/routes/HomePage';
 
-describe('App', () => {
+describe('HomePage', () => {
   it('renders the heading', () => {
-    render(<App />);
+    render(<HomePage />);
     expect(screen.getByRole('heading', { name: /itdevcrm/i })).toBeInTheDocument();
   });
 });
