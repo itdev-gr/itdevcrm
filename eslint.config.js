@@ -7,7 +7,14 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier'; // + Task 3
 
 export default defineConfig([
-  globalIgnores(['dist', 'playwright-report', 'coverage', 'src/types/supabase.ts']), // + Task 3 (added 3 entries)
+  // + Task 3 (added 3 entries); + Task 12 (ignore edge functions)
+  globalIgnores([
+    'dist',
+    'playwright-report',
+    'coverage',
+    'src/types/supabase.ts',
+    'supabase/functions/**',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

@@ -7,3 +7,4 @@ docs/superpowers
 .husky
 *.lock
 package-lock.json
+supabase/functions
