@@ -3,6 +3,8 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import enCommon from '@/i18n/locales/en/common.json';
 import elCommon from '@/i18n/locales/el/common.json';
+import enAuth from '@/i18n/locales/en/auth.json';
+import elAuth from '@/i18n/locales/el/auth.json';
 
 void i18n
   .use(LanguageDetector)
@@ -11,10 +13,10 @@ void i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'el'],
     defaultNS: 'common',
-    ns: ['common'],
+    ns: ['common', 'auth'],
     resources: {
-      en: { common: enCommon },
-      el: { common: elCommon },
+      en: { common: enCommon, auth: enAuth },
+      el: { common: elCommon, auth: elAuth },
     },
     interpolation: { escapeValue: false },
     detection: {

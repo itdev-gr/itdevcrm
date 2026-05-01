@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { ShellLayout } from './ShellLayout';
 import { HomePage } from './routes/HomePage';
-import { LoginPage } from './routes/LoginPage';
+import { LoginPage } from '@/features/auth/LoginPage';
 import { NotFoundPage } from './routes/NotFoundPage';
 
 export const router = createBrowserRouter([
