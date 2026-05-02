@@ -1,0 +1,59 @@
+{
+  "title": "Leads",
+  "new_lead": "New lead",
+  "actions": {
+    "create": "Add lead",
+    "save": "Save",
+    "cancel": "Cancel",
+    "archive": "Archive",
+    "convert": "Convert to client"
+  },
+  "form": {
+    "source": "Source",
+    "source_options": {
+      "manual": "Manual",
+      "meta": "Meta (Facebook/Instagram)",
+      "import": "Import"
+    },
+    "title": "Lead title",
+    "contact_first_name": "First name",
+    "contact_last_name": "Last name",
+    "email": "Email",
+    "phone": "Phone",
+    "company_name": "Company name",
+    "industry": "Industry",
+    "country": "Country",
+    "address": "Address",
+    "vat_number": "VAT number",
+    "notes": "Notes",
+    "estimated_one_time_value": "One-time value (€)",
+    "estimated_monthly_value": "Monthly value (€)",
+    "services_planned": "Services planned",
+    "expected_close_date": "Expected close date"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "comments": "Comments",
+    "attachments": "Attachments",
+    "activity": "Activity"
+  },
+  "convert": {
+    "errors": {
+      "permission_denied": "You do not have permission to convert leads.",
+      "lead_not_found": "Lead not found.",
+      "already_converted": "This lead is already converted.",
+      "lead_archived": "Cannot convert an archived lead.",
+      "value_required": "At least one of one-time or monthly value must be greater than 0.",
+      "at_least_one_service_required": "Add at least one service.",
+      "email_required": "Email is required.",
+      "phone_or_address_required": "Phone or address is required.",
+      "company_name_required": "Company name is required.",
+      "contract_attachment_required": "A signed contract attachment is required."
+    }
+  },
+  "card": {
+    "monthly": "/mo",
+    "no_company": "(no company yet)"
+  },
+  "empty": "No leads yet. Click \"Add lead\" to create one."
+}

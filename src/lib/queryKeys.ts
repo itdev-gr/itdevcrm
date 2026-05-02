@@ -24,4 +24,6 @@ export const queryKeys = {
   savedFilters: (board: string) => ['saved-filters', board] as const,
   accountingDeals: () => ['accounting-deals'] as const,
   clientBlock: (clientId: string) => ['client-block', clientId] as const,
+  leads: (filters?: Record<string, string | undefined>) => ['leads', filters ?? null] as const,
+  lead: (id: string) => ['lead', id] as const,
 };

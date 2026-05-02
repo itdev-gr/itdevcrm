@@ -39,3 +39,15 @@ export async function unblockClient(clientId: string): Promise<UnblockClientResu
   if (error) return { ok: false, errors: [error.message] };
   return data as UnblockClientResult;
 }
+
+export type ConvertLeadResult =
+  | { ok: true; lead_id: string; client_id: string; deal_id: string }
+  | { ok: false; errors: string[] };
+
+export async function convertLeadToClient(leadId: string): Promise<ConvertLeadResult> {
+  const { data, error } = await supabase.rpc('convert_lead_to_client', {
+    target_lead_id: leadId,
+  });
+  if (error) return { ok: false, errors: [error.message] };
+  return data as ConvertLeadResult;
+}

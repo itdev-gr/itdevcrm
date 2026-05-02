@@ -1,0 +1,59 @@
+{
+  "title": "Επαφές (Leads)",
+  "new_lead": "Νέα επαφή",
+  "actions": {
+    "create": "Προσθήκη επαφής",
+    "save": "Αποθήκευση",
+    "cancel": "Άκυρο",
+    "archive": "Αρχειοθέτηση",
+    "convert": "Μετατροπή σε πελάτη"
+  },
+  "form": {
+    "source": "Πηγή",
+    "source_options": {
+      "manual": "Χειροκίνητα",
+      "meta": "Meta (Facebook/Instagram)",
+      "import": "Εισαγωγή"
+    },
+    "title": "Τίτλος επαφής",
+    "contact_first_name": "Όνομα",
+    "contact_last_name": "Επώνυμο",
+    "email": "Email",
+    "phone": "Τηλέφωνο",
+    "company_name": "Επωνυμία εταιρείας",
+    "industry": "Κλάδος",
+    "country": "Χώρα",
+    "address": "Διεύθυνση",
+    "vat_number": "ΑΦΜ",
+    "notes": "Σημειώσεις",
+    "estimated_one_time_value": "Εφάπαξ ποσό (€)",
+    "estimated_monthly_value": "Μηνιαίο ποσό (€)",
+    "services_planned": "Προγραμματισμένες υπηρεσίες",
+    "expected_close_date": "Προβλεπόμενη ημερομηνία κλεισίματος"
+  },
+  "tabs": {
+    "overview": "Επισκόπηση",
+    "comments": "Σχόλια",
+    "attachments": "Συνημμένα",
+    "activity": "Ιστορικό"
+  },
+  "convert": {
+    "errors": {
+      "permission_denied": "Δεν έχετε δικαίωμα μετατροπής επαφών.",
+      "lead_not_found": "Δεν βρέθηκε η επαφή.",
+      "already_converted": "Η επαφή έχει ήδη μετατραπεί.",
+      "lead_archived": "Δεν μπορεί να μετατραπεί αρχειοθετημένη επαφή.",
+      "value_required": "Τουλάχιστον ένα από εφάπαξ ή μηνιαίο ποσό πρέπει να είναι μεγαλύτερο του 0.",
+      "at_least_one_service_required": "Προσθέστε τουλάχιστον μία υπηρεσία.",
+      "email_required": "Απαιτείται email.",
+      "phone_or_address_required": "Απαιτείται τηλέφωνο ή διεύθυνση.",
+      "company_name_required": "Απαιτείται επωνυμία εταιρείας.",
+      "contract_attachment_required": "Απαιτείται υπογεγραμμένη σύμβαση ως συνημμένο."
+    }
+  },
+  "card": {
+    "monthly": "/μήνα",
+    "no_company": "(χωρίς εταιρεία)"
+  },
+  "empty": "Καμία επαφή ακόμα. Πατήστε «Προσθήκη επαφής» για να δημιουργήσετε."
+}
