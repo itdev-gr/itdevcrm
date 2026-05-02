@@ -1140,6 +1140,15 @@ export type Database = {
       }
     }
     Functions: {
+      assignable_owners: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          is_admin: boolean
+          user_id: string
+        }[]
+      }
       block_client: {
         Args: { reason_text: string; target_client_id: string }
         Returns: Json
