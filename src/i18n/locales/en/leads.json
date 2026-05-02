@@ -20,6 +20,11 @@
     "vat": "VAT",
     "total": "Total"
   },
+  "global_search": {
+    "placeholder": "Search leads, clients, deals…",
+    "no_results": "No matches",
+    "type_to_search": "Start typing to search"
+  },
   "filters": {
     "search": "Search…",
     "source_all": "All sources",

@@ -1203,6 +1203,17 @@ export type Database = {
         Returns: string
       }
       generate_lead_code: { Args: never; Returns: string }
+      global_search: {
+        Args: { max_rows?: number; q: string }
+        Returns: {
+          code: string
+          entity_id: string
+          entity_type: string
+          label: string
+          rank: number
+          sublabel: string
+        }[]
+      }
       is_client_blocked: {
         Args: { target_client_id: string }
         Returns: boolean
