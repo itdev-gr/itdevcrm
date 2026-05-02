@@ -33,7 +33,14 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
 
   // Totals are derived from services_planned now — no manual inputs.
   const oneTimeNum = services.reduce((sum, s) => sum + (Number(s.one_time_amount) || 0), 0);
-  const monthlyNum = services.reduce((sum, s) => sum + (Number(s.monthly_amount) || 0), 0);
+  const monthlyNum = services.reduce(
+    (sum, s) => sum + (s.billing_type === 'recurring_monthly' ? Number(s.monthly_amount) || 0 : 0),
+    0,
+  );
+  const yearlyNum = services.reduce(
+    (sum, s) => sum + (s.billing_type === 'recurring_yearly' ? Number(s.monthly_amount) || 0 : 0),
+    0,
+  );
 
   const patch = useMemo(
     () => ({
@@ -178,8 +185,10 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               const vatRate = vatRateFor(country);
               const oneTimeVat = oneTimeNum * vatRate;
               const monthlyVat = monthlyNum * vatRate;
+              const yearlyVat = yearlyNum * vatRate;
               const oneTimeTotal = oneTimeNum + oneTimeVat;
               const monthlyTotal = monthlyNum + monthlyVat;
+              const yearlyTotal = yearlyNum + yearlyVat;
               const vatPct = Math.round(vatRate * 100);
               return (
                 <table className="w-full text-sm">
@@ -205,6 +214,12 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                       <td className="py-1 text-right">{formatEur(monthlyNum)}</td>
                       <td className="py-1 text-right">{formatEur(monthlyVat)}</td>
                       <td className="py-1 text-right font-medium">{formatEur(monthlyTotal)}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1 text-slate-600">{t('totals.yearly_label')}</td>
+                      <td className="py-1 text-right">{formatEur(yearlyNum)}</td>
+                      <td className="py-1 text-right">{formatEur(yearlyVat)}</td>
+                      <td className="py-1 text-right font-medium">{formatEur(yearlyTotal)}</td>
                     </tr>
                   </tbody>
                 </table>

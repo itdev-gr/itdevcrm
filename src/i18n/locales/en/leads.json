@@ -19,6 +19,7 @@
     "title": "Pricing summary",
     "one_time_label": "One-time",
     "monthly_label": "Monthly",
+    "yearly_label": "Yearly",
     "subtotal": "Subtotal",
     "vat": "VAT",
     "total": "Total"

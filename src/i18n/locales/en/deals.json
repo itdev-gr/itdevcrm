@@ -52,6 +52,7 @@
     "pick_package": "Pick a package",
     "no_package": "(no package)",
     "monthly_amount": "Monthly €",
+    "yearly_amount": "Yearly €",
     "one_time_amount": "One-time €",
     "setup_fee": "Setup €",
     "types": {
@@ -64,6 +65,7 @@
     },
     "billing": {
       "recurring_monthly": "Monthly",
+      "recurring_yearly": "Yearly",
       "one_time": "One-time"
     }
   },

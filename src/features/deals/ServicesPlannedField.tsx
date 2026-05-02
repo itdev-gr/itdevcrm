@@ -13,7 +13,7 @@ import { useServicePackages } from '@/features/service_packages/hooks/useService
 
 export type PlannedService = {
   service_type: 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting';
-  billing_type: 'one_time' | 'recurring_monthly';
+  billing_type: 'one_time' | 'recurring_monthly' | 'recurring_yearly';
   package_id?: string | null;
   one_time_amount?: number;
   monthly_amount?: number;
@@ -34,7 +34,20 @@ const SERVICE_TYPES: PlannedService['service_type'][] = [
   'ai_seo',
   'hosting',
 ];
-const BILLING_TYPES: PlannedService['billing_type'][] = ['recurring_monthly', 'one_time'];
+function billingOptionsFor(
+  serviceType: PlannedService['service_type'],
+): PlannedService['billing_type'][] {
+  // Hosting is sold yearly only — every other service supports monthly + one-time.
+  if (serviceType === 'hosting') return ['recurring_yearly'];
+  return ['recurring_monthly', 'one_time'];
+}
+
+function defaultBillingFor(
+  serviceType: PlannedService['service_type'],
+): PlannedService['billing_type'] {
+  if (serviceType === 'hosting') return 'recurring_yearly';
+  return 'recurring_monthly';
+}
 const NO_PACKAGE = '__none__';
 
 function patchRow(row: PlannedService, patch: Partial<PlannedService>): PlannedService {
@@ -113,12 +126,18 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                   <Select
                     value={row.service_type}
                     disabled={isDisabled}
-                    onValueChange={(v) =>
+                    onValueChange={(v) => {
+                      const next = v as PlannedService['service_type'];
+                      const options = billingOptionsFor(next);
+                      const billing = options.includes(row.billing_type)
+                        ? row.billing_type
+                        : defaultBillingFor(next);
                       updateRow(idx, {
-                        service_type: v as PlannedService['service_type'],
+                        service_type: next,
+                        billing_type: billing,
                         package_id: null,
-                      })
-                    }
+                      });
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -156,7 +175,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                   <Label className="whitespace-nowrap text-xs">{t('services.billing_type')}</Label>
                   <Select
                     value={row.billing_type}
-                    disabled={isDisabled}
+                    disabled={isDisabled || row.service_type === 'hosting'}
                     onValueChange={(v) =>
                       updateRow(idx, { billing_type: v as PlannedService['billing_type'] })
                     }
@@ -165,7 +184,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {BILLING_TYPES.map((b) => (
+                      {billingOptionsFor(row.service_type).map((b) => (
                         <SelectItem key={b} value={b}>
                           {t(`services.billing.${b}`)}
                         </SelectItem>
@@ -173,11 +192,13 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
-                {row.billing_type === 'recurring_monthly' ? (
+                {row.billing_type !== 'one_time' ? (
                   <>
                     <div className="col-span-2">
                       <Label className="whitespace-nowrap text-xs">
-                        {t('services.monthly_amount')}
+                        {row.billing_type === 'recurring_yearly'
+                          ? t('services.yearly_amount')
+                          : t('services.monthly_amount')}
                       </Label>
                       <Input
                         type="number"

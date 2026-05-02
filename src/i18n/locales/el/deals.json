@@ -52,6 +52,7 @@
     "pick_package": "Επιλέξτε πακέτο",
     "no_package": "(χωρίς πακέτο)",
     "monthly_amount": "Μηνιαίο €",
+    "yearly_amount": "Ετήσιο €",
     "one_time_amount": "Εφάπαξ €",
     "setup_fee": "Setup €",
     "types": {
@@ -64,6 +65,7 @@
     },
     "billing": {
       "recurring_monthly": "Μηνιαία",
+      "recurring_yearly": "Ετήσια",
       "one_time": "Εφάπαξ"
     }
   },
