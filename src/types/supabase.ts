@@ -115,6 +115,61 @@ export type Database = {
           },
         ]
       }
+      client_blocks: {
+        Row: {
+          blocked_at: string
+          blocked_by: string | null
+          client_id: string
+          created_at: string
+          id: string
+          reason: string
+          unblocked_at: string | null
+          unblocked_by: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_blocks_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "client_blocks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_blocks_unblocked_by_fkey"
+            columns: ["unblocked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -627,6 +682,132 @@ export type Database = {
           },
         ]
       }
+      monthly_invoice_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          job_id: string | null
+          service_type: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          job_id?: string | null
+          service_type?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          job_id?: string | null
+          service_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_invoice_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_invoices: {
+        Row: {
+          amount_paid: number
+          archived: boolean
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          client_id: string
+          created_at: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          period: string
+          status: string
+          subtotal: number
+          tax_amount: number | null
+          tax_rate: number | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          client_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          period: string
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          client_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          period?: string
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_invoices_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "monthly_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -895,6 +1076,10 @@ export type Database = {
       }
     }
     Functions: {
+      block_client: {
+        Args: { reason_text: string; target_client_id: string }
+        Returns: Json
+      }
       complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
       current_user_can: {
         Args: { target_action: string; target_board: string }
@@ -905,7 +1090,17 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      generate_monthly_invoices: {
+        Args: { target_period: string }
+        Returns: Json
+      }
+      is_client_blocked: {
+        Args: { target_client_id: string }
+        Returns: boolean
+      }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
+      mark_overdue_invoices: { Args: never; Returns: number }
+      unblock_client: { Args: { target_client_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
