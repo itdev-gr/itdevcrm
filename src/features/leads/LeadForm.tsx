@@ -69,6 +69,15 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       <fieldset disabled={readOnly} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
+            <Label htmlFor="notes">{t('form.lead_info')}</Label>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="col-span-2">
             <Label htmlFor="fn">{t('form.full_name')}</Label>
             <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
@@ -191,15 +200,6 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 </table>
               );
             })()}
-          </div>
-          <div className="col-span-2">
-            <Label htmlFor="notes">{t('form.lead_info')}</Label>
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
           </div>
         </div>
         <Button type="submit" disabled={update.isPending}>
