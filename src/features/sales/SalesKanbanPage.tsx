@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useDeals, type DealRow } from '@/features/deals/hooks/useDeals';
 import { useMoveDealStage } from '@/features/deals/hooks/useMoveDealStage';
 import { useLockDeal } from '@/features/deals/hooks/useLockDeal';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { Button } from '@/components/ui/button';
+import { SavedFiltersBar } from '@/features/saved_filters/SavedFiltersBar';
 import { SalesKanbanColumn } from './SalesKanbanColumn';
 import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
 
@@ -11,7 +15,9 @@ export function SalesKanbanPage() {
   const { t, i18n } = useTranslation('sales');
   useSalesKanbanRealtime();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
-  const { data: deals = [], isLoading } = useDeals();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const [filter, setFilter] = useState<Record<string, unknown>>({});
+  const { data: deals = [], isLoading } = useDeals(filter as Parameters<typeof useDeals>[0]);
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveDealStage();
   const lock = useLockDeal();
@@ -52,7 +58,26 @@ export function SalesKanbanPage() {
 
   return (
     <div className="space-y-4 p-6">
-      <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={filter.ownerId === userId ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter({ ownerId: userId ?? undefined })}
+          >
+            {t('filters.mine')}
+          </Button>
+          <Button
+            variant={Object.keys(filter).length === 0 ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter({})}
+          >
+            {t('filters.all')}
+          </Button>
+          <SavedFiltersBar board="sales:kanban" currentFilter={filter} onApply={setFilter} />
+        </div>
+      </div>
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className="flex gap-3 overflow-x-auto pb-4">
           {salesStages.map((s) => (
