@@ -12,6 +12,7 @@ import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -22,6 +23,7 @@ export function LeadDetailPage() {
   const convert = useConvertLead();
   const update = useUpdateLead();
   const { data: owners = [] } = useAssignableOwners();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !lead)
@@ -56,6 +58,15 @@ export function LeadDetailPage() {
           <h1 className="text-2xl font-bold">{lead.title}</h1>
           <p className="text-xs text-slate-500">
             🗓 {formatDate(lead.created_at)} · {relativeFromNow(lead.created_at)}
+            {isAdmin && lead.won_by_user_id && (
+              <span className="ml-2">
+                · 🏆{' '}
+                {(() => {
+                  const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
+                  return winner ? winner.full_name || winner.email : lead.won_by_user_id;
+                })()}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">

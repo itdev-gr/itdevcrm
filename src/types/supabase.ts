@@ -725,6 +725,7 @@ export type Database = {
           updated_at: string
           vat_number: string | null
           website: string | null
+          won_by_user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -758,6 +759,7 @@ export type Database = {
           updated_at?: string
           vat_number?: string | null
           website?: string | null
+          won_by_user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -791,6 +793,7 @@ export type Database = {
           updated_at?: string
           vat_number?: string | null
           website?: string | null
+          won_by_user_id?: string | null
         }
         Relationships: [
           {
@@ -834,6 +837,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_won_by_user_id_fkey"
+            columns: ["won_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }

@@ -87,7 +87,7 @@ export function CommentItem({ comment, replies = [] }: Props) {
     <div className="rounded-md border bg-white p-3">
       <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
         <span className="font-medium text-slate-700">{author}</span>
-        <div className="flex items-center gap-1 whitespace-nowrap">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <span>
             {date}
             {isEdited && (
@@ -96,6 +96,17 @@ export function CommentItem({ comment, replies = [] }: Props) {
               </span>
             )}
           </span>
+          {!editing && (
+            <button
+              type="button"
+              className="text-[11px] text-slate-500 hover:text-slate-900"
+              onClick={() => setReplying((v) => !v)}
+            >
+              {replying
+                ? t('comments.cancel', { defaultValue: 'Cancel' })
+                : t('comments.reply', { defaultValue: 'Reply' })}
+            </button>
+          )}
           {(canEdit || canDelete) && !editing && (
             <div className="relative" ref={menuRef}>
               <button
@@ -171,20 +182,6 @@ export function CommentItem({ comment, replies = [] }: Props) {
         </div>
       ) : (
         <p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p>
-      )}
-
-      {!editing && (
-        <div className="mt-1 flex gap-3 text-[11px] text-slate-500">
-          <button
-            type="button"
-            className="hover:text-slate-900"
-            onClick={() => setReplying((v) => !v)}
-          >
-            {replying
-              ? t('comments.cancel', { defaultValue: 'Cancel' })
-              : t('comments.reply', { defaultValue: 'Reply' })}
-          </button>
-        </div>
       )}
 
       {replying && (
