@@ -13,7 +13,8 @@ export const queryKeys = {
   clients: () => ['clients'] as const,
   client: (id: string) => ['client', id] as const,
   myClients: () => ['my-clients'] as const,
-  deals: (filters?: Record<string, string | undefined>) => ['deals', filters ?? null] as const,
+  deals: (filters?: Record<string, string | undefined>) =>
+    filters ? (['deals', filters] as const) : (['deals'] as const),
   deal: (id: string) => ['deal', id] as const,
   jobsForClient: (clientId: string) => ['jobs', 'client', clientId] as const,
   comments: (parentType: string, parentId: string) => ['comments', parentType, parentId] as const,
@@ -24,6 +25,7 @@ export const queryKeys = {
   savedFilters: (board: string) => ['saved-filters', board] as const,
   accountingDeals: () => ['accounting-deals'] as const,
   clientBlock: (clientId: string) => ['client-block', clientId] as const,
-  leads: (filters?: Record<string, string | undefined>) => ['leads', filters ?? null] as const,
+  leads: (filters?: Record<string, string | undefined>) =>
+    filters ? (['leads', filters] as const) : (['leads'] as const),
   lead: (id: string) => ['lead', id] as const,
 };
