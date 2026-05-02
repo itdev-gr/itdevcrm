@@ -85,16 +85,22 @@ export function LeadDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="comments">{t('tabs.comments')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="pt-4">
-          <LeadForm lead={lead} />
-        </TabsContent>
-        <TabsContent value="comments" className="pt-4">
-          <CommentsPanel parentType="lead" parentId={leadId} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[65%_35%]">
+            <div className="min-w-0">
+              <LeadForm lead={lead} />
+            </div>
+            <aside className="min-w-0">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+                {t('tabs.comments')}
+              </h2>
+              <CommentsPanel parentType="lead" parentId={leadId} />
+            </aside>
+          </div>
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="lead" parentId={leadId} />
