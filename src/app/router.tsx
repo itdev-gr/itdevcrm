@@ -16,6 +16,7 @@ import { StagesListPage } from '@/features/stages/StagesListPage';
 import { ClientsListPage } from '@/features/clients/ClientsListPage';
 import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
 import { DealDetailPage } from '@/features/deals/DealDetailPage';
+import { SalesKanbanPage } from '@/features/sales/SalesKanbanPage';
 
 export const router = createBrowserRouter([
   {
@@ -38,7 +39,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'sales',
-        children: [{ path: 'clients', element: <ClientsListPage /> }],
+        children: [
+          { path: 'clients', element: <ClientsListPage /> },
+          { path: 'kanban', element: <SalesKanbanPage /> },
+        ],
       },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },
       { path: 'deals/:dealId', element: <DealDetailPage /> },
