@@ -1007,6 +1007,51 @@ export type Database = {
           },
         ]
       }
+      service_packages: {
+        Row: {
+          archived: boolean
+          code: string
+          created_at: string
+          default_monthly_amount: number | null
+          default_one_time_amount: number | null
+          description: string | null
+          display_names: Json
+          id: string
+          service_type: string
+          setup_fee: number | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          code: string
+          created_at?: string
+          default_monthly_amount?: number | null
+          default_one_time_amount?: number | null
+          description?: string | null
+          display_names: Json
+          id?: string
+          service_type: string
+          setup_fee?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          code?: string
+          created_at?: string
+          default_monthly_amount?: number | null
+          default_one_time_amount?: number | null
+          description?: string | null
+          display_names?: Json
+          id?: string
+          service_type?: string
+          setup_fee?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_groups: {
         Row: {
           created_at: string
