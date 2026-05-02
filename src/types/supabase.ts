@@ -179,6 +179,7 @@ export type Database = {
           archived_reason: string | null
           assigned_owner_id: string | null
           city: string | null
+          code: string | null
           contact_first_name: string | null
           contact_last_name: string | null
           country: string | null
@@ -203,6 +204,7 @@ export type Database = {
           archived_reason?: string | null
           assigned_owner_id?: string | null
           city?: string | null
+          code?: string | null
           contact_first_name?: string | null
           contact_last_name?: string | null
           country?: string | null
@@ -227,6 +229,7 @@ export type Database = {
           archived_reason?: string | null
           assigned_owner_id?: string | null
           city?: string | null
+          code?: string | null
           contact_first_name?: string | null
           contact_last_name?: string | null
           country?: string | null
@@ -341,6 +344,7 @@ export type Database = {
           archived_by: string | null
           archived_reason: string | null
           client_id: string
+          code: string | null
           created_at: string
           currency: string
           description: string | null
@@ -368,6 +372,7 @@ export type Database = {
           archived_by?: string | null
           archived_reason?: string | null
           client_id: string
+          code?: string | null
           created_at?: string
           currency?: string
           description?: string | null
@@ -395,6 +400,7 @@ export type Database = {
           archived_by?: string | null
           archived_reason?: string | null
           client_id?: string
+          code?: string | null
           created_at?: string
           currency?: string
           description?: string | null
@@ -580,6 +586,7 @@ export type Database = {
           assigned_group_id: string | null
           billing_type: string
           client_id: string
+          code: string | null
           completed_at: string | null
           created_at: string
           deal_id: string
@@ -605,6 +612,7 @@ export type Database = {
           assigned_group_id?: string | null
           billing_type: string
           client_id: string
+          code?: string | null
           completed_at?: string | null
           created_at?: string
           deal_id: string
@@ -630,6 +638,7 @@ export type Database = {
           assigned_group_id?: string | null
           billing_type?: string
           client_id?: string
+          code?: string | null
           completed_at?: string | null
           created_at?: string
           deal_id?: string
@@ -700,6 +709,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          code: string
           company_name: string | null
           contact_first_name: string | null
           contact_last_name: string | null
@@ -735,6 +745,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          code?: string
           company_name?: string | null
           contact_first_name?: string | null
           contact_last_name?: string | null
@@ -770,6 +781,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          code?: string
           company_name?: string | null
           contact_first_name?: string | null
           contact_last_name?: string | null
@@ -1190,6 +1202,7 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      generate_lead_code: { Args: never; Returns: string }
       is_client_blocked: {
         Args: { target_client_id: string }
         Returns: boolean

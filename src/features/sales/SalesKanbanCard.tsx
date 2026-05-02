@@ -35,7 +35,14 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
             <Link to={`/leads/${lead.id}`} className="text-sm font-medium hover:underline">
               {fullName}
             </Link>
-            {lead.converted_at && <span className="text-xs text-emerald-600">✓</span>}
+            <div className="flex items-center gap-1">
+              {lead.code && (
+                <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">
+                  {lead.code}
+                </span>
+              )}
+              {lead.converted_at && <span className="text-xs text-emerald-600">✓</span>}
+            </div>
           </div>
           {companyAndCategory && (
             <div className="text-xs text-muted-foreground">{companyAndCategory}</div>

@@ -55,7 +55,14 @@ export function LeadDetailPage() {
     <div className="space-y-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{lead.title}</h1>
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-2xl font-bold">{lead.title}</h1>
+            {lead.code && (
+              <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">
+                {lead.code}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500">
             🗓 {formatDate(lead.created_at)} · {relativeFromNow(lead.created_at)}
             {isAdmin && lead.won_by_user_id && (
