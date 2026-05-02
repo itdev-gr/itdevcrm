@@ -46,6 +46,9 @@
     "title": "Υπηρεσίες",
     "add": "Προσθήκη υπηρεσίας",
     "empty": "Δεν έχουν προγραμματιστεί υπηρεσίες — προσθέστε τουλάχιστον μία πριν το κλείδωμα.",
+    "package": "Πακέτο",
+    "pick_package": "Επιλέξτε πακέτο",
+    "no_package": "(χωρίς πακέτο)",
     "monthly_amount": "Μηνιαίο €",
     "one_time_amount": "Εφάπαξ €",
     "setup_fee": "Τέλος εγκατάστασης €",
@@ -53,7 +56,9 @@
       "web_seo": "Web SEO",
       "local_seo": "Τοπικό SEO",
       "web_dev": "Ανάπτυξη Ιστού",
-      "social_media": "Social Media"
+      "social_media": "Social Media",
+      "ai_seo": "AI SEO",
+      "hosting": "Φιλοξενία"
     },
     "billing": {
       "recurring_monthly": "Επαναλαμβανόμενο μηνιαία",

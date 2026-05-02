@@ -46,6 +46,9 @@
     "title": "Services",
     "add": "Add service",
     "empty": "No services planned yet — add at least one before locking the deal.",
+    "package": "Package",
+    "pick_package": "Pick a package",
+    "no_package": "(no package)",
     "monthly_amount": "Monthly €",
     "one_time_amount": "One-time €",
     "setup_fee": "Setup fee €",
@@ -53,7 +56,9 @@
       "web_seo": "Web SEO",
       "local_seo": "Local SEO",
       "web_dev": "Web Dev",
-      "social_media": "Social Media"
+      "social_media": "Social Media",
+      "ai_seo": "AI SEO",
+      "hosting": "Hosting"
     },
     "billing": {
       "recurring_monthly": "Recurring monthly",
