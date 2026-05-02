@@ -20,6 +20,16 @@
     "vat": "VAT",
     "total": "Total"
   },
+  "filters": {
+    "search": "Search…",
+    "source_all": "All sources",
+    "sort_label": "Sort",
+    "sort_newest": "Newest first",
+    "sort_oldest": "Oldest first",
+    "sort_value_high": "Value: high to low",
+    "sort_value_low": "Value: low to high",
+    "sort_recent": "Recently updated"
+  },
   "form": {
     "source": "Source",
     "source_options": {

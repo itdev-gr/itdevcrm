@@ -33,9 +33,18 @@ export function SalesKanbanPage() {
   const [filter, setFilter] = useState<Record<string, unknown>>({});
   const [createOpen, setCreateOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [source, setSource] = useState<'' | 'manual' | 'meta' | 'import'>('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent'>(
+    'newest',
+  );
   const { data: owners = [] } = useAssignableOwners();
 
-  const { data: leads = [], isLoading } = useLeads(filter as Parameters<typeof useLeads>[0]);
+  const leadsFilter: Parameters<typeof useLeads>[0] = {
+    ...(typeof filter.ownerId === 'string' ? { ownerId: filter.ownerId } : {}),
+    ...(source ? { source } : {}),
+  };
+  const { data: leads = [], isLoading } = useLeads(leadsFilter);
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveLeadStage();
   const convert = useConvertLead();
@@ -51,13 +60,52 @@ export function SalesKanbanPage() {
 
   const wonStage = salesStages.find((s) => s.code === 'won');
 
+  const searchNorm = search.trim().toLowerCase();
+  const filteredLeads = searchNorm
+    ? leads.filter((l) => {
+        const haystack = [
+          l.title,
+          l.contact_first_name,
+          l.contact_last_name,
+          l.email,
+          l.phone,
+          l.company_name,
+          l.industry,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(searchNorm);
+      })
+    : leads;
+
+  function valueOf(l: LeadRow): number {
+    return Number(l.estimated_one_time_value ?? 0) + Number(l.estimated_monthly_value ?? 0);
+  }
+  function compare(a: LeadRow, b: LeadRow): number {
+    switch (sortBy) {
+      case 'oldest':
+        return a.created_at.localeCompare(b.created_at);
+      case 'value_high':
+        return valueOf(b) - valueOf(a);
+      case 'value_low':
+        return valueOf(a) - valueOf(b);
+      case 'recent':
+        return b.updated_at.localeCompare(a.updated_at);
+      case 'newest':
+      default:
+        return b.created_at.localeCompare(a.created_at);
+    }
+  }
+
   const leadsByStage = new Map<string, LeadRow[]>();
   for (const s of salesStages) leadsByStage.set(s.id, []);
-  for (const lead of leads) {
+  for (const lead of filteredLeads) {
     if (lead.stage?.board !== 'sales') continue;
     const list = leadsByStage.get(lead.stage_id ?? '');
     if (list) list.push(lead);
   }
+  for (const list of leadsByStage.values()) list.sort(compare);
 
   function onDragStart(e: DragStartEvent) {
     setActiveId(String(e.active.id));
@@ -117,6 +165,39 @@ export function SalesKanbanPage() {
               ))}
             </select>
           )}
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value as '' | 'manual' | 'meta' | 'import')}
+            className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+          >
+            <option value="">{tLeads('filters.source_all')}</option>
+            <option value="manual">{tLeads('form.source_options.manual')}</option>
+            <option value="meta">{tLeads('form.source_options.meta')}</option>
+            <option value="import">{tLeads('form.source_options.import')}</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) =>
+              setSortBy(
+                e.target.value as 'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent',
+              )
+            }
+            className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+            title={tLeads('filters.sort_label')}
+          >
+            <option value="newest">{tLeads('filters.sort_newest')}</option>
+            <option value="oldest">{tLeads('filters.sort_oldest')}</option>
+            <option value="value_high">{tLeads('filters.sort_value_high')}</option>
+            <option value="value_low">{tLeads('filters.sort_value_low')}</option>
+            <option value="recent">{tLeads('filters.sort_recent')}</option>
+          </select>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={tLeads('filters.search')}
+            className="w-40 rounded-md border border-input bg-background px-2 py-1 text-sm"
+          />
           <SavedFiltersBar board="sales:kanban" currentFilter={filter} onApply={setFilter} />
           <Button onClick={() => setCreateOpen(true)}>{tLeads('actions.create')}</Button>
         </div>

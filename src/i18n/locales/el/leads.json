@@ -20,6 +20,16 @@
     "vat": "ΦΠΑ",
     "total": "Σύνολο"
   },
+  "filters": {
+    "search": "Αναζήτηση…",
+    "source_all": "Όλες οι πηγές",
+    "sort_label": "Ταξινόμηση",
+    "sort_newest": "Νεότερα πρώτα",
+    "sort_oldest": "Παλαιότερα πρώτα",
+    "sort_value_high": "Αξία: υψηλή προς χαμηλή",
+    "sort_value_low": "Αξία: χαμηλή προς υψηλή",
+    "sort_recent": "Πρόσφατη ενημέρωση"
+  },
   "form": {
     "source": "Πηγή",
     "source_options": {
