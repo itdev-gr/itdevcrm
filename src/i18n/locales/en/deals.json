@@ -42,5 +42,23 @@
       "contract_attachment_required": "A contract attachment of kind \"contract\" is required."
     }
   },
+  "services": {
+    "title": "Services",
+    "add": "Add service",
+    "empty": "No services planned yet — add at least one before locking the deal.",
+    "monthly_amount": "Monthly €",
+    "one_time_amount": "One-time €",
+    "setup_fee": "Setup fee €",
+    "types": {
+      "web_seo": "Web SEO",
+      "local_seo": "Local SEO",
+      "web_dev": "Web Dev",
+      "social_media": "Social Media"
+    },
+    "billing": {
+      "recurring_monthly": "Recurring monthly",
+      "one_time": "One-time"
+    }
+  },
   "empty": "No deals yet."
 }

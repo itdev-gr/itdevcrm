@@ -42,5 +42,23 @@
       "contract_attachment_required": "Απαιτείται συνημμένο συμβόλαιο (kind \"contract\")."
     }
   },
+  "services": {
+    "title": "Υπηρεσίες",
+    "add": "Προσθήκη υπηρεσίας",
+    "empty": "Δεν έχουν προγραμματιστεί υπηρεσίες — προσθέστε τουλάχιστον μία πριν το κλείδωμα.",
+    "monthly_amount": "Μηνιαίο €",
+    "one_time_amount": "Εφάπαξ €",
+    "setup_fee": "Τέλος εγκατάστασης €",
+    "types": {
+      "web_seo": "Web SEO",
+      "local_seo": "Τοπικό SEO",
+      "web_dev": "Ανάπτυξη Ιστού",
+      "social_media": "Social Media"
+    },
+    "billing": {
+      "recurring_monthly": "Επαναλαμβανόμενο μηνιαία",
+      "one_time": "Εφάπαξ"
+    }
+  },
   "empty": "Δεν υπάρχουν συμφωνίες."
 }
