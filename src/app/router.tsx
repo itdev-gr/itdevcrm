@@ -15,6 +15,7 @@ import { PermissionsTestPage } from '@/features/permissions/PermissionsTestPage'
 import { StagesListPage } from '@/features/stages/StagesListPage';
 import { ClientsListPage } from '@/features/clients/ClientsListPage';
 import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
+import { DealDetailPage } from '@/features/deals/DealDetailPage';
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
         children: [{ path: 'clients', element: <ClientsListPage /> }],
       },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },
+      { path: 'deals/:dealId', element: <DealDetailPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

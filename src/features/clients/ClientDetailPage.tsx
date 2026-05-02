@@ -1,13 +1,20 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { ClientForm } from './ClientForm';
 import { useClient } from './hooks/useClient';
+import { useDeals } from '@/features/deals/hooks/useDeals';
+import { CreateDealDialog } from '@/features/deals/CreateDealDialog';
 
 export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const { t } = useTranslation('clients');
   const { data: client, isLoading, error } = useClient(clientId);
+  const [dealOpen, setDealOpen] = useState(false);
+  const { data: deals = [] } = useDeals({ clientId });
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !client)
@@ -30,8 +37,23 @@ export function ClientDetailPage() {
         <TabsContent value="overview" className="pt-4">
           <ClientForm initial={client} />
         </TabsContent>
-        <TabsContent value="deals" className="pt-4">
-          <p className="text-sm text-muted-foreground">Deals list (Task 13)</p>
+        <TabsContent value="deals" className="pt-4 space-y-3">
+          <Button onClick={() => setDealOpen(true)}>{t('tabs.deals')}: New</Button>
+          {deals.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No deals yet.</p>
+          ) : (
+            <ul className="divide-y rounded-md border">
+              {deals.map((d) => (
+                <li key={d.id} className="flex items-center justify-between px-4 py-2">
+                  <span>{d.title}</span>
+                  <Link to={`/deals/${d.id}`} className="text-blue-600 underline text-sm">
+                    View
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <CreateDealDialog open={dealOpen} onOpenChange={setDealOpen} clientId={clientId} />
         </TabsContent>
         <TabsContent value="jobs" className="pt-4">
           <p className="text-sm text-muted-foreground">Jobs list (Phase 6)</p>
