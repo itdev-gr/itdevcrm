@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -6,6 +6,17 @@ import type { CommentRow } from './hooks/useComments';
 import { useUpdateComment } from './hooks/useUpdateComment';
 import { useArchiveComment } from './hooks/useArchiveComment';
 import { CommentForm } from './CommentForm';
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 type Props = {
   comment: CommentRow;
@@ -20,9 +31,21 @@ export function CommentItem({ comment, replies = [] }: Props) {
   const archive = useArchiveComment();
   const [editing, setEditing] = useState(false);
   const [replying, setReplying] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [draft, setDraft] = useState(comment.body);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const date = new Date(comment.created_at).toLocaleString();
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDoc(ev: MouseEvent) {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(ev.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [menuOpen]);
+
+  const date = formatTime(comment.created_at);
   const author = comment.author?.full_name || comment.author?.email || comment.author_id;
   const canEdit = isAdmin || (myId !== null && myId === comment.author_id);
   const canDelete = canEdit;
@@ -64,14 +87,56 @@ export function CommentItem({ comment, replies = [] }: Props) {
     <div className="rounded-md border bg-white p-3">
       <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
         <span className="font-medium text-slate-700">{author}</span>
-        <span className="whitespace-nowrap">
-          {date}
-          {isEdited && (
-            <span className="ml-1 italic">
-              · {t('comments.edited', { defaultValue: 'edited' })}
-            </span>
+        <div className="flex items-center gap-1 whitespace-nowrap">
+          <span>
+            {date}
+            {isEdited && (
+              <span className="ml-1 italic">
+                · {t('comments.edited', { defaultValue: 'edited' })}
+              </span>
+            )}
+          </span>
+          {(canEdit || canDelete) && !editing && (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                aria-label="More"
+                className="rounded px-1 leading-none hover:bg-slate-100"
+                onClick={() => setMenuOpen((v) => !v)}
+              >
+                ⋯
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-5 z-10 min-w-[8rem] rounded-md border bg-white shadow-md">
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-2 text-left text-xs hover:bg-slate-50"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setEditing(true);
+                      }}
+                    >
+                      {t('comments.edit', { defaultValue: 'Edit' })}
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-slate-50"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        void onDelete();
+                      }}
+                    >
+                      {t('comments.delete', { defaultValue: 'Delete' })}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
-        </span>
+        </div>
       </div>
 
       {editing ? (
@@ -119,16 +184,6 @@ export function CommentItem({ comment, replies = [] }: Props) {
               ? t('comments.cancel', { defaultValue: 'Cancel' })
               : t('comments.reply', { defaultValue: 'Reply' })}
           </button>
-          {canEdit && (
-            <button type="button" className="hover:text-slate-900" onClick={() => setEditing(true)}>
-              {t('comments.edit', { defaultValue: 'Edit' })}
-            </button>
-          )}
-          {canDelete && (
-            <button type="button" className="text-red-600 hover:text-red-800" onClick={onDelete}>
-              {t('comments.delete', { defaultValue: 'Delete' })}
-            </button>
-          )}
         </div>
       )}
 
