@@ -9,7 +9,9 @@ export function useDeal(dealId: string) {
     queryFn: async (): Promise<DealRow> => {
       const { data, error } = await supabase
         .from('deals')
-        .select('*, client:clients(id, name), stage:pipeline_stages(id, code, board)')
+        .select(
+          '*, client:clients(id, name), stage:pipeline_stages!deals_stage_id_fkey(id, code, board, display_names), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board, display_names)',
+        )
         .eq('id', dealId)
         .single();
       if (error || !data) throw new Error(error?.message ?? 'Not found');
