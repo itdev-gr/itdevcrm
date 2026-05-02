@@ -34,7 +34,10 @@ test.describe('admin smoke', () => {
   test('group permissions matrix renders', async ({ page }) => {
     await signIn(page);
     await page.goto('/admin/groups');
-    await page.getByRole('link', { name: /manage permissions|διαχείριση δικαιωμάτων/i }).first().click();
+    await page
+      .getByRole('link', { name: /manage permissions|διαχείριση δικαιωμάτων/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/groups\/.+\/permissions$/);
     // Matrix has board headers
     await expect(page.getByRole('heading', { name: /permissions for/i })).toBeVisible();
@@ -44,7 +47,9 @@ test.describe('admin smoke', () => {
     await signIn(page);
     await page.goto('/admin/fields');
     await expect(page).toHaveURL(/\/admin\/fields$/);
-    await expect(page.getByRole('heading', { name: /field-level rules|κανόνες ανά πεδίο/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /field-level rules|κανόνες ανά πεδίο/i }),
+    ).toBeVisible();
     // Add Rule button
     await expect(page.getByRole('button', { name: /add rule|προσθήκη κανόνα/i })).toBeVisible();
   });
@@ -53,7 +58,9 @@ test.describe('admin smoke', () => {
     await signIn(page);
     await page.goto('/admin/stages');
     await expect(page).toHaveURL(/\/admin\/stages$/);
-    await expect(page.getByRole('heading', { name: /pipeline stages|στάδια pipeline/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /pipeline stages|στάδια pipeline/i }),
+    ).toBeVisible();
     // Sales board section
     await expect(page.getByRole('heading', { name: /sales|πωλήσεις/i })).toBeVisible();
     // Web Dev board section
