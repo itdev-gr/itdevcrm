@@ -104,7 +104,7 @@ export function LeadDetailPage() {
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="flex min-h-full flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">

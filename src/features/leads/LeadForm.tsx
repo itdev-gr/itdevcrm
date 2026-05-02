@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ServicesPlannedField, type PlannedService } from '@/features/deals/ServicesPlannedField';
 import { useUpdateLead } from './hooks/useUpdateLead';
 import type { LeadRow } from './hooks/useLeads';
 import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
+import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 
 export function LeadForm({ lead }: { lead: LeadRow }) {
-  const { t } = useTranslation('leads');
+  const { t, i18n } = useTranslation('leads');
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const update = useUpdateLead();
   const readOnly = !!lead.converted_at;
 
@@ -35,36 +35,58 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const oneTimeNum = services.reduce((sum, s) => sum + (Number(s.one_time_amount) || 0), 0);
   const monthlyNum = services.reduce((sum, s) => sum + (Number(s.monthly_amount) || 0), 0);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    try {
+  const patch = useMemo(
+    () => ({
+      contact_first_name: fullName.trim() || null,
+      contact_last_name: null,
+      email: email.trim() || null,
+      phone: phone.trim() || null,
+      website: website.trim() || null,
+      company_name: companyName.trim() || null,
+      industry: industry.trim() || null,
+      country: country.trim() || null,
+      address: address.trim() || null,
+      vat_number: vatNumber.trim() || null,
+      notes: notes.trim() || null,
+      additional_notes: additionalNotes.trim() || null,
+      estimated_one_time_value: oneTimeNum,
+      estimated_monthly_value: monthlyNum,
+      services_planned: services,
+    }),
+    [
+      fullName,
+      email,
+      phone,
+      website,
+      companyName,
+      industry,
+      country,
+      address,
+      vatNumber,
+      notes,
+      additionalNotes,
+      oneTimeNum,
+      monthlyNum,
+      services,
+    ],
+  );
+
+  const saveStatus = useAutoSave(
+    patch,
+    async (next) => {
       await update.mutateAsync({
         id: lead.id,
         patch: {
-          contact_first_name: fullName.trim() || null,
-          contact_last_name: null,
-          email: email.trim() || null,
-          phone: phone.trim() || null,
-          website: website.trim() || null,
-          company_name: companyName.trim() || null,
-          industry: industry.trim() || null,
-          country: country.trim() || null,
-          address: address.trim() || null,
-          vat_number: vatNumber.trim() || null,
-          notes: notes.trim() || null,
-          additional_notes: additionalNotes.trim() || null,
-          estimated_one_time_value: oneTimeNum,
-          estimated_monthly_value: monthlyNum,
-          services_planned: services as unknown as LeadRow['services_planned'],
+          ...next,
+          services_planned: next.services_planned as unknown as LeadRow['services_planned'],
         },
       });
-    } catch (err) {
-      alert((err as Error).message);
-    }
-  }
+    },
+    { enabled: !readOnly },
+  );
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <div className="space-y-4">
       <fieldset disabled={readOnly} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
@@ -190,10 +212,10 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             })()}
           </div>
         </div>
-        <Button type="submit" disabled={update.isPending}>
-          {t('actions.save')}
-        </Button>
+        <div className="flex h-5 items-center text-xs text-slate-500">
+          {autoSaveLabel(saveStatus, lang)}
+        </div>
       </fieldset>
-    </form>
+    </div>
   );
 }
