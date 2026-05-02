@@ -175,7 +175,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                 </div>
                 {row.billing_type === 'recurring_monthly' ? (
                   <>
-                    <div className="col-span-2">
+                    <div className="col-span-3">
                       <Label className="whitespace-nowrap text-xs">
                         {t('services.monthly_amount')}
                       </Label>
@@ -203,7 +203,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     </div>
                   </>
                 ) : (
-                  <div className="col-span-4">
+                  <div className="col-span-5">
                     <Label className="whitespace-nowrap text-xs">
                       {t('services.one_time_amount')}
                     </Label>
@@ -219,7 +219,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     />
                   </div>
                 )}
-                <div className="col-span-2 flex justify-end">
+                <div className="col-span-1 flex justify-end">
                   {!isDisabled && (
                     <Button
                       type="button"
