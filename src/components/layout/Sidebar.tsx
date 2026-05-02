@@ -10,7 +10,7 @@ export function Sidebar() {
   const isAccounting = groupCodes.includes('accounting');
 
   return (
-    <aside className="hidden w-56 space-y-2 border-r bg-slate-50 p-4 md:block">
+    <aside className="hidden w-56 flex-col gap-2 self-stretch border-r bg-slate-50 p-4 md:flex">
       <NavLink
         to="/"
         end
@@ -55,7 +55,7 @@ export function Sidebar() {
         </div>
       )}
       {isAdmin && (
-        <div className="pt-4">
+        <div className="mt-auto border-t pt-3">
           <NavLink
             to="/admin"
             className={({ isActive }) =>
