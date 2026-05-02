@@ -85,7 +85,7 @@ export function AccountingClientsPage() {
             <thead className="sticky top-0 bg-slate-50">
               <tr className="border-b text-left">
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.code')}</th>
-                <th className="px-3 py-2 font-medium">{t('clients_page.table.created')}</th>
+                <th className="px-3 py-2 font-medium">{t('clients_page.table.start_date')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.company')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.contact')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.email')}</th>
@@ -121,7 +121,9 @@ export function AccountingClientsPage() {
                     <td className="px-3 py-2">
                       {c.code && <CopyableCode code={c.code} className="text-[10px]" />}
                     </td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(c.created_at)}</td>
+                    <td className="px-3 py-2 text-slate-500">
+                      {c.start_date ? formatDate(c.start_date) : formatDate(c.created_at)}
+                    </td>
                     <td className="px-3 py-2 font-medium">
                       <Link to={`/clients/${c.id}`} className="hover:underline">
                         {c.name}

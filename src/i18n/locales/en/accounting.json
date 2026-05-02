@@ -22,7 +22,8 @@
       "monthly_revenue": "€ / mo",
       "yearly_revenue": "€ / yr",
       "status": "Status",
-      "created": "Joined"
+      "created": "Joined",
+      "start_date": "Start"
     },
     "status": {
       "active": "Active",

@@ -22,7 +22,8 @@
       "monthly_revenue": "€ / μήνα",
       "yearly_revenue": "€ / έτος",
       "status": "Κατάσταση",
-      "created": "Από"
+      "created": "Από",
+      "start_date": "Έναρξη"
     },
     "status": {
       "active": "Ενεργός",
