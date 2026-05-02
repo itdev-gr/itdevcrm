@@ -16,7 +16,7 @@ import { useFieldRules } from './hooks/useFieldRules';
 import { useUpsertFieldRule } from './hooks/useUpsertFieldRule';
 import { useDeleteFieldRule } from './hooks/useDeleteFieldRule';
 
-const KNOWN_TABLES = ['clients', 'deals', 'jobs', 'monthly_invoices', 'profiles'] as const;
+const KNOWN_TABLES = ['leads', 'clients', 'deals', 'jobs', 'profiles'] as const;
 
 type DraftState = {
   scope_type: 'group' | 'user';
