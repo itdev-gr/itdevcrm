@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
 import { useLockDeal } from './hooks/useLockDeal';
+import { CommentsPanel } from '@/features/comments/CommentsPanel';
 
 export function DealDetailPage() {
   const { dealId = '' } = useParams<{ dealId: string }>();
@@ -52,7 +53,7 @@ export function DealDetailPage() {
           <p className="text-sm text-muted-foreground">Jobs (Phase 6)</p>
         </TabsContent>
         <TabsContent value="comments" className="pt-4">
-          <p className="text-sm text-muted-foreground">Comments (Task 18)</p>
+          <CommentsPanel parentType="deal" parentId={dealId} />
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <p className="text-sm text-muted-foreground">Attachments (Task 19)</p>

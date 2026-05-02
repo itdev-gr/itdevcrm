@@ -8,6 +8,7 @@ import { ClientForm } from './ClientForm';
 import { useClient } from './hooks/useClient';
 import { useDeals } from '@/features/deals/hooks/useDeals';
 import { CreateDealDialog } from '@/features/deals/CreateDealDialog';
+import { CommentsPanel } from '@/features/comments/CommentsPanel';
 
 export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
@@ -59,7 +60,7 @@ export function ClientDetailPage() {
           <p className="text-sm text-muted-foreground">Jobs list (Phase 6)</p>
         </TabsContent>
         <TabsContent value="comments" className="pt-4">
-          <p className="text-sm text-muted-foreground">Comments (Task 18)</p>
+          <CommentsPanel parentType="client" parentId={clientId} />
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <p className="text-sm text-muted-foreground">Attachments (Task 19)</p>
