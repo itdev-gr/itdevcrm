@@ -6,7 +6,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 const MAX_BYTES = 25 * 1024 * 1024;
 
 type Vars = {
-  parent_type: 'client' | 'deal' | 'job';
+  parent_type: 'client' | 'deal' | 'job' | 'lead';
   parent_id: string;
   file: File;
   kind?: 'contract' | 'invoice' | 'other';

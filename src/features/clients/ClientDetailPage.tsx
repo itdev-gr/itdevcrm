@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { ClientForm } from './ClientForm';
 import { useClient } from './hooks/useClient';
 import { useDeals } from '@/features/deals/hooks/useDeals';
-import { CreateDealDialog } from '@/features/deals/CreateDealDialog';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
@@ -20,7 +19,6 @@ export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const { t } = useTranslation('clients');
   const { data: client, isLoading, error } = useClient(clientId);
-  const [dealOpen, setDealOpen] = useState(false);
   const { data: deals = [] } = useDeals({ clientId });
   const { t: tAcc } = useTranslation('accounting');
   const { data: block } = useClientBlock(clientId);
@@ -68,7 +66,6 @@ export function ClientDetailPage() {
           <ClientForm initial={client} />
         </TabsContent>
         <TabsContent value="deals" className="pt-4 space-y-3">
-          <Button onClick={() => setDealOpen(true)}>{t('tabs.deals')}: New</Button>
           {deals.length === 0 ? (
             <p className="text-sm text-muted-foreground">No deals yet.</p>
           ) : (
@@ -83,7 +80,6 @@ export function ClientDetailPage() {
               ))}
             </ul>
           )}
-          <CreateDealDialog open={dealOpen} onOpenChange={setDealOpen} clientId={clientId} />
         </TabsContent>
         <TabsContent value="jobs" className="pt-4">
           <p className="text-sm text-muted-foreground">Jobs list (Phase 6)</p>

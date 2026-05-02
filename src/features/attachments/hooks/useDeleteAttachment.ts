@@ -5,7 +5,7 @@ import { queryKeys } from '@/lib/queryKeys';
 type Vars = {
   id: string;
   storage_path: string;
-  parent_type: 'client' | 'deal' | 'job';
+  parent_type: 'client' | 'deal' | 'job' | 'lead';
   parent_id: string;
 };
 

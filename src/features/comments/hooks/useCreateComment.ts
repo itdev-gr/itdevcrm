@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/lib/stores/authStore';
 
 type Vars = {
-  parent_type: 'client' | 'deal' | 'job';
+  parent_type: 'client' | 'deal' | 'job' | 'lead';
   parent_id: string;
   body: string;
   mentioned_user_ids?: string[];

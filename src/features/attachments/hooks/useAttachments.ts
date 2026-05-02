@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/queryKeys';
 
 export type AttachmentRow = {
   id: string;
-  parent_type: 'client' | 'deal' | 'job';
+  parent_type: 'client' | 'deal' | 'job' | 'lead';
   parent_id: string;
   storage_path: string;
   file_name: string;
@@ -15,7 +15,7 @@ export type AttachmentRow = {
   created_at: string;
 };
 
-export function useAttachments(parentType: 'client' | 'deal' | 'job', parentId: string) {
+export function useAttachments(parentType: 'client' | 'deal' | 'job' | 'lead', parentId: string) {
   return useQuery({
     queryKey: queryKeys.attachments(parentType, parentId),
     queryFn: async (): Promise<AttachmentRow[]> => {

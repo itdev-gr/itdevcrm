@@ -8,7 +8,7 @@ import { useUploadAttachment } from './hooks/useUploadAttachment';
 import { useDeleteAttachment } from './hooks/useDeleteAttachment';
 
 type Props = {
-  parentType: 'client' | 'deal' | 'job';
+  parentType: 'client' | 'deal' | 'job' | 'lead';
   parentId: string;
 };
 

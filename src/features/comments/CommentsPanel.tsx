@@ -4,7 +4,7 @@ import { CommentItem } from './CommentItem';
 import { CommentForm } from './CommentForm';
 
 type Props = {
-  parentType: 'client' | 'deal' | 'job';
+  parentType: 'client' | 'deal' | 'job' | 'lead';
   parentId: string;
 };
 

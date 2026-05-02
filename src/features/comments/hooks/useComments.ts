@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/queryKeys';
 
 export type CommentRow = {
   id: string;
-  parent_type: 'client' | 'deal' | 'job';
+  parent_type: 'client' | 'deal' | 'job' | 'lead';
   parent_id: string;
   author_id: string;
   body: string;
@@ -13,7 +13,7 @@ export type CommentRow = {
   author: { user_id: string; full_name: string; email: string } | null;
 };
 
-export function useComments(parentType: 'client' | 'deal' | 'job', parentId: string) {
+export function useComments(parentType: 'client' | 'deal' | 'job' | 'lead', parentId: string) {
   return useQuery({
     queryKey: queryKeys.comments(parentType, parentId),
     queryFn: async (): Promise<CommentRow[]> => {

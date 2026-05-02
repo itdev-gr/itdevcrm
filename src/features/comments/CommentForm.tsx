@@ -7,7 +7,7 @@ import { useUsers } from '@/features/users/hooks/useUsers';
 import { useCreateComment } from './hooks/useCreateComment';
 
 type Props = {
-  parentType: 'client' | 'deal' | 'job';
+  parentType: 'client' | 'deal' | 'job' | 'lead';
   parentId: string;
 };
 
