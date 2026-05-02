@@ -11,6 +11,10 @@ import { CreateDealDialog } from '@/features/deals/CreateDealDialog';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
+import { useClientBlock } from '@/features/client_blocks/hooks/useClientBlock';
+import { useUnblockClient } from '@/features/client_blocks/hooks/useUnblockClient';
+import { BlockBadge } from '@/features/client_blocks/BlockBadge';
+import { BlockClientDialog } from '@/features/client_blocks/BlockClientDialog';
 
 export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
@@ -18,6 +22,10 @@ export function ClientDetailPage() {
   const { data: client, isLoading, error } = useClient(clientId);
   const [dealOpen, setDealOpen] = useState(false);
   const { data: deals = [] } = useDeals({ clientId });
+  const { t: tAcc } = useTranslation('accounting');
+  const { data: block } = useClientBlock(clientId);
+  const unblock = useUnblockClient();
+  const [blockOpen, setBlockOpen] = useState(false);
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !client)
@@ -25,7 +33,26 @@ export function ClientDetailPage() {
 
   return (
     <div className="space-y-6 p-8">
-      <h1 className="text-2xl font-bold">{client.name}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">{client.name}</h1>
+          <BlockBadge clientId={clientId} />
+        </div>
+        {block ? (
+          <Button
+            variant="outline"
+            onClick={() => unblock.mutate(clientId)}
+            disabled={unblock.isPending}
+          >
+            {tAcc('block.button_unblock')}
+          </Button>
+        ) : (
+          <Button variant="destructive" onClick={() => setBlockOpen(true)}>
+            {tAcc('block.button')}
+          </Button>
+        )}
+      </div>
+      <BlockClientDialog open={blockOpen} onOpenChange={setBlockOpen} clientId={clientId} />
 
       <Tabs defaultValue="overview">
         <TabsList>

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useMyClients } from './hooks/useMyClients';
 import { CreateClientDialog } from './CreateClientDialog';
+import { BlockBadge } from '@/features/client_blocks/BlockBadge';
 
 export function ClientsListPage() {
   const { t } = useTranslation('clients');
@@ -39,7 +40,12 @@ export function ClientsListPage() {
           <tbody>
             {clients.map((c) => (
               <tr key={c.id} className="border-b">
-                <td className="py-2 pr-4 font-medium">{c.name}</td>
+                <td className="py-2 pr-4 font-medium">
+                  <span className="inline-flex items-center gap-2">
+                    {c.name}
+                    <BlockBadge clientId={c.id} />
+                  </span>
+                </td>
                 <td className="py-2 pr-4">
                   {[c.contact_first_name, c.contact_last_name].filter(Boolean).join(' ')}
                 </td>
