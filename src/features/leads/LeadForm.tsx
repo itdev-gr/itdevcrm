@@ -29,7 +29,6 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [services, setServices] = useState<PlannedService[]>(
     Array.isArray(lead.services_planned) ? (lead.services_planned as PlannedService[]) : [],
   );
-  const [expectedClose, setExpectedClose] = useState<string>(lead.expected_close_date ?? '');
 
   function toNum(v: string) {
     const n = Number(v);
@@ -55,7 +54,6 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           estimated_one_time_value: toNum(oneTime),
           estimated_monthly_value: toNum(monthly),
           services_planned: services as unknown as LeadRow['services_planned'],
-          expected_close_date: expectedClose || null,
         },
       });
     } catch (err) {
@@ -100,18 +98,9 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <Label htmlFor="addr">{t('form.address')}</Label>
             <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
           </div>
-          <div>
+          <div className="col-span-2">
             <Label htmlFor="vat">{t('form.vat_number')}</Label>
             <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="ecd">{t('form.expected_close_date')}</Label>
-            <Input
-              id="ecd"
-              type="date"
-              value={expectedClose}
-              onChange={(e) => setExpectedClose(e.target.value)}
-            />
           </div>
           <div>
             <Label htmlFor="ot">{t('form.estimated_one_time_value')}</Label>

@@ -28,7 +28,6 @@ const schema = z.object({
   description: z.string().optional(),
   client_id: z.string().min(1),
   stage_id: z.string().min(1),
-  expected_close_date: z.string().optional(),
   probability: z.string().optional(),
   lead_source: z.string().optional(),
   one_time_value: z.string().optional(),
@@ -82,7 +81,6 @@ export function DealForm({ initial, defaultClientId, onDone, onCancel }: Props) 
       description: initial?.description ?? '',
       client_id: defaultClientId_,
       stage_id: defaultStageId,
-      expected_close_date: initial?.expected_close_date ?? '',
       probability: initial?.probability !== undefined ? String(initial.probability) : '50',
       lead_source: initial?.lead_source ?? '',
       one_time_value:
@@ -102,7 +100,6 @@ export function DealForm({ initial, defaultClientId, onDone, onCancel }: Props) 
       stage_id: values.stage_id,
     };
     if (values.description) payload.description = values.description;
-    if (values.expected_close_date) payload.expected_close_date = values.expected_close_date;
     if (values.lead_source) payload.lead_source = values.lead_source;
     const prob = toNum(values.probability);
     if (prob !== undefined) payload.probability = prob;
@@ -168,10 +165,6 @@ export function DealForm({ initial, defaultClientId, onDone, onCancel }: Props) 
       <div>
         <Label htmlFor="probability">{t('form.probability')}</Label>
         <Input id="probability" type="number" min="0" max="100" {...register('probability')} />
-      </div>
-      <div>
-        <Label htmlFor="ecd">{t('form.expected_close_date')}</Label>
-        <Input id="ecd" type="date" {...register('expected_close_date')} />
       </div>
       <div>
         <Label htmlFor="otv">{t('form.one_time_value')}</Label>
