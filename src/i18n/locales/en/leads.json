@@ -6,7 +6,10 @@
     "save": "Save",
     "cancel": "Cancel",
     "archive": "Archive",
-    "convert": "Convert to client"
+    "convert": "Convert to client",
+    "next_new_lead": "Next new lead →",
+    "no_more_new_leads": "No more new leads",
+    "move_to": "Move to"
   },
   "owner": {
     "label": "Owner",

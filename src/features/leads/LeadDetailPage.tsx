@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { LeadForm } from './LeadForm';
 import { useLead } from './hooks/useLead';
@@ -15,6 +17,7 @@ import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
+import { supabase } from '@/lib/supabase';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -24,12 +27,41 @@ export function LeadDetailPage() {
   const { data: lead, isLoading, error } = useLead(leadId);
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
+  const navigate = useNavigate();
   const convert = useConvertLead();
   const update = useUpdateLead();
   const moveStage = useMoveLeadStage();
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+
+  const newLeadStageId = stages.find(
+    (s) => s.board === 'sales' && s.code === 'new_lead' && !s.archived,
+  )?.id;
+
+  const nextNewLead = useQuery({
+    queryKey: ['next-new-lead', userId, newLeadStageId, leadId] as const,
+    queryFn: async (): Promise<string | null> => {
+      if (!newLeadStageId || !userId) return null;
+      const { data, error: e } = await supabase
+        .from('leads')
+        .select('id, created_at')
+        .eq('owner_user_id', userId)
+        .eq('stage_id', newLeadStageId)
+        .eq('archived', false)
+        .is('converted_at', null)
+        .order('created_at', { ascending: true });
+      if (e) throw new Error(e.message);
+      const list = data ?? [];
+      if (list.length === 0) return null;
+      const idx = list.findIndex((l) => l.id === leadId);
+      if (idx === -1) return list[0]?.id ?? null;
+      return list[idx + 1]?.id ?? null;
+    },
+    enabled: !!userId && !!newLeadStageId,
+    staleTime: 30_000,
+  });
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !lead)
@@ -116,7 +148,7 @@ export function LeadDetailPage() {
           {!lead.converted_at && (
             <div className="flex items-center gap-2">
               <Label htmlFor="stage" className="text-sm">
-                {t('actions.move_to', { defaultValue: 'Move to' })}:
+                {t('actions.move_to')}:
               </Label>
               <select
                 id="stage"
@@ -134,6 +166,15 @@ export function LeadDetailPage() {
             </div>
           )}
           {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
+            disabled={!nextNewLead.data}
+            title={nextNewLead.data ? t('actions.next_new_lead') : t('actions.no_more_new_leads')}
+          >
+            {nextNewLead.data ? t('actions.next_new_lead') : t('actions.no_more_new_leads')}
+          </Button>
         </div>
       </div>
 
