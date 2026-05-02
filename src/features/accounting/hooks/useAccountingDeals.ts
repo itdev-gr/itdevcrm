@@ -5,6 +5,13 @@ import type { DealRow } from '@/features/deals/hooks/useDeals';
 
 export type AccountingDealRow = DealRow & {
   accounting_stage?: { id: string; code: string; board: string } | null;
+  client?: {
+    id: string;
+    name: string;
+    contact_first_name?: string | null;
+    contact_last_name?: string | null;
+    industry?: string | null;
+  } | null;
 };
 
 export function useAccountingDeals() {
@@ -14,7 +21,7 @@ export function useAccountingDeals() {
       const { data, error } = await supabase
         .from('deals')
         .select(
-          '*, client:clients(id, name), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board)',
+          '*, client:clients(id, name, contact_first_name, contact_last_name, industry), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board)',
         )
         .not('accounting_stage_id', 'is', null)
         .is('accounting_completed_at', null)
