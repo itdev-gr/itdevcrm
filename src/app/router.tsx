@@ -13,6 +13,8 @@ import { UserPermissionsPage } from '@/features/permissions/UserPermissionsPage'
 import { FieldRulesPage } from '@/features/permissions/FieldRulesPage';
 import { PermissionsTestPage } from '@/features/permissions/PermissionsTestPage';
 import { StagesListPage } from '@/features/stages/StagesListPage';
+import { ClientsListPage } from '@/features/clients/ClientsListPage';
+import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +35,11 @@ export const router = createBrowserRouter([
           { path: 'stages', element: <StagesListPage /> },
         ],
       },
+      {
+        path: 'sales',
+        children: [{ path: 'clients', element: <ClientsListPage /> }],
+      },
+      { path: 'clients/:clientId', element: <ClientDetailPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
