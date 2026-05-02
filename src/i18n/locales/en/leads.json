@@ -15,6 +15,9 @@
     "label": "Owner",
     "unassigned": "Unassigned"
   },
+  "sales_person": {
+    "label": "Sales person"
+  },
   "totals": {
     "title": "Pricing summary",
     "one_time_label": "One-time",

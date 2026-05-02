@@ -4,7 +4,20 @@ import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
 
 export type DealRow = Database['public']['Tables']['deals']['Row'] & {
-  client?: { id: string; name: string } | null;
+  won_by_user_id?: string | null;
+  client?: {
+    id: string;
+    name: string;
+    contact_first_name?: string | null;
+    contact_last_name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    industry?: string | null;
+    country?: string | null;
+    address?: string | null;
+    vat_number?: string | null;
+  } | null;
   stage?: { id: string; code: string; board: string; display_names?: unknown } | null;
   accounting_stage?: { id: string; code: string; board: string; display_names?: unknown } | null;
 };

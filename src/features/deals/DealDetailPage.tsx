@@ -30,6 +30,9 @@ export function DealDetailPage() {
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const wonBy = deal?.won_by_user_id
+    ? owners.find((o) => o.user_id === deal.won_by_user_id)
+    : null;
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !deal)
@@ -86,6 +89,14 @@ export function DealDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {wonBy && (
+            <div className="flex items-center gap-2">
+              <Label className="text-sm">{tLeads('sales_person.label')}:</Label>
+              <span className="rounded-md border border-input bg-slate-50 px-2 py-1 text-sm text-slate-700">
+                🏆 {wonBy.full_name || wonBy.email}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Label htmlFor="owner" className="text-sm">
               {tLeads('owner.label')}:

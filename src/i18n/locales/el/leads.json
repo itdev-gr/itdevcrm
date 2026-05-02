@@ -15,6 +15,9 @@
     "label": "Υπεύθυνος",
     "unassigned": "Μη ανατεθειμένο"
   },
+  "sales_person": {
+    "label": "Πωλητής"
+  },
   "totals": {
     "title": "Σύνοψη τιμολόγησης",
     "one_time_label": "Εφάπαξ",

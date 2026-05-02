@@ -1,208 +1,279 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useUpsertDeal, type DealUpsert } from './hooks/useUpsertDeal';
-import { useClients } from '@/features/clients/hooks/useClients';
-import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
-import type { DealRow } from './hooks/useDeals';
+import { supabase } from '@/lib/supabase';
+import { queryKeys } from '@/lib/queryKeys';
+import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
+import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { ServicesPlannedField, type PlannedService } from './ServicesPlannedField';
-import type { Json } from '@/types/supabase';
-
-// Number fields are treated as strings in RHF (HTML inputs always return strings).
-// Conversion to number happens in onSubmit to avoid exactOptionalPropertyTypes conflicts
-// between zod coerce and @hookform/resolvers with TS6.
-const schema = z.object({
-  title: z.string().min(1),
-  description: z.string().optional(),
-  client_id: z.string().min(1),
-  stage_id: z.string().min(1),
-  probability: z.string().optional(),
-  lead_source: z.string().optional(),
-  one_time_value: z.string().optional(),
-  recurring_monthly_value: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof schema>;
+import type { DealRow } from './hooks/useDeals';
 
 type Props = {
-  initial?: Partial<DealRow>;
-  defaultClientId?: string;
-  onDone?: (id: string) => void;
-  onCancel?: () => void;
+  initial: DealRow;
 };
 
-function toNum(v: string | undefined): number | undefined {
-  if (v === '' || v === undefined) return undefined;
-  const n = Number(v);
-  return isNaN(n) ? undefined : n;
+function splitName(first?: string | null, last?: string | null): string {
+  return [first, last].filter(Boolean).join(' ');
 }
 
-export function DealForm({ initial, defaultClientId, onDone, onCancel }: Props) {
+function joinName(full: string): { first: string | null; last: string | null } {
+  const trimmed = full.trim();
+  if (!trimmed) return { first: null, last: null };
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) return { first: parts[0] ?? null, last: null };
+  return { first: parts[0] ?? null, last: parts.slice(1).join(' ') || null };
+}
+
+export function DealForm({ initial }: Props) {
   const { t, i18n } = useTranslation('deals');
+  const { t: tLeads } = useTranslation('leads');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
-  const upsert = useUpsertDeal();
-  const { data: clients = [] } = useClients();
-  const { data: stages = [] } = usePipelineStages();
+  const qc = useQueryClient();
 
-  const salesStages = stages
-    .filter((s) => s.board === 'sales' && !s.archived)
-    .sort((a, b) => a.position - b.position);
+  const client = initial.client;
+  const clientId = initial.client_id ?? client?.id ?? null;
 
-  const defaultClientId_ = initial?.client_id ?? defaultClientId ?? '';
-  const defaultStageId = initial?.stage_id ?? salesStages[0]?.id ?? '';
+  const [title, setTitle] = useState(initial.title ?? '');
+  const [fullName, setFullName] = useState(
+    splitName(client?.contact_first_name, client?.contact_last_name),
+  );
+  const [email, setEmail] = useState(client?.email ?? '');
+  const [phone, setPhone] = useState(client?.phone ?? '');
+  const [website, setWebsite] = useState(client?.website ?? '');
+  const [companyName, setCompanyName] = useState(client?.name ?? '');
+  const [vatNumber, setVatNumber] = useState(client?.vat_number ?? '');
+  const [country, setCountry] = useState(client?.country ?? '');
+  const [industry, setIndustry] = useState(client?.industry ?? '');
+  const [address, setAddress] = useState(client?.address ?? '');
+  const [services, setServices] = useState<PlannedService[]>(
+    Array.isArray(initial.services_planned)
+      ? (initial.services_planned as unknown as PlannedService[])
+      : [],
+  );
 
-  const [clientId, setClientId] = useState(defaultClientId_);
-  const [stageId, setStageId] = useState(defaultStageId);
+  const oneTimeNum = services.reduce((sum, s) => sum + (Number(s.one_time_amount) || 0), 0);
+  const monthlyNum = services.reduce(
+    (sum, s) => sum + (s.billing_type === 'recurring_monthly' ? Number(s.monthly_amount) || 0 : 0),
+    0,
+  );
+  const yearlyNum = services.reduce(
+    (sum, s) => sum + (s.billing_type === 'recurring_yearly' ? Number(s.monthly_amount) || 0 : 0),
+    0,
+  );
 
-  const [services, setServices] = useState<PlannedService[]>(() => {
-    const raw = initial?.services_planned;
-    if (Array.isArray(raw)) return raw as unknown as PlannedService[];
-    return [];
-  });
+  const dealPatch = useMemo(
+    () => ({
+      title: title.trim() || initial.title || '',
+      services_planned: services,
+      one_time_value: oneTimeNum,
+      recurring_monthly_value: monthlyNum,
+    }),
+    [title, services, oneTimeNum, monthlyNum, initial.title],
+  );
 
-  const isLocked = !!initial?.locked_at;
-
-  const { register, handleSubmit, formState, setValue } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      title: initial?.title ?? '',
-      description: initial?.description ?? '',
-      client_id: defaultClientId_,
-      stage_id: defaultStageId,
-      probability: initial?.probability !== undefined ? String(initial.probability) : '50',
-      lead_source: initial?.lead_source ?? '',
-      one_time_value:
-        initial?.one_time_value !== undefined ? String(Number(initial.one_time_value)) : '0',
-      recurring_monthly_value:
-        initial?.recurring_monthly_value !== undefined
-          ? String(Number(initial.recurring_monthly_value))
-          : '0',
-    },
-  });
-
-  async function onSubmit(values: FormValues) {
-    // Build typed payload — strip empty strings, convert number strings to numbers.
-    const payload: Partial<DealUpsert> & { client_id: string; title: string; stage_id: string } = {
-      client_id: values.client_id,
-      title: values.title,
-      stage_id: values.stage_id,
+  const clientPatch = useMemo(() => {
+    const { first, last } = joinName(fullName);
+    return {
+      contact_first_name: first,
+      contact_last_name: last,
+      email: email.trim() || null,
+      phone: phone.trim() || null,
+      website: website.trim() || null,
+      name: companyName.trim() || client?.name || '',
+      vat_number: vatNumber.trim() || null,
+      country: country.trim() || null,
+      industry: industry.trim() || null,
+      address: address.trim() || null,
     };
-    if (values.description) payload.description = values.description;
-    if (values.lead_source) payload.lead_source = values.lead_source;
-    const prob = toNum(values.probability);
-    if (prob !== undefined) payload.probability = prob;
-    const otv = toNum(values.one_time_value);
-    if (otv !== undefined) payload.one_time_value = otv;
-    const rmv = toNum(values.recurring_monthly_value);
-    if (rmv !== undefined) payload.recurring_monthly_value = rmv;
-    if (initial?.id) payload.id = initial.id;
-    payload.services_planned = services as unknown as Json;
+  }, [
+    fullName,
+    email,
+    phone,
+    website,
+    companyName,
+    vatNumber,
+    country,
+    industry,
+    address,
+    client?.name,
+  ]);
 
-    const id = await upsert.mutateAsync(payload);
-    onDone?.(id);
-  }
+  const dealStatus = useAutoSave(dealPatch, async (next) => {
+    const { error } = await supabase
+      .from('deals')
+      .update({
+        title: next.title,
+        services_planned: next.services_planned as unknown as DealRow['services_planned'],
+        one_time_value: next.one_time_value,
+        recurring_monthly_value: next.recurring_monthly_value,
+      })
+      .eq('id', initial.id);
+    if (error) throw new Error(error.message);
+    void qc.invalidateQueries({ queryKey: queryKeys.deal(initial.id) });
+    void qc.invalidateQueries({ queryKey: queryKeys.deals() });
+    void qc.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
+  });
+
+  const clientStatus = useAutoSave(
+    clientPatch,
+    async (next) => {
+      if (!clientId) return;
+      const { error } = await supabase.from('clients').update(next).eq('id', clientId);
+      if (error) throw new Error(error.message);
+      void qc.invalidateQueries({ queryKey: queryKeys.deal(initial.id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.deals() });
+      void qc.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
+      void qc.invalidateQueries({ queryKey: queryKeys.client(clientId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.clients() });
+    },
+    { enabled: !!clientId },
+  );
+
+  const combinedStatus =
+    dealStatus === 'error' || clientStatus === 'error'
+      ? 'error'
+      : dealStatus === 'saving' || clientStatus === 'saving'
+        ? 'saving'
+        : dealStatus === 'saved' || clientStatus === 'saved'
+          ? 'saved'
+          : 'idle';
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
-      <div className="md:col-span-2">
-        <Label htmlFor="title">{t('form.title')}</Label>
-        <Input id="title" {...register('title')} />
-      </div>
-      <div>
-        <Label>{t('form.client')}</Label>
-        <Select
-          value={clientId}
-          onValueChange={(v) => {
-            setClientId(v);
-            setValue('client_id', v);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {clients.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <Label htmlFor="title">{t('form.title')}</Label>
+          <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="fn">{tLeads('form.full_name')}</Label>
+          <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="email">{tLeads('form.email')}</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="phone">{tLeads('form.phone')}</Label>
+          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="ws">{tLeads('form.website')}</Label>
+          <Input
+            id="ws"
+            type="url"
+            placeholder="https://"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="co">{tLeads('form.company_name')}</Label>
+          <Input id="co" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="vat">{tLeads('form.vat_number')}</Label>
+          <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="cnt">{tLeads('form.country')}</Label>
+          <select
+            id="cnt"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="">—</option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.storedValue}>
+                {c.storedValue} ({Math.round(c.vatRate * 100)}% VAT)
+              </option>
             ))}
-          </SelectContent>
-        </Select>
+          </select>
+        </div>
+        <div>
+          <Label htmlFor="ind">{tLeads('form.industry')}</Label>
+          <Input id="ind" value={industry} onChange={(e) => setIndustry(e.target.value)} />
+        </div>
+        <div className="col-span-2">
+          <Label htmlFor="addr">{tLeads('form.address')}</Label>
+          <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
+        </div>
+        <div className="col-span-2">
+          <Label>{tLeads('form.services_planned')}</Label>
+          <ServicesPlannedField value={services} onChange={setServices} />
+        </div>
+        <div className="col-span-2">
+          <Label htmlFor="stage-readonly">{t('form.stage')}</Label>
+          <div
+            id="stage-readonly"
+            className="mt-1 rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-700"
+          >
+            {(initial.stage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
+              initial.stage?.code ??
+              '—'}
+          </div>
+        </div>
+        <div className="col-span-2 rounded-md border bg-slate-50 p-3 text-sm">
+          <div className="mb-2 text-xs font-medium uppercase text-slate-500">
+            {tLeads('totals.title')}
+          </div>
+          {(() => {
+            const vatRate = vatRateFor(country);
+            const oneTimeVat = oneTimeNum * vatRate;
+            const monthlyVat = monthlyNum * vatRate;
+            const yearlyVat = yearlyNum * vatRate;
+            const oneTimeTotal = oneTimeNum + oneTimeVat;
+            const monthlyTotal = monthlyNum + monthlyVat;
+            const yearlyTotal = yearlyNum + yearlyVat;
+            const vatPct = Math.round(vatRate * 100);
+            return (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-slate-500">
+                    <th className="text-left font-normal"></th>
+                    <th className="text-right font-normal">{tLeads('totals.subtotal')}</th>
+                    <th className="text-right font-normal">
+                      {tLeads('totals.vat')} ({vatPct}%)
+                    </th>
+                    <th className="text-right font-normal">{tLeads('totals.total')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-1 text-slate-600">{tLeads('totals.one_time_label')}</td>
+                    <td className="py-1 text-right">{formatEur(oneTimeNum)}</td>
+                    <td className="py-1 text-right">{formatEur(oneTimeVat)}</td>
+                    <td className="py-1 text-right font-medium">{formatEur(oneTimeTotal)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 text-slate-600">{tLeads('totals.monthly_label')}</td>
+                    <td className="py-1 text-right">{formatEur(monthlyNum)}</td>
+                    <td className="py-1 text-right">{formatEur(monthlyVat)}</td>
+                    <td className="py-1 text-right font-medium">{formatEur(monthlyTotal)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 text-slate-600">{tLeads('totals.yearly_label')}</td>
+                    <td className="py-1 text-right">{formatEur(yearlyNum)}</td>
+                    <td className="py-1 text-right">{formatEur(yearlyVat)}</td>
+                    <td className="py-1 text-right font-medium">{formatEur(yearlyTotal)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            );
+          })()}
+        </div>
       </div>
-      <div>
-        <Label>{t('form.stage')}</Label>
-        <Select
-          value={stageId}
-          onValueChange={(v) => {
-            setStageId(v);
-            setValue('stage_id', v);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {salesStages.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {(s.display_names as { en: string; el: string })[lang]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex h-5 items-center text-xs text-slate-500">
+        {autoSaveLabel(combinedStatus, lang)}
       </div>
-      <div>
-        <Label htmlFor="probability">{t('form.probability')}</Label>
-        <Input id="probability" type="number" min="0" max="100" {...register('probability')} />
-      </div>
-      <div>
-        <Label htmlFor="otv">{t('form.one_time_value')}</Label>
-        <Input id="otv" type="number" step="0.01" min="0" {...register('one_time_value')} />
-      </div>
-      <div>
-        <Label htmlFor="rmv">{t('form.recurring_monthly_value')}</Label>
-        <Input
-          id="rmv"
-          type="number"
-          step="0.01"
-          min="0"
-          {...register('recurring_monthly_value')}
-        />
-      </div>
-      <div>
-        <Label htmlFor="src">{t('form.lead_source')}</Label>
-        <Input id="src" {...register('lead_source')} />
-      </div>
-      <div className="md:col-span-2">
-        <Label htmlFor="desc">{t('form.description')}</Label>
-        <Input id="desc" {...register('description')} />
-      </div>
-
-      <div className="md:col-span-2">
-        <ServicesPlannedField value={services} onChange={setServices} disabled={isLocked} />
-      </div>
-
-      <div className="md:col-span-2 flex gap-2">
-        <Button type="submit" disabled={upsert.isPending || formState.isSubmitting}>
-          {upsert.isPending ? t('form.submitting') : t('form.submit')}
-        </Button>
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
-      </div>
-    </form>
+    </div>
   );
 }
