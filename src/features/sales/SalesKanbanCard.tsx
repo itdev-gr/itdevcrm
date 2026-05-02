@@ -3,37 +3,40 @@ import { useTranslation } from 'react-i18next';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
-import type { DealRow } from '@/features/deals/hooks/useDeals';
+import type { LeadRow } from '@/features/leads/hooks/useLeads';
 
-export function SalesKanbanCard({ deal }: { deal: DealRow }) {
-  const { t } = useTranslation('sales');
+export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
+  const { t } = useTranslation('leads');
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: deal.id,
-    data: { dealId: deal.id, currentStage: deal.stage_id },
+    id: lead.id,
+    data: { leadId: lead.id, currentStage: lead.stage_id },
   });
   const style = transform
     ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }
     : undefined;
+
+  const contactName = [lead.contact_first_name, lead.contact_last_name].filter(Boolean).join(' ');
+  const subtitle = lead.company_name || contactName || t('card.no_company');
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card className="cursor-grab active:cursor-grabbing">
         <CardContent className="space-y-1 p-3">
           <div className="flex items-center justify-between">
-            <Link to={`/deals/${deal.id}`} className="text-sm font-medium hover:underline">
-              {deal.title}
+            <Link to={`/leads/${lead.id}`} className="text-sm font-medium hover:underline">
+              {lead.title}
             </Link>
-            {deal.locked_at && <span className="text-xs text-emerald-600">🔒</span>}
+            {lead.converted_at && <span className="text-xs text-emerald-600">✓</span>}
           </div>
-          <div className="text-xs text-muted-foreground">{deal.client?.name}</div>
+          <div className="text-xs text-muted-foreground">{subtitle}</div>
           <div className="text-xs">
-            {Number(deal.one_time_value ?? 0) > 0 && (
-              <span>€{Number(deal.one_time_value).toFixed(0)}</span>
+            {Number(lead.estimated_one_time_value ?? 0) > 0 && (
+              <span>€{Number(lead.estimated_one_time_value).toFixed(0)}</span>
             )}
-            {Number(deal.recurring_monthly_value ?? 0) > 0 && (
+            {Number(lead.estimated_monthly_value ?? 0) > 0 && (
               <span className="ml-2">
-                €{Number(deal.recurring_monthly_value).toFixed(0)}
-                {t('kanban.card.monthly')}
+                €{Number(lead.estimated_monthly_value).toFixed(0)}
+                {t('card.monthly')}
               </span>
             )}
           </div>

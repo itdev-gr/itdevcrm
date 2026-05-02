@@ -1,26 +1,30 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { useDeals, type DealRow } from '@/features/deals/hooks/useDeals';
-import { useMoveDealStage } from '@/features/deals/hooks/useMoveDealStage';
-import { useLockDeal } from '@/features/deals/hooks/useLockDeal';
+import { useLeads, type LeadRow } from '@/features/leads/hooks/useLeads';
+import { useMoveLeadStage } from '@/features/leads/hooks/useMoveLeadStage';
+import { useConvertLead } from '@/features/leads/hooks/useConvertLead';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { SavedFiltersBar } from '@/features/saved_filters/SavedFiltersBar';
 import { SalesKanbanColumn } from './SalesKanbanColumn';
 import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
+import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
 
 export function SalesKanbanPage() {
   const { t, i18n } = useTranslation('sales');
+  const { t: tLeads } = useTranslation('leads');
   useSalesKanbanRealtime();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const [filter, setFilter] = useState<Record<string, unknown>>({});
-  const { data: deals = [], isLoading } = useDeals(filter as Parameters<typeof useDeals>[0]);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const { data: leads = [], isLoading } = useLeads(filter as Parameters<typeof useLeads>[0]);
   const { data: stages = [] } = usePipelineStages();
-  const moveStage = useMoveDealStage();
-  const lock = useLockDeal();
+  const moveStage = useMoveLeadStage();
+  const convert = useConvertLead();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   if (isLoading) return <div className="p-8">…</div>;
@@ -31,28 +35,27 @@ export function SalesKanbanPage() {
 
   const wonStage = salesStages.find((s) => s.code === 'won');
 
-  const dealsByStage = new Map<string, DealRow[]>();
-  for (const s of salesStages) dealsByStage.set(s.id, []);
-  for (const d of deals) {
-    if (d.stage?.board !== 'sales') continue;
-    const list = dealsByStage.get(d.stage_id);
-    if (list) list.push(d);
+  const leadsByStage = new Map<string, LeadRow[]>();
+  for (const s of salesStages) leadsByStage.set(s.id, []);
+  for (const lead of leads) {
+    if (lead.stage?.board !== 'sales') continue;
+    const list = leadsByStage.get(lead.stage_id ?? '');
+    if (list) list.push(lead);
   }
 
   async function onDragEnd(e: DragEndEvent) {
-    const dealId = String(e.active.id);
+    const leadId = String(e.active.id);
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
-    const isLockTarget = wonStage && stageId === wonStage.id;
-    if (isLockTarget) {
+    if (wonStage && stageId === wonStage.id) {
       try {
-        await lock.mutateAsync(dealId);
+        await convert.mutateAsync(leadId);
       } catch (err) {
         const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-        alert(errors.map((er) => t(`deals:lock.errors.${er}`, { defaultValue: er })).join('\n'));
+        alert(errors.map((er) => tLeads(`convert.errors.${er}`, { defaultValue: er })).join('\n'));
       }
     } else {
-      await moveStage.mutateAsync({ dealId, stageId });
+      await moveStage.mutateAsync({ leadId, stageId });
     }
   }
 
@@ -76,6 +79,7 @@ export function SalesKanbanPage() {
             {t('filters.all')}
           </Button>
           <SavedFiltersBar board="sales:kanban" currentFilter={filter} onApply={setFilter} />
+          <Button onClick={() => setCreateOpen(true)}>{tLeads('actions.create')}</Button>
         </div>
       </div>
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
@@ -85,11 +89,12 @@ export function SalesKanbanPage() {
               key={s.id}
               stageId={s.id}
               stageLabel={(s.display_names as { en: string; el: string })[lang]}
-              deals={dealsByStage.get(s.id) ?? []}
+              leads={leadsByStage.get(s.id) ?? []}
             />
           ))}
         </div>
       </DndContext>
+      <CreateLeadDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }

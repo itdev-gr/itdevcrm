@@ -6,14 +6,14 @@ import { queryKeys } from '@/lib/queryKeys';
 export function useSalesKanbanRealtime() {
   const qc = useQueryClient();
   useEffect(() => {
-    const channel = supabase
-      .channel('sales-kanban')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'deals' }, () => {
-        void qc.invalidateQueries({ queryKey: queryKeys.deals() });
+    const ch = supabase
+      .channel('sales-kanban-leads')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
+        void qc.invalidateQueries({ queryKey: queryKeys.leads() });
       })
       .subscribe();
     return () => {
-      void supabase.removeChannel(channel);
+      void supabase.removeChannel(ch);
     };
   }, [qc]);
 }

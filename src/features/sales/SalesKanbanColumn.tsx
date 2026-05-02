@@ -1,15 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { useDroppable } from '@dnd-kit/core';
 import { SalesKanbanCard } from './SalesKanbanCard';
-import type { DealRow } from '@/features/deals/hooks/useDeals';
+import type { LeadRow } from '@/features/leads/hooks/useLeads';
 
 type Props = {
   stageId: string;
   stageLabel: string;
-  deals: DealRow[];
+  leads: LeadRow[];
 };
 
-export function SalesKanbanColumn({ stageId, stageLabel, deals }: Props) {
+export function SalesKanbanColumn({ stageId, stageLabel, leads }: Props) {
   const { t } = useTranslation('sales');
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
   return (
@@ -21,15 +21,15 @@ export function SalesKanbanColumn({ stageId, stageLabel, deals }: Props) {
     >
       <header className="border-b px-3 py-2">
         <span className="text-sm font-medium">{stageLabel}</span>
-        <span className="ml-1 text-xs text-muted-foreground">({deals.length})</span>
+        <span className="ml-1 text-xs text-muted-foreground">({leads.length})</span>
       </header>
       <div className="flex-1 space-y-2 overflow-y-auto p-2">
-        {deals.length === 0 ? (
+        {leads.length === 0 ? (
           <p className="px-2 py-4 text-center text-xs text-muted-foreground">
             {t('kanban.empty_column')}
           </p>
         ) : (
-          deals.map((d) => <SalesKanbanCard key={d.id} deal={d} />)
+          leads.map((l) => <SalesKanbanCard key={l.id} lead={l} />)
         )}
       </div>
     </div>
