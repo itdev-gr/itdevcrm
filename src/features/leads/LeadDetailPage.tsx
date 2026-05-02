@@ -1,13 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { LeadForm } from './LeadForm';
 import { useLead } from './hooks/useLead';
 import { useConvertLead } from './hooks/useConvertLead';
 import { useUpdateLead } from './hooks/useUpdateLead';
+import { useMoveLeadStage } from './hooks/useMoveLeadStage';
 import { useAssignableOwners } from './hooks/useAssignableOwners';
+import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
@@ -21,9 +22,13 @@ export function LeadDetailPage() {
   const { leadId = '' } = useParams<{ leadId: string }>();
   const { t } = useTranslation('leads');
   const { data: lead, isLoading, error } = useLead(leadId);
+  const { i18n } = useTranslation();
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const convert = useConvertLead();
   const update = useUpdateLead();
+  const moveStage = useMoveLeadStage();
   const { data: owners = [] } = useAssignableOwners();
+  const { data: stages = [] } = usePipelineStages();
   const isAdmin = useAuthStore((s) => s.isAdmin);
 
   if (isLoading) return <div className="p-8">…</div>;
@@ -42,13 +47,27 @@ export function LeadDetailPage() {
     }
   }
 
-  async function onConvert() {
-    try {
-      const result = await convert.mutateAsync(leadId);
-      alert(`Converted. Client ${result.clientId} / Deal ${result.dealId}`);
-    } catch (err) {
-      const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-      alert(errors.map((er) => t(`convert.errors.${er}`, { defaultValue: er })).join('\n'));
+  const salesStages = stages
+    .filter((s) => s.board === 'sales' && !s.archived)
+    .sort((a, b) => a.position - b.position);
+  const wonStage = salesStages.find((s) => s.code === 'won');
+
+  async function onChangeStage(targetStageId: string) {
+    if (!lead || !targetStageId || targetStageId === lead.stage_id) return;
+    if (wonStage && targetStageId === wonStage.id) {
+      try {
+        const result = await convert.mutateAsync(leadId);
+        alert(`Converted. Client ${result.clientId} / Deal ${result.dealId}`);
+      } catch (err) {
+        const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
+        alert(errors.map((er) => t(`convert.errors.${er}`, { defaultValue: er })).join('\n'));
+      }
+    } else {
+      try {
+        await moveStage.mutateAsync({ leadId, stageId: targetStageId });
+      } catch (err) {
+        alert((err as Error).message);
+      }
     }
   }
 
@@ -95,9 +114,24 @@ export function LeadDetailPage() {
             </select>
           </div>
           {!lead.converted_at && (
-            <Button onClick={onConvert} disabled={convert.isPending}>
-              {t('actions.convert')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="stage" className="text-sm">
+                {t('actions.move_to', { defaultValue: 'Move to' })}:
+              </Label>
+              <select
+                id="stage"
+                value={lead.stage_id ?? ''}
+                onChange={(e) => onChangeStage(e.target.value)}
+                disabled={convert.isPending || moveStage.isPending}
+                className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+              >
+                {salesStages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
           {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}
         </div>
