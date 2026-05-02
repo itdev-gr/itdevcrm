@@ -23,10 +23,12 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
 
   const [source, setSource] = useState<'manual' | 'meta' | 'import'>('manual');
   const [title, setTitle] = useState('');
-  const [contactName, setContactName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [website, setWebsite] = useState('');
   const [company, setCompany] = useState('');
+  const [leadInfo, setLeadInfo] = useState('');
 
   const canSubmit = title.trim().length > 0 && (email.trim().length > 0 || phone.trim().length > 0);
 
@@ -37,11 +39,13 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
       const id = await create.mutateAsync({
         source,
         title: title.trim(),
-        contact_first_name: contactName.trim() || null,
+        contact_first_name: fullName.trim() || null,
         contact_last_name: null,
         email: email.trim() || null,
         phone: phone.trim() || null,
+        website: website.trim() || null,
         company_name: company.trim() || null,
+        notes: leadInfo.trim() || null,
       });
       onOpenChange(false);
       navigate(`/leads/${id}`);
@@ -75,8 +79,8 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
             <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="cn">{t('form.contact_name')}</Label>
-            <Input id="cn" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+            <Label htmlFor="fn">{t('form.full_name')}</Label>
+            <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
           <div>
             <Label htmlFor="email">{t('form.email')}</Label>
@@ -92,8 +96,27 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
             <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
           <div>
+            <Label htmlFor="ws">{t('form.website')}</Label>
+            <Input
+              id="ws"
+              type="url"
+              placeholder="https://"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </div>
+          <div>
             <Label htmlFor="co">{t('form.company_name')}</Label>
             <Input id="co" value={company} onChange={(e) => setCompany(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="li">{t('form.lead_info')}</Label>
+            <textarea
+              id="li"
+              value={leadInfo}
+              onChange={(e) => setLeadInfo(e.target.value)}
+              className="mt-1 block min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

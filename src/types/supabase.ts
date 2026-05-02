@@ -714,6 +714,7 @@ export type Database = {
           title: string
           updated_at: string
           vat_number: string | null
+          website: string | null
         }
         Insert: {
           address?: string | null
@@ -746,6 +747,7 @@ export type Database = {
           title: string
           updated_at?: string
           vat_number?: string | null
+          website?: string | null
         }
         Update: {
           address?: string | null
@@ -778,6 +780,7 @@ export type Database = {
           title?: string
           updated_at?: string
           vat_number?: string | null
+          website?: string | null
         }
         Relationships: [
           {

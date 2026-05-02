@@ -13,11 +13,12 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const update = useUpdateLead();
   const readOnly = !!lead.converted_at;
 
-  const [contactName, setContactName] = useState(
+  const [fullName, setFullName] = useState(
     [lead.contact_first_name, lead.contact_last_name].filter(Boolean).join(' '),
   );
   const [email, setEmail] = useState(lead.email ?? '');
   const [phone, setPhone] = useState(lead.phone ?? '');
+  const [website, setWebsite] = useState(lead.website ?? '');
   const [companyName, setCompanyName] = useState(lead.company_name ?? '');
   const [industry, setIndustry] = useState(lead.industry ?? '');
   const [country, setCountry] = useState(lead.country ?? '');
@@ -41,10 +42,11 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       await update.mutateAsync({
         id: lead.id,
         patch: {
-          contact_first_name: contactName.trim() || null,
+          contact_first_name: fullName.trim() || null,
           contact_last_name: null,
           email: email.trim() || null,
           phone: phone.trim() || null,
+          website: website.trim() || null,
           company_name: companyName.trim() || null,
           industry: industry.trim() || null,
           country: country.trim() || null,
@@ -66,8 +68,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       <fieldset disabled={readOnly} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
-            <Label htmlFor="cn">{t('form.contact_name')}</Label>
-            <Input id="cn" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+            <Label htmlFor="fn">{t('form.full_name')}</Label>
+            <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
           <div>
             <Label htmlFor="email">{t('form.email')}</Label>
@@ -81,6 +83,16 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           <div>
             <Label htmlFor="phone">{t('form.phone')}</Label>
             <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          <div className="col-span-2">
+            <Label htmlFor="ws">{t('form.website')}</Label>
+            <Input
+              id="ws"
+              type="url"
+              placeholder="https://"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
           </div>
           <div className="col-span-2">
             <Label htmlFor="co">{t('form.company_name')}</Label>
@@ -125,7 +137,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <ServicesPlannedField value={services} onChange={setServices} disabled={readOnly} />
           </div>
           <div className="col-span-2">
-            <Label htmlFor="notes">{t('form.notes')}</Label>
+            <Label htmlFor="notes">{t('form.lead_info')}</Label>
             <textarea
               id="notes"
               value={notes}

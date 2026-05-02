@@ -79,9 +79,9 @@ export function SalesKanbanPage() {
 
   return (
     <div className="space-y-4 p-6">
-      <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant={filter.ownerId === userId ? 'default' : 'outline'}
             size="sm"
