@@ -21,5 +21,22 @@
       "services_planned_empty": "No services planned on this deal — sales must add at least one service.",
       "invalid_one_time_value": "Invalid one-time value."
     }
+  },
+  "block": {
+    "badge": "Blocked – Awaiting Accounting",
+    "button": "Block client",
+    "button_unblock": "Unblock client",
+    "dialog_title": "Block this client?",
+    "dialog_body": "Reason (visible to other staff):",
+    "submit": "Block",
+    "cancel": "Cancel",
+    "errors": {
+      "permission_denied": "You do not have permission to block clients.",
+      "reason_required": "A reason is required.",
+      "client_not_found": "Client not found.",
+      "already_blocked": "This client is already blocked.",
+      "not_blocked": "This client is not currently blocked.",
+      "client_blocked": "Cannot move stage — client is blocked. Unblock the client first."
+    }
   }
 }

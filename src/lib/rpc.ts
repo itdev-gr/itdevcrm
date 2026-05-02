@@ -21,3 +21,32 @@ export async function completeAccounting(dealId: string): Promise<CompleteAccoun
   }
   return data as CompleteAccountingResult;
 }
+
+export type BlockClientResult = { ok: true; block_id: string } | { ok: false; errors: string[] };
+export type UnblockClientResult = { ok: true; block_id: string } | { ok: false; errors: string[] };
+export type GenerateInvoicesResult =
+  | { ok: true; period: string; invoices_generated: number }
+  | { ok: false; errors: string[] };
+
+export async function blockClient(clientId: string, reason: string): Promise<BlockClientResult> {
+  const { data, error } = await supabase.rpc('block_client', {
+    target_client_id: clientId,
+    reason_text: reason,
+  });
+  if (error) return { ok: false, errors: [error.message] };
+  return data as BlockClientResult;
+}
+
+export async function unblockClient(clientId: string): Promise<UnblockClientResult> {
+  const { data, error } = await supabase.rpc('unblock_client', { target_client_id: clientId });
+  if (error) return { ok: false, errors: [error.message] };
+  return data as UnblockClientResult;
+}
+
+export async function generateMonthlyInvoices(period: string): Promise<GenerateInvoicesResult> {
+  const { data, error } = await supabase.rpc('generate_monthly_invoices', {
+    target_period: period,
+  });
+  if (error) return { ok: false, errors: [error.message] };
+  return data as GenerateInvoicesResult;
+}

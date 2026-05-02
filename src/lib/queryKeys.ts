@@ -23,4 +23,8 @@ export const queryKeys = {
   notifications: () => ['notifications'] as const,
   savedFilters: (board: string) => ['saved-filters', board] as const,
   accountingDeals: () => ['accounting-deals'] as const,
+  clientBlock: (clientId: string) => ['client-block', clientId] as const,
+  monthlyInvoices: (filters?: Record<string, string | undefined>) =>
+    ['monthly-invoices', filters ?? null] as const,
+  monthlyInvoice: (id: string) => ['monthly-invoice', id] as const,
 };
