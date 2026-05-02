@@ -16,6 +16,7 @@
       "import": "Εισαγωγή"
     },
     "title": "Τίτλος επαφής",
+    "contact_name": "Όνομα επαφής",
     "contact_first_name": "Όνομα",
     "contact_last_name": "Επώνυμο",
     "email": "Email",

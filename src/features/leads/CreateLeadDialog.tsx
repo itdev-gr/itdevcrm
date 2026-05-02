@@ -23,8 +23,7 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
 
   const [source, setSource] = useState<'manual' | 'meta' | 'import'>('manual');
   const [title, setTitle] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
@@ -38,8 +37,8 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
       const id = await create.mutateAsync({
         source,
         title: title.trim(),
-        contact_first_name: firstName.trim() || null,
-        contact_last_name: lastName.trim() || null,
+        contact_first_name: contactName.trim() || null,
+        contact_last_name: null,
         email: email.trim() || null,
         phone: phone.trim() || null,
         company_name: company.trim() || null,
@@ -75,15 +74,9 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
             <Label htmlFor="title">{t('form.title')}</Label>
             <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="fn">{t('form.contact_first_name')}</Label>
-              <Input id="fn" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="ln">{t('form.contact_last_name')}</Label>
-              <Input id="ln" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-            </div>
+          <div>
+            <Label htmlFor="cn">{t('form.contact_name')}</Label>
+            <Input id="cn" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           </div>
           <div>
             <Label htmlFor="email">{t('form.email')}</Label>

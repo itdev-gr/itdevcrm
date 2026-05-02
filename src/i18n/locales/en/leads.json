@@ -16,6 +16,7 @@
       "import": "Import"
     },
     "title": "Lead title",
+    "contact_name": "Contact name",
     "contact_first_name": "First name",
     "contact_last_name": "Last name",
     "email": "Email",

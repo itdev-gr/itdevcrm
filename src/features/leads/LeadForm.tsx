@@ -13,8 +13,9 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const update = useUpdateLead();
   const readOnly = !!lead.converted_at;
 
-  const [contactFirstName, setContactFirstName] = useState(lead.contact_first_name ?? '');
-  const [contactLastName, setContactLastName] = useState(lead.contact_last_name ?? '');
+  const [contactName, setContactName] = useState(
+    [lead.contact_first_name, lead.contact_last_name].filter(Boolean).join(' '),
+  );
   const [email, setEmail] = useState(lead.email ?? '');
   const [phone, setPhone] = useState(lead.phone ?? '');
   const [companyName, setCompanyName] = useState(lead.company_name ?? '');
@@ -41,8 +42,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       await update.mutateAsync({
         id: lead.id,
         patch: {
-          contact_first_name: contactFirstName.trim() || null,
-          contact_last_name: contactLastName.trim() || null,
+          contact_first_name: contactName.trim() || null,
+          contact_last_name: null,
           email: email.trim() || null,
           phone: phone.trim() || null,
           company_name: companyName.trim() || null,
@@ -66,21 +67,9 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
     <form onSubmit={onSubmit} className="space-y-4">
       <fieldset disabled={readOnly} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="fn">{t('form.contact_first_name')}</Label>
-            <Input
-              id="fn"
-              value={contactFirstName}
-              onChange={(e) => setContactFirstName(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="ln">{t('form.contact_last_name')}</Label>
-            <Input
-              id="ln"
-              value={contactLastName}
-              onChange={(e) => setContactLastName(e.target.value)}
-            />
+          <div className="col-span-2">
+            <Label htmlFor="cn">{t('form.contact_name')}</Label>
+            <Input id="cn" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           </div>
           <div>
             <Label htmlFor="email">{t('form.email')}</Label>

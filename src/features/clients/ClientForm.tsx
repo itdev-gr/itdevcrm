@@ -9,8 +9,7 @@ import type { ClientRow } from './hooks/useClients';
 
 const schema = z.object({
   name: z.string().min(1),
-  contact_first_name: z.string().optional(),
-  contact_last_name: z.string().optional(),
+  contact_name: z.string().optional(),
   email: z.string().email().or(z.literal('')).optional(),
   phone: z.string().optional(),
   website: z.string().url().or(z.literal('')).optional(),
@@ -39,8 +38,9 @@ export function ClientForm({ initial, onDone, onCancel }: Props) {
     resolver: zodResolver(schema),
     defaultValues: {
       name: initial?.name ?? '',
-      contact_first_name: initial?.contact_first_name ?? '',
-      contact_last_name: initial?.contact_last_name ?? '',
+      contact_name: [initial?.contact_first_name, initial?.contact_last_name]
+        .filter(Boolean)
+        .join(' '),
       email: initial?.email ?? '',
       phone: initial?.phone ?? '',
       website: initial?.website ?? '',
@@ -56,9 +56,12 @@ export function ClientForm({ initial, onDone, onCancel }: Props) {
   });
 
   async function onSubmit(values: FormValues) {
+    const { contact_name, ...rest } = values;
     const payload = Object.fromEntries(
-      Object.entries(values).map(([k, v]) => [k, v === undefined ? null : v]),
+      Object.entries(rest).map(([k, v]) => [k, v === undefined ? null : v]),
     ) as Record<string, string | null>;
+    payload.contact_first_name = contact_name?.trim() || null;
+    payload.contact_last_name = null;
     const upsertArg = initial?.id
       ? { ...payload, name: values.name, id: initial.id }
       : { ...payload, name: values.name };
@@ -78,16 +81,9 @@ export function ClientForm({ initial, onDone, onCancel }: Props) {
       <PermissionAwareInput
         table="clients"
         field="contact_first_name"
-        id="cfn"
-        label={t('form.contact_first_name')}
-        {...register('contact_first_name')}
-      />
-      <PermissionAwareInput
-        table="clients"
-        field="contact_last_name"
-        id="cln"
-        label={t('form.contact_last_name')}
-        {...register('contact_last_name')}
+        id="cn"
+        label={t('form.contact_name')}
+        {...register('contact_name')}
       />
       <PermissionAwareInput
         table="clients"
