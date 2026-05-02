@@ -27,6 +27,7 @@ const FIELD_LABELS: Record<string, string> = {
   address: 'Address',
   vat_number: 'VAT',
   notes: 'Lead info',
+  additional_notes: 'Notes',
   estimated_one_time_value: 'One-time €',
   estimated_monthly_value: 'Monthly €',
   services_planned: 'Services',

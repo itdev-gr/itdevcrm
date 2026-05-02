@@ -26,6 +26,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [address, setAddress] = useState(lead.address ?? '');
   const [vatNumber, setVatNumber] = useState(lead.vat_number ?? '');
   const [notes, setNotes] = useState(lead.notes ?? '');
+  const [additionalNotes, setAdditionalNotes] = useState(lead.additional_notes ?? '');
   const [services, setServices] = useState<PlannedService[]>(
     Array.isArray(lead.services_planned) ? (lead.services_planned as PlannedService[]) : [],
   );
@@ -51,6 +52,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           address: address.trim() || null,
           vat_number: vatNumber.trim() || null,
           notes: notes.trim() || null,
+          additional_notes: additionalNotes.trim() || null,
           estimated_one_time_value: oneTimeNum,
           estimated_monthly_value: monthlyNum,
           services_planned: services as unknown as LeadRow['services_planned'],
@@ -71,6 +73,15 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="col-span-2">
+            <Label htmlFor="addl-notes">{t('form.notes')}</Label>
+            <textarea
+              id="addl-notes"
+              value={additionalNotes}
+              onChange={(e) => setAdditionalNotes(e.target.value)}
               className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>

@@ -694,6 +694,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          additional_notes: string | null
           address: string | null
           archived: boolean
           archived_at: string | null
@@ -728,6 +729,7 @@ export type Database = {
           won_by_user_id: string | null
         }
         Insert: {
+          additional_notes?: string | null
           address?: string | null
           archived?: boolean
           archived_at?: string | null
@@ -762,6 +764,7 @@ export type Database = {
           won_by_user_id?: string | null
         }
         Update: {
+          additional_notes?: string | null
           address?: string | null
           archived?: boolean
           archived_at?: string | null
