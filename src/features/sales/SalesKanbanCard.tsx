@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
+import { CopyableCode } from '@/components/CopyableCode';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
@@ -31,18 +32,17 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card className="cursor-grab active:cursor-grabbing">
         <CardContent className="space-y-1 p-3">
-          <div className="flex items-center justify-between">
-            <Link to={`/leads/${lead.id}`} className="text-sm font-medium hover:underline">
-              {fullName}
-            </Link>
-            <div className="flex items-center gap-1">
-              {lead.code && (
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">
-                  {lead.code}
-                </span>
-              )}
-              {lead.converted_at && <span className="text-xs text-emerald-600">✓</span>}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {lead.code && <CopyableCode code={lead.code} className="text-[10px]" />}
+              <Link
+                to={`/leads/${lead.id}`}
+                className="truncate text-sm font-medium hover:underline"
+              >
+                {fullName}
+              </Link>
             </div>
+            {lead.converted_at && <span className="text-xs text-emerald-600">✓</span>}
           </div>
           {companyAndCategory && (
             <div className="text-xs text-muted-foreground">{companyAndCategory}</div>

@@ -13,6 +13,7 @@ import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { CopyableCode } from '@/components/CopyableCode';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -56,12 +57,8 @@ export function LeadDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
+            {lead.code && <CopyableCode code={lead.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{lead.title}</h1>
-            {lead.code && (
-              <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">
-                {lead.code}
-              </span>
-            )}
           </div>
           <p className="text-xs text-slate-500">
             🗓 {formatDate(lead.created_at)} · {relativeFromNow(lead.created_at)}
