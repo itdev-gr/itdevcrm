@@ -18,6 +18,7 @@ import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
 import { DealDetailPage } from '@/features/deals/DealDetailPage';
 import { SalesKanbanPage } from '@/features/sales/SalesKanbanPage';
 import { AccountingOnboardingKanbanPage } from '@/features/accounting/AccountingOnboardingKanbanPage';
+import { AccountingRecurringPage } from '@/features/billing/AccountingRecurringPage';
 
 export const router = createBrowserRouter([
   {
@@ -47,7 +48,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'accounting',
-        children: [{ path: 'onboarding', element: <AccountingOnboardingKanbanPage /> }],
+        children: [
+          { path: 'onboarding', element: <AccountingOnboardingKanbanPage /> },
+          { path: 'recurring', element: <AccountingRecurringPage /> },
+        ],
       },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },
       { path: 'deals/:dealId', element: <DealDetailPage /> },
