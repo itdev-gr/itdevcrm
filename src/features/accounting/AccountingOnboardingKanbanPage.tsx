@@ -5,8 +5,10 @@ import { useMoveAccountingStage } from './hooks/useMoveAccountingStage';
 import { useCompleteAccounting } from './hooks/useCompleteAccounting';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { AccountingKanbanColumn } from './AccountingKanbanColumn';
+import { useAccountingKanbanRealtime } from './hooks/useAccountingKanbanRealtime';
 
 export function AccountingOnboardingKanbanPage() {
+  useAccountingKanbanRealtime();
   const { t, i18n } = useTranslation('accounting');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: deals = [], isLoading } = useAccountingDeals();
