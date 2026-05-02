@@ -107,9 +107,9 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
             const rowPackages = packages.filter((p) => p.service_type === row.service_type);
             const hasPackages = rowPackages.length > 0;
             return (
-              <li key={idx} className="grid grid-cols-12 items-end gap-2">
-                <div className="col-span-3">
-                  <Label className="text-xs">{t('services.service_type')}</Label>
+              <li key={idx} className="grid grid-cols-12 items-end gap-1">
+                <div className="col-span-2">
+                  <Label className="whitespace-nowrap text-xs">{t('services.service_type')}</Label>
                   <Select
                     value={row.service_type}
                     disabled={isDisabled}
@@ -132,8 +132,8 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-3">
-                  <Label className="text-xs">{t('services.package')}</Label>
+                <div className="col-span-2">
+                  <Label className="whitespace-nowrap text-xs">{t('services.package')}</Label>
                   <Select
                     value={row.package_id ?? NO_PACKAGE}
                     disabled={isDisabled || !hasPackages}
@@ -153,7 +153,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                   </Select>
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs">{t('services.billing_type')}</Label>
+                  <Label className="whitespace-nowrap text-xs">{t('services.billing_type')}</Label>
                   <Select
                     value={row.billing_type}
                     disabled={isDisabled}
@@ -175,8 +175,10 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                 </div>
                 {row.billing_type === 'recurring_monthly' ? (
                   <>
-                    <div className="col-span-1">
-                      <Label className="text-xs">{t('services.monthly_amount')}</Label>
+                    <div className="col-span-2">
+                      <Label className="whitespace-nowrap text-xs">
+                        {t('services.monthly_amount')}
+                      </Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -188,8 +190,8 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                         }
                       />
                     </div>
-                    <div className="col-span-1">
-                      <Label className="text-xs">{t('services.setup_fee')}</Label>
+                    <div className="col-span-2">
+                      <Label className="whitespace-nowrap text-xs">{t('services.setup_fee')}</Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -201,8 +203,10 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     </div>
                   </>
                 ) : (
-                  <div className="col-span-2">
-                    <Label className="text-xs">{t('services.one_time_amount')}</Label>
+                  <div className="col-span-4">
+                    <Label className="whitespace-nowrap text-xs">
+                      {t('services.one_time_amount')}
+                    </Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -215,7 +219,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     />
                   </div>
                 )}
-                <div className="col-span-1 flex justify-end">
+                <div className="col-span-2 flex justify-end">
                   {!isDisabled && (
                     <Button
                       type="button"
