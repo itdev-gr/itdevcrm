@@ -52,6 +52,340 @@ export type Database = {
           },
         ]
       }
+      attachments: {
+        Row: {
+          archived: boolean
+          archived_at: string | null
+          archived_by: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          kind: string | null
+          mime_type: string | null
+          parent_id: string
+          parent_type: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          kind?: string | null
+          mime_type?: string | null
+          parent_id: string
+          parent_type: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          kind?: string | null
+          mime_type?: string | null
+          parent_id?: string
+          parent_type?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          address: string | null
+          archived: boolean
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          assigned_owner_id: string | null
+          city: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          industry: string | null
+          lead_source: string | null
+          name: string
+          phone: string | null
+          postcode: string | null
+          region: string | null
+          updated_at: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_owner_id?: string | null
+          city?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          lead_source?: string | null
+          name: string
+          phone?: string | null
+          postcode?: string | null
+          region?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_owner_id?: string | null
+          city?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          lead_source?: string | null
+          name?: string
+          phone?: string | null
+          postcode?: string | null
+          region?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_owner_id_fkey"
+            columns: ["assigned_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          archived: boolean
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          mentioned_user_ids: string[]
+          parent_id: string
+          parent_type: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          mentioned_user_ids?: string[]
+          parent_id: string
+          parent_type: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          mentioned_user_ids?: string[]
+          parent_id?: string
+          parent_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      deals: {
+        Row: {
+          accounting_completed_at: string | null
+          accounting_completed_by: string | null
+          actual_close_date: string | null
+          archived: boolean
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          client_id: string
+          created_at: string
+          currency: string
+          description: string | null
+          expected_close_date: string | null
+          id: string
+          lead_source: string | null
+          locked_at: string | null
+          locked_by: string | null
+          one_time_value: number | null
+          owner_user_id: string | null
+          probability: number | null
+          recurring_monthly_value: number | null
+          stage_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_completed_at?: string | null
+          accounting_completed_by?: string | null
+          actual_close_date?: string | null
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          client_id: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          expected_close_date?: string | null
+          id?: string
+          lead_source?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          one_time_value?: number | null
+          owner_user_id?: string | null
+          probability?: number | null
+          recurring_monthly_value?: number | null
+          stage_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_completed_at?: string | null
+          accounting_completed_by?: string | null
+          actual_close_date?: string | null
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          client_id?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          expected_close_date?: string | null
+          id?: string
+          lead_source?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          one_time_value?: number | null
+          owner_user_id?: string | null
+          probability?: number | null
+          recurring_monthly_value?: number | null
+          stage_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_accounting_completed_by_fkey"
+            columns: ["accounting_completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "deals_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "deals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_locked_by_fkey"
+            columns: ["locked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "deals_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "deals_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field_permissions: {
         Row: {
           created_at: string
@@ -159,6 +493,162 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs: {
+        Row: {
+          archived: boolean
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          assigned_group_id: string | null
+          billing_type: string
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          deal_id: string
+          id: string
+          monthly_amount: number | null
+          monthly_tasks: Json
+          monthly_tasks_period: string | null
+          one_time_amount: number | null
+          owner_user_id: string | null
+          recurring_start_date: string | null
+          service_type: string
+          setup_fee: number | null
+          stage_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_type: string
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          deal_id: string
+          id?: string
+          monthly_amount?: number | null
+          monthly_tasks?: Json
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          recurring_start_date?: string | null
+          service_type: string
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_type?: string
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          deal_id?: string
+          id?: string
+          monthly_amount?: number | null
+          monthly_tasks?: Json
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "jobs_assigned_group_id_fkey"
+            columns: ["assigned_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "jobs_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload: Json
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       pipeline_stages: {
         Row: {
           archived: boolean
@@ -263,6 +753,47 @@ export type Database = {
           },
         ]
       }
+      saved_filters: {
+        Row: {
+          board: string
+          created_at: string
+          filter_json: Json
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          board: string
+          created_at?: string
+          filter_json: Json
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          board?: string
+          created_at?: string
+          filter_json?: Json
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_filters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_groups: {
         Row: {
           created_at: string
@@ -360,6 +891,7 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      lock_deal: { Args: { target_deal_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
