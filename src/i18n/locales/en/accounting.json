@@ -38,5 +38,46 @@
       "not_blocked": "This client is not currently blocked.",
       "client_blocked": "Cannot move stage — client is blocked. Unblock the client first."
     }
+  },
+  "recurring": {
+    "title": "Recurring billing",
+    "table": {
+      "client": "Client",
+      "period": "Period",
+      "due_date": "Due",
+      "total": "Total",
+      "paid": "Paid",
+      "status": "Status"
+    },
+    "status": {
+      "pending": "Pending",
+      "partial": "Partial",
+      "paid": "Paid",
+      "overdue": "Overdue"
+    },
+    "actions": {
+      "generate": "Generate invoices",
+      "view": "View",
+      "mark_paid": "Mark paid",
+      "mark_partial": "Mark partial"
+    },
+    "generate": {
+      "dialog_title": "Generate monthly invoices",
+      "period_label": "Period (YYYY-MM)",
+      "submit": "Generate",
+      "submitting": "Generating…",
+      "success": "Generated {{count}} invoices for {{period}}.",
+      "errors": {
+        "permission_denied": "You do not have permission to generate invoices.",
+        "invalid_period_format": "Period must be in YYYY-MM format."
+      }
+    },
+    "items": {
+      "title": "Line items",
+      "service": "Service",
+      "amount": "Amount",
+      "description": "Description"
+    },
+    "empty": "No invoices yet — click \"Generate invoices\" to create them for the current month."
   }
 }
