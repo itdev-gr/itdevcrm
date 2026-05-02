@@ -12,10 +12,10 @@ export function Topbar() {
   const userEmail = useAuthStore((state) => state.user?.email ?? '');
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b px-4">
+    <header className="grid h-14 grid-cols-[auto_1fr_auto] items-center gap-4 border-b px-4">
       <span className="font-semibold">{t('app_title')}</span>
-      {session && <GlobalSearch />}
-      <div className="ml-auto flex items-center gap-3">
+      <div className="flex justify-center">{session && <GlobalSearch />}</div>
+      <div className="flex items-center gap-3">
         {session && <span className="text-sm text-muted-foreground">{userEmail}</span>}
         {session && <NotificationsBell />}
         <LocaleSwitcher />
