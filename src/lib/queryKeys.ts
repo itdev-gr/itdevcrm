@@ -28,4 +28,5 @@ export const queryKeys = {
   leads: (filters?: Record<string, string | undefined>) =>
     filters ? (['leads', filters] as const) : (['leads'] as const),
   lead: (id: string) => ['lead', id] as const,
+  servicePackages: () => ['service-packages'] as const,
 };
