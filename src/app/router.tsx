@@ -13,6 +13,7 @@ import { UserPermissionsPage } from '@/features/permissions/UserPermissionsPage'
 import { FieldRulesPage } from '@/features/permissions/FieldRulesPage';
 import { PermissionsTestPage } from '@/features/permissions/PermissionsTestPage';
 import { StagesListPage } from '@/features/stages/StagesListPage';
+import { ServicePackagesPage } from '@/features/service_packages/ServicePackagesPage';
 import { ClientsListPage } from '@/features/clients/ClientsListPage';
 import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
 import { DealDetailPage } from '@/features/deals/DealDetailPage';
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
         path: 'admin',
         element: <AdminLayout />,
         children: [
+          { index: true, element: <UsersListPage /> },
           { path: 'users', element: <UsersListPage /> },
           { path: 'users/:userId', element: <UserDetailPage /> },
           { path: 'users/:userId/permissions', element: <UserPermissionsPage /> },
@@ -37,6 +39,7 @@ export const router = createBrowserRouter([
           { path: 'fields', element: <FieldRulesPage /> },
           { path: 'permissions/test', element: <PermissionsTestPage /> },
           { path: 'stages', element: <StagesListPage /> },
+          { path: 'service-packages', element: <ServicePackagesPage /> },
         ],
       },
       {

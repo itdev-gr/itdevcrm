@@ -15,15 +15,15 @@ test.describe('auth flow', () => {
     await expect(page.getByRole('heading', { name: /itdevcrm/i })).toBeVisible();
   });
 
-  test('admin sees /admin/users in the sidebar and can navigate to it', async ({ page }) => {
+  test('admin sees Settings in the sidebar and can navigate to /admin', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel(/email/i).fill(ADMIN_EMAIL!);
     await page.getByLabel(/password/i).fill(ADMIN_PASSWORD!);
     await page.getByRole('button', { name: /sign in/i }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
 
-    await page.getByRole('link', { name: /users|χρήστες/i }).click();
-    await expect(page).toHaveURL(/\/admin\/users$/);
-    await expect(page.getByRole('heading', { name: /users|χρήστες/i })).toBeVisible();
+    await page.getByRole('link', { name: /settings|ρυθμίσεις/i }).click();
+    await expect(page).toHaveURL(/\/admin/);
+    await expect(page.getByRole('heading', { name: /^settings|^ρυθμίσεις/i })).toBeVisible();
   });
 });

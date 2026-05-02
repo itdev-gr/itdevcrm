@@ -1,9 +1,39 @@
 {
   "nav": {
+    "settings": "Settings",
+    "users": "Users",
     "groups": "Groups & permissions",
     "fields": "Field rules",
     "stages": "Pipeline stages",
+    "service_packages": "Service packages",
     "permissions_test": "Permissions test page"
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "service_packages": {
+    "title": "Service packages",
+    "add": "Add package",
+    "add_title": "Add package",
+    "edit": "Edit",
+    "edit_title": "Edit package",
+    "archive": "Archive",
+    "restore": "Restore",
+    "save": "Save",
+    "cancel": "Cancel",
+    "show_archived": "Show archived",
+    "fields": {
+      "service_type": "Service",
+      "code": "Code",
+      "name": "Name",
+      "name_en": "Name (English)",
+      "name_el": "Name (Greek)",
+      "default_one_time": "One-time price",
+      "default_monthly": "Monthly price",
+      "setup_fee": "Setup fee",
+      "sort_order": "Sort",
+      "description": "Description"
+    }
   },
   "groups": {
     "title": "Groups",

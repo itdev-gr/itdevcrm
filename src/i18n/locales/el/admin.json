@@ -1,9 +1,39 @@
 {
   "nav": {
+    "settings": "Ρυθμίσεις",
+    "users": "Χρήστες",
     "groups": "Ομάδες & δικαιώματα",
     "fields": "Κανόνες πεδίων",
     "stages": "Στάδια Pipeline",
+    "service_packages": "Πακέτα υπηρεσιών",
     "permissions_test": "Δοκιμή δικαιωμάτων"
+  },
+  "settings": {
+    "title": "Ρυθμίσεις"
+  },
+  "service_packages": {
+    "title": "Πακέτα υπηρεσιών",
+    "add": "Προσθήκη πακέτου",
+    "add_title": "Προσθήκη πακέτου",
+    "edit": "Επεξεργασία",
+    "edit_title": "Επεξεργασία πακέτου",
+    "archive": "Αρχειοθέτηση",
+    "restore": "Επαναφορά",
+    "save": "Αποθήκευση",
+    "cancel": "Άκυρο",
+    "show_archived": "Εμφάνιση αρχειοθετημένων",
+    "fields": {
+      "service_type": "Υπηρεσία",
+      "code": "Κωδικός",
+      "name": "Όνομα",
+      "name_en": "Όνομα (Αγγλικά)",
+      "name_el": "Όνομα (Ελληνικά)",
+      "default_one_time": "Εφάπαξ τιμή",
+      "default_monthly": "Μηνιαία τιμή",
+      "setup_fee": "Τέλος ρύθμισης",
+      "sort_order": "Σειρά",
+      "description": "Περιγραφή"
+    }
   },
   "groups": {
     "title": "Ομάδες",
