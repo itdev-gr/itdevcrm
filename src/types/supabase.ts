@@ -273,6 +273,7 @@ export type Database = {
           mentioned_user_ids: string[]
           parent_id: string
           parent_type: string
+          reply_to_id: string | null
           updated_at: string
         }
         Insert: {
@@ -287,6 +288,7 @@ export type Database = {
           mentioned_user_ids?: string[]
           parent_id: string
           parent_type: string
+          reply_to_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -301,6 +303,7 @@ export type Database = {
           mentioned_user_ids?: string[]
           parent_id?: string
           parent_type?: string
+          reply_to_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -317,6 +320,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "comments_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
           },
         ]
       }

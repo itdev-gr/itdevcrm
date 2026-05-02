@@ -4,27 +4,24 @@ import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/lib/stores/authStore';
 
 type Vars = {
+  id: string;
   parent_type: 'client' | 'deal' | 'job' | 'lead';
   parent_id: string;
-  body: string;
-  mentioned_user_ids?: string[];
-  reply_to_id?: string | null;
 };
 
-export function useCreateComment() {
+export function useArchiveComment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: Vars) => {
-      const author_id = useAuthStore.getState().user?.id;
-      if (!author_id) throw new Error('not_authenticated');
-      const { error } = await supabase.from('comments').insert({
-        parent_type: vars.parent_type,
-        parent_id: vars.parent_id,
-        body: vars.body,
-        author_id,
-        mentioned_user_ids: vars.mentioned_user_ids ?? [],
-        reply_to_id: vars.reply_to_id ?? null,
-      });
+      const userId = useAuthStore.getState().user?.id ?? null;
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          archived: true,
+          archived_at: new Date().toISOString(),
+          archived_by: userId,
+        })
+        .eq('id', vars.id);
       if (error) throw new Error(error.message);
     },
     onSuccess: (_d, vars) => {

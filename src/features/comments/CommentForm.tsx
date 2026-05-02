@@ -8,6 +8,8 @@ import { useCreateComment } from './hooks/useCreateComment';
 type Props = {
   parentType: 'client' | 'deal' | 'job' | 'lead';
   parentId: string;
+  replyToId?: string;
+  onCancelReply?: () => void;
 };
 
 // Match the trigger token at the caret: `@` followed by 0+ name chars, no space.
@@ -25,7 +27,7 @@ function buildMentionToken(user: MentionableUser): string {
   return '@' + (user.full_name || user.email).trim().replace(/\s+/g, '_');
 }
 
-export function CommentForm({ parentType, parentId }: Props) {
+export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: Props) {
   const { t } = useTranslation('sales');
   const { data: users = [] } = useMentionableUsers();
   const create = useCreateComment();
@@ -126,10 +128,12 @@ export function CommentForm({ parentType, parentId }: Props) {
       parent_id: parentId,
       body: body.trim(),
       mentioned_user_ids: resolveMentions(body),
+      reply_to_id: replyToId ?? null,
     });
     setBody('');
     setQuery(null);
     tokenToUserId.current.clear();
+    if (replyToId) onCancelReply?.();
   }
 
   return (
@@ -168,8 +172,13 @@ export function CommentForm({ parentType, parentId }: Props) {
           ))}
         </ul>
       )}
-      <div className="flex justify-end">
-        <Button type="submit" disabled={create.isPending || !body.trim()}>
+      <div className="flex justify-end gap-2">
+        {replyToId && onCancelReply && (
+          <Button type="button" variant="outline" size="sm" onClick={onCancelReply}>
+            {t('comments.cancel', { defaultValue: 'Cancel' })}
+          </Button>
+        )}
+        <Button type="submit" size="sm" disabled={create.isPending || !body.trim()}>
           {t('comments.submit')}
         </Button>
       </div>
