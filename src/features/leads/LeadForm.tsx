@@ -85,7 +85,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
-          <div className="col-span-2">
+          <div>
             <Label htmlFor="fn">{t('form.full_name')}</Label>
             <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
@@ -102,7 +102,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <Label htmlFor="phone">{t('form.phone')}</Label>
             <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
-          <div className="col-span-2">
+          <div>
             <Label htmlFor="ws">{t('form.website')}</Label>
             <Input
               id="ws"
@@ -112,7 +112,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               onChange={(e) => setWebsite(e.target.value)}
             />
           </div>
-          <div className="col-span-2">
+          <div>
             <Label htmlFor="co">{t('form.company_name')}</Label>
             <Input id="co" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
           </div>
@@ -136,13 +136,13 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               ))}
             </select>
           </div>
+          <div>
+            <Label htmlFor="vat">{t('form.vat_number')}</Label>
+            <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+          </div>
           <div className="col-span-2">
             <Label htmlFor="addr">{t('form.address')}</Label>
             <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
-          </div>
-          <div className="col-span-2">
-            <Label htmlFor="vat">{t('form.vat_number')}</Label>
-            <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
           </div>
           <div className="col-span-2">
             <Label>{t('form.services_planned')}</Label>
