@@ -1172,6 +1172,16 @@ export type Database = {
         Returns: boolean
       }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
+      mentionable_users: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          group_codes: string[]
+          is_admin: boolean
+          user_id: string
+        }[]
+      }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
     }
     Enums: {
