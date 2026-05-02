@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  type DragEndEvent,
+  type DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { useLeads, type LeadRow } from '@/features/leads/hooks/useLeads';
 import { useMoveLeadStage } from '@/features/leads/hooks/useMoveLeadStage';
 import { useConvertLead } from '@/features/leads/hooks/useConvertLead';
@@ -9,6 +18,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { SavedFiltersBar } from '@/features/saved_filters/SavedFiltersBar';
 import { SalesKanbanColumn } from './SalesKanbanColumn';
+import { SalesKanbanCard } from './SalesKanbanCard';
 import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
 import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
 
@@ -20,12 +30,15 @@ export function SalesKanbanPage() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const [filter, setFilter] = useState<Record<string, unknown>>({});
   const [createOpen, setCreateOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const { data: leads = [], isLoading } = useLeads(filter as Parameters<typeof useLeads>[0]);
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveLeadStage();
   const convert = useConvertLead();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const activeLead = activeId ? (leads.find((l) => l.id === activeId) ?? null) : null;
 
   if (isLoading) return <div className="p-8">…</div>;
 
@@ -43,7 +56,12 @@ export function SalesKanbanPage() {
     if (list) list.push(lead);
   }
 
+  function onDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id));
+  }
+
   async function onDragEnd(e: DragEndEvent) {
+    setActiveId(null);
     const leadId = String(e.active.id);
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
@@ -82,7 +100,13 @@ export function SalesKanbanPage() {
           <Button onClick={() => setCreateOpen(true)}>{tLeads('actions.create')}</Button>
         </div>
       </div>
-      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
         <div className="flex gap-3 overflow-x-auto pb-4">
           {salesStages.map((s) => (
             <SalesKanbanColumn
@@ -93,6 +117,7 @@ export function SalesKanbanPage() {
             />
           ))}
         </div>
+        <DragOverlay>{activeLead ? <SalesKanbanCard lead={activeLead} /> : null}</DragOverlay>
       </DndContext>
       <CreateLeadDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>

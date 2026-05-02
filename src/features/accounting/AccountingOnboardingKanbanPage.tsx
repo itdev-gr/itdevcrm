@@ -1,21 +1,35 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  type DragEndEvent,
+  type DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { useAccountingDeals, type AccountingDealRow } from './hooks/useAccountingDeals';
 import { useMoveAccountingStage } from './hooks/useMoveAccountingStage';
 import { useCompleteAccounting } from './hooks/useCompleteAccounting';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { AccountingKanbanColumn } from './AccountingKanbanColumn';
+import { AccountingKanbanCard } from './AccountingKanbanCard';
 import { useAccountingKanbanRealtime } from './hooks/useAccountingKanbanRealtime';
 
 export function AccountingOnboardingKanbanPage() {
   useAccountingKanbanRealtime();
   const { t, i18n } = useTranslation('accounting');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
+  const [activeId, setActiveId] = useState<string | null>(null);
   const { data: deals = [], isLoading } = useAccountingDeals();
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveAccountingStage();
   const complete = useCompleteAccounting();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const activeDeal = activeId ? (deals.find((d) => d.id === activeId) ?? null) : null;
 
   if (isLoading) return <div className="p-8">…</div>;
 
@@ -34,7 +48,12 @@ export function AccountingOnboardingKanbanPage() {
     if (list) list.push(d);
   }
 
+  function onDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id));
+  }
+
   async function onDragEnd(e: DragEndEvent) {
+    setActiveId(null);
     const dealId = String(e.active.id);
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
@@ -53,7 +72,13 @@ export function AccountingOnboardingKanbanPage() {
   return (
     <div className="space-y-4 p-6">
       <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
-      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
         <div className="flex gap-3 overflow-x-auto pb-4">
           {accStages.map((s) => (
             <AccountingKanbanColumn
@@ -64,6 +89,7 @@ export function AccountingOnboardingKanbanPage() {
             />
           ))}
         </div>
+        <DragOverlay>{activeDeal ? <AccountingKanbanCard deal={activeDeal} /> : null}</DragOverlay>
       </DndContext>
     </div>
   );
