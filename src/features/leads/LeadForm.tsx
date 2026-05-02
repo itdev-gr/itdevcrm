@@ -26,16 +26,13 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [address, setAddress] = useState(lead.address ?? '');
   const [vatNumber, setVatNumber] = useState(lead.vat_number ?? '');
   const [notes, setNotes] = useState(lead.notes ?? '');
-  const [oneTime, setOneTime] = useState(String(lead.estimated_one_time_value ?? 0));
-  const [monthly, setMonthly] = useState(String(lead.estimated_monthly_value ?? 0));
   const [services, setServices] = useState<PlannedService[]>(
     Array.isArray(lead.services_planned) ? (lead.services_planned as PlannedService[]) : [],
   );
 
-  function toNum(v: string) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  }
+  // Totals are derived from services_planned now — no manual inputs.
+  const oneTimeNum = services.reduce((sum, s) => sum + (Number(s.one_time_amount) || 0), 0);
+  const monthlyNum = services.reduce((sum, s) => sum + (Number(s.monthly_amount) || 0), 0);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -54,8 +51,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           address: address.trim() || null,
           vat_number: vatNumber.trim() || null,
           notes: notes.trim() || null,
-          estimated_one_time_value: toNum(oneTime),
-          estimated_monthly_value: toNum(monthly),
+          estimated_one_time_value: oneTimeNum,
+          estimated_monthly_value: monthlyNum,
           services_planned: services as unknown as LeadRow['services_planned'],
         },
       });
@@ -136,24 +133,6 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <Label htmlFor="vat">{t('form.vat_number')}</Label>
             <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
           </div>
-          <div>
-            <Label htmlFor="ot">{t('form.estimated_one_time_value')}</Label>
-            <Input
-              id="ot"
-              inputMode="decimal"
-              value={oneTime}
-              onChange={(e) => setOneTime(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="mo">{t('form.estimated_monthly_value')}</Label>
-            <Input
-              id="mo"
-              inputMode="decimal"
-              value={monthly}
-              onChange={(e) => setMonthly(e.target.value)}
-            />
-          </div>
           <div className="col-span-2">
             <Label>{t('form.services_planned')}</Label>
             <ServicesPlannedField value={services} onChange={setServices} disabled={readOnly} />
@@ -164,8 +143,6 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             </div>
             {(() => {
               const vatRate = vatRateFor(country);
-              const oneTimeNum = toNum(oneTime);
-              const monthlyNum = toNum(monthly);
               const oneTimeVat = oneTimeNum * vatRate;
               const monthlyVat = monthlyNum * vatRate;
               const oneTimeTotal = oneTimeNum + oneTimeVat;
