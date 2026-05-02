@@ -24,5 +24,17 @@
     "submit": "Αποστολή πρόσκλησης",
     "submitting": "Πρόσκληση…",
     "error_generic": "Αποτυχία πρόσκλησης χρήστη."
+  },
+  "profile": {
+    "title": "Το προφίλ μου",
+    "subtitle": "Επεξεργαστείτε τις προσωπικές σας πληροφορίες.",
+    "full_name": "Πλήρες όνομα",
+    "email": "Email",
+    "phone": "Τηλέφωνο",
+    "phone_extension": "Εσωτερικό",
+    "job_title": "Θέση",
+    "timezone": "Ζώνη ώρας",
+    "preferred_locale": "Γλώσσα",
+    "avatar_url": "URL avatar"
   }
 }

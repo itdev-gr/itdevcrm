@@ -24,5 +24,17 @@
     "submit": "Send invite",
     "submitting": "Inviting…",
     "error_generic": "Could not invite the user."
+  },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Update your personal information.",
+    "full_name": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "phone_extension": "Extension",
+    "job_title": "Job title",
+    "timezone": "Time zone",
+    "preferred_locale": "Language",
+    "avatar_url": "Avatar URL"
   }
 }

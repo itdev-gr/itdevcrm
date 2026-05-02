@@ -14,6 +14,7 @@ import { FieldRulesPage } from '@/features/permissions/FieldRulesPage';
 import { PermissionsTestPage } from '@/features/permissions/PermissionsTestPage';
 import { StagesListPage } from '@/features/stages/StagesListPage';
 import { ServicePackagesPage } from '@/features/service_packages/ServicePackagesPage';
+import { MyProfilePage } from '@/features/users/MyProfilePage';
 import { ClientsListPage } from '@/features/clients/ClientsListPage';
 import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
 import { DealDetailPage } from '@/features/deals/DealDetailPage';
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
       { path: 'clients/:clientId', element: <ClientDetailPage /> },
       { path: 'deals/:dealId', element: <DealDetailPage /> },
       { path: 'leads/:leadId', element: <LeadDetailPage /> },
+      { path: 'profile', element: <MyProfilePage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

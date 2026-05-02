@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -16,7 +17,15 @@ export function Topbar() {
       <span className="font-semibold">{t('app_title')}</span>
       <div className="flex justify-center">{session && <GlobalSearch />}</div>
       <div className="flex items-center gap-3">
-        {session && <span className="text-sm text-muted-foreground">{userEmail}</span>}
+        {session && (
+          <Link
+            to="/profile"
+            className="text-sm text-muted-foreground hover:text-slate-900 hover:underline"
+            title={userEmail}
+          >
+            {userEmail}
+          </Link>
+        )}
         {session && <NotificationsBell />}
         <LocaleSwitcher />
         {session && (

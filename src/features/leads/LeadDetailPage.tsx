@@ -170,10 +170,13 @@ export function LeadDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
-            disabled={!nextNewLead.data}
-            title={nextNewLead.data ? t('actions.next_new_lead') : t('actions.no_more_new_leads')}
+            disabled={!nextNewLead.data || nextNewLead.isLoading}
           >
-            {nextNewLead.data ? t('actions.next_new_lead') : t('actions.no_more_new_leads')}
+            {nextNewLead.isLoading
+              ? '…'
+              : nextNewLead.data
+                ? t('actions.next_new_lead')
+                : t('actions.no_more_new_leads')}
           </Button>
         </div>
       </div>

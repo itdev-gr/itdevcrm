@@ -954,8 +954,12 @@ export type Database = {
           full_name: string
           is_active: boolean
           is_admin: boolean
+          job_title: string | null
           must_change_password: boolean
+          phone: string | null
+          phone_extension: string | null
           preferred_locale: string
+          timezone: string | null
           updated_at: string
           user_id: string
         }
@@ -970,8 +974,12 @@ export type Database = {
           full_name?: string
           is_active?: boolean
           is_admin?: boolean
+          job_title?: string | null
           must_change_password?: boolean
+          phone?: string | null
+          phone_extension?: string | null
           preferred_locale?: string
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -986,8 +994,12 @@ export type Database = {
           full_name?: string
           is_active?: boolean
           is_admin?: boolean
+          job_title?: string | null
           must_change_password?: boolean
+          phone?: string | null
+          phone_extension?: string | null
           preferred_locale?: string
+          timezone?: string | null
           updated_at?: string
           user_id?: string
         }
