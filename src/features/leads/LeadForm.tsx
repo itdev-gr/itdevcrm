@@ -117,8 +117,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <Input id="co" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="ind">{t('form.industry')}</Label>
-            <Input id="ind" value={industry} onChange={(e) => setIndustry(e.target.value)} />
+            <Label htmlFor="vat">{t('form.vat_number')}</Label>
+            <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
           </div>
           <div>
             <Label htmlFor="cnt">{t('form.country')}</Label>
@@ -137,8 +137,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             </select>
           </div>
           <div>
-            <Label htmlFor="vat">{t('form.vat_number')}</Label>
-            <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+            <Label htmlFor="ind">{t('form.industry')}</Label>
+            <Input id="ind" value={industry} onChange={(e) => setIndustry(e.target.value)} />
           </div>
           <div className="col-span-2">
             <Label htmlFor="addr">{t('form.address')}</Label>
