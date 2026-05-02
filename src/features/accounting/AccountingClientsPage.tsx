@@ -89,8 +89,6 @@ export function AccountingClientsPage() {
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.contact')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.email')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.phone')}</th>
-                <th className="px-3 py-2 font-medium">{t('clients_page.table.industry')}</th>
-                <th className="px-3 py-2 font-medium">{t('clients_page.table.country')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.vat')}</th>
                 <th className="px-3 py-2 text-right font-medium">
                   {t('clients_page.table.active_jobs')}
@@ -103,6 +101,7 @@ export function AccountingClientsPage() {
                 </th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.status')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.created')}</th>
+                <th className="px-3 py-2 font-medium">{t('clients_page.table.industry')}</th>
               </tr>
             </thead>
             <tbody>
@@ -130,8 +129,6 @@ export function AccountingClientsPage() {
                     <td className="px-3 py-2">{contactName || '—'}</td>
                     <td className="px-3 py-2 text-slate-600">{c.email ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-600">{c.phone ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-600">{c.industry ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-600">{c.country ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-600">{c.vat_number ?? '—'}</td>
                     <td className="px-3 py-2 text-right">{jobs.length}</td>
                     <td className="px-3 py-2 text-right">€{monthlyRevenue(c).toFixed(0)}</td>
@@ -150,6 +147,7 @@ export function AccountingClientsPage() {
                       </span>
                     </td>
                     <td className="px-3 py-2 text-slate-500">{formatDate(c.created_at)}</td>
+                    <td className="px-3 py-2 text-slate-600">{c.industry ?? '—'}</td>
                   </tr>
                 );
               })}
