@@ -109,9 +109,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
             return (
               <li key={idx} className="grid grid-cols-12 items-end gap-2">
                 <div className="col-span-3">
-                  <Label className="text-xs">
-                    {t('services.types.web_seo', { defaultValue: 'Service' })}
-                  </Label>
+                  <Label className="text-xs">{t('services.service_type')}</Label>
                   <Select
                     value={row.service_type}
                     disabled={isDisabled}
@@ -155,9 +153,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                   </Select>
                 </div>
                 <div className="col-span-2">
-                  <Label className="text-xs">
-                    {t('services.billing.recurring_monthly', { defaultValue: 'Billing' })}
-                  </Label>
+                  <Label className="text-xs">{t('services.billing_type')}</Label>
                   <Select
                     value={row.billing_type}
                     disabled={isDisabled}

@@ -46,12 +46,14 @@
     "title": "Υπηρεσίες",
     "add": "Προσθήκη υπηρεσίας",
     "empty": "Δεν έχουν προγραμματιστεί υπηρεσίες — προσθέστε τουλάχιστον μία πριν το κλείδωμα.",
+    "service_type": "Υπηρεσία",
+    "billing_type": "Χρέωση",
     "package": "Πακέτο",
     "pick_package": "Επιλέξτε πακέτο",
     "no_package": "(χωρίς πακέτο)",
     "monthly_amount": "Μηνιαίο €",
     "one_time_amount": "Εφάπαξ €",
-    "setup_fee": "Τέλος εγκατάστασης €",
+    "setup_fee": "Setup €",
     "types": {
       "web_seo": "Web SEO",
       "local_seo": "Τοπικό SEO",
@@ -61,7 +63,7 @@
       "hosting": "Φιλοξενία"
     },
     "billing": {
-      "recurring_monthly": "Επαναλαμβανόμενο μηνιαία",
+      "recurring_monthly": "Μηνιαία",
       "one_time": "Εφάπαξ"
     }
   },

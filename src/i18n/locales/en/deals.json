@@ -46,12 +46,14 @@
     "title": "Services",
     "add": "Add service",
     "empty": "No services planned yet — add at least one before locking the deal.",
+    "service_type": "Service",
+    "billing_type": "Billing",
     "package": "Package",
     "pick_package": "Pick a package",
     "no_package": "(no package)",
     "monthly_amount": "Monthly €",
     "one_time_amount": "One-time €",
-    "setup_fee": "Setup fee €",
+    "setup_fee": "Setup €",
     "types": {
       "web_seo": "Web SEO",
       "local_seo": "Local SEO",
@@ -61,7 +63,7 @@
       "hosting": "Hosting"
     },
     "billing": {
-      "recurring_monthly": "Recurring monthly",
+      "recurring_monthly": "Monthly",
       "one_time": "One-time"
     }
   },
