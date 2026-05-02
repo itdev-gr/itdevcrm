@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "groups": "Ομάδες & δικαιώματα",
+    "fields": "Κανόνες πεδίων",
+    "stages": "Στάδια Pipeline",
+    "permissions_test": "Δοκιμή δικαιωμάτων"
+  },
+  "groups": {
+    "title": "Ομάδες",
+    "manage": "Διαχείριση δικαιωμάτων",
+    "members": "μέλη"
+  },
+  "permissions": {
+    "title": "Δικαιώματα για {{group}}",
+    "user_title": "Δικαιώματα για {{user}}",
+    "boards": {
+      "sales": "Πωλήσεις",
+      "accounting_onboarding": "Λογιστήριο - Νέοι",
+      "accounting_recurring": "Λογιστήριο - Επαναλαμβανόμενα",
+      "web_seo": "Web SEO",
+      "local_seo": "Τοπικό SEO",
+      "web_dev": "Ανάπτυξη Ιστού",
+      "social_media": "Social Media",
+      "clients": "Πελάτες",
+      "users": "Χρήστες",
+      "permissions": "Δικαιώματα"
+    },
+    "actions": {
+      "view": "Προβολή",
+      "create": "Δημιουργία",
+      "edit": "Επεξεργασία",
+      "delete": "Διαγραφή",
+      "move_stage": "Μετακίνηση σταδίου",
+      "assign_owner": "Ανάθεση",
+      "comment": "Σχόλιο",
+      "attach_file": "Επισύναψη",
+      "lock_deal": "Κλείδωμα συμφωνίας",
+      "complete_accounting": "Ολοκλήρωση Λογιστηρίου",
+      "block_client": "Μπλοκ πελάτη",
+      "unblock_client": "Ξεμπλοκ πελάτη",
+      "complete_job": "Ολοκλήρωση εργασίας",
+      "manage_permissions": "Διαχείριση δικαιωμάτων"
+    },
+    "scopes": {
+      "own": "Δικά μου",
+      "group": "Ομάδα",
+      "all": "Όλα",
+      "denied": "—"
+    },
+    "from_groups": "Από ομάδες",
+    "override": "Παρέκκλιση",
+    "remove_override": "Αφαίρεση παρέκκλισης"
+  },
+  "fields": {
+    "title": "Κανόνες ανά πεδίο",
+    "table": "Πίνακας",
+    "field": "Πεδίο",
+    "scope_type": "Εφαρμόζεται σε",
+    "scope_value": "Ομάδα / Χρήστης",
+    "mode": "Τρόπος",
+    "modes": {
+      "hidden": "Κρυφό",
+      "readonly": "Μόνο ανάγνωση"
+    },
+    "add": "Προσθήκη κανόνα",
+    "delete": "Διαγραφή"
+  },
+  "stages": {
+    "title": "Στάδια Pipeline",
+    "board": "Board",
+    "code": "Κωδικός",
+    "name_en": "Όνομα (EN)",
+    "name_el": "Όνομα (EL)",
+    "position": "Θέση",
+    "color": "Χρώμα",
+    "is_terminal": "Τερματικό",
+    "terminal_outcome": "Έκβαση",
+    "triggers_action": "Ενεργοποιεί",
+    "add": "Προσθήκη σταδίου",
+    "save": "Αποθήκευση",
+    "move_up": "Πάνω",
+    "move_down": "Κάτω",
+    "archive": "Αρχειοθέτηση"
+  },
+  "test_page": {
+    "title": "Δοκιμή δικαιωμάτων",
+    "description": "Χρησιμοποιήστε αυτή τη σελίδα για να επιβεβαιώσετε ότι οι κανόνες πεδίων κρύβουν / κλειδώνουν πεδία για τον χρήστη σας.",
+    "demo_field": "Demo πεδίο",
+    "evaluation": "Αξιολογημένος τρόπος: {{mode}}"
+  }
+}

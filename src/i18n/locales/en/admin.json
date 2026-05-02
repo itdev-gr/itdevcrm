@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "groups": "Groups & permissions",
+    "fields": "Field rules",
+    "stages": "Pipeline stages",
+    "permissions_test": "Permissions test page"
+  },
+  "groups": {
+    "title": "Groups",
+    "manage": "Manage permissions",
+    "members": "members"
+  },
+  "permissions": {
+    "title": "Permissions for {{group}}",
+    "user_title": "Permissions for {{user}}",
+    "boards": {
+      "sales": "Sales",
+      "accounting_onboarding": "Accounting onboarding",
+      "accounting_recurring": "Accounting recurring",
+      "web_seo": "Web SEO",
+      "local_seo": "Local SEO",
+      "web_dev": "Web Dev",
+      "social_media": "Social Media",
+      "clients": "Clients",
+      "users": "Users",
+      "permissions": "Permissions"
+    },
+    "actions": {
+      "view": "View",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "move_stage": "Move stage",
+      "assign_owner": "Assign owner",
+      "comment": "Comment",
+      "attach_file": "Attach file",
+      "lock_deal": "Lock deal",
+      "complete_accounting": "Complete accounting",
+      "block_client": "Block client",
+      "unblock_client": "Unblock client",
+      "complete_job": "Complete job",
+      "manage_permissions": "Manage permissions"
+    },
+    "scopes": {
+      "own": "Own",
+      "group": "Group",
+      "all": "All",
+      "denied": "—"
+    },
+    "from_groups": "From groups",
+    "override": "Override",
+    "remove_override": "Remove override"
+  },
+  "fields": {
+    "title": "Field-level rules",
+    "table": "Table",
+    "field": "Field",
+    "scope_type": "Applies to",
+    "scope_value": "Group / User",
+    "mode": "Mode",
+    "modes": {
+      "hidden": "Hidden",
+      "readonly": "Read-only"
+    },
+    "add": "Add rule",
+    "delete": "Delete"
+  },
+  "stages": {
+    "title": "Pipeline stages",
+    "board": "Board",
+    "code": "Code",
+    "name_en": "Name (EN)",
+    "name_el": "Name (EL)",
+    "position": "Position",
+    "color": "Color",
+    "is_terminal": "Terminal",
+    "terminal_outcome": "Outcome",
+    "triggers_action": "Triggers",
+    "add": "Add stage",
+    "save": "Save",
+    "move_up": "Move up",
+    "move_down": "Move down",
+    "archive": "Archive"
+  },
+  "test_page": {
+    "title": "Permissions test page",
+    "description": "Use this page to verify that field-level rules hide / lock fields for your user.",
+    "demo_field": "Demo field",
+    "evaluation": "Evaluated mode: {{mode}}"
+  }
+}
