@@ -11,6 +11,7 @@ import { GroupsListPage } from '@/features/permissions/GroupsListPage';
 import { GroupPermissionsPage } from '@/features/permissions/GroupPermissionsPage';
 import { UserPermissionsPage } from '@/features/permissions/UserPermissionsPage';
 import { FieldRulesPage } from '@/features/permissions/FieldRulesPage';
+import { PermissionsTestPage } from '@/features/permissions/PermissionsTestPage';
 import { StagesListPage } from '@/features/stages/StagesListPage';
 
 export const router = createBrowserRouter([
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
           { path: 'groups', element: <GroupsListPage /> },
           { path: 'groups/:groupId/permissions', element: <GroupPermissionsPage /> },
           { path: 'fields', element: <FieldRulesPage /> },
+          { path: 'permissions/test', element: <PermissionsTestPage /> },
           { path: 'stages', element: <StagesListPage /> },
         ],
       },
