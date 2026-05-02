@@ -4,9 +4,12 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
+import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 
 export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
   const { t } = useTranslation('leads');
+  const { data: owners = [] } = useAssignableOwners();
+  const owner = lead.owner_user_id ? owners.find((o) => o.user_id === lead.owner_user_id) : null;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: { leadId: lead.id, currentStage: lead.stage_id },
@@ -39,6 +42,9 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
                 {t('card.monthly')}
               </span>
             )}
+          </div>
+          <div className="text-[10px] text-slate-500">
+            👤 {owner ? owner.full_name || owner.email : t('owner.unassigned')}
           </div>
         </CardContent>
       </Card>

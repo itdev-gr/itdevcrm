@@ -13,6 +13,7 @@ import {
 import { useLeads, type LeadRow } from '@/features/leads/hooks/useLeads';
 import { useMoveLeadStage } from '@/features/leads/hooks/useMoveLeadStage';
 import { useConvertLead } from '@/features/leads/hooks/useConvertLead';
+import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
@@ -28,9 +29,11 @@ export function SalesKanbanPage() {
   useSalesKanbanRealtime();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const userId = useAuthStore((s) => s.user?.id ?? null);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const [filter, setFilter] = useState<Record<string, unknown>>({});
   const [createOpen, setCreateOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const { data: owners = [] } = useAssignableOwners();
 
   const { data: leads = [], isLoading } = useLeads(filter as Parameters<typeof useLeads>[0]);
   const { data: stages = [] } = usePipelineStages();
@@ -96,6 +99,24 @@ export function SalesKanbanPage() {
           >
             {t('filters.all')}
           </Button>
+          {isAdmin && (
+            <select
+              value={typeof filter.ownerId === 'string' ? filter.ownerId : ''}
+              onChange={(e) => setFilter(e.target.value ? { ownerId: e.target.value } : {})}
+              className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+              title={tLeads('owner.label')}
+            >
+              <option value="">
+                {tLeads('owner.label')}: {t('filters.all')}
+              </option>
+              {owners.map((o) => (
+                <option key={o.user_id} value={o.user_id}>
+                  {o.full_name || o.email}
+                  {o.is_admin ? ' · admin' : ''}
+                </option>
+              ))}
+            </select>
+          )}
           <SavedFiltersBar board="sales:kanban" currentFilter={filter} onApply={setFilter} />
           <Button onClick={() => setCreateOpen(true)}>{tLeads('actions.create')}</Button>
         </div>

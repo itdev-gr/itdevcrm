@@ -8,6 +8,10 @@
     "archive": "Archive",
     "convert": "Convert to client"
   },
+  "owner": {
+    "label": "Owner",
+    "unassigned": "Unassigned"
+  },
   "form": {
     "source": "Source",
     "source_options": {

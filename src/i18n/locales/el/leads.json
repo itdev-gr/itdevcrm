@@ -8,6 +8,10 @@
     "archive": "Αρχειοθέτηση",
     "convert": "Μετατροπή σε πελάτη"
   },
+  "owner": {
+    "label": "Υπεύθυνος",
+    "unassigned": "Μη ανατεθειμένο"
+  },
   "form": {
     "source": "Πηγή",
     "source_options": {
