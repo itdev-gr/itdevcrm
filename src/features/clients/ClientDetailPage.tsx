@@ -10,6 +10,7 @@ import { useDeals } from '@/features/deals/hooks/useDeals';
 import { CreateDealDialog } from '@/features/deals/CreateDealDialog';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
+import { ActivityPanel } from '@/features/activity/ActivityPanel';
 
 export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
@@ -67,7 +68,7 @@ export function ClientDetailPage() {
           <AttachmentsPanel parentType="client" parentId={clientId} />
         </TabsContent>
         <TabsContent value="activity" className="pt-4">
-          <p className="text-sm text-muted-foreground">Activity (Task 20)</p>
+          <ActivityPanel entityType="clients" entityId={clientId} />
         </TabsContent>
       </Tabs>
     </div>
