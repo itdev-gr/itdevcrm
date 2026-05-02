@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      field_permissions: {
+        Row: {
+          created_at: string
+          field_name: string
+          id: string
+          mode: string
+          scope_id: string
+          scope_type: string
+          table_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          field_name: string
+          id?: string
+          mode: string
+          scope_id: string
+          scope_type: string
+          table_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          field_name?: string
+          id?: string
+          mode?: string
+          scope_id?: string
+          scope_type?: string
+          table_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      group_permissions: {
+        Row: {
+          action: string
+          allowed: boolean
+          board: string
+          created_at: string
+          group_id: string
+          id: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          allowed?: boolean
+          board: string
+          created_at?: string
+          group_id: string
+          id?: string
+          scope: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          allowed?: boolean
+          board?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_permissions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           archived: boolean
@@ -43,6 +155,51 @@ export type Database = {
           id?: string
           parent_label?: string | null
           position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pipeline_stages: {
+        Row: {
+          archived: boolean
+          board: string
+          code: string
+          color: string | null
+          created_at: string
+          display_names: Json
+          id: string
+          is_terminal: boolean
+          position: number
+          terminal_outcome: string | null
+          triggers_action: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          board: string
+          code: string
+          color?: string | null
+          created_at?: string
+          display_names: Json
+          id?: string
+          is_terminal?: boolean
+          position?: number
+          terminal_outcome?: string | null
+          triggers_action?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          board?: string
+          code?: string
+          color?: string | null
+          created_at?: string
+          display_names?: Json
+          id?: string
+          is_terminal?: boolean
+          position?: number
+          terminal_outcome?: string | null
+          triggers_action?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -139,12 +296,70 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          action: string
+          allowed: boolean
+          board: string
+          created_at: string
+          id: string
+          scope: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          allowed: boolean
+          board: string
+          created_at?: string
+          id?: string
+          scope: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          allowed?: boolean
+          board?: string
+          created_at?: string
+          id?: string
+          scope?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      user_effective_permissions: {
+        Row: {
+          action: string | null
+          allowed: boolean | null
+          board: string | null
+          scope: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      current_user_can: {
+        Args: { target_action: string; target_board: string }
+        Returns: boolean
+      }
       current_user_is_admin: { Args: never; Returns: boolean }
+      current_user_scope: {
+        Args: { target_action: string; target_board: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
