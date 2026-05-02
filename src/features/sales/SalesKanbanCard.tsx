@@ -12,6 +12,10 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
   const { t } = useTranslation('leads');
   const { data: owners = [] } = useAssignableOwners();
   const owner = lead.owner_user_id ? owners.find((o) => o.user_id === lead.owner_user_id) : null;
+  const isWon = lead.stage?.code === 'won';
+  const wonBy = lead.won_by_user_id
+    ? owners.find((o) => o.user_id === lead.won_by_user_id)
+    : null;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: { leadId: lead.id, currentStage: lead.stage_id },
@@ -61,6 +65,11 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
           <div className="text-[10px] text-slate-500">
             👤 {owner ? owner.full_name || owner.email : t('owner.unassigned')}
           </div>
+          {isWon && wonBy && (
+            <div className="text-[10px] text-emerald-700">
+              🏆 {t('sales_person.label')}: {wonBy.full_name || wonBy.email}
+            </div>
+          )}
           <div className="text-[10px] text-slate-400" title={formatDate(lead.created_at)}>
             🗓 {relativeFromNow(lead.created_at)}
           </div>

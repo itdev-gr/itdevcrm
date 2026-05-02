@@ -43,6 +43,7 @@ export function SalesKanbanPage() {
   const leadsFilter: Parameters<typeof useLeads>[0] = {
     ...(typeof filter.ownerId === 'string' ? { ownerId: filter.ownerId } : {}),
     ...(source ? { source } : {}),
+    includeConverted: true,
   };
   const { data: leads = [], isLoading } = useLeads(leadsFilter);
   const { data: stages = [] } = usePipelineStages();
