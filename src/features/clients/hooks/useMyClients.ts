@@ -6,12 +6,25 @@ import type { ClientRow } from './useClients';
 
 export function useMyClients() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
 
   return useQuery({
-    queryKey: [...queryKeys.myClients(), userId, groupCodes.join(',')] as const,
+    queryKey: [...queryKeys.myClients(), userId, isAdmin, groupCodes.join(',')] as const,
     queryFn: async (): Promise<ClientRow[]> => {
       if (!userId) return [];
+
+      // Admins see every non-archived client.
+      if (isAdmin) {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('archived', false)
+          .order('name');
+        if (error) throw new Error(error.message);
+        return (data ?? []) as ClientRow[];
+      }
+
       const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
       const { data: owned, error: e1 } = await supabase

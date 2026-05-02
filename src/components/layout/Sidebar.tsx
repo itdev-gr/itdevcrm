@@ -20,7 +20,7 @@ export function Sidebar() {
       >
         {t('nav.home')}
       </NavLink>
-      {isSales && (
+      {(isAdmin || isSales) && (
         <div className="space-y-1 pt-2">
           <p className="px-3 text-xs font-medium uppercase text-slate-500">Sales</p>
           <NavLink
@@ -41,7 +41,7 @@ export function Sidebar() {
           </NavLink>
         </div>
       )}
-      {isAccounting && (
+      {(isAdmin || isAccounting) && (
         <div className="space-y-1 pt-2">
           <p className="px-3 text-xs font-medium uppercase text-slate-500">Accounting</p>
           <NavLink
