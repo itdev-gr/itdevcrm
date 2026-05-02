@@ -67,7 +67,7 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
           </div>
           {isWon && wonBy && (
             <div className="text-[10px] text-emerald-700">
-              🏆 {t('sales_person.label')}: {wonBy.full_name || wonBy.email}
+              {t('sales_person.label')}: {wonBy.full_name || wonBy.email}
             </div>
           )}
           <div className="text-[10px] text-slate-400" title={formatDate(lead.created_at)}>

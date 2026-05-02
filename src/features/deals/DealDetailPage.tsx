@@ -93,7 +93,7 @@ export function DealDetailPage() {
             <div className="flex items-center gap-2">
               <Label className="text-sm">{tLeads('sales_person.label')}:</Label>
               <span className="rounded-md border border-input bg-slate-50 px-2 py-1 text-sm text-slate-700">
-                🏆 {wonBy.full_name || wonBy.email}
+                {wonBy.full_name || wonBy.email}
               </span>
             </div>
           )}

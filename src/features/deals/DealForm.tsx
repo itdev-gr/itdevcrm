@@ -232,7 +232,7 @@ export function DealForm({ initial }: Props) {
             id="sales-person-readonly"
             className="mt-1 rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-700"
           >
-            {wonBy ? `🏆 ${wonBy.full_name || wonBy.email}` : '—'}
+            {wonBy ? wonBy.full_name || wonBy.email : '—'}
           </div>
         </div>
         <div className="col-span-2 rounded-md border bg-slate-50 p-3 text-sm">
