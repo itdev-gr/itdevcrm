@@ -7,6 +7,7 @@ export function Sidebar() {
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const isSales = groupCodes.includes('sales');
+  const isAccounting = groupCodes.includes('accounting');
 
   return (
     <aside className="hidden w-56 space-y-2 border-r bg-slate-50 p-4 md:block">
@@ -37,6 +38,19 @@ export function Sidebar() {
             }
           >
             {t('sales:kanban.title')}
+          </NavLink>
+        </div>
+      )}
+      {isAccounting && (
+        <div className="space-y-1 pt-2">
+          <p className="px-3 text-xs font-medium uppercase text-slate-500">Accounting</p>
+          <NavLink
+            to="/accounting/onboarding"
+            className={({ isActive }) =>
+              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+            }
+          >
+            {t('accounting:nav.onboarding')}
           </NavLink>
         </div>
       )}
