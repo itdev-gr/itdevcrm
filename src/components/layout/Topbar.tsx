@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { signOut } from '@/lib/auth';
+import { NotificationsBell } from '@/features/notifications/NotificationsBell';
 
 export function Topbar() {
   const { t } = useTranslation();
@@ -14,6 +15,7 @@ export function Topbar() {
       <span className="font-semibold">{t('app_title')}</span>
       <div className="flex items-center gap-3">
         {session && <span className="text-sm text-muted-foreground">{userEmail}</span>}
+        {session && <NotificationsBell />}
         <LocaleSwitcher />
         {session && (
           <Button
