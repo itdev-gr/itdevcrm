@@ -12,6 +12,14 @@
     "label": "Υπεύθυνος",
     "unassigned": "Μη ανατεθειμένο"
   },
+  "totals": {
+    "title": "Σύνοψη τιμολόγησης",
+    "one_time_label": "Εφάπαξ",
+    "monthly_label": "Μηνιαίο",
+    "subtotal": "Υποσύνολο",
+    "vat": "ΦΠΑ",
+    "total": "Σύνολο"
+  },
   "form": {
     "source": "Πηγή",
     "source_options": {

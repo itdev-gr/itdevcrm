@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateLead } from './hooks/useCreateLead';
+import { COUNTRIES } from '@/lib/countries';
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void };
 
@@ -28,6 +29,7 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [company, setCompany] = useState('');
+  const [country, setCountry] = useState<string>(COUNTRIES[0]?.storedValue ?? '');
   const [leadInfo, setLeadInfo] = useState('');
 
   const canSubmit = title.trim().length > 0 && (email.trim().length > 0 || phone.trim().length > 0);
@@ -45,6 +47,7 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
         phone: phone.trim() || null,
         website: website.trim() || null,
         company_name: company.trim() || null,
+        country: country || null,
         notes: leadInfo.trim() || null,
       });
       onOpenChange(false);
@@ -108,6 +111,22 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
           <div>
             <Label htmlFor="co">{t('form.company_name')}</Label>
             <Input id="co" value={company} onChange={(e) => setCompany(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="cnt">{t('form.country')}</Label>
+            <select
+              id="cnt"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.storedValue}>
+                  {c.storedValue} ({Math.round(c.vatRate * 100)}% VAT)
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <Label htmlFor="li">{t('form.lead_info')}</Label>

@@ -12,6 +12,14 @@
     "label": "Owner",
     "unassigned": "Unassigned"
   },
+  "totals": {
+    "title": "Pricing summary",
+    "one_time_label": "One-time",
+    "monthly_label": "Monthly",
+    "subtotal": "Subtotal",
+    "vat": "VAT",
+    "total": "Total"
+  },
   "form": {
     "source": "Source",
     "source_options": {

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { ServicesPlannedField, type PlannedService } from '@/features/deals/ServicesPlannedField';
 import { useUpdateLead } from './hooks/useUpdateLead';
 import type { LeadRow } from './hooks/useLeads';
+import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
 
 export function LeadForm({ lead }: { lead: LeadRow }) {
   const { t } = useTranslation('leads');
@@ -104,7 +105,19 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           </div>
           <div>
             <Label htmlFor="cnt">{t('form.country')}</Label>
-            <Input id="cnt" value={country} onChange={(e) => setCountry(e.target.value)} />
+            <select
+              id="cnt"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.storedValue}>
+                  {c.storedValue} ({Math.round(c.vatRate * 100)}% VAT)
+                </option>
+              ))}
+            </select>
           </div>
           <div className="col-span-2">
             <Label htmlFor="addr">{t('form.address')}</Label>
@@ -135,6 +148,49 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           <div className="col-span-2">
             <Label>{t('form.services_planned')}</Label>
             <ServicesPlannedField value={services} onChange={setServices} disabled={readOnly} />
+          </div>
+          <div className="col-span-2 rounded-md border bg-slate-50 p-3 text-sm">
+            <div className="mb-2 text-xs font-medium uppercase text-slate-500">
+              {t('totals.title')}
+            </div>
+            {(() => {
+              const vatRate = vatRateFor(country);
+              const oneTimeNum = toNum(oneTime);
+              const monthlyNum = toNum(monthly);
+              const oneTimeVat = oneTimeNum * vatRate;
+              const monthlyVat = monthlyNum * vatRate;
+              const oneTimeTotal = oneTimeNum + oneTimeVat;
+              const monthlyTotal = monthlyNum + monthlyVat;
+              const vatPct = Math.round(vatRate * 100);
+              return (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-slate-500">
+                      <th className="text-left font-normal"></th>
+                      <th className="text-right font-normal">{t('totals.subtotal')}</th>
+                      <th className="text-right font-normal">
+                        {t('totals.vat')} ({vatPct}%)
+                      </th>
+                      <th className="text-right font-normal">{t('totals.total')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="py-1 text-slate-600">{t('totals.one_time_label')}</td>
+                      <td className="py-1 text-right">{formatEur(oneTimeNum)}</td>
+                      <td className="py-1 text-right">{formatEur(oneTimeVat)}</td>
+                      <td className="py-1 text-right font-medium">{formatEur(oneTimeTotal)}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1 text-slate-600">{t('totals.monthly_label')}</td>
+                      <td className="py-1 text-right">{formatEur(monthlyNum)}</td>
+                      <td className="py-1 text-right">{formatEur(monthlyVat)}</td>
+                      <td className="py-1 text-right font-medium">{formatEur(monthlyTotal)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              );
+            })()}
           </div>
           <div className="col-span-2">
             <Label htmlFor="notes">{t('form.lead_info')}</Label>
