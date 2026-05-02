@@ -682,128 +682,144 @@ export type Database = {
           },
         ]
       }
-      monthly_invoice_items: {
+      leads: {
         Row: {
-          amount: number
-          created_at: string
-          description: string | null
-          id: string
-          invoice_id: string
-          job_id: string | null
-          service_type: string | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          invoice_id: string
-          job_id?: string | null
-          service_type?: string | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          invoice_id?: string
-          job_id?: string | null
-          service_type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "monthly_invoice_items_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "monthly_invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "monthly_invoice_items_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "jobs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      monthly_invoices: {
-        Row: {
-          amount_paid: number
+          address: string | null
           archived: boolean
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
-          client_id: string
+          company_name: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
+          converted_at: string | null
+          converted_client_id: string | null
+          converted_deal_id: string | null
+          country: string | null
           created_at: string
-          due_date: string
+          created_by: string | null
+          email: string | null
+          estimated_monthly_value: number
+          estimated_one_time_value: number
+          expected_close_date: string | null
           id: string
+          industry: string | null
           notes: string | null
-          paid_at: string | null
-          payment_method: string | null
-          period: string
-          status: string
-          subtotal: number
-          tax_amount: number | null
-          tax_rate: number | null
-          total_amount: number
+          owner_user_id: string | null
+          phone: string | null
+          services_planned: Json
+          source: string
+          source_data: Json | null
+          stage_id: string | null
+          title: string
           updated_at: string
+          vat_number: string | null
         }
         Insert: {
-          amount_paid?: number
+          address?: string | null
           archived?: boolean
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
-          client_id: string
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
           created_at?: string
-          due_date: string
+          created_by?: string | null
+          email?: string | null
+          estimated_monthly_value?: number
+          estimated_one_time_value?: number
+          expected_close_date?: string | null
           id?: string
+          industry?: string | null
           notes?: string | null
-          paid_at?: string | null
-          payment_method?: string | null
-          period: string
-          status?: string
-          subtotal?: number
-          tax_amount?: number | null
-          tax_rate?: number | null
-          total_amount?: number
+          owner_user_id?: string | null
+          phone?: string | null
+          services_planned?: Json
+          source: string
+          source_data?: Json | null
+          stage_id?: string | null
+          title: string
           updated_at?: string
+          vat_number?: string | null
         }
         Update: {
-          amount_paid?: number
+          address?: string | null
           archived?: boolean
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
-          client_id?: string
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
           created_at?: string
-          due_date?: string
+          created_by?: string | null
+          email?: string | null
+          estimated_monthly_value?: number
+          estimated_one_time_value?: number
+          expected_close_date?: string | null
           id?: string
+          industry?: string | null
           notes?: string | null
-          paid_at?: string | null
-          payment_method?: string | null
-          period?: string
-          status?: string
-          subtotal?: number
-          tax_amount?: number | null
-          tax_rate?: number | null
-          total_amount?: number
+          owner_user_id?: string | null
+          phone?: string | null
+          services_planned?: Json
+          source?: string
+          source_data?: Json | null
+          stage_id?: string | null
+          title?: string
           updated_at?: string
+          vat_number?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "monthly_invoices_archived_by_fkey"
+            foreignKeyName: "leads_archived_by_fkey"
             columns: ["archived_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
           {
-            foreignKeyName: "monthly_invoices_client_id_fkey"
-            columns: ["client_id"]
+            foreignKeyName: "leads_converted_client_id_fkey"
+            columns: ["converted_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_converted_deal_id_fkey"
+            columns: ["converted_deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "leads_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "leads_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
           },
         ]
@@ -1081,6 +1097,10 @@ export type Database = {
         Returns: Json
       }
       complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
+      convert_lead_to_client: {
+        Args: { target_lead_id: string }
+        Returns: Json
+      }
       current_user_can: {
         Args: { target_action: string; target_board: string }
         Returns: boolean
@@ -1090,16 +1110,11 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
-      generate_monthly_invoices: {
-        Args: { target_period: string }
-        Returns: Json
-      }
       is_client_blocked: {
         Args: { target_client_id: string }
         Returns: boolean
       }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
-      mark_overdue_invoices: { Args: never; Returns: number }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
     }
     Enums: {

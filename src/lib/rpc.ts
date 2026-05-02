@@ -24,9 +24,6 @@ export async function completeAccounting(dealId: string): Promise<CompleteAccoun
 
 export type BlockClientResult = { ok: true; block_id: string } | { ok: false; errors: string[] };
 export type UnblockClientResult = { ok: true; block_id: string } | { ok: false; errors: string[] };
-export type GenerateInvoicesResult =
-  | { ok: true; period: string; invoices_generated: number }
-  | { ok: false; errors: string[] };
 
 export async function blockClient(clientId: string, reason: string): Promise<BlockClientResult> {
   const { data, error } = await supabase.rpc('block_client', {
@@ -41,12 +38,4 @@ export async function unblockClient(clientId: string): Promise<UnblockClientResu
   const { data, error } = await supabase.rpc('unblock_client', { target_client_id: clientId });
   if (error) return { ok: false, errors: [error.message] };
   return data as UnblockClientResult;
-}
-
-export async function generateMonthlyInvoices(period: string): Promise<GenerateInvoicesResult> {
-  const { data, error } = await supabase.rpc('generate_monthly_invoices', {
-    target_period: period,
-  });
-  if (error) return { ok: false, errors: [error.message] };
-  return data as GenerateInvoicesResult;
 }
