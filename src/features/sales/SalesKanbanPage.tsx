@@ -5,9 +5,11 @@ import { useMoveDealStage } from '@/features/deals/hooks/useMoveDealStage';
 import { useLockDeal } from '@/features/deals/hooks/useLockDeal';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { SalesKanbanColumn } from './SalesKanbanColumn';
+import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
 
 export function SalesKanbanPage() {
   const { t, i18n } = useTranslation('sales');
+  useSalesKanbanRealtime();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: deals = [], isLoading } = useDeals();
   const { data: stages = [] } = usePipelineStages();
