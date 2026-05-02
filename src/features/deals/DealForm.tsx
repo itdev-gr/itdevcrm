@@ -17,6 +17,8 @@ import { useUpsertDeal, type DealUpsert } from './hooks/useUpsertDeal';
 import { useClients } from '@/features/clients/hooks/useClients';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import type { DealRow } from './hooks/useDeals';
+import { ServicesPlannedField, type PlannedService } from './ServicesPlannedField';
+import type { Json } from '@/types/supabase';
 
 // Number fields are treated as strings in RHF (HTML inputs always return strings).
 // Conversion to number happens in onSubmit to avoid exactOptionalPropertyTypes conflicts
@@ -65,6 +67,14 @@ export function DealForm({ initial, defaultClientId, onDone, onCancel }: Props) 
   const [clientId, setClientId] = useState(defaultClientId_);
   const [stageId, setStageId] = useState(defaultStageId);
 
+  const [services, setServices] = useState<PlannedService[]>(() => {
+    const raw = initial?.services_planned;
+    if (Array.isArray(raw)) return raw as unknown as PlannedService[];
+    return [];
+  });
+
+  const isLocked = !!initial?.locked_at;
+
   const { register, handleSubmit, formState, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -101,6 +111,7 @@ export function DealForm({ initial, defaultClientId, onDone, onCancel }: Props) 
     const rmv = toNum(values.recurring_monthly_value);
     if (rmv !== undefined) payload.recurring_monthly_value = rmv;
     if (initial?.id) payload.id = initial.id;
+    payload.services_planned = services as unknown as Json;
 
     const id = await upsert.mutateAsync(payload);
     onDone?.(id);
@@ -183,6 +194,10 @@ export function DealForm({ initial, defaultClientId, onDone, onCancel }: Props) 
       <div className="md:col-span-2">
         <Label htmlFor="desc">{t('form.description')}</Label>
         <Input id="desc" {...register('description')} />
+      </div>
+
+      <div className="md:col-span-2">
+        <ServicesPlannedField value={services} onChange={setServices} disabled={isLocked} />
       </div>
 
       <div className="md:col-span-2 flex gap-2">
