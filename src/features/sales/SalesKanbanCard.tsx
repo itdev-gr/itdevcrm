@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
+import { formatDate, relativeFromNow } from '@/lib/datetime';
 
 export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
   const { t } = useTranslation('leads');
@@ -52,6 +53,9 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
           </div>
           <div className="text-[10px] text-slate-500">
             👤 {owner ? owner.full_name || owner.email : t('owner.unassigned')}
+          </div>
+          <div className="text-[10px] text-slate-400" title={formatDate(lead.created_at)}>
+            🗓 {relativeFromNow(lead.created_at)}
           </div>
         </CardContent>
       </Card>

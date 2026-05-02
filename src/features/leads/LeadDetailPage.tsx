@@ -11,6 +11,7 @@ import { useAssignableOwners } from './hooks/useAssignableOwners';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
+import { formatDate, relativeFromNow } from '@/lib/datetime';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -51,7 +52,12 @@ export function LeadDetailPage() {
   return (
     <div className="space-y-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{lead.title}</h1>
+        <div>
+          <h1 className="text-2xl font-bold">{lead.title}</h1>
+          <p className="text-xs text-slate-500">
+            🗓 {formatDate(lead.created_at)} · {relativeFromNow(lead.created_at)}
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Label htmlFor="owner" className="text-sm">
