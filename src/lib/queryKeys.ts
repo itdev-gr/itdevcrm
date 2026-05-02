@@ -9,4 +9,17 @@ export const queryKeys = {
   userOverrides: (userId: string) => ['user-overrides', userId] as const,
   effectivePermissions: (userId: string) => ['effective-permissions', userId] as const,
   fieldPermissions: () => ['field-permissions'] as const,
+  // Phase 3:
+  clients: () => ['clients'] as const,
+  client: (id: string) => ['client', id] as const,
+  myClients: () => ['my-clients'] as const,
+  deals: (filters?: Record<string, string | undefined>) => ['deals', filters ?? null] as const,
+  deal: (id: string) => ['deal', id] as const,
+  jobsForClient: (clientId: string) => ['jobs', 'client', clientId] as const,
+  comments: (parentType: string, parentId: string) => ['comments', parentType, parentId] as const,
+  attachments: (parentType: string, parentId: string) =>
+    ['attachments', parentType, parentId] as const,
+  activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
+  notifications: () => ['notifications'] as const,
+  savedFilters: (board: string) => ['saved-filters', board] as const,
 };

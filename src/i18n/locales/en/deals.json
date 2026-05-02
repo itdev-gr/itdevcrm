@@ -1,0 +1,46 @@
+{
+  "title": "Deals",
+  "new_deal": "New deal",
+  "form": {
+    "title": "Title",
+    "description": "Description",
+    "client": "Client",
+    "stage": "Stage",
+    "owner": "Owner",
+    "expected_close_date": "Expected close date",
+    "probability": "Probability (%)",
+    "lead_source": "Source",
+    "currency": "Currency",
+    "one_time_value": "One-time value",
+    "recurring_monthly_value": "Monthly recurring value",
+    "submit": "Save",
+    "submitting": "Saving…"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "jobs": "Jobs",
+    "comments": "Comments",
+    "attachments": "Attachments",
+    "activity": "Activity"
+  },
+  "actions": {
+    "view": "View",
+    "edit": "Edit",
+    "lock": "Lock deal",
+    "archive": "Archive"
+  },
+  "lock": {
+    "confirm_title": "Lock this deal?",
+    "confirm_body": "Once locked, sales cannot edit deal value or services. The deal moves to Accounting.",
+    "errors": {
+      "permission_denied": "You do not have permission to lock deals.",
+      "already_locked": "This deal is already locked.",
+      "value_required": "Deal value must be greater than zero.",
+      "at_least_one_job_required": "At least one service / job is required.",
+      "client_email_required": "The client must have an email.",
+      "client_phone_or_address_required": "The client must have a phone or address.",
+      "contract_attachment_required": "A contract attachment of kind \"contract\" is required."
+    }
+  },
+  "empty": "No deals yet."
+}

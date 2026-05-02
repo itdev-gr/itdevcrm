@@ -1,0 +1,42 @@
+{
+  "kanban": {
+    "title": "Pipeline Πωλήσεων",
+    "empty_column": "Σύρετε συμφωνίες εδώ",
+    "card": {
+      "value": "Αξία",
+      "monthly": "/μήνα"
+    }
+  },
+  "filters": {
+    "all": "Όλες",
+    "mine": "Δικές μου",
+    "saved": "Αποθηκευμένα φίλτρα",
+    "save_current": "Αποθήκευση τρέχοντος φίλτρου",
+    "name_placeholder": "Όνομα φίλτρου"
+  },
+  "comments": {
+    "placeholder": "Γράψτε σχόλιο… mention με @",
+    "submit": "Δημοσίευση",
+    "empty": "Δεν υπάρχουν σχόλια."
+  },
+  "attachments": {
+    "upload": "Μεταφόρτωση αρχείου",
+    "uploading": "Μεταφόρτωση…",
+    "max_size": "Μέγιστο 25 MB",
+    "kind": "Είδος",
+    "kinds": {
+      "contract": "Συμβόλαιο",
+      "invoice": "Τιμολόγιο",
+      "other": "Άλλο"
+    },
+    "empty": "Δεν υπάρχουν συνημμένα."
+  },
+  "activity": {
+    "empty": "Δεν υπάρχει δραστηριότητα."
+  },
+  "notifications": {
+    "title": "Ειδοποιήσεις",
+    "empty": "Δεν υπάρχουν ειδοποιήσεις.",
+    "mark_all_read": "Σήμανση όλων ως αναγνωσμένες"
+  }
+}

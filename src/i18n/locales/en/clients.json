@@ -1,0 +1,49 @@
+{
+  "title": "Clients",
+  "my_clients": "My Clients",
+  "new_client": "New client",
+  "table": {
+    "name": "Company",
+    "contact": "Contact",
+    "email": "Email",
+    "phone": "Phone",
+    "industry": "Industry",
+    "country": "Country",
+    "owner": "Owner",
+    "actions": "Actions"
+  },
+  "form": {
+    "name": "Company name",
+    "contact_first_name": "Contact first name",
+    "contact_last_name": "Contact last name",
+    "email": "Email",
+    "phone": "Phone",
+    "website": "Website",
+    "industry": "Industry",
+    "country": "Country",
+    "region": "Region / State",
+    "city": "City",
+    "address": "Address",
+    "postcode": "Postcode",
+    "vat_number": "VAT number",
+    "lead_source": "Lead source",
+    "assigned_owner": "Assigned owner",
+    "submit": "Save",
+    "submitting": "Saving…",
+    "cancel": "Cancel"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "deals": "Deals",
+    "jobs": "Jobs",
+    "comments": "Comments",
+    "attachments": "Attachments",
+    "activity": "Activity"
+  },
+  "actions": {
+    "view": "View",
+    "edit": "Edit",
+    "archive": "Archive"
+  },
+  "empty": "No clients yet — click \"New client\" to add one."
+}

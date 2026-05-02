@@ -1,0 +1,42 @@
+{
+  "kanban": {
+    "title": "Sales pipeline",
+    "empty_column": "Drop deals here",
+    "card": {
+      "value": "Value",
+      "monthly": "/mo"
+    }
+  },
+  "filters": {
+    "all": "All deals",
+    "mine": "My deals",
+    "saved": "Saved filters",
+    "save_current": "Save current filter",
+    "name_placeholder": "Filter name"
+  },
+  "comments": {
+    "placeholder": "Write a comment… mention with @",
+    "submit": "Post",
+    "empty": "No comments yet."
+  },
+  "attachments": {
+    "upload": "Upload file",
+    "uploading": "Uploading…",
+    "max_size": "Max 25 MB",
+    "kind": "Kind",
+    "kinds": {
+      "contract": "Contract",
+      "invoice": "Invoice",
+      "other": "Other"
+    },
+    "empty": "No attachments yet."
+  },
+  "activity": {
+    "empty": "No activity yet."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications.",
+    "mark_all_read": "Mark all read"
+  }
+}

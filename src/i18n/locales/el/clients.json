@@ -1,0 +1,49 @@
+{
+  "title": "Πελάτες",
+  "my_clients": "Οι Πελάτες μου",
+  "new_client": "Νέος πελάτης",
+  "table": {
+    "name": "Εταιρεία",
+    "contact": "Επαφή",
+    "email": "Email",
+    "phone": "Τηλέφωνο",
+    "industry": "Κλάδος",
+    "country": "Χώρα",
+    "owner": "Υπεύθυνος",
+    "actions": "Ενέργειες"
+  },
+  "form": {
+    "name": "Όνομα εταιρείας",
+    "contact_first_name": "Όνομα επαφής",
+    "contact_last_name": "Επώνυμο επαφής",
+    "email": "Email",
+    "phone": "Τηλέφωνο",
+    "website": "Ιστοσελίδα",
+    "industry": "Κλάδος",
+    "country": "Χώρα",
+    "region": "Νομός / Περιοχή",
+    "city": "Πόλη",
+    "address": "Διεύθυνση",
+    "postcode": "Τ.Κ.",
+    "vat_number": "ΑΦΜ",
+    "lead_source": "Πηγή",
+    "assigned_owner": "Υπεύθυνος",
+    "submit": "Αποθήκευση",
+    "submitting": "Αποθήκευση…",
+    "cancel": "Άκυρο"
+  },
+  "tabs": {
+    "overview": "Επισκόπηση",
+    "deals": "Συμφωνίες",
+    "jobs": "Εργασίες",
+    "comments": "Σχόλια",
+    "attachments": "Συνημμένα",
+    "activity": "Δραστηριότητα"
+  },
+  "actions": {
+    "view": "Προβολή",
+    "edit": "Επεξεργασία",
+    "archive": "Αρχειοθέτηση"
+  },
+  "empty": "Δεν υπάρχουν πελάτες — προσθέστε έναν με «Νέος πελάτης»."
+}
