@@ -22,4 +22,5 @@ export const queryKeys = {
   activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
   notifications: () => ['notifications'] as const,
   savedFilters: (board: string) => ['saved-filters', board] as const,
+  accountingDeals: () => ['accounting-deals'] as const,
 };

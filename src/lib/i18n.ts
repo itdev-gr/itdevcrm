@@ -15,6 +15,8 @@ import enDeals from '@/i18n/locales/en/deals.json';
 import elDeals from '@/i18n/locales/el/deals.json';
 import enSales from '@/i18n/locales/en/sales.json';
 import elSales from '@/i18n/locales/el/sales.json';
+import enAccounting from '@/i18n/locales/en/accounting.json';
+import elAccounting from '@/i18n/locales/el/accounting.json';
 
 void i18n
   .use(LanguageDetector)
@@ -23,7 +25,7 @@ void i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'el'],
     defaultNS: 'common',
-    ns: ['common', 'auth', 'users', 'admin', 'clients', 'deals', 'sales'],
+    ns: ['common', 'auth', 'users', 'admin', 'clients', 'deals', 'sales', 'accounting'],
     resources: {
       en: {
         common: enCommon,
@@ -33,6 +35,7 @@ void i18n
         clients: enClients,
         deals: enDeals,
         sales: enSales,
+        accounting: enAccounting,
       },
       el: {
         common: elCommon,
@@ -42,6 +45,7 @@ void i18n
         clients: elClients,
         deals: elDeals,
         sales: elSales,
+        accounting: elAccounting,
       },
     },
     interpolation: { escapeValue: false },

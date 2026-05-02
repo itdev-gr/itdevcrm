@@ -1,0 +1,25 @@
+{
+  "nav": {
+    "onboarding": "Accounting onboarding"
+  },
+  "kanban": {
+    "title": "Accounting onboarding",
+    "empty_column": "Drop deals here"
+  },
+  "card": {
+    "services": "Services",
+    "lock_date": "Locked"
+  },
+  "actions": {
+    "complete": "Complete accounting"
+  },
+  "complete": {
+    "errors": {
+      "permission_denied": "You do not have permission to complete accounting.",
+      "deal_not_locked": "Deal must be locked by sales first.",
+      "already_completed": "This deal is already completed.",
+      "services_planned_empty": "No services planned on this deal — sales must add at least one service.",
+      "invalid_one_time_value": "Invalid one-time value."
+    }
+  }
+}

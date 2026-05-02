@@ -9,3 +9,15 @@ export async function lockDeal(dealId: string): Promise<LockDealResult> {
   }
   return data as LockDealResult;
 }
+
+export type CompleteAccountingResult =
+  | { ok: true; deal_id: string }
+  | { ok: false; errors: string[] };
+
+export async function completeAccounting(dealId: string): Promise<CompleteAccountingResult> {
+  const { data, error } = await supabase.rpc('complete_accounting', { target_deal_id: dealId });
+  if (error) {
+    return { ok: false, errors: [error.message] };
+  }
+  return data as CompleteAccountingResult;
+}
