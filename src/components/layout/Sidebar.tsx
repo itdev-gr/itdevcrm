@@ -37,6 +37,16 @@ export function Sidebar() {
           {t('admin:nav.groups')}
         </NavLink>
       )}
+      {isAdmin && (
+        <NavLink
+          to="/admin/fields"
+          className={({ isActive }) =>
+            `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+          }
+        >
+          {t('admin:nav.fields')}
+        </NavLink>
+      )}
     </aside>
   );
 }
