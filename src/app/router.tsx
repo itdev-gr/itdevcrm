@@ -16,6 +16,7 @@ import { StagesListPage } from '@/features/stages/StagesListPage';
 import { ClientsListPage } from '@/features/clients/ClientsListPage';
 import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
 import { DealDetailPage } from '@/features/deals/DealDetailPage';
+import { LeadDetailPage } from '@/features/leads/LeadDetailPage';
 import { SalesKanbanPage } from '@/features/sales/SalesKanbanPage';
 import { AccountingOnboardingKanbanPage } from '@/features/accounting/AccountingOnboardingKanbanPage';
 
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
       },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },
       { path: 'deals/:dealId', element: <DealDetailPage /> },
+      { path: 'leads/:leadId', element: <LeadDetailPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
