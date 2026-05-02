@@ -1,6 +1,34 @@
 {
   "nav": {
-    "onboarding": "Λογιστήριο - Νέοι"
+    "onboarding": "Λογιστήριο - Νέοι",
+    "clients": "Πελάτες"
+  },
+  "clients_page": {
+    "title": "Πελάτες",
+    "search": "Αναζήτηση πελατών…",
+    "show_blocked_only": "Μόνο μπλοκαρισμένοι",
+    "empty": "Κανένας πελάτης ακόμα — θα εμφανιστούν εδώ μετά την πρώτη μετατροπή.",
+    "table": {
+      "code": "Κωδικός",
+      "company": "Εταιρεία",
+      "contact": "Επαφή",
+      "email": "Email",
+      "phone": "Τηλέφωνο",
+      "industry": "Κλάδος",
+      "country": "Χώρα",
+      "vat": "ΑΦΜ",
+      "active_deals": "Συμφωνίες",
+      "active_jobs": "Εργασίες",
+      "monthly_revenue": "€ / μήνα",
+      "yearly_revenue": "€ / έτος",
+      "status": "Κατάσταση",
+      "created": "Από"
+    },
+    "status": {
+      "active": "Ενεργός",
+      "blocked": "Μπλοκαρισμένος",
+      "no_jobs": "Σε αναμονή"
+    }
   },
   "kanban": {
     "title": "Λογιστήριο - Νέοι",

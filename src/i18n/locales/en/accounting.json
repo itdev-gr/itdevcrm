@@ -1,6 +1,34 @@
 {
   "nav": {
-    "onboarding": "Accounting onboarding"
+    "onboarding": "Accounting onboarding",
+    "clients": "Clients"
+  },
+  "clients_page": {
+    "title": "Clients",
+    "search": "Search clients…",
+    "show_blocked_only": "Blocked only",
+    "empty": "No clients yet — they'll appear here after the first lead is converted.",
+    "table": {
+      "code": "Code",
+      "company": "Company",
+      "contact": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "industry": "Industry",
+      "country": "Country",
+      "vat": "VAT",
+      "active_deals": "Deals",
+      "active_jobs": "Jobs",
+      "monthly_revenue": "€ / mo",
+      "yearly_revenue": "€ / yr",
+      "status": "Status",
+      "created": "Joined"
+    },
+    "status": {
+      "active": "Active",
+      "blocked": "Blocked",
+      "no_jobs": "Pending"
+    }
   },
   "kanban": {
     "title": "Accounting onboarding",
