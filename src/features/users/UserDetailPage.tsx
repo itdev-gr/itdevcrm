@@ -82,6 +82,12 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
           ) : (
             <span className="text-sm text-muted-foreground">{t('actions.deactivated')}</span>
           )}
+          <Link
+            to={`/admin/users/${userId}/permissions`}
+            className="text-sm text-blue-600 underline"
+          >
+            Permissions
+          </Link>
         </div>
       </div>
     </div>
