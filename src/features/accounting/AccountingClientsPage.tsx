@@ -9,10 +9,6 @@ function isBlocked(c: AccountingClientRow): boolean {
   return (c.client_blocks ?? []).some((b) => b.unblocked_at == null);
 }
 
-function activeDealCount(c: AccountingClientRow): number {
-  return (c.deals ?? []).filter((d) => !d.archived).length;
-}
-
 function activeJobs(c: AccountingClientRow) {
   return (c.jobs ?? []).filter((j) => !j.archived && j.status === 'active');
 }
@@ -97,9 +93,6 @@ export function AccountingClientsPage() {
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.country')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.vat')}</th>
                 <th className="px-3 py-2 text-right font-medium">
-                  {t('clients_page.table.active_deals')}
-                </th>
-                <th className="px-3 py-2 text-right font-medium">
                   {t('clients_page.table.active_jobs')}
                 </th>
                 <th className="px-3 py-2 text-right font-medium">
@@ -140,7 +133,6 @@ export function AccountingClientsPage() {
                     <td className="px-3 py-2 text-slate-600">{c.industry ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-600">{c.country ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-600">{c.vat_number ?? '—'}</td>
-                    <td className="px-3 py-2 text-right">{activeDealCount(c)}</td>
                     <td className="px-3 py-2 text-right">{jobs.length}</td>
                     <td className="px-3 py-2 text-right">€{monthlyRevenue(c).toFixed(0)}</td>
                     <td className="px-3 py-2 text-right">€{yearlyRevenue(c).toFixed(0)}</td>
