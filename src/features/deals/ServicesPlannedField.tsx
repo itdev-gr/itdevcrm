@@ -132,7 +132,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <Label className="whitespace-nowrap text-xs">{t('services.package')}</Label>
                   <Select
                     value={row.package_id ?? NO_PACKAGE}
@@ -175,7 +175,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                 </div>
                 {row.billing_type === 'recurring_monthly' ? (
                   <>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <Label className="whitespace-nowrap text-xs">
                         {t('services.monthly_amount')}
                       </Label>
