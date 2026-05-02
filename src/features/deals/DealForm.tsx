@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
+import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { ServicesPlannedField, type PlannedService } from './ServicesPlannedField';
 import type { DealRow } from './hooks/useDeals';
 
@@ -34,6 +35,10 @@ export function DealForm({ initial }: Props) {
 
   const client = initial.client;
   const clientId = initial.client_id ?? client?.id ?? null;
+  const { data: owners = [] } = useAssignableOwners();
+  const wonBy = initial.won_by_user_id
+    ? owners.find((o) => o.user_id === initial.won_by_user_id)
+    : null;
 
   const [title, setTitle] = useState(initial.title ?? '');
   const [fullName, setFullName] = useState(
@@ -210,7 +215,7 @@ export function DealForm({ initial }: Props) {
           <Label>{tLeads('form.services_planned')}</Label>
           <ServicesPlannedField value={services} onChange={setServices} />
         </div>
-        <div className="col-span-2">
+        <div>
           <Label htmlFor="stage-readonly">{t('form.stage')}</Label>
           <div
             id="stage-readonly"
@@ -219,6 +224,15 @@ export function DealForm({ initial }: Props) {
             {(initial.stage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
               initial.stage?.code ??
               '—'}
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="sales-person-readonly">{tLeads('sales_person.label')}</Label>
+          <div
+            id="sales-person-readonly"
+            className="mt-1 rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-700"
+          >
+            {wonBy ? `🏆 ${wonBy.full_name || wonBy.email}` : '—'}
           </div>
         </div>
         <div className="col-span-2 rounded-md border bg-slate-50 p-3 text-sm">
