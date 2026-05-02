@@ -269,6 +269,7 @@ export type Database = {
         Row: {
           accounting_completed_at: string | null
           accounting_completed_by: string | null
+          accounting_stage_id: string | null
           actual_close_date: string | null
           archived: boolean
           archived_at: string | null
@@ -287,6 +288,7 @@ export type Database = {
           owner_user_id: string | null
           probability: number | null
           recurring_monthly_value: number | null
+          services_planned: Json
           stage_id: string
           title: string
           updated_at: string
@@ -294,6 +296,7 @@ export type Database = {
         Insert: {
           accounting_completed_at?: string | null
           accounting_completed_by?: string | null
+          accounting_stage_id?: string | null
           actual_close_date?: string | null
           archived?: boolean
           archived_at?: string | null
@@ -312,6 +315,7 @@ export type Database = {
           owner_user_id?: string | null
           probability?: number | null
           recurring_monthly_value?: number | null
+          services_planned?: Json
           stage_id: string
           title: string
           updated_at?: string
@@ -319,6 +323,7 @@ export type Database = {
         Update: {
           accounting_completed_at?: string | null
           accounting_completed_by?: string | null
+          accounting_stage_id?: string | null
           actual_close_date?: string | null
           archived?: boolean
           archived_at?: string | null
@@ -337,6 +342,7 @@ export type Database = {
           owner_user_id?: string | null
           probability?: number | null
           recurring_monthly_value?: number | null
+          services_planned?: Json
           stage_id?: string
           title?: string
           updated_at?: string
@@ -348,6 +354,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "deals_accounting_stage_id_fkey"
+            columns: ["accounting_stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "deals_archived_by_fkey"
@@ -882,6 +895,7 @@ export type Database = {
       }
     }
     Functions: {
+      complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
       current_user_can: {
         Args: { target_action: string; target_board: string }
         Returns: boolean
