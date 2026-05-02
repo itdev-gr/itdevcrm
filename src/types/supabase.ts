@@ -364,6 +364,7 @@ export type Database = {
           stage_id: string
           title: string
           updated_at: string
+          won_by_user_id: string | null
         }
         Insert: {
           accounting_completed_at?: string | null
@@ -392,6 +393,7 @@ export type Database = {
           stage_id: string
           title: string
           updated_at?: string
+          won_by_user_id?: string | null
         }
         Update: {
           accounting_completed_at?: string | null
@@ -420,6 +422,7 @@ export type Database = {
           stage_id?: string
           title?: string
           updated_at?: string
+          won_by_user_id?: string | null
         }
         Relationships: [
           {
@@ -470,6 +473,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_won_by_user_id_fkey"
+            columns: ["won_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1377,3 +1387,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />

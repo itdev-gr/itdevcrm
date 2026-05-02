@@ -4,7 +4,6 @@ import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
 
 export type DealRow = Database['public']['Tables']['deals']['Row'] & {
-  won_by_user_id?: string | null;
   client?: {
     id: string;
     name: string;
