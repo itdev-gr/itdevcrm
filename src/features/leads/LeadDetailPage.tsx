@@ -91,10 +91,10 @@ export function LeadDetailPage() {
 
         <TabsContent value="overview" className="pt-4">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[65%_35%]">
-            <div className="min-w-0">
+            <div className="min-w-0 lg:pr-6">
               <LeadForm lead={lead} />
             </div>
-            <aside className="min-w-0">
+            <aside className="min-w-0 lg:border-l lg:pl-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
                 {t('tabs.comments')}
               </h2>
