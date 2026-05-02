@@ -81,8 +81,8 @@ export function SalesKanbanPage() {
   }
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
+      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -128,7 +128,7 @@ export function SalesKanbanPage() {
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2">
           {salesStages.map((s) => (
             <SalesKanbanColumn
               key={s.id}

@@ -70,8 +70,10 @@ export function AccountingOnboardingKanbanPage() {
   }
 
   return (
-    <div className="space-y-4 p-6">
-      <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
+    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
+      <div className="-mx-6 -mt-6 border-b bg-white/95 px-6 py-3">
+        <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
+      </div>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -79,7 +81,7 @@ export function AccountingOnboardingKanbanPage() {
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2">
           {accStages.map((s) => (
             <AccountingKanbanColumn
               key={s.id}
