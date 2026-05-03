@@ -155,7 +155,7 @@ export function JobDetailPage() {
           <AttachmentsPanel parentType="job" parentId={job.id} />
         </TabsContent>
         <TabsContent value="activity" className="pt-4">
-          <ActivityPanel entityType="job" entityId={job.id} />
+          <ActivityPanel entityType="jobs" entityId={job.id} />
         </TabsContent>
       </Tabs>
     </div>
