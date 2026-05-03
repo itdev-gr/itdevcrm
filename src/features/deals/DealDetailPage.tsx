@@ -155,6 +155,7 @@ export function DealDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="sales">{t('tabs.sales')}</TabsTrigger>
           <TabsTrigger value="jobs">{t('tabs.jobs')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
@@ -171,6 +172,24 @@ export function DealDetailPage() {
               </h2>
               <CommentsPanel parentType="deal" parentId={dealId} />
             </aside>
+          </div>
+        </TabsContent>
+        <TabsContent value="sales" className="pt-4">
+          <div className="grid max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <Label>{t('form.stage')}</Label>
+              <div className="mt-1 rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                {(deal.stage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
+                  deal.stage?.code ??
+                  '—'}
+              </div>
+            </div>
+            <div>
+              <Label>{tLeads('sales_person.label')}</Label>
+              <div className="mt-1 rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                {wonBy ? wonBy.full_name || wonBy.email : '—'}
+              </div>
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="jobs" className="pt-4">
