@@ -18,6 +18,11 @@ import { AccountingKanbanColumn } from './AccountingKanbanColumn';
 import { AccountingKanbanCard } from './AccountingKanbanCard';
 import { useAccountingKanbanRealtime } from './hooks/useAccountingKanbanRealtime';
 
+const STAGE_SUBTITLES: Record<string, { en: string; el: string }> = {
+  awaiting_payment: { en: '7 days prior', el: '7 μέρες πριν' },
+  on_hold: { en: 'Blocked', el: 'Μπλοκαρισμένο' },
+};
+
 export function AccountingOnboardingKanbanPage() {
   useAccountingKanbanRealtime();
   const { t, i18n } = useTranslation('accounting');
@@ -92,6 +97,7 @@ export function AccountingOnboardingKanbanPage() {
               key={s.id}
               stageId={s.id}
               stageLabel={(s.display_names as { en: string; el: string })[lang]}
+              stageSubtitle={STAGE_SUBTITLES[s.code]?.[lang]}
               deals={dealsByStage.get(s.id) ?? []}
             />
           ))}

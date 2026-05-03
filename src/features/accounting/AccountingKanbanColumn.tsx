@@ -6,10 +6,11 @@ import type { AccountingDealRow } from './hooks/useAccountingDeals';
 type Props = {
   stageId: string;
   stageLabel: string;
+  stageSubtitle?: string;
   deals: AccountingDealRow[];
 };
 
-export function AccountingKanbanColumn({ stageId, stageLabel, deals }: Props) {
+export function AccountingKanbanColumn({ stageId, stageLabel, stageSubtitle, deals }: Props) {
   const { t } = useTranslation('accounting');
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
   return (
@@ -21,6 +22,11 @@ export function AccountingKanbanColumn({ stageId, stageLabel, deals }: Props) {
     >
       <header className="border-b px-3 py-2">
         <span className="text-sm font-medium">{stageLabel}</span>
+        {stageSubtitle && (
+          <span className="ml-2 text-[11px] font-normal italic text-slate-500">
+            {stageSubtitle}
+          </span>
+        )}
         <span className="ml-1 text-xs text-muted-foreground">({deals.length})</span>
       </header>
       <div className="flex-1 space-y-2 overflow-y-auto p-2">
