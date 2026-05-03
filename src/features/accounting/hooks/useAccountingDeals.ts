@@ -24,7 +24,6 @@ export function useAccountingDeals() {
           '*, client:clients(id, name, contact_first_name, contact_last_name, industry), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board)',
         )
         .not('accounting_stage_id', 'is', null)
-        .is('accounting_completed_at', null)
         .eq('archived', false)
         .order('updated_at', { ascending: false });
       if (error) throw new Error(error.message);
