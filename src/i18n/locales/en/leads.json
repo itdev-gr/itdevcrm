@@ -67,7 +67,12 @@
     "estimated_one_time_value": "One-time value (€)",
     "estimated_monthly_value": "Monthly value (€)",
     "services_planned": "Services planned",
-    "expected_close_date": "Expected close date"
+    "expected_close_date": "Expected close date",
+    "payment_method": "Payment method",
+    "payment_method_options": {
+      "cash": "Cash",
+      "online": "Online payment"
+    }
   },
   "tabs": {
     "overview": "Overview",

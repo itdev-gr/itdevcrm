@@ -25,6 +25,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [country, setCountry] = useState(lead.country ?? '');
   const [address, setAddress] = useState(lead.address ?? '');
   const [vatNumber, setVatNumber] = useState(lead.vat_number ?? '');
+  const [paymentMethod, setPaymentMethod] = useState(lead.payment_method ?? '');
   const [notes, setNotes] = useState(lead.notes ?? '');
   const [additionalNotes, setAdditionalNotes] = useState(lead.additional_notes ?? '');
   const [services, setServices] = useState<PlannedService[]>(
@@ -54,6 +55,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       country: country.trim() || null,
       address: address.trim() || null,
       vat_number: vatNumber.trim() || null,
+      payment_method: paymentMethod || null,
       notes: notes.trim() || null,
       additional_notes: additionalNotes.trim() || null,
       estimated_one_time_value: oneTimeNum,
@@ -70,6 +72,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       country,
       address,
       vatNumber,
+      paymentMethod,
       notes,
       additionalNotes,
       oneTimeNum,
@@ -169,9 +172,22 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <Label htmlFor="ind">{t('form.industry')}</Label>
             <Input id="ind" value={industry} onChange={(e) => setIndustry(e.target.value)} />
           </div>
-          <div className="col-span-2">
+          <div>
             <Label htmlFor="addr">{t('form.address')}</Label>
             <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="pm">{t('form.payment_method')}</Label>
+            <select
+              id="pm"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              <option value="cash">{t('form.payment_method_options.cash')}</option>
+              <option value="online">{t('form.payment_method_options.online')}</option>
+            </select>
           </div>
           <div className="col-span-2">
             <Label>{t('form.services_planned')}</Label>

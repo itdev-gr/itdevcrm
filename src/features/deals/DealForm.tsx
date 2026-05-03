@@ -52,6 +52,7 @@ export function DealForm({ initial }: Props) {
   const [country, setCountry] = useState(client?.country ?? '');
   const [industry, setIndustry] = useState(client?.industry ?? '');
   const [address, setAddress] = useState(client?.address ?? '');
+  const [paymentMethod, setPaymentMethod] = useState(initial.payment_method ?? '');
   const [services, setServices] = useState<PlannedService[]>(
     Array.isArray(initial.services_planned)
       ? (initial.services_planned as unknown as PlannedService[])
@@ -74,8 +75,9 @@ export function DealForm({ initial }: Props) {
       services_planned: services,
       one_time_value: oneTimeNum,
       recurring_monthly_value: monthlyNum,
+      payment_method: paymentMethod || null,
     }),
-    [title, services, oneTimeNum, monthlyNum, initial.title],
+    [title, services, oneTimeNum, monthlyNum, paymentMethod, initial.title],
   );
 
   const clientPatch = useMemo(() => {
@@ -113,6 +115,7 @@ export function DealForm({ initial }: Props) {
         services_planned: next.services_planned as unknown as DealRow['services_planned'],
         one_time_value: next.one_time_value,
         recurring_monthly_value: next.recurring_monthly_value,
+        payment_method: next.payment_method,
       })
       .eq('id', initial.id);
     if (error) throw new Error(error.message);
@@ -207,9 +210,22 @@ export function DealForm({ initial }: Props) {
           <Label htmlFor="ind">{tLeads('form.industry')}</Label>
           <Input id="ind" value={industry} onChange={(e) => setIndustry(e.target.value)} />
         </div>
-        <div className="col-span-2">
+        <div>
           <Label htmlFor="addr">{tLeads('form.address')}</Label>
           <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="pm">{tLeads('form.payment_method')}</Label>
+          <select
+            id="pm"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="">—</option>
+            <option value="cash">{tLeads('form.payment_method_options.cash')}</option>
+            <option value="online">{tLeads('form.payment_method_options.online')}</option>
+          </select>
         </div>
         <div className="col-span-2">
           <Label>{tLeads('form.services_planned')}</Label>

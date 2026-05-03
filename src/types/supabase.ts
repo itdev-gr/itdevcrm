@@ -358,6 +358,7 @@ export type Database = {
           locked_by: string | null
           one_time_value: number | null
           owner_user_id: string | null
+          payment_method: string | null
           probability: number | null
           recurring_monthly_value: number | null
           services_planned: Json
@@ -387,6 +388,7 @@ export type Database = {
           locked_by?: string | null
           one_time_value?: number | null
           owner_user_id?: string | null
+          payment_method?: string | null
           probability?: number | null
           recurring_monthly_value?: number | null
           services_planned?: Json
@@ -416,6 +418,7 @@ export type Database = {
           locked_by?: string | null
           one_time_value?: number | null
           owner_user_id?: string | null
+          payment_method?: string | null
           probability?: number | null
           recurring_monthly_value?: number | null
           services_planned?: Json
@@ -740,6 +743,7 @@ export type Database = {
           industry: string | null
           notes: string | null
           owner_user_id: string | null
+          payment_method: string | null
           phone: string | null
           services_planned: Json
           source: string
@@ -776,6 +780,7 @@ export type Database = {
           industry?: string | null
           notes?: string | null
           owner_user_id?: string | null
+          payment_method?: string | null
           phone?: string | null
           services_planned?: Json
           source: string
@@ -812,6 +817,7 @@ export type Database = {
           industry?: string | null
           notes?: string | null
           owner_user_id?: string | null
+          payment_method?: string | null
           phone?: string | null
           services_planned?: Json
           source?: string

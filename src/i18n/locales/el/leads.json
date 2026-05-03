@@ -67,7 +67,12 @@
     "estimated_one_time_value": "Εφάπαξ ποσό (€)",
     "estimated_monthly_value": "Μηνιαίο ποσό (€)",
     "services_planned": "Προγραμματισμένες υπηρεσίες",
-    "expected_close_date": "Προβλεπόμενη ημερομηνία κλεισίματος"
+    "expected_close_date": "Προβλεπόμενη ημερομηνία κλεισίματος",
+    "payment_method": "Τρόπος πληρωμής",
+    "payment_method_options": {
+      "cash": "Μετρητά",
+      "online": "Διαδικτυακή πληρωμή"
+    }
   },
   "tabs": {
     "overview": "Επισκόπηση",
