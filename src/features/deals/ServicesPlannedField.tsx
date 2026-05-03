@@ -224,7 +224,7 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
                     </div>
                   </>
                 ) : (
-                  <div className="col-span-5">
+                  <div className="col-span-4">
                     <Label className="whitespace-nowrap text-xs">
                       {t('services.one_time_amount')}
                     </Label>
