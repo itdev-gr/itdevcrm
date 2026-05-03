@@ -57,6 +57,11 @@ export function AccountingOnboardingKanbanPage() {
     const dealId = String(e.active.id);
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
+    const deal = deals.find((d) => d.id === dealId);
+    if (deal && stageId !== deal.accounting_stage_id && !deal.payment_method) {
+      alert(t('kanban.move_errors.payment_method_required'));
+      return;
+    }
     if (paidStage && stageId === paidStage.id) {
       try {
         await complete.mutateAsync(dealId);

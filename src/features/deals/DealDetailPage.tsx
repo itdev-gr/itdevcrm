@@ -58,6 +58,10 @@ export function DealDetailPage() {
 
   async function onChangeAccountingStage(targetStageId: string) {
     if (!deal || !targetStageId || targetStageId === deal.accounting_stage_id) return;
+    if (!deal.payment_method) {
+      alert(tAccounting('kanban.move_errors.payment_method_required'));
+      return;
+    }
     if (paidStage && targetStageId === paidStage.id) {
       try {
         await complete.mutateAsync(dealId);

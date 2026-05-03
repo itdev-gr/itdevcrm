@@ -33,7 +33,10 @@
   },
   "kanban": {
     "title": "Accounting onboarding",
-    "empty_column": "Drop deals here"
+    "empty_column": "Drop deals here",
+    "move_errors": {
+      "payment_method_required": "Choose a payment method (cash or online) on the deal before moving it."
+    }
   },
   "card": {
     "services": "Services",
