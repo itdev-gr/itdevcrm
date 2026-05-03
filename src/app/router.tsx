@@ -1,4 +1,5 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Outlet } from 'react-router-dom';
+import { RequireGroup } from '@/components/auth/RequireGroup';
 import { ShellLayout } from './ShellLayout';
 import { SetPasswordLayout } from './SetPasswordLayout';
 import { AdminLayout } from './AdminLayout';
@@ -46,6 +47,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'sales',
+        element: (
+          <RequireGroup groups={['sales']}>
+            <Outlet />
+          </RequireGroup>
+        ),
         children: [
           { path: 'clients', element: <ClientsListPage /> },
           { path: 'kanban', element: <SalesKanbanPage /> },
@@ -53,6 +59,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'accounting',
+        element: (
+          <RequireGroup groups={['accounting']}>
+            <Outlet />
+          </RequireGroup>
+        ),
         children: [
           { path: 'onboarding', element: <AccountingOnboardingKanbanPage /> },
           { path: 'clients', element: <AccountingClientsPage /> },
