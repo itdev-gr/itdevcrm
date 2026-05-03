@@ -22,6 +22,7 @@ export function useAutoSave<T>(
   const [status, setStatus] = useState<AutoSaveStatus>('idle');
   const lastSavedRef = useRef<string | null>(null);
   const saveRef = useRef(save);
+  const pendingValueRef = useRef<{ value: T; serialized: string } | null>(null);
 
   useEffect(() => {
     saveRef.current = save;
@@ -35,13 +36,18 @@ export function useAutoSave<T>(
       lastSavedRef.current = serialized;
       return;
     }
-    if (serialized === lastSavedRef.current) return;
+    if (serialized === lastSavedRef.current) {
+      pendingValueRef.current = null;
+      return;
+    }
 
+    pendingValueRef.current = { value, serialized };
     const id = setTimeout(async () => {
       setStatus('saving');
       try {
         await saveRef.current(value);
         lastSavedRef.current = serialized;
+        pendingValueRef.current = null;
         setStatus('saved');
       } catch (err) {
         console.error('autosave failed', err);
@@ -51,6 +57,19 @@ export function useAutoSave<T>(
 
     return () => clearTimeout(id);
   }, [value, enabled, debounceMs]);
+
+  // On unmount, flush any pending unsaved change so navigating away never
+  // loses work. Fire-and-forget — there is no UI left to surface errors.
+  useEffect(() => {
+    return () => {
+      const pending = pendingValueRef.current;
+      if (!pending) return;
+      if (pending.serialized === lastSavedRef.current) return;
+      void saveRef.current(pending.value).catch((err) => {
+        console.error('autosave (on unmount) failed', err);
+      });
+    };
+  }, []);
 
   // Auto-fade the "saved" pill back to idle after a moment.
   useEffect(() => {
