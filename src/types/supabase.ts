@@ -349,6 +349,7 @@ export type Database = {
           id: string
           invoice_number: string | null
           label: string | null
+          next_due_at: string | null
           paid_at: string | null
           service_index: number | null
           service_type: string | null
@@ -365,6 +366,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           label?: string | null
+          next_due_at?: string | null
           paid_at?: string | null
           service_index?: number | null
           service_type?: string | null
@@ -381,6 +383,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           label?: string | null
+          next_due_at?: string | null
           paid_at?: string | null
           service_index?: number | null
           service_type?: string | null

@@ -37,6 +37,8 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
   const update = useUpdateDealPayment(dealId);
   const remove = useDeleteDealPayment(dealId);
 
+  const isTest = row.billing_type === 'recurring_test_2min';
+
   const [label, setLabel] = useState(row.label ?? '');
   const [start, setStart] = useState(row.start_date ?? '');
   const [end, setEnd] = useState(row.end_date ?? '');
@@ -56,6 +58,35 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
         paid_at: next === 'paid' ? new Date().toISOString() : null,
       },
     });
+  }
+
+  if (isTest) {
+    const nextDue = row.next_due_at ? new Date(row.next_due_at) : null;
+    return (
+      <tr className="border-t bg-amber-50/40">
+        <td className="px-2 py-2 text-xs text-slate-700">
+          {t('services.types.test', { defaultValue: 'Test' })}
+          <div className="text-[10px] text-amber-700">
+            {t('services.billing.recurring_test_2min', {
+              defaultValue: 'Every 2 minutes (test)',
+            })}
+          </div>
+        </td>
+        <td className="px-2 py-2 text-xs text-slate-600">{row.label ?? '—'}</td>
+        <td className="px-2 py-2 text-xs text-slate-500" colSpan={2}>
+          {t('payments.next_due', { defaultValue: 'Next due' })}:{' '}
+          {nextDue ? nextDue.toLocaleString() : '—'}
+        </td>
+        <td className="px-2 py-2 text-xs">{Number(row.amount ?? 0).toFixed(2)}</td>
+        <td className="px-2 py-2">
+          <span className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">
+            {row.status === 'paid' ? t('payments.status_paid') : t('payments.status_pending')}
+          </span>
+        </td>
+        <td className="px-2 py-2 text-xs text-slate-500">{row.invoice_number ?? '—'}</td>
+        <td className="px-2 py-2 text-right text-[10px] text-slate-400">auto</td>
+      </tr>
+    );
   }
 
   return (
