@@ -16,6 +16,7 @@ export type RecurringClientRow = {
   has_overdue_payment: boolean;
   is_blocked: boolean;
   earliest_due: string | null;
+  deal_id: string | null;
 };
 
 type ClientRecord = {
@@ -76,8 +77,9 @@ export function useRecurringClients() {
 
           const isBlocked = (c.client_blocks ?? []).some((b) => b.unblocked_at === null);
 
-          const recurringPayments = (c.deals ?? [])
-            .filter((d) => !d.archived)
+          const liveDeals = (c.deals ?? []).filter((d) => !d.archived);
+          const dealId = liveDeals[0]?.id ?? null;
+          const recurringPayments = liveDeals
             .flatMap((d) => d.deal_payments ?? [])
             .filter(
               (p) =>
@@ -107,6 +109,7 @@ export function useRecurringClients() {
             has_overdue_payment: hasOverdue,
             is_blocked: isBlocked,
             earliest_due: earliestDue,
+            deal_id: dealId,
           };
         })
         .filter((r): r is RecurringClientRow => r !== null)

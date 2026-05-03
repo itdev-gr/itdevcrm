@@ -99,7 +99,7 @@ export function AccountingRecurringPage() {
                   <tr key={r.client_id} className="border-t hover:bg-slate-50/60">
                     <td className="px-3 py-2">
                       <Link
-                        to={`/clients/${r.client_id}`}
+                        to={r.deal_id ? `/deals/${r.deal_id}` : `/clients/${r.client_id}`}
                         className="font-medium text-blue-700 hover:underline"
                       >
                         {r.client_name}
