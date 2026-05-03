@@ -193,6 +193,7 @@ export type Database = {
           postcode: string | null
           region: string | null
           start_date: string | null
+          status: string
           updated_at: string
           vat_number: string | null
           website: string | null
@@ -219,6 +220,7 @@ export type Database = {
           postcode?: string | null
           region?: string | null
           start_date?: string | null
+          status?: string
           updated_at?: string
           vat_number?: string | null
           website?: string | null
@@ -245,6 +247,7 @@ export type Database = {
           postcode?: string | null
           region?: string | null
           start_date?: string | null
+          status?: string
           updated_at?: string
           vat_number?: string | null
           website?: string | null

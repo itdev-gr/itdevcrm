@@ -25,6 +25,7 @@ export function DealDetailPage() {
   const { t, i18n } = useTranslation('deals');
   const { t: tLeads } = useTranslation('leads');
   const { t: tAccounting } = useTranslation('accounting');
+  const { t: tClients } = useTranslation('clients');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: deal, isLoading, error } = useDeal(dealId);
   const moveAccounting = useMoveAccountingStage();
@@ -58,6 +59,15 @@ export function DealDetailPage() {
       .from('deals')
       .update({ owner_user_id: next })
       .eq('id', deal.id);
+    if (e) alert(e.message);
+  }
+
+  async function onChangeClientStatus(nextStatus: string) {
+    if (!deal?.client_id) return;
+    const { error: e } = await supabase
+      .from('clients')
+      .update({ status: nextStatus })
+      .eq('id', deal.client_id);
     if (e) alert(e.message);
   }
 
@@ -98,6 +108,22 @@ export function DealDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="client-status" className="text-sm">
+              {tClients('status.label')}:
+            </Label>
+            <select
+              id="client-status"
+              value={deal.client?.status ?? 'new'}
+              onChange={(e) => onChangeClientStatus(e.target.value)}
+              className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+            >
+              <option value="new">{tClients('status.new')}</option>
+              <option value="active">{tClients('status.active')}</option>
+              <option value="blocked">{tClients('status.blocked')}</option>
+              <option value="done">{tClients('status.done')}</option>
+            </select>
+          </div>
           {wonBy && (
             <div className="flex items-center gap-2">
               <Label className="text-sm">{tLeads('sales_person.label')}:</Label>

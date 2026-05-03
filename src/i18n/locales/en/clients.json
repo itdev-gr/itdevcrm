@@ -33,6 +33,13 @@
     "submitting": "Saving…",
     "cancel": "Cancel"
   },
+  "status": {
+    "label": "Status",
+    "new": "New",
+    "active": "Active",
+    "blocked": "Blocked",
+    "done": "Done"
+  },
   "tabs": {
     "overview": "Overview",
     "deals": "Deals",

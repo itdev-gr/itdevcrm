@@ -7,6 +7,7 @@ export type DealRow = Database['public']['Tables']['deals']['Row'] & {
   client?: {
     id: string;
     name: string;
+    status?: string | null;
     contact_first_name?: string | null;
     contact_last_name?: string | null;
     email?: string | null;
