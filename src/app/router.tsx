@@ -68,6 +68,17 @@ const AccountingClientsPage = lazyPage(
   () => import('@/features/accounting/AccountingClientsPage'),
   'AccountingClientsPage',
 );
+const AccountingRecurringPage = lazyPage(
+  () => import('@/features/accounting/AccountingRecurringPage'),
+  'AccountingRecurringPage',
+);
+// JobsKanbanPage takes a `serviceType` prop, so we can't go through the
+// unknown-typed lazyPage helper — invoke React.lazy directly to preserve the
+// original component's prop signature.
+const JobsKanbanPage = lazy(() =>
+  import('@/features/jobs/JobsKanbanPage').then((m) => ({ default: m.JobsKanbanPage })),
+);
+const JobDetailPage = lazyPage(() => import('@/features/jobs/JobDetailPage'), 'JobDetailPage');
 
 export const router = createBrowserRouter([
   {
@@ -112,10 +123,30 @@ export const router = createBrowserRouter([
         children: [
           { path: 'onboarding', element: <AccountingOnboardingKanbanPage /> },
           { path: 'clients', element: <AccountingClientsPage /> },
+          { path: 'recurring', element: <AccountingRecurringPage /> },
+        ],
+      },
+      {
+        path: 'tech',
+        element: (
+          <RequireGroup
+            groups={['web_seo', 'local_seo', 'web_dev', 'social_media', 'ai_seo', 'hosting']}
+          >
+            <Outlet />
+          </RequireGroup>
+        ),
+        children: [
+          { path: 'web-seo', element: <JobsKanbanPage serviceType="web_seo" /> },
+          { path: 'local-seo', element: <JobsKanbanPage serviceType="local_seo" /> },
+          { path: 'web-dev', element: <JobsKanbanPage serviceType="web_dev" /> },
+          { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
+          { path: 'ai-seo', element: <JobsKanbanPage serviceType="ai_seo" /> },
+          { path: 'hosting', element: <JobsKanbanPage serviceType="hosting" /> },
         ],
       },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },
       { path: 'deals/:dealId', element: <DealDetailPage /> },
+      { path: 'jobs/:jobId', element: <JobDetailPage /> },
       { path: 'leads/:leadId', element: <LeadDetailPage /> },
       { path: 'profile', element: <MyProfilePage /> },
       { path: '*', element: <NotFoundPage /> },
