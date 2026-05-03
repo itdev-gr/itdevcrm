@@ -18,11 +18,33 @@
   },
   "tabs": {
     "overview": "Overview",
-    "sales": "Sales",
+    "payment": "Payment",
     "jobs": "Jobs",
     "comments": "Comments",
     "attachments": "Attachments",
     "activity": "Activity"
+  },
+  "payments": {
+    "title": "Payments",
+    "add": "+ Add payment",
+    "empty": "No payments yet.",
+    "service": "Service",
+    "label": "Label",
+    "start": "Start",
+    "end": "End",
+    "amount": "Amount (€)",
+    "status": "Status",
+    "invoice_number": "Invoice #",
+    "actions": "",
+    "remove": "Remove",
+    "status_pending": "Pending",
+    "status_paid": "Paid",
+    "card_status": {
+      "pending": "Pending",
+      "partial": "Partial",
+      "paid": "Paid"
+    },
+    "card_invoiced": "Invoiced"
   },
   "actions": {
     "view": "View",

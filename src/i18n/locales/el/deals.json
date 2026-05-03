@@ -18,11 +18,33 @@
   },
   "tabs": {
     "overview": "Επισκόπηση",
-    "sales": "Πωλήσεις",
+    "payment": "Πληρωμή",
     "jobs": "Εργασίες",
     "comments": "Σχόλια",
     "attachments": "Συνημμένα",
     "activity": "Δραστηριότητα"
+  },
+  "payments": {
+    "title": "Πληρωμές",
+    "add": "+ Προσθήκη πληρωμής",
+    "empty": "Δεν υπάρχουν ακόμη πληρωμές.",
+    "service": "Υπηρεσία",
+    "label": "Ετικέτα",
+    "start": "Από",
+    "end": "Έως",
+    "amount": "Ποσό (€)",
+    "status": "Κατάσταση",
+    "invoice_number": "Αρ. Τιμολογίου",
+    "actions": "",
+    "remove": "Διαγραφή",
+    "status_pending": "Εκκρεμεί",
+    "status_paid": "Πληρώθηκε",
+    "card_status": {
+      "pending": "Εκκρεμεί",
+      "partial": "Μερικώς",
+      "paid": "Πληρώθηκε"
+    },
+    "card_invoiced": "Τιμολογήθηκε"
   },
   "actions": {
     "view": "Προβολή",

@@ -7,12 +7,39 @@ import { CopyableCode } from '@/components/CopyableCode';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import type { AccountingDealRow } from './hooks/useAccountingDeals';
+import type { PlannedService } from '@/features/deals/ServicesPlannedField';
+
+function paymentSummary(rows: AccountingDealRow['deal_payments']) {
+  const list = rows ?? [];
+  if (list.length === 0)
+    return { status: 'pending' as const, invoiced: false, nextDue: null as string | null };
+  const paid = list.filter((p) => p.status === 'paid').length;
+  const status: 'pending' | 'partial' | 'paid' =
+    paid === 0 ? 'pending' : paid === list.length ? 'paid' : 'partial';
+  const invoiced = list.length > 0 && list.every((p) => !!p.invoice_number);
+  // Next pending row by closest end_date — what accounting needs to chase next.
+  const upcoming = list
+    .filter((p) => p.status === 'pending' && p.end_date)
+    .sort((a, b) => (a.end_date ?? '').localeCompare(b.end_date ?? ''));
+  return { status, invoiced, nextDue: upcoming[0]?.end_date ?? null };
+}
 
 export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
   const { t } = useTranslation('accounting');
   const { t: tLeads } = useTranslation('leads');
+  const { t: tDeals } = useTranslation('deals');
   const { data: owners = [] } = useAssignableOwners();
   const owner = deal.owner_user_id ? owners.find((o) => o.user_id === deal.owner_user_id) : null;
+  const services: PlannedService[] = Array.isArray(deal.services_planned)
+    ? (deal.services_planned as unknown as PlannedService[])
+    : [];
+  const { status: payStatus, invoiced, nextDue } = paymentSummary(deal.deal_payments);
+  const statusClass =
+    payStatus === 'paid'
+      ? 'bg-emerald-100 text-emerald-700'
+      : payStatus === 'partial'
+        ? 'bg-amber-100 text-amber-700'
+        : 'bg-slate-100 text-slate-700';
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
@@ -64,6 +91,26 @@ export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
           </div>
           <div className="text-[10px] text-slate-500">
             👤 {owner ? owner.full_name || owner.email : tLeads('owner.unassigned')}
+          </div>
+          {services.length > 0 && (
+            <div className="text-[10px] text-slate-500">
+              {services.map((s) => tDeals(`services.types.${s.service_type}`)).join(' · ')}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-1 pt-1">
+            <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${statusClass}`}>
+              {tDeals(`payments.card_status.${payStatus}`)}
+            </span>
+            {invoiced && (
+              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                📄 {tDeals('payments.card_invoiced')}
+              </span>
+            )}
+            {nextDue && payStatus !== 'paid' && (
+              <span className="text-[10px] text-slate-400" title={formatDate(nextDue)}>
+                ⏳ {relativeFromNow(nextDue)}
+              </span>
+            )}
           </div>
           {startedAt && (
             <div className="text-[10px] text-slate-400" title={formatDate(startedAt)}>

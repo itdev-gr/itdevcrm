@@ -336,6 +336,65 @@ export type Database = {
           },
         ]
       }
+      deal_payments: {
+        Row: {
+          amount: number
+          billing_type: string
+          created_at: string
+          deal_id: string
+          end_date: string | null
+          id: string
+          invoice_number: string | null
+          label: string | null
+          paid_at: string | null
+          service_index: number | null
+          service_type: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          billing_type: string
+          created_at?: string
+          deal_id: string
+          end_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          label?: string | null
+          paid_at?: string | null
+          service_index?: number | null
+          service_type?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_type?: string
+          created_at?: string
+          deal_id?: string
+          end_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          label?: string | null
+          paid_at?: string | null
+          service_index?: number | null
+          service_type?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_payments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           accounting_completed_at: string | null
@@ -1233,6 +1292,7 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      ensure_recurring_payments: { Args: never; Returns: number }
       generate_lead_code: { Args: never; Returns: string }
       global_search: {
         Args: { max_rows?: number; q: string }
@@ -1259,6 +1319,10 @@ export type Database = {
           is_admin: boolean
           user_id: string
         }[]
+      }
+      seed_deal_payments: {
+        Args: { target_deal_id: string }
+        Returns: undefined
       }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
     }

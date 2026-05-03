@@ -9,6 +9,8 @@ import { useCompleteAccounting } from '@/features/accounting/hooks/useCompleteAc
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
+import { PaymentsPanel } from './PaymentsPanel';
+import type { PlannedService } from './ServicesPlannedField';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
@@ -40,6 +42,9 @@ export function DealDetailPage() {
 
   const completed = !!deal.accounting_completed_at;
   const onAccountingKanban = !!deal.accounting_stage_id && !completed;
+  const dealServices: PlannedService[] = Array.isArray(deal.services_planned)
+    ? (deal.services_planned as unknown as PlannedService[])
+    : [];
 
   const accStages = stages
     .filter((s) => s.board === 'accounting_onboarding' && !s.archived)
@@ -155,7 +160,7 @@ export function DealDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="sales">{t('tabs.sales')}</TabsTrigger>
+          <TabsTrigger value="payment">{t('tabs.payment')}</TabsTrigger>
           <TabsTrigger value="jobs">{t('tabs.jobs')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
@@ -174,23 +179,8 @@ export function DealDetailPage() {
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value="sales" className="pt-4">
-          <div className="grid max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <Label>{t('form.stage')}</Label>
-              <div className="mt-1 rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                {(deal.stage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
-                  deal.stage?.code ??
-                  '—'}
-              </div>
-            </div>
-            <div>
-              <Label>{tLeads('sales_person.label')}</Label>
-              <div className="mt-1 rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                {wonBy ? wonBy.full_name || wonBy.email : '—'}
-              </div>
-            </div>
-          </div>
+        <TabsContent value="payment" className="pt-4">
+          <PaymentsPanel dealId={dealId} services={dealServices} />
         </TabsContent>
         <TabsContent value="jobs" className="pt-4">
           <p className="text-sm text-muted-foreground">Jobs (Phase 6)</p>
