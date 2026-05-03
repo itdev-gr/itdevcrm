@@ -349,7 +349,6 @@ export type Database = {
           id: string
           invoice_number: string | null
           label: string | null
-          next_due_at: string | null
           paid_at: string | null
           service_index: number | null
           service_type: string | null
@@ -366,7 +365,6 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           label?: string | null
-          next_due_at?: string | null
           paid_at?: string | null
           service_index?: number | null
           service_type?: string | null
@@ -383,7 +381,6 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           label?: string | null
-          next_due_at?: string | null
           paid_at?: string | null
           service_index?: number | null
           service_type?: string | null
@@ -1326,6 +1323,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      move_overdue_deals_to_on_hold: { Args: never; Returns: number }
       seed_deal_payments: {
         Args: { target_deal_id: string }
         Returns: undefined
