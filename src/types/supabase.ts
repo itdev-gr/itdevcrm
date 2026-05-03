@@ -663,12 +663,16 @@ export type Database = {
           archived_reason: string | null
           assigned_group_id: string | null
           billing_type: string
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
           client_id: string
           code: string | null
           completed_at: string | null
           created_at: string
           deal_id: string
           id: string
+          is_blocked: boolean
           monthly_amount: number | null
           monthly_tasks: Json
           monthly_tasks_period: string | null
@@ -689,12 +693,16 @@ export type Database = {
           archived_reason?: string | null
           assigned_group_id?: string | null
           billing_type: string
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           client_id: string
           code?: string | null
           completed_at?: string | null
           created_at?: string
           deal_id: string
           id?: string
+          is_blocked?: boolean
           monthly_amount?: number | null
           monthly_tasks?: Json
           monthly_tasks_period?: string | null
@@ -715,12 +723,16 @@ export type Database = {
           archived_reason?: string | null
           assigned_group_id?: string | null
           billing_type?: string
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           client_id?: string
           code?: string | null
           completed_at?: string | null
           created_at?: string
           deal_id?: string
           id?: string
+          is_blocked?: boolean
           monthly_amount?: number | null
           monthly_tasks?: Json
           monthly_tasks_period?: string | null
@@ -748,6 +760,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "jobs_client_id_fkey"
@@ -1281,6 +1300,10 @@ export type Database = {
         Args: { reason_text: string; target_client_id: string }
         Returns: Json
       }
+      block_job: {
+        Args: { reason?: string; target_job_id: string }
+        Returns: Json
+      }
       complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
       convert_lead_to_client: {
         Args: { target_lead_id: string }
@@ -1324,11 +1347,16 @@ export type Database = {
         }[]
       }
       move_overdue_deals_to_on_hold: { Args: never; Returns: number }
+      release_jobs_for_deal: {
+        Args: { partial_payment_mode: boolean; target_deal_id: string }
+        Returns: number
+      }
       seed_deal_payments: {
         Args: { target_deal_id: string }
         Returns: undefined
       }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
+      unblock_job: { Args: { target_job_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

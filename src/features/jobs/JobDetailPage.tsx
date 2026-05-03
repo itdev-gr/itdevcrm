@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { CopyableCode } from '@/components/CopyableCode';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
@@ -10,6 +11,8 @@ import { useJob } from './hooks/useJob';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
+import { useBlockJob, useUnblockJob } from './hooks/useBlockJob';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import type { ServiceType } from './hooks/useJobs';
 
@@ -23,6 +26,11 @@ export function JobDetailPage() {
 
   const serviceType = (job?.service_type ?? '') as ServiceType;
   const moveStage = useMoveJobStage(serviceType);
+  const block = useBlockJob(job?.id ?? '');
+  const unblock = useUnblockJob(job?.id ?? '');
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const canBlockJob = isAdmin || groupCodes.includes('accounting');
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !job)
@@ -54,6 +62,15 @@ export function JobDetailPage() {
           <div className="flex items-baseline gap-3">
             {job.deal?.code && <CopyableCode code={job.deal.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{fullName}</h1>
+            {job.is_blocked && (
+              <span
+                className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                title={job.blocked_reason ?? undefined}
+              >
+                🔒 Blocked
+                {job.blocked_reason ? ` · ${job.blocked_reason.replace(/_/g, ' ')}` : ''}
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500">
             {job.service_type} · {job.billing_type} · 🗓 {formatDate(job.created_at)} ·{' '}
@@ -61,6 +78,26 @@ export function JobDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {canBlockJob &&
+            (job.is_blocked ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => unblock.mutate()}
+                disabled={unblock.isPending}
+              >
+                Unblock
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => block.mutate({ reason: 'manual' })}
+                disabled={block.isPending}
+              >
+                Block
+              </Button>
+            ))}
           {boardStages.length > 0 && (
             <div className="flex items-center gap-2">
               <Label htmlFor="job-stage" className="text-sm">

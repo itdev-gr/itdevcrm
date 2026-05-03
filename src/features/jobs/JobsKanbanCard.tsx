@@ -38,7 +38,17 @@ export function JobsKanbanCard({ job }: { job: JobRow }) {
                 {headline}
               </Link>
             </div>
-            {job.completed_at && <span className="text-xs text-emerald-600">✓</span>}
+            <div className="flex items-center gap-1">
+              {job.is_blocked && (
+                <span
+                  className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700"
+                  title={job.blocked_reason ?? undefined}
+                >
+                  🔒 Blocked
+                </span>
+              )}
+              {job.completed_at && <span className="text-xs text-emerald-600">✓</span>}
+            </div>
           </div>
           {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
           {Number(job.monthly_amount ?? 0) > 0 && (
