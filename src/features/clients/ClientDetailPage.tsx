@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -24,15 +24,23 @@ export function ClientDetailPage() {
   const { t: tAcc } = useTranslation('accounting');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: client, isLoading, error } = useClient(clientId);
-  const { data: deals = [] } = useDeals({ clientId });
+  const { data: deals = [], isLoading: dealsLoading } = useDeals({ clientId });
   const { data: jobs = [] } = useJobsForClient(clientId);
   const { data: block } = useClientBlock(clientId);
   const unblock = useUnblockClient();
   const [blockOpen, setBlockOpen] = useState(false);
 
-  if (isLoading) return <div className="p-8">…</div>;
+  if (isLoading || dealsLoading) return <div className="p-8">…</div>;
   if (error || !client)
     return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+
+  // 1 client = 1 live deal in this CRM. Whenever one exists, the deal is the
+  // canonical working record — redirect there so users always land on the
+  // page with the full payments / services / accounting context.
+  const liveDeal = deals.find((d) => !d.archived);
+  if (liveDeal) {
+    return <Navigate to={`/deals/${liveDeal.id}`} replace />;
+  }
 
   async function onChangeStatus(nextStatus: string) {
     if (!client) return;
@@ -92,9 +100,6 @@ export function ClientDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="deals">
-            {t('tabs.deals')} ({deals.length})
-          </TabsTrigger>
           <TabsTrigger value="jobs">
             {t('tabs.jobs')} ({jobs.length})
           </TabsTrigger>
@@ -105,31 +110,6 @@ export function ClientDetailPage() {
 
         <TabsContent value="overview" className="pt-4">
           <ClientForm initial={client} />
-        </TabsContent>
-
-        <TabsContent value="deals" className="space-y-3 pt-4">
-          {deals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No deals yet.</p>
-          ) : (
-            <ul className="divide-y rounded-md border">
-              {deals.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex items-center justify-between gap-3 px-4 py-2 text-sm"
-                >
-                  <div>
-                    <div className="font-medium">{d.title}</div>
-                    <div className="text-[11px] text-slate-500">
-                      🗓 {formatDate(d.created_at)} · {relativeFromNow(d.created_at)}
-                    </div>
-                  </div>
-                  <Link to={`/deals/${d.id}`} className="text-blue-600 underline text-xs">
-                    View →
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
         </TabsContent>
 
         <TabsContent value="jobs" className="space-y-3 pt-4">
