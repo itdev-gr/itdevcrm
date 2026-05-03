@@ -6,7 +6,7 @@ import type { AccountingDealRow } from './hooks/useAccountingDeals';
 type Props = {
   stageId: string;
   stageLabel: string;
-  stageSubtitle?: string;
+  stageSubtitle?: string | undefined;
   deals: AccountingDealRow[];
 };
 
