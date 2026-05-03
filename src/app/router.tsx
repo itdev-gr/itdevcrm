@@ -1,28 +1,73 @@
+import { lazy, type ComponentType } from 'react';
 import { createBrowserRouter, Outlet } from 'react-router-dom';
 import { RequireGroup } from '@/components/auth/RequireGroup';
 import { ShellLayout } from './ShellLayout';
 import { SetPasswordLayout } from './SetPasswordLayout';
 import { AdminLayout } from './AdminLayout';
-import { HomePage } from './routes/HomePage';
-import { LoginPage } from '@/features/auth/LoginPage';
-import { NotFoundPage } from './routes/NotFoundPage';
-import { UsersListPage } from '@/features/users/UsersListPage';
-import { UserDetailPage } from '@/features/users/UserDetailPage';
-import { GroupsListPage } from '@/features/permissions/GroupsListPage';
-import { GroupPermissionsPage } from '@/features/permissions/GroupPermissionsPage';
-import { UserPermissionsPage } from '@/features/permissions/UserPermissionsPage';
-import { FieldRulesPage } from '@/features/permissions/FieldRulesPage';
-import { PermissionsTestPage } from '@/features/permissions/PermissionsTestPage';
-import { StagesListPage } from '@/features/stages/StagesListPage';
-import { ServicePackagesPage } from '@/features/service_packages/ServicePackagesPage';
-import { MyProfilePage } from '@/features/users/MyProfilePage';
-import { ClientsListPage } from '@/features/clients/ClientsListPage';
-import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
-import { DealDetailPage } from '@/features/deals/DealDetailPage';
-import { LeadDetailPage } from '@/features/leads/LeadDetailPage';
-import { SalesKanbanPage } from '@/features/sales/SalesKanbanPage';
-import { AccountingOnboardingKanbanPage } from '@/features/accounting/AccountingOnboardingKanbanPage';
-import { AccountingClientsPage } from '@/features/accounting/AccountingClientsPage';
+
+// Lazily load every page so each lands in its own chunk and the initial
+// JS payload stays small. Components are named exports, so map them to
+// `default` for `React.lazy`.
+function lazyPage<K extends string>(
+  importer: () => Promise<Record<K, ComponentType<unknown>>>,
+  name: K,
+) {
+  return lazy(() => importer().then((mod) => ({ default: mod[name] })));
+}
+
+const HomePage = lazyPage(() => import('./routes/HomePage'), 'HomePage');
+const NotFoundPage = lazyPage(() => import('./routes/NotFoundPage'), 'NotFoundPage');
+const LoginPage = lazyPage(() => import('@/features/auth/LoginPage'), 'LoginPage');
+const UsersListPage = lazyPage(() => import('@/features/users/UsersListPage'), 'UsersListPage');
+const UserDetailPage = lazyPage(() => import('@/features/users/UserDetailPage'), 'UserDetailPage');
+const GroupsListPage = lazyPage(
+  () => import('@/features/permissions/GroupsListPage'),
+  'GroupsListPage',
+);
+const GroupPermissionsPage = lazyPage(
+  () => import('@/features/permissions/GroupPermissionsPage'),
+  'GroupPermissionsPage',
+);
+const UserPermissionsPage = lazyPage(
+  () => import('@/features/permissions/UserPermissionsPage'),
+  'UserPermissionsPage',
+);
+const FieldRulesPage = lazyPage(
+  () => import('@/features/permissions/FieldRulesPage'),
+  'FieldRulesPage',
+);
+const PermissionsTestPage = lazyPage(
+  () => import('@/features/permissions/PermissionsTestPage'),
+  'PermissionsTestPage',
+);
+const StagesListPage = lazyPage(() => import('@/features/stages/StagesListPage'), 'StagesListPage');
+const ServicePackagesPage = lazyPage(
+  () => import('@/features/service_packages/ServicePackagesPage'),
+  'ServicePackagesPage',
+);
+const MyProfilePage = lazyPage(() => import('@/features/users/MyProfilePage'), 'MyProfilePage');
+const ClientsListPage = lazyPage(
+  () => import('@/features/clients/ClientsListPage'),
+  'ClientsListPage',
+);
+const ClientDetailPage = lazyPage(
+  () => import('@/features/clients/ClientDetailPage'),
+  'ClientDetailPage',
+);
+const DealDetailPage = lazyPage(() => import('@/features/deals/DealDetailPage'), 'DealDetailPage');
+const LeadDetailPage = lazyPage(() => import('@/features/leads/LeadDetailPage'), 'LeadDetailPage');
+const SalesKanbanPage = lazyPage(
+  () => import('@/features/sales/SalesKanbanPage'),
+  'SalesKanbanPage',
+);
+const AccountingOnboardingKanbanPage = lazyPage(
+  () => import('@/features/accounting/AccountingOnboardingKanbanPage'),
+  'AccountingOnboardingKanbanPage',
+);
+const AccountingClientsPage = lazyPage(
+  () => import('@/features/accounting/AccountingClientsPage'),
+  'AccountingClientsPage',
+);
 
 export const router = createBrowserRouter([
   {
