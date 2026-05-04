@@ -20,18 +20,3 @@ export function useServiceSubpackages(parentId: string) {
     },
   });
 }
-
-export function useAllServiceSubpackages() {
-  return useQuery({
-    queryKey: ['service-subpackages-all'],
-    queryFn: async (): Promise<ServiceSubpackageRow[]> => {
-      const { data, error } = await supabase
-        .from('service_subpackages')
-        .select('*')
-        .eq('archived', false)
-        .order('sort_order');
-      if (error) throw new Error(error.message);
-      return (data ?? []) as ServiceSubpackageRow[];
-    },
-  });
-}

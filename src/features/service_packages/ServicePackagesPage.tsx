@@ -30,7 +30,7 @@ function SubpackageRows({ parentId }: SubRowsProps) {
 
   return (
     <tr>
-      <td colSpan={7} className="bg-muted/30 p-0">
+      <td colSpan={9} className="bg-muted/30 p-0">
         <div className="px-8 py-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
