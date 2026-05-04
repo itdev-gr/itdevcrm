@@ -24,6 +24,20 @@ import { vatRateFor } from '@/lib/countries';
 
 const lang: 'en' | 'el' = 'el';
 
+const CATEGORY_LABELS: Record<string, { en: string; el: string }> = {
+  web_seo: { en: 'Web SEO', el: 'Web SEO' },
+  local_seo: { en: 'Local SEO', el: 'Local SEO' },
+  web_dev: { en: 'Web Development', el: 'Ανάπτυξη Ιστοσελίδων' },
+  social_media: { en: 'Social Media', el: 'Social Media' },
+  ai_seo: { en: 'AI SEO', el: 'AI SEO' },
+  hosting: { en: 'Hosting', el: 'Φιλοξενία' },
+  ads: { en: 'Ads', el: 'Διαφημίσεις' },
+};
+
+function categoryLabel(serviceType: string): string {
+  return CATEGORY_LABELS[serviceType]?.[lang] ?? serviceType;
+}
+
 function getLabel(pkg: CatalogPackage): string {
   return pkg.display_names[lang] ?? pkg.display_names['en'] ?? pkg.code;
 }
@@ -349,7 +363,7 @@ export function OfferBuilderPage() {
                           : 'text-muted-foreground hover:bg-muted'
                       }`}
                     >
-                      {cat}
+                      {categoryLabel(cat)}
                     </button>
                   ))}
                 </nav>
@@ -359,7 +373,7 @@ export function OfferBuilderPage() {
 
           {/* Right panel — packages */}
           <div className="col-span-9 space-y-3">
-            <h2 className="text-base font-semibold">{selectedCategory}</h2>
+            <h2 className="text-base font-semibold">{categoryLabel(selectedCategory)}</h2>
             {currentPkgs.length === 0 ? (
               <p className="text-sm text-muted-foreground">No packages in this category.</p>
             ) : (
