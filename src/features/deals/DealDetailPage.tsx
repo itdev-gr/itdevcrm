@@ -17,6 +17,7 @@ import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
+import { OffersTab } from '@/features/offers/OffersTab';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -190,6 +191,7 @@ export function DealDetailPage() {
           <TabsTrigger value="jobs">{t('tabs.jobs')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
+          <TabsTrigger value="offers">Offers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="pt-4">
@@ -216,6 +218,9 @@ export function DealDetailPage() {
         </TabsContent>
         <TabsContent value="activity" className="pt-4">
           <ActivityPanel entityType="deals" entityId={dealId} />
+        </TabsContent>
+        <TabsContent value="offers" className="pt-4">
+          <OffersTab dealId={dealId} />
         </TabsContent>
       </Tabs>
     </div>

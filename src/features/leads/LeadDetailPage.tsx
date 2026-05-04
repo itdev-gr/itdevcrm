@@ -18,6 +18,7 @@ import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
+import { OffersTab } from '@/features/offers/OffersTab';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -175,6 +176,13 @@ export function LeadDetailPage() {
           )}
           {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}
           <Button
+            type="button"
+            onClick={() => navigate(`/leads/${leadId}/offers/new`)}
+            disabled={readOnly}
+          >
+            Create offer
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
@@ -194,6 +202,7 @@ export function LeadDetailPage() {
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
+          <TabsTrigger value="offers">Offers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="pt-4">
@@ -214,6 +223,9 @@ export function LeadDetailPage() {
         </TabsContent>
         <TabsContent value="activity" className="pt-4">
           <ActivityPanel entityType="leads" entityId={leadId} />
+        </TabsContent>
+        <TabsContent value="offers" className="pt-4">
+          <OffersTab leadId={leadId} />
         </TabsContent>
       </Tabs>
     </div>
