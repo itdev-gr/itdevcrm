@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
 import { renderOfferHtml, type OfferItem, type OfferTotals } from './_pdf-template';
 
 export const config = { maxDuration: 60 };
@@ -76,10 +74,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     createdAt: offer.created_at,
   });
 
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
-    headless: true,
+  const puppeteer = await import('puppeteer-core');
+  const chromium = await import('@sparticuz/chromium');
+  const executablePath = await chromium.default.executablePath();
+  const browser = await puppeteer.default.launch({
+    args: chromium.default.args,
+    defaultViewport: chromium.default.defaultViewport,
+    executablePath,
+    headless: chromium.default.headless as boolean | 'new',
   });
   let pdf: Uint8Array;
   try {

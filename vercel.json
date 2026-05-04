@@ -3,6 +3,9 @@
     { "source": "/((?!api/|assets/|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/offer-pdf.ts": { "maxDuration": 60 }
+    "api/offer-pdf.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/@sparticuz/chromium/**"
+    }
   }
 }
