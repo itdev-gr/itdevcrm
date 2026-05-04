@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
@@ -5,23 +6,21 @@ import { renderOfferHtml, type OfferItem, type OfferTotals } from './_pdf-templa
 
 export const config = { maxDuration: 60 };
 
-export default async function handler(req: Request): Promise<Response> {
-  const url = new URL(req.url);
-  const offerId = url.searchParams.get('id');
-  const auth = req.headers.get('authorization') ?? '';
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  const offerId = typeof req.query.id === 'string' ? req.query.id : null;
+  const auth = req.headers.authorization ?? '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+
   if (!offerId || !token) {
-    return new Response(JSON.stringify({ error: 'missing offer id or token' }), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
-    });
+    res.status(400).json({ error: 'missing offer id or token' });
+    return;
   }
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
-    return new Response(JSON.stringify({ error: 'server not configured' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
-    });
+    res.status(500).json({ error: 'server not configured' });
+    return;
   }
 
   // Service-role client used for storage + DB updates.
@@ -34,17 +33,15 @@ export default async function handler(req: Request): Promise<Response> {
   });
   const { data: { user } } = await userClient.auth.getUser(token);
   if (!user) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
-    });
+    res.status(401).json({ error: 'unauthorized' });
+    return;
   }
 
   const { data: offer, error } = await userClient
     .from('offers').select('*').eq('id', offerId).single();
   if (error || !offer) {
-    return new Response(JSON.stringify({ error: error?.message ?? 'not found' }), {
-      status: 404, headers: { 'Content-Type': 'application/json' },
-    });
+    res.status(404).json({ error: error?.message ?? 'not found' });
+    return;
   }
 
   let clientName = 'Client';
@@ -79,12 +76,10 @@ export default async function handler(req: Request): Promise<Response> {
     createdAt: offer.created_at,
   });
 
-  // Headless Chromium via @sparticuz/chromium for the Vercel runtime.
   const browser = await puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
+    headless: true,
   });
   let pdf: Uint8Array;
   try {
@@ -95,22 +90,18 @@ export default async function handler(req: Request): Promise<Response> {
     await browser.close();
   }
 
-  // Use the service-role client to write to storage (RLS bypass).
   const path = `offers/${offer.id}.pdf`;
   const { error: uploadErr } = await admin.storage
     .from('offer-pdfs')
     .upload(path, pdf, { contentType: 'application/pdf', upsert: true });
   if (uploadErr) {
-    return new Response(JSON.stringify({ error: 'upload failed: ' + uploadErr.message }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
-    });
+    res.status(500).json({ error: 'upload failed: ' + uploadErr.message });
+    return;
   }
 
   await admin.from('offers').update({ pdf_path: path }).eq('id', offer.id);
 
   const { data: signed } = await admin.storage
     .from('offer-pdfs').createSignedUrl(path, 60 * 5);
-  return new Response(JSON.stringify({ url: signed?.signedUrl ?? null }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  res.status(200).json({ url: signed?.signedUrl ?? null });
 }
