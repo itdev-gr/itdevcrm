@@ -84,6 +84,10 @@ const OfferBuilderPage = lazyPage(
   () => import('@/features/offers/OfferBuilderPage'),
   'OfferBuilderPage',
 );
+const OfferDetailPage = lazyPage(
+  () => import('@/features/offers/OfferDetailPage'),
+  'OfferDetailPage',
+);
 
 export const router = createBrowserRouter([
   {
@@ -154,6 +158,7 @@ export const router = createBrowserRouter([
       { path: 'jobs/:jobId', element: <JobDetailPage /> },
       { path: 'leads/:leadId', element: <LeadDetailPage /> },
       { path: 'leads/:leadId/offers/new', element: <OfferBuilderPage /> },
+      { path: 'offers/:offerId', element: <OfferDetailPage /> },
       { path: 'profile', element: <MyProfilePage /> },
       { path: 'sentry-check', element: <SentryCheckPage /> },
       { path: '*', element: <NotFoundPage /> },
