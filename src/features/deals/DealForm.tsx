@@ -9,6 +9,12 @@ import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
 import { INDUSTRIES } from '@/lib/industries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { ServicesPlannedField, type PlannedService } from './ServicesPlannedField';
+import {
+  AdditionalContactsField,
+  parseAdditionalContacts,
+  type AdditionalContact,
+} from '@/features/contacts/AdditionalContactsField';
+import { useClient } from '@/features/clients/hooks/useClient';
 import type { DealRow } from './hooks/useDeals';
 
 type Props = {
@@ -27,6 +33,24 @@ function joinName(full: string): { first: string | null; last: string | null } {
   return { first: parts[0] ?? null, last: parts.slice(1).join(' ') || null };
 }
 
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h2>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export function DealForm({ initial }: Props) {
   const { t, i18n } = useTranslation('deals');
   const { t: tLeads } = useTranslation('leads');
@@ -36,12 +60,18 @@ export function DealForm({ initial }: Props) {
   const client = initial.client;
   const clientId = initial.client_id ?? client?.id ?? null;
 
+  // Pull the full client row (the embedded `client` only carries some columns)
+  // so contact_info + additional_contacts are available to seed the form.
+  const { data: fullClient } = useClient(clientId ?? '');
+
   const [title, setTitle] = useState(initial.title ?? '');
   const [fullName, setFullName] = useState(
     splitName(client?.contact_first_name, client?.contact_last_name),
   );
   const [email, setEmail] = useState(client?.email ?? '');
   const [phone, setPhone] = useState(client?.phone ?? '');
+  const [contactInfo, setContactInfo] = useState<string>('');
+  const [additionalContacts, setAdditionalContacts] = useState<AdditionalContact[]>([]);
   const [website, setWebsite] = useState(client?.website ?? '');
   const [companyName, setCompanyName] = useState(client?.name ?? '');
   const [vatNumber, setVatNumber] = useState(client?.vat_number ?? '');
@@ -54,6 +84,20 @@ export function DealForm({ initial }: Props) {
       ? (initial.services_planned as unknown as PlannedService[])
       : [],
   );
+
+  // When the full client loads, hydrate the contact-info + additional-contacts
+  // fields. Use a one-shot ref-style sentinel so subsequent realtime refreshes
+  // don't clobber edits in progress.
+  const seededRef = useState<{ done: boolean }>({ done: false })[0];
+  if (fullClient && !seededRef.done) {
+    seededRef.done = true;
+    setContactInfo((fullClient as unknown as { contact_info?: string | null }).contact_info ?? '');
+    setAdditionalContacts(
+      parseAdditionalContacts(
+        (fullClient as unknown as { additional_contacts?: unknown }).additional_contacts,
+      ),
+    );
+  }
 
   const oneTimeNum = services.reduce((sum, s) => sum + (Number(s.one_time_amount) || 0), 0);
   const monthlyNum = services.reduce(
@@ -83,6 +127,8 @@ export function DealForm({ initial }: Props) {
       contact_last_name: last,
       email: email.trim() || null,
       phone: phone.trim() || null,
+      contact_info: contactInfo.trim() || null,
+      additional_contacts: additionalContacts,
       website: website.trim() || null,
       name: companyName.trim() || client?.name || '',
       vat_number: vatNumber.trim() || null,
@@ -94,6 +140,8 @@ export function DealForm({ initial }: Props) {
     fullName,
     email,
     phone,
+    contactInfo,
+    additionalContacts,
     website,
     companyName,
     vatNumber,
@@ -145,104 +193,139 @@ export function DealForm({ initial }: Props) {
           : 'idle';
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+    <div className="space-y-6">
+      <Section title={t('form.section_deal', { defaultValue: 'Deal' })}>
+        <div>
           <Label htmlFor="title">{t('form.title')}</Label>
           <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
-        <div>
-          <Label htmlFor="fn">{tLeads('form.full_name')}</Label>
-          <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+      </Section>
+
+      <Section title={tLeads('form.section_primary_contact', { defaultValue: 'Primary contact' })}>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="fn">{tLeads('form.full_name')}</Label>
+            <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="email">{tLeads('form.email')}</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="phone">{tLeads('form.phone')}</Label>
+            <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="contact-info">
+              {tLeads('form.contact_info', { defaultValue: 'Info' })}
+            </Label>
+            <Input
+              id="contact-info"
+              value={contactInfo}
+              onChange={(e) => setContactInfo(e.target.value)}
+              placeholder="e.g. CEO · prefers WhatsApp"
+            />
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        title={tLeads('form.section_additional_contacts', { defaultValue: 'Additional contacts' })}
+      >
+        <AdditionalContactsField
+          value={additionalContacts}
+          onChange={setAdditionalContacts}
+        />
+      </Section>
+
+      <Section title={tLeads('form.section_company', { defaultValue: 'Company' })}>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="co">{tLeads('form.company_name')}</Label>
+            <Input id="co" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="vat">{tLeads('form.vat_number')}</Label>
+            <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="ws">{tLeads('form.website')}</Label>
+            <Input
+              id="ws"
+              type="url"
+              placeholder="https://"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="ind">{tLeads('form.industry')}</Label>
+            <select
+              id="ind"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              {INDUSTRIES.map((ind) => (
+                <option key={ind.code} value={ind.code}>
+                  {ind.labels[lang]}
+                </option>
+              ))}
+              {industry && !INDUSTRIES.some((i) => i.code === industry) && (
+                <option value={industry}>{industry} (legacy)</option>
+              )}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="cnt">{tLeads('form.country')}</Label>
+            <select
+              id="cnt"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.storedValue}>
+                  {c.storedValue} ({Math.round(c.vatRate * 100)}% VAT)
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="addr">{tLeads('form.address')}</Label>
+            <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
+          </div>
+        </div>
+      </Section>
+
+      <Section title={tLeads('form.section_sales', { defaultValue: 'Sales' })}>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="pm">{tLeads('form.payment_method')}</Label>
+            <select
+              id="pm"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              <option value="cash">{tLeads('form.payment_method_options.cash')}</option>
+              <option value="online">{tLeads('form.payment_method_options.online')}</option>
+            </select>
+          </div>
         </div>
         <div>
-          <Label htmlFor="email">{tLeads('form.email')}</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="phone">{tLeads('form.phone')}</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        </div>
-        <div>
-          <Label htmlFor="ws">{tLeads('form.website')}</Label>
-          <Input
-            id="ws"
-            type="url"
-            placeholder="https://"
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="co">{tLeads('form.company_name')}</Label>
-          <Input id="co" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-        </div>
-        <div>
-          <Label htmlFor="vat">{tLeads('form.vat_number')}</Label>
-          <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
-        </div>
-        <div>
-          <Label htmlFor="cnt">{tLeads('form.country')}</Label>
-          <select
-            id="cnt"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">—</option>
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.storedValue}>
-                {c.storedValue} ({Math.round(c.vatRate * 100)}% VAT)
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <Label htmlFor="ind">{tLeads('form.industry')}</Label>
-          <select
-            id="ind"
-            value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">—</option>
-            {INDUSTRIES.map((ind) => (
-              <option key={ind.code} value={ind.code}>
-                {ind.labels[lang]}
-              </option>
-            ))}
-            {industry && !INDUSTRIES.some((i) => i.code === industry) && (
-              <option value={industry}>{industry} (legacy)</option>
-            )}
-          </select>
-        </div>
-        <div>
-          <Label htmlFor="addr">{tLeads('form.address')}</Label>
-          <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
-        </div>
-        <div>
-          <Label htmlFor="pm">{tLeads('form.payment_method')}</Label>
-          <select
-            id="pm"
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">—</option>
-            <option value="cash">{tLeads('form.payment_method_options.cash')}</option>
-            <option value="online">{tLeads('form.payment_method_options.online')}</option>
-          </select>
-        </div>
-        <div className="col-span-2">
           <Label>{tLeads('form.services_planned')}</Label>
           <ServicesPlannedField value={services} onChange={setServices} />
         </div>
-        <div className="col-span-2 rounded-md border bg-slate-50 p-3 text-sm">
+        <div className="rounded-md border bg-slate-50 p-3 text-sm">
           <div className="mb-2 text-xs font-medium uppercase text-slate-500">
             {tLeads('totals.title')}
           </div>
@@ -291,7 +374,8 @@ export function DealForm({ initial }: Props) {
             );
           })()}
         </div>
-      </div>
+      </Section>
+
       <div className="flex h-5 items-center text-xs text-slate-500">
         {autoSaveLabel(combinedStatus, lang)}
       </div>

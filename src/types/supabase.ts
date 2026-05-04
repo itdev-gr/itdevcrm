@@ -172,6 +172,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          additional_contacts: Json
           address: string | null
           archived: boolean
           archived_at: string | null
@@ -181,6 +182,7 @@ export type Database = {
           city: string | null
           code: string | null
           contact_first_name: string | null
+          contact_info: string | null
           contact_last_name: string | null
           country: string | null
           created_at: string
@@ -199,6 +201,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          additional_contacts?: Json
           address?: string | null
           archived?: boolean
           archived_at?: string | null
@@ -208,6 +211,7 @@ export type Database = {
           city?: string | null
           code?: string | null
           contact_first_name?: string | null
+          contact_info?: string | null
           contact_last_name?: string | null
           country?: string | null
           created_at?: string
@@ -226,6 +230,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          additional_contacts?: Json
           address?: string | null
           archived?: boolean
           archived_at?: string | null
@@ -235,6 +240,7 @@ export type Database = {
           city?: string | null
           code?: string | null
           contact_first_name?: string | null
+          contact_info?: string | null
           contact_last_name?: string | null
           country?: string | null
           created_at?: string
@@ -800,6 +806,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          additional_contacts: Json
           additional_notes: string | null
           address: string | null
           archived: boolean
@@ -809,6 +816,7 @@ export type Database = {
           code: string
           company_name: string | null
           contact_first_name: string | null
+          contact_info: string | null
           contact_last_name: string | null
           converted_at: string | null
           converted_client_id: string | null
@@ -837,6 +845,7 @@ export type Database = {
           won_by_user_id: string | null
         }
         Insert: {
+          additional_contacts?: Json
           additional_notes?: string | null
           address?: string | null
           archived?: boolean
@@ -846,6 +855,7 @@ export type Database = {
           code?: string
           company_name?: string | null
           contact_first_name?: string | null
+          contact_info?: string | null
           contact_last_name?: string | null
           converted_at?: string | null
           converted_client_id?: string | null
@@ -874,6 +884,7 @@ export type Database = {
           won_by_user_id?: string | null
         }
         Update: {
+          additional_contacts?: Json
           additional_notes?: string | null
           address?: string | null
           archived?: boolean
@@ -883,6 +894,7 @@ export type Database = {
           code?: string
           company_name?: string | null
           contact_first_name?: string | null
+          contact_info?: string | null
           contact_last_name?: string | null
           converted_at?: string | null
           converted_client_id?: string | null
