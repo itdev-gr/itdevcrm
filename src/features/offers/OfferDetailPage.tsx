@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { CopyableCode } from '@/components/CopyableCode';
 import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
+import { useDownloadOfferPdf } from './hooks/useDownloadOfferPdf';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatEur } from '@/lib/offers/calculate';
 import type { OfferItem, OfferTotals } from '@/lib/offers/types';
@@ -23,6 +24,7 @@ export function OfferDetailPage() {
   const { offerId = '' } = useParams<{ offerId: string }>();
   const { data: offer, isLoading, error } = useOffer(offerId);
   const updateStatus = useUpdateOfferStatus(offerId);
+  const download = useDownloadOfferPdf();
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !offer)
@@ -80,8 +82,19 @@ export function OfferDetailPage() {
               ))}
             </select>
           </div>
-          <Button type="button" disabled>
-            Download PDF
+          <Button
+            type="button"
+            onClick={async () => {
+              try {
+                const url = await download.mutateAsync(offer.id);
+                window.open(url, '_blank', 'noopener');
+              } catch (err) {
+                alert((err as Error).message);
+              }
+            }}
+            disabled={download.isPending}
+          >
+            {download.isPending ? 'Generating…' : 'Download PDF'}
           </Button>
         </div>
       </div>
