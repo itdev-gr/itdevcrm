@@ -20,6 +20,7 @@ import { useCreateOffer } from './hooks/useCreateOffer';
 import { OfferSummaryPanel } from './OfferSummaryPanel';
 import type { OfferItem } from '@/lib/offers/types';
 import { calculateTotals } from '@/lib/offers/calculate';
+import { vatRateFor } from '@/lib/countries';
 
 const lang: 'en' | 'el' = 'el';
 
@@ -76,7 +77,10 @@ export function OfferBuilderPage() {
   const [validityDays, setValidityDays] = useState(14);
   const [notes, setNotes] = useState('');
 
-  // Pre-fill from lead once loaded
+  // Pre-fill from lead once loaded. VAT defaults to whatever the lead's
+  // country dictates — Greece 24%, Cyprus 0%, fallback 24%. The user can
+  // still override the field manually.
+  const vatSeededRef = useRef(false);
   useEffect(() => {
     if (!lead) return;
     const name =
@@ -85,6 +89,11 @@ export function OfferBuilderPage() {
       '';
     if (name) setClientNameOverride(name);
     if (lead.email) setEmailOverride(lead.email);
+    if (!vatSeededRef.current) {
+      const rate = vatRateFor(lead.country);
+      setVatPercent(Math.round(rate * 100));
+      vatSeededRef.current = true;
+    }
   }, [lead]);
 
   // Pre-select catalog items based on what the lead's Services field already
