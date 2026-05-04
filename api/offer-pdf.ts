@@ -5,6 +5,21 @@ import { renderOfferHtml, type OfferItem, type OfferTotals } from './_pdf-templa
 export const config = { maxDuration: 60 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  try {
+    await runHandler(req, res);
+  } catch (err) {
+    const e = err as Error;
+    console.error('offer-pdf handler error:', e);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: e?.message ?? 'unknown error',
+        stack: e?.stack?.split('\n').slice(0, 8).join('\n') ?? null,
+      });
+    }
+  }
+}
+
+async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const offerId = typeof req.query.id === 'string' ? req.query.id : null;
   const auth = req.headers.authorization ?? '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
