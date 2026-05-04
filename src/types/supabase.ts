@@ -1009,6 +1009,98 @@ export type Database = {
           },
         ]
       }
+      offers: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deal_id: string | null
+          discount_amount: number
+          id: string
+          items: Json
+          lead_id: string | null
+          notes: string | null
+          offer_number: string | null
+          pdf_path: string | null
+          sent_at: string | null
+          status: string
+          totals: Json
+          updated_at: string
+          validity_days: number
+          vat_percent: number
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          discount_amount?: number
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          offer_number?: string | null
+          pdf_path?: string | null
+          sent_at?: string | null
+          status?: string
+          totals?: Json
+          updated_at?: string
+          validity_days?: number
+          vat_percent?: number
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          discount_amount?: number
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          offer_number?: string | null
+          pdf_path?: string | null
+          sent_at?: string | null
+          status?: string
+          totals?: Json
+          updated_at?: string
+          validity_days?: number
+          vat_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "offers_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_stages: {
         Row: {
           archived: boolean
