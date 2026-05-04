@@ -12,6 +12,8 @@ import { SubpackageDialog } from './SubpackageDialog';
 import type { ServiceSubpackageRow } from './hooks/useServiceSubpackages';
 
 // ── Sub-products nested section ─────────────────────────────────────────────
+// Note: Archived sub-packages are filtered out at query time and do not appear in the UI.
+// To restore an archived sub-package, use the database directly or add a toggle in a future enhancement.
 
 type SubRowsProps = {
   parentId: string;
@@ -65,7 +67,7 @@ function SubpackageRows({ parentId }: SubRowsProps) {
               </thead>
               <tbody>
                 {subs.map((sub) => (
-                  <tr key={sub.id} className={`border-b ${sub.archived ? 'opacity-50' : ''}`}>
+                  <tr key={sub.id} className="border-b">
                     <td className="py-1 pr-3 font-mono">{sub.code}</td>
                     <td className="py-1 pr-3">
                       {(sub.display_names as { en?: string; el?: string })[lang]}
@@ -98,11 +100,9 @@ function SubpackageRows({ parentId }: SubRowsProps) {
                         size="sm"
                         variant="link"
                         className="h-auto p-0 text-xs"
-                        onClick={() => archiveSub.mutate({ id: sub.id, archived: !sub.archived })}
+                        onClick={() => archiveSub.mutate({ id: sub.id, archived: true })}
                       >
-                        {sub.archived
-                          ? t('service_packages.restore')
-                          : t('service_packages.archive')}
+                        {t('service_packages.archive')}
                       </Button>
                     </td>
                   </tr>

@@ -13,6 +13,7 @@ export function useServiceSubpackages(parentId: string) {
         .from('service_subpackages')
         .select('*')
         .eq('parent_package_id', parentId)
+        .eq('archived', false)
         .order('sort_order');
       if (error) throw new Error(error.message);
       return (data ?? []) as ServiceSubpackageRow[];
@@ -27,6 +28,7 @@ export function useAllServiceSubpackages() {
       const { data, error } = await supabase
         .from('service_subpackages')
         .select('*')
+        .eq('archived', false)
         .order('sort_order');
       if (error) throw new Error(error.message);
       return (data ?? []) as ServiceSubpackageRow[];
