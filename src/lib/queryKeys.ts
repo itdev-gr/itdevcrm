@@ -29,6 +29,7 @@ export const queryKeys = {
     filters ? (['leads', filters] as const) : (['leads'] as const),
   lead: (id: string) => ['lead', id] as const,
   servicePackages: () => ['service-packages'] as const,
+  serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
   job: (id: string) => ['job', id] as const,
   recurringClients: () => ['recurring-clients'] as const,

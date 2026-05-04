@@ -32,7 +32,17 @@
       "default_monthly": "Monthly price",
       "setup_fee": "Setup fee",
       "sort_order": "Sort",
-      "description": "Description"
+      "description": "Description",
+      "subtitle": "Subtitle",
+      "is_active": "Active",
+      "price": "Price"
+    },
+    "subpackages": {
+      "title": "Sub-products",
+      "add": "+ Add sub-product",
+      "add_title": "Add sub-product",
+      "edit_title": "Edit sub-product",
+      "empty": "No sub-products"
     }
   },
   "groups": {

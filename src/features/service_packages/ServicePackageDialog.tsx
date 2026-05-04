@@ -22,6 +22,7 @@ const SERVICE_TYPES = [
   'social_media',
   'ai_seo',
   'hosting',
+  'ads',
 ] as const;
 
 type Props = {
@@ -51,7 +52,9 @@ function ServicePackageForm({ initial, onOpenChange }: FormProps) {
   const [monthly, setMonthly] = useState(String(initial?.default_monthly_amount ?? 0));
   const [setupFee, setSetupFee] = useState(String(initial?.setup_fee ?? 0));
   const [sortOrder, setSortOrder] = useState(String(initial?.sort_order ?? 0));
+  const [subtitle, setSubtitle] = useState(initial?.subtitle ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [isActive, setIsActive] = useState(initial?.is_active ?? true);
 
   function toNum(v: string) {
     const n = Number(v);
@@ -74,7 +77,9 @@ function ServicePackageForm({ initial, onOpenChange }: FormProps) {
         default_monthly_amount: toNum(monthly),
         setup_fee: toNum(setupFee),
         sort_order: Math.trunc(toNum(sortOrder)),
+        subtitle: subtitle.trim() !== '' ? subtitle.trim() : null,
         description: description.trim() !== '' ? description.trim() : null,
+        is_active: isActive,
       };
       if (initial?.id) {
         await upsert.mutateAsync({ id: initial.id, ...payload });
@@ -161,6 +166,14 @@ function ServicePackageForm({ initial, onOpenChange }: FormProps) {
         </div>
       </div>
       <div>
+        <Label htmlFor="st-sub">{t('service_packages.fields.subtitle')}</Label>
+        <Input
+          id="st-sub"
+          value={subtitle}
+          onChange={(e) => setSubtitle(e.target.value)}
+        />
+      </div>
+      <div>
         <Label htmlFor="ds">{t('service_packages.fields.description')}</Label>
         <textarea
           id="ds"
@@ -168,6 +181,16 @@ function ServicePackageForm({ initial, onOpenChange }: FormProps) {
           onChange={(e) => setDescription(e.target.value)}
           className="mt-1 block min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          id="is-active"
+          type="checkbox"
+          checked={isActive}
+          onChange={(e) => setIsActive(e.target.checked)}
+          className="h-4 w-4"
+        />
+        <Label htmlFor="is-active">{t('service_packages.fields.is_active')}</Label>
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

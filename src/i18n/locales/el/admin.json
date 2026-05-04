@@ -32,7 +32,17 @@
       "default_monthly": "Μηνιαία τιμή",
       "setup_fee": "Τέλος ρύθμισης",
       "sort_order": "Σειρά",
-      "description": "Περιγραφή"
+      "description": "Περιγραφή",
+      "subtitle": "Υπότιτλος",
+      "is_active": "Ενεργό",
+      "price": "Τιμή"
+    },
+    "subpackages": {
+      "title": "Υπο-προϊόντα",
+      "add": "+ Προσθήκη υπο-προϊόντος",
+      "add_title": "Προσθήκη υπο-προϊόντος",
+      "edit_title": "Επεξεργασία υπο-προϊόντος",
+      "empty": "Καμία υπο-προϊόν"
     }
   },
   "groups": {
