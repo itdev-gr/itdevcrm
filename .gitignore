@@ -30,3 +30,14 @@ supabase/.temp
 # typescript
 *.tsbuildinfo
 .vercel
+# tooling caches
+.claude/
+.playwright-mcp/
+# transient smoke-test screenshots
+*-account-view.png
+*-attempt-*.png
+*-kanban*.png
+*-payments.png
+sales-deal-view.png
+smoke-*.png
+deal-000013-payments.png
