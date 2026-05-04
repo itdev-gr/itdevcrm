@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { convertLeadToClient } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export function useConvertLead() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (leadId: string) => {
+    mutationFn: captureMutation('leads', 'convert', async (leadId: string) => {
       const result = await convertLeadToClient(leadId);
       if (!result.ok) {
         const err = new Error(result.errors[0] ?? 'convert_failed');
@@ -13,7 +14,7 @@ export function useConvertLead() {
         throw err;
       }
       return { leadId: result.lead_id, clientId: result.client_id, dealId: result.deal_id };
-    },
+    }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.leads() });
       void qc.invalidateQueries({ queryKey: queryKeys.clients() });

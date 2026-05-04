@@ -1,8 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { Json } from '@/types/supabase';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 type Vars = {
   id?: string;
@@ -13,8 +14,8 @@ type Vars = {
 
 export function useUpsertSavedFilter() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: Vars) => {
+  return useMutation<void, DefaultError, Vars>({
+    mutationFn: captureMutation('saved_filters', 'upsert', async (vars: Vars) => {
       const userId = useAuthStore.getState().user?.id;
       if (!userId) throw new Error('not_authenticated');
       const filterJson = vars.filter_json as Json;
@@ -33,7 +34,7 @@ export function useUpsertSavedFilter() {
         });
         if (error) throw new Error(error.message);
       }
-    },
+    }),
     onSuccess: (_d, vars) => {
       void qc.invalidateQueries({ queryKey: queryKeys.savedFilters(vars.board) });
     },

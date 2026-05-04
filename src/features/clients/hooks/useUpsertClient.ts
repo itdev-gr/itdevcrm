@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export type ClientUpsert = Partial<Database['public']['Tables']['clients']['Insert']> & {
   id?: string;
@@ -10,8 +11,8 @@ export type ClientUpsert = Partial<Database['public']['Tables']['clients']['Inse
 
 export function useUpsertClient() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: ClientUpsert) => {
+  return useMutation<string, DefaultError, ClientUpsert>({
+    mutationFn: captureMutation('clients', 'upsert', async (vars: ClientUpsert) => {
       if (vars.id) {
         const { id, ...patch } = vars;
         const { error } = await supabase.from('clients').update(patch).eq('id', id);
@@ -22,7 +23,7 @@ export function useUpsertClient() {
         if (error || !data) throw new Error(error?.message ?? 'Insert failed');
         return data.id;
       }
-    },
+    }),
     onSuccess: (id) => {
       void qc.invalidateQueries({ queryKey: queryKeys.clients() });
       void qc.invalidateQueries({ queryKey: queryKeys.client(id) });

@@ -1,18 +1,19 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { JobRow, ServiceType } from './useJobs';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export function useMoveJobStage(serviceType: ServiceType) {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ jobId, stageId }: { jobId: string; stageId: string }) => {
+  return useMutation<void, DefaultError, { jobId: string; stageId: string }, { previous: [readonly unknown[], JobRow[] | undefined][] }>({
+    mutationFn: captureMutation('jobs', 'move_stage', async ({ jobId, stageId }: { jobId: string; stageId: string }) => {
       const { error } = await supabase
         .from('jobs')
         .update({ stage_id: stageId })
         .eq('id', jobId);
       if (error) throw new Error(error.message);
-    },
+    }),
     onMutate: async ({ jobId, stageId }) => {
       await qc.cancelQueries({ queryKey: queryKeys.jobsByService(serviceType) });
       const previous = qc.getQueriesData<JobRow[]>({

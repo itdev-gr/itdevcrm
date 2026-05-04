@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 type Insert = Database['public']['Tables']['service_subpackages']['Insert'];
 type Update = Database['public']['Tables']['service_subpackages']['Update'];
@@ -9,7 +10,7 @@ type Update = Database['public']['Tables']['service_subpackages']['Update'];
 export function useUpsertSubpackage(parentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id?: string } & (Insert | Update)): Promise<string> => {
+    mutationFn: captureMutation('service_packages', 'upsert_subpackage', async (input: { id?: string } & (Insert | Update)): Promise<string> => {
       if (input.id) {
         const { id, ...patch } = input;
         const { error } = await supabase
@@ -26,7 +27,7 @@ export function useUpsertSubpackage(parentId: string) {
         .single();
       if (error || !data) throw new Error(error?.message ?? 'insert_failed');
       return data.id;
-    },
+    }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.serviceSubpackages(parentId) });
     },

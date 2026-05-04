@@ -2,11 +2,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { changePassword } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export function useChangePassword() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (newPassword: string) => {
+    mutationFn: captureMutation('auth', 'change_password', async (newPassword: string) => {
       await changePassword(newPassword);
       const userId = useAuthStore.getState().user?.id;
       if (userId) {
@@ -17,6 +18,6 @@ export function useChangePassword() {
         if (error) throw new Error(error.message);
       }
       await qc.invalidateQueries();
-    },
+    }),
   });
 }

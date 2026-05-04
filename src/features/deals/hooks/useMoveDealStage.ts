@@ -1,15 +1,16 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { DealRow } from './useDeals';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export function useMoveDealStage() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ dealId, stageId }: { dealId: string; stageId: string }) => {
+  return useMutation<void, DefaultError, { dealId: string; stageId: string }, { previous: [readonly unknown[], DealRow[] | undefined][] }>({
+    mutationFn: captureMutation('deals', 'move_stage', async ({ dealId, stageId }: { dealId: string; stageId: string }) => {
       const { error } = await supabase.from('deals').update({ stage_id: stageId }).eq('id', dealId);
       if (error) throw new Error(error.message);
-    },
+    }),
     onMutate: async ({ dealId, stageId }) => {
       await qc.cancelQueries({ queryKey: queryKeys.deals() });
       const previous = qc.getQueriesData<DealRow[]>({ queryKey: queryKeys.deals() });

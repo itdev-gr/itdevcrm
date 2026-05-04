@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export type DealPaymentRow = Database['public']['Tables']['deal_payments']['Row'];
 export type DealPaymentInsert = Database['public']['Tables']['deal_payments']['Insert'];
@@ -30,10 +31,10 @@ export function useDealPayments(dealId: string) {
 export function useUpdateDealPayment(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: DealPaymentUpdate }) => {
+    mutationFn: captureMutation('deal_payments', 'update', async ({ id, patch }: { id: string; patch: DealPaymentUpdate }) => {
       const { error } = await supabase.from('deal_payments').update(patch).eq('id', id);
       if (error) throw new Error(error.message);
-    },
+    }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
       void qc.invalidateQueries({ queryKey: ['accounting-deals'] });
@@ -44,10 +45,10 @@ export function useUpdateDealPayment(dealId: string) {
 export function useAddDealPayment(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (row: Omit<DealPaymentInsert, 'deal_id'>) => {
+    mutationFn: captureMutation('deal_payments', 'create', async (row: Omit<DealPaymentInsert, 'deal_id'>) => {
       const { error } = await supabase.from('deal_payments').insert({ ...row, deal_id: dealId });
       if (error) throw new Error(error.message);
-    },
+    }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
       void qc.invalidateQueries({ queryKey: ['accounting-deals'] });
@@ -58,10 +59,10 @@ export function useAddDealPayment(dealId: string) {
 export function useDeleteDealPayment(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: captureMutation('deal_payments', 'delete', async (id: string) => {
       const { error } = await supabase.from('deal_payments').delete().eq('id', id);
       if (error) throw new Error(error.message);
-    },
+    }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
       void qc.invalidateQueries({ queryKey: ['accounting-deals'] });

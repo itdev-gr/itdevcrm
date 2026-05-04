@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 const MAX_BYTES = 25 * 1024 * 1024;
 
@@ -14,8 +15,8 @@ type Vars = {
 
 export function useUploadAttachment() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: Vars) => {
+  return useMutation<void, DefaultError, Vars>({
+    mutationFn: captureMutation('attachments', 'upload', async (vars: Vars) => {
       if (vars.file.size > MAX_BYTES) throw new Error('file_too_large');
       const userId = useAuthStore.getState().user?.id;
       if (!userId) throw new Error('not_authenticated');
@@ -38,7 +39,7 @@ export function useUploadAttachment() {
         kind: vars.kind ?? 'other',
       });
       if (e2) throw new Error(e2.message);
-    },
+    }),
     onSuccess: (_d, vars) => {
       void qc.invalidateQueries({
         queryKey: queryKeys.attachments(vars.parent_type, vars.parent_id),

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 type Vars = {
   email: string;
@@ -13,7 +14,7 @@ type Vars = {
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (vars: Vars) => {
+    mutationFn: captureMutation('users', 'create', async (vars: Vars) => {
       const { data, error } = await supabase.functions.invoke('invite_user', { body: vars });
       if (error) {
         let msg = error.message;
@@ -29,7 +30,7 @@ export function useCreateUser() {
         throw new Error(msg);
       }
       return data as { user_id: string };
-    },
+    }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.users() });
     },

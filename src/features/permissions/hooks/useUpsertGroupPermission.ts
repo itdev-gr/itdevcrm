@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { Action, Board, Scope } from '@/lib/permissions';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 type Vars = {
   groupId: string;
@@ -13,8 +14,8 @@ type Vars = {
 
 export function useUpsertGroupPermission() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ groupId, board, action, allowed, scope }: Vars) => {
+  return useMutation<void, DefaultError, Vars>({
+    mutationFn: captureMutation('permissions', 'upsert_group', async ({ groupId, board, action, allowed, scope }: Vars) => {
       const { error } = await supabase
         .from('group_permissions')
         .upsert(
@@ -22,7 +23,7 @@ export function useUpsertGroupPermission() {
           { onConflict: 'group_id,board,action' },
         );
       if (error) throw new Error(error.message);
-    },
+    }),
     onSuccess: (_d, vars) => {
       void qc.invalidateQueries({ queryKey: queryKeys.groupPermissions(vars.groupId) });
     },

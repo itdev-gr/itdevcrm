@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
-import { Sentry } from '@/lib/sentry';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 import type { OfferItem, OfferTotals } from '@/lib/offers/types';
 import type { Json } from '@/types/supabase';
 
@@ -20,8 +20,8 @@ type Input = {
 
 export function useCreateOffer() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: Input): Promise<string> => {
+  return useMutation<string, DefaultError, Input>({
+    mutationFn: captureMutation('offers', 'create', async (input: Input): Promise<string> => {
       const payload = {
         lead_id: input.lead_id ?? null,
         deal_id: input.deal_id ?? null,
@@ -41,13 +41,10 @@ export function useCreateOffer() {
         .select('id')
         .single();
       if (error || !data) {
-        Sentry.captureException(error ?? new Error('insert returned no row'), {
-          tags: { feature: 'offers', op: 'create' },
-        });
         throw new Error(error?.message ?? 'Failed to create offer');
       }
       return data.id;
-    },
+    }),
     onSuccess: (_id, vars) => {
       void qc.invalidateQueries({ queryKey: ['offers'] });
       if (vars.lead_id)

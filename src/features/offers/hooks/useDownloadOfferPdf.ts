@@ -1,10 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { Sentry } from '@/lib/sentry';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export function useDownloadOfferPdf() {
   return useMutation({
-    mutationFn: async (offerId: string): Promise<string> => {
+    mutationFn: captureMutation('offers', 'pdf', async (offerId: string): Promise<string> => {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) throw new Error('not authenticated');
@@ -13,13 +13,11 @@ export function useDownloadOfferPdf() {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => '');
-        const err = new Error(`PDF generation failed (${res.status}): ${text}`);
-        Sentry.captureException(err, { tags: { feature: 'offers', op: 'pdf' } });
-        throw err;
+        throw new Error(`PDF generation failed (${res.status}): ${text}`);
       }
       const { url } = (await res.json()) as { url: string | null };
       if (!url) throw new Error('signed URL was null');
       return url;
-    },
+    }),
   });
 }

@@ -1,13 +1,14 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 
 type Vars = { userId: string; groupIds: string[] };
 
 export function useUpdateUserGroups() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ userId, groupIds }: Vars) => {
+  return useMutation<void, DefaultError, Vars>({
+    mutationFn: captureMutation('users', 'update_groups', async ({ userId, groupIds }: Vars) => {
       const { data: current, error: e1 } = await supabase
         .from('user_groups')
         .select('group_id')
@@ -33,7 +34,7 @@ export function useUpdateUserGroups() {
           .in('group_id', toRemove);
         if (error) throw new Error(error.message);
       }
-    },
+    }),
     onSuccess: (_d, vars) => {
       void qc.invalidateQueries({ queryKey: queryKeys.user(vars.userId) });
       void qc.invalidateQueries({ queryKey: queryKeys.users() });
