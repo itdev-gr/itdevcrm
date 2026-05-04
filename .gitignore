@@ -33,11 +33,7 @@ supabase/.temp
 # tooling caches
 .claude/
 .playwright-mcp/
-# transient smoke-test screenshots
-*-account-view.png
-*-attempt-*.png
-*-kanban*.png
-*-payments.png
-sales-deal-view.png
-smoke-*.png
-deal-000013-payments.png
+# transient screenshots from local smoke tests — keep them out of git
+/*.png
+!public/**/*.png
+!src/**/*.png
