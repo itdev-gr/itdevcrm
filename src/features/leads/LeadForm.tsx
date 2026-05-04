@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { ServicesPlannedField, type PlannedService } from '@/features/deals/ServicesPlannedField';
 import {
   AdditionalContactsField,
@@ -35,6 +37,7 @@ function Section({
 export function LeadForm({ lead }: { lead: LeadRow }) {
   const { t, i18n } = useTranslation('leads');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
+  const navigate = useNavigate();
   const update = useUpdateLead();
   const readOnly = !!lead.converted_at;
 
@@ -276,7 +279,22 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           </div>
           <div>
             <Label>{t('form.services_planned')}</Label>
-            <ServicesPlannedField value={services} onChange={setServices} disabled={readOnly} />
+            <ServicesPlannedField
+              value={services}
+              onChange={setServices}
+              disabled={readOnly}
+              headerLeft={
+                !readOnly && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => navigate(`/leads/${lead.id}/offers/new`)}
+                  >
+                    Create offer
+                  </Button>
+                )
+              }
+            />
           </div>
           <div className="rounded-md border bg-slate-50 p-3 text-sm">
             <div className="mb-2 text-xs font-medium uppercase text-slate-500">

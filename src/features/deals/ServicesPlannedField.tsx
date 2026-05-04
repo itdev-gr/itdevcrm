@@ -24,6 +24,7 @@ type Props = {
   value: PlannedService[];
   onChange: (next: PlannedService[]) => void;
   disabled?: boolean;
+  headerLeft?: React.ReactNode;
 };
 
 const SERVICE_TYPES: PlannedService['service_type'][] = [
@@ -54,7 +55,7 @@ function patchRow(row: PlannedService, patch: Partial<PlannedService>): PlannedS
   return { ...row, ...patch } as PlannedService;
 }
 
-export function ServicesPlannedField({ value, onChange, disabled }: Props) {
+export function ServicesPlannedField({ value, onChange, disabled, headerLeft }: Props) {
   const { t, i18n } = useTranslation('deals');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const isDisabled = !!disabled;
@@ -105,11 +106,14 @@ export function ServicesPlannedField({ value, onChange, disabled }: Props) {
     <div className="space-y-3 rounded-md border p-3">
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">{t('services.title')}</Label>
-        {!isDisabled && (
-          <Button type="button" size="sm" variant="outline" onClick={addRow}>
-            {t('services.add')}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {headerLeft}
+          {!isDisabled && (
+            <Button type="button" size="sm" variant="outline" onClick={addRow}>
+              {t('services.add')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {value.length === 0 ? (

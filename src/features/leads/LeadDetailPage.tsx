@@ -176,13 +176,6 @@ export function LeadDetailPage() {
           )}
           {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}
           <Button
-            type="button"
-            onClick={() => navigate(`/leads/${leadId}/offers/new`)}
-            disabled={readOnly}
-          >
-            Create offer
-          </Button>
-          <Button
             variant="outline"
             size="sm"
             onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
