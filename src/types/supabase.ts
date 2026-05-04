@@ -1176,9 +1176,11 @@ export type Database = {
           description: string | null
           display_names: Json
           id: string
+          is_active: boolean
           service_type: string
           setup_fee: number | null
           sort_order: number
+          subtitle: string | null
           updated_at: string
         }
         Insert: {
@@ -1190,9 +1192,11 @@ export type Database = {
           description?: string | null
           display_names: Json
           id?: string
+          is_active?: boolean
           service_type: string
           setup_fee?: number | null
           sort_order?: number
+          subtitle?: string | null
           updated_at?: string
         }
         Update: {
@@ -1204,12 +1208,64 @@ export type Database = {
           description?: string | null
           display_names?: Json
           id?: string
+          is_active?: boolean
           service_type?: string
           setup_fee?: number | null
           sort_order?: number
+          subtitle?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      service_subpackages: {
+        Row: {
+          archived: boolean
+          code: string
+          created_at: string
+          description: string | null
+          display_names: Json
+          id: string
+          is_active: boolean
+          parent_package_id: string
+          price: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          display_names: Json
+          id?: string
+          is_active?: boolean
+          parent_package_id: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_names?: Json
+          id?: string
+          is_active?: boolean
+          parent_package_id?: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_subpackages_parent_package_id_fkey"
+            columns: ["parent_package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_groups: {
         Row: {
