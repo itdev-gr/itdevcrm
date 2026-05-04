@@ -17,6 +17,7 @@ function lazyPage<K extends string>(
 
 const HomePage = lazyPage(() => import('./routes/HomePage'), 'HomePage');
 const NotFoundPage = lazyPage(() => import('./routes/NotFoundPage'), 'NotFoundPage');
+const SentryCheckPage = lazyPage(() => import('./routes/SentryCheckPage'), 'SentryCheckPage');
 const LoginPage = lazyPage(() => import('@/features/auth/LoginPage'), 'LoginPage');
 const UsersListPage = lazyPage(() => import('@/features/users/UsersListPage'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/UserDetailPage'), 'UserDetailPage');
@@ -149,6 +150,7 @@ export const router = createBrowserRouter([
       { path: 'jobs/:jobId', element: <JobDetailPage /> },
       { path: 'leads/:leadId', element: <LeadDetailPage /> },
       { path: 'profile', element: <MyProfilePage /> },
+      { path: 'sentry-check', element: <SentryCheckPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

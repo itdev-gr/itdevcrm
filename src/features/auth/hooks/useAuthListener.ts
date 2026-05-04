@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { fetchProfile, fetchUserGroupCodes } from '@/lib/profile';
+import { Sentry } from '@/lib/sentry';
 import type { Session, User } from '@supabase/supabase-js';
 
 async function hydrate(session: Session | null, user: User | null) {
@@ -11,6 +12,7 @@ async function hydrate(session: Session | null, user: User | null) {
   setSession(session, user);
 
   if (user) {
+    Sentry.setUser({ id: user.id, ...(user.email ? { email: user.email } : {}) });
     try {
       const [profile, groupCodes] = await Promise.all([
         fetchProfile(user.id),
@@ -22,6 +24,7 @@ async function hydrate(session: Session | null, user: User | null) {
       setProfile({ isAdmin: false, groupCodes: [] });
     }
   } else {
+    Sentry.setUser(null);
     setProfile({ isAdmin: false, groupCodes: [] });
   }
 }
