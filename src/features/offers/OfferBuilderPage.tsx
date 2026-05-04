@@ -125,6 +125,7 @@ export function OfferBuilderPage() {
           package_id?: string | null;
           monthly_amount?: number | string | null;
           one_time_amount?: number | string | null;
+          subpackage_codes?: string[];
         }>)
       : [];
     if (planned.length === 0) {
@@ -133,6 +134,7 @@ export function OfferBuilderPage() {
     }
 
     const nextItems = new Map<string, OfferItem>();
+    const nextSubpackages = new Map<string, Set<string>>();
     for (const ps of planned) {
       // Match the lead's services_planned entry to a catalog row. Prefer the
       // explicit package_id; otherwise fall back to (service_type) only when
@@ -154,6 +156,12 @@ export function OfferBuilderPage() {
       // Inline the same key shape used by itemKey() further below — declared
       // after this effect, so we can't call it here without re-ordering.
       const key = `${pkg.service_type}-${pkg.code}`;
+      const subCodes = ps.subpackage_codes ?? [];
+      const subTotal = subCodes.length > 0
+        ? pkg.subpackages
+            .filter((sp) => subCodes.includes(sp.code))
+            .reduce((sum, sp) => sum + sp.price, 0)
+        : 0;
       nextItems.set(key, {
         category: pkg.service_type,
         itemId: pkg.code,
@@ -161,12 +169,18 @@ export function OfferBuilderPage() {
         description: pkg.description ?? '',
         unitPrice,
         qty: 1,
-        lineTotal: unitPrice,
+        lineTotal: unitPrice + subTotal,
       });
+      if (subCodes.length > 0) {
+        nextSubpackages.set(key, new Set(subCodes));
+      }
     }
 
     if (nextItems.size > 0) {
       setSelectedItems(nextItems);
+      if (nextSubpackages.size > 0) {
+        setSelectedSubpackages(nextSubpackages);
+      }
       // Land the user on the first pre-selected category for visual confirmation.
       const firstCategory = [...nextItems.values()][0]?.category;
       if (firstCategory) setSelectedCategory(firstCategory);

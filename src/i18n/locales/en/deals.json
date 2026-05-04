@@ -84,7 +84,8 @@
       "web_dev": "Web Dev",
       "social_media": "Social Media",
       "ai_seo": "AI SEO",
-      "hosting": "Hosting"
+      "hosting": "Hosting",
+      "ads": "Ads"
     },
     "billing": {
       "recurring_monthly": "Monthly",

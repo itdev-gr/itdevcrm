@@ -24,6 +24,7 @@ const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   social_media: { en: 'Social Media', el: 'Social Media' },
   ai_seo: { en: 'AI SEO', el: 'AI SEO' },
   hosting: { en: 'Hosting', el: 'Hosting' },
+  ads: { en: 'Ads', el: 'Διαφημίσεις' },
 };
 
 export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {

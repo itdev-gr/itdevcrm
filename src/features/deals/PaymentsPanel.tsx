@@ -30,6 +30,7 @@ const SERVICE_OPTIONS: PlannedService['service_type'][] = [
   'social_media',
   'ai_seo',
   'hosting',
+  'ads',
 ];
 
 function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
