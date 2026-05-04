@@ -1,6 +1,25 @@
+// All runtime imports are deferred until inside the handler so a failed
+// dependency surfaces as a 500 with a real stack instead of Vercel's
+// opaque FUNCTION_INVOCATION_FAILED at module-load time.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
-import { renderOfferHtml, type OfferItem, type OfferTotals } from './_pdf-template';
+
+type OfferItem = {
+  category: string;
+  itemId: string;
+  label: string;
+  description: string;
+  unitPrice: number;
+  qty: number;
+  lineTotal: number;
+};
+
+type OfferTotals = {
+  subtotal: number;
+  discountAmount: number;
+  taxable: number;
+  vatAmount: number;
+  total: number;
+};
 
 export const config = { maxDuration: 60 };
 
@@ -35,6 +54,11 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     res.status(500).json({ error: 'server not configured' });
     return;
   }
+
+  // Defer the supabase + template imports so a failed module load lands
+  // inside the outer handler's try/catch rather than crashing cold start.
+  const { createClient } = await import('@supabase/supabase-js');
+  const { renderOfferHtml } = await import('./_pdf-template.js');
 
   // Service-role client used for storage + DB updates.
   const admin = createClient(supabaseUrl, serviceRoleKey);
