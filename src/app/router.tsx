@@ -80,6 +80,10 @@ const JobsKanbanPage = lazy(() =>
   import('@/features/jobs/JobsKanbanPage').then((m) => ({ default: m.JobsKanbanPage })),
 );
 const JobDetailPage = lazyPage(() => import('@/features/jobs/JobDetailPage'), 'JobDetailPage');
+const OfferBuilderPage = lazyPage(
+  () => import('@/features/offers/OfferBuilderPage'),
+  'OfferBuilderPage',
+);
 
 export const router = createBrowserRouter([
   {
@@ -149,6 +153,7 @@ export const router = createBrowserRouter([
       { path: 'deals/:dealId', element: <DealDetailPage /> },
       { path: 'jobs/:jobId', element: <JobDetailPage /> },
       { path: 'leads/:leadId', element: <LeadDetailPage /> },
+      { path: 'leads/:leadId/offers/new', element: <OfferBuilderPage /> },
       { path: 'profile', element: <MyProfilePage /> },
       { path: 'sentry-check', element: <SentryCheckPage /> },
       { path: '*', element: <NotFoundPage /> },
