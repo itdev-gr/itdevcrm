@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
@@ -86,6 +86,70 @@ export function OfferBuilderPage() {
     if (name) setClientNameOverride(name);
     if (lead.email) setEmailOverride(lead.email);
   }, [lead]);
+
+  // Pre-select catalog items based on what the lead's Services field already
+  // has. Sales picked these on the lead form; the offer builder should open
+  // with them already in the cart so they don't have to re-pick. One-shot via
+  // a ref so subsequent realtime refreshes of the lead don't clobber edits.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (!lead || catalog.length === 0) return;
+    const planned = Array.isArray(lead.services_planned)
+      ? (lead.services_planned as unknown as Array<{
+          service_type?: string;
+          billing_type?: string;
+          package_id?: string | null;
+          monthly_amount?: number | string | null;
+          one_time_amount?: number | string | null;
+        }>)
+      : [];
+    if (planned.length === 0) {
+      seededRef.current = true;
+      return;
+    }
+
+    const nextItems = new Map<string, OfferItem>();
+    for (const ps of planned) {
+      // Match the lead's services_planned entry to a catalog row. Prefer the
+      // explicit package_id; otherwise fall back to (service_type) only when
+      // the service_type maps to exactly one catalog row.
+      const pkg = ps.package_id
+        ? catalog.find((p) => p.id === ps.package_id)
+        : (() => {
+            const pool = catalog.filter((p) => p.service_type === ps.service_type);
+            return pool.length === 1 ? pool[0] : null;
+          })();
+      if (!pkg) continue;
+
+      const userPrice =
+        ps.billing_type === 'one_time'
+          ? Number(ps.one_time_amount ?? 0)
+          : Number(ps.monthly_amount ?? 0);
+      const unitPrice =
+        userPrice > 0 ? userPrice : getUnitPrice(pkg, 0);
+      // Inline the same key shape used by itemKey() further below — declared
+      // after this effect, so we can't call it here without re-ordering.
+      const key = `${pkg.service_type}-${pkg.code}`;
+      nextItems.set(key, {
+        category: pkg.service_type,
+        itemId: pkg.code,
+        label: getLabel(pkg),
+        description: pkg.description ?? '',
+        unitPrice,
+        qty: 1,
+        lineTotal: unitPrice,
+      });
+    }
+
+    if (nextItems.size > 0) {
+      setSelectedItems(nextItems);
+      // Land the user on the first pre-selected category for visual confirmation.
+      const firstCategory = [...nextItems.values()][0]?.category;
+      if (firstCategory) setSelectedCategory(firstCategory);
+    }
+    seededRef.current = true;
+  }, [lead, catalog]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
