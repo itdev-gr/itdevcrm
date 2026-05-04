@@ -33,4 +33,8 @@ export const queryKeys = {
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
   job: (id: string) => ['job', id] as const,
   recurringClients: () => ['recurring-clients'] as const,
+  offerCatalog: () => ['offer-catalog'] as const,
+  offer: (id: string) => ['offer', id] as const,
+  offersForLead: (leadId: string) => ['offers', 'lead', leadId] as const,
+  offersForDeal: (dealId: string) => ['offers', 'deal', dealId] as const,
 };

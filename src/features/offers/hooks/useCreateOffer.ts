@@ -1,0 +1,59 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { queryKeys } from '@/lib/queryKeys';
+import { Sentry } from '@/lib/sentry';
+import type { OfferItem, OfferTotals } from '@/lib/offers/types';
+import type { Json } from '@/types/supabase';
+
+type Input = {
+  lead_id?: string | null;
+  deal_id?: string | null;
+  client_id?: string | null;
+  currency: string;
+  discount_amount: number;
+  vat_percent: number;
+  validity_days: number;
+  notes: string | null;
+  items: OfferItem[];
+  totals: OfferTotals;
+};
+
+export function useCreateOffer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Input): Promise<string> => {
+      const payload = {
+        lead_id: input.lead_id ?? null,
+        deal_id: input.deal_id ?? null,
+        client_id: input.client_id ?? null,
+        status: 'draft' as const,
+        currency: input.currency,
+        discount_amount: input.discount_amount,
+        vat_percent: input.vat_percent,
+        validity_days: input.validity_days,
+        notes: input.notes,
+        items: input.items as unknown as Json,
+        totals: input.totals as unknown as Json,
+      };
+      const { data, error } = await supabase
+        .from('offers')
+        .insert(payload)
+        .select('id')
+        .single();
+      if (error || !data) {
+        Sentry.captureException(error ?? new Error('insert returned no row'), {
+          tags: { feature: 'offers', op: 'create' },
+        });
+        throw new Error(error?.message ?? 'Failed to create offer');
+      }
+      return data.id;
+    },
+    onSuccess: (_id, vars) => {
+      void qc.invalidateQueries({ queryKey: ['offers'] });
+      if (vars.lead_id)
+        void qc.invalidateQueries({ queryKey: queryKeys.offersForLead(vars.lead_id) });
+      if (vars.deal_id)
+        void qc.invalidateQueries({ queryKey: queryKeys.offersForDeal(vars.deal_id) });
+    },
+  });
+}
