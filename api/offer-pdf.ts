@@ -126,7 +126,20 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
-    pdf = await page.pdf({ format: 'A4', printBackground: true });
+    // Render as a single tall page (no page breaks). Measure the rendered
+    // body height in px and convert to mm via the 96 DPI ratio
+    // (1 mm = 3.779527559 px). 297 mm = A4 height — use as a floor so
+    // tiny offers still come out at A4 size.
+    const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
+    const pageHeightMm = Math.max(bodyHeight / 3.779527559, 297);
+    pdf = await page.pdf({
+      width: '210mm',
+      height: `${pageHeightMm}mm`,
+      margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
+      printBackground: true,
+      preferCSSPageSize: true,
+      displayHeaderFooter: false,
+    });
   } finally {
     await browser.close();
   }
