@@ -6,6 +6,7 @@ import { ServicesPlannedField, type PlannedService } from '@/features/deals/Serv
 import { useUpdateLead } from './hooks/useUpdateLead';
 import type { LeadRow } from './hooks/useLeads';
 import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
+import { INDUSTRIES } from '@/lib/industries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 
 export function LeadForm({ lead }: { lead: LeadRow }) {
@@ -170,7 +171,23 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           </div>
           <div>
             <Label htmlFor="ind">{t('form.industry')}</Label>
-            <Input id="ind" value={industry} onChange={(e) => setIndustry(e.target.value)} />
+            <select
+              id="ind"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              disabled={readOnly}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              {INDUSTRIES.map((ind) => (
+                <option key={ind.code} value={ind.code}>
+                  {ind.labels[lang]}
+                </option>
+              ))}
+              {industry && !INDUSTRIES.some((i) => i.code === industry) && (
+                <option value={industry}>{industry} (legacy)</option>
+              )}
+            </select>
           </div>
           <div>
             <Label htmlFor="addr">{t('form.address')}</Label>

@@ -55,9 +55,17 @@ export function LeadDetailPage() {
       if (e) throw new Error(e.message);
       const list = data ?? [];
       if (list.length === 0) return null;
+      // Pick the next chronologically-after-current lead, otherwise wrap
+      // around to the first one that isn't this one. With this, "Next new
+      // lead" always lands on a different lead when the user has more than
+      // one assigned — instead of false-claiming "no more" when they're
+      // viewing the most recent of their queue.
       const idx = list.findIndex((l) => l.id === leadId);
       if (idx === -1) return list[0]?.id ?? null;
-      return list[idx + 1]?.id ?? null;
+      const after = list[idx + 1];
+      if (after) return after.id;
+      const wrapAround = list.find((l) => l.id !== leadId);
+      return wrapAround?.id ?? null;
     },
     enabled: !!userId && !!newLeadStageId,
     staleTime: 30_000,

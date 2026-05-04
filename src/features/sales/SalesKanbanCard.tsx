@@ -7,9 +7,13 @@ import { CopyableCode } from '@/components/CopyableCode';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
+import { industryLabel } from '@/lib/industries';
+import type { PlannedService } from '@/features/deals/ServicesPlannedField';
 
 export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
-  const { t } = useTranslation('leads');
+  const { t, i18n } = useTranslation('leads');
+  const { t: tDeals } = useTranslation('deals');
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: owners = [] } = useAssignableOwners();
   const owner = lead.owner_user_id ? owners.find((o) => o.user_id === lead.owner_user_id) : null;
   const isWon = lead.stage?.code === 'won';
@@ -29,8 +33,12 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
   // sometimes only carry a phone + company), then to the lead.title last.
   const fullName = contactName || lead.company_name || lead.title;
   // Avoid showing the company name twice when it's already the title.
-  const subtitleParts = [contactName ? lead.company_name : null, lead.industry].filter(Boolean);
+  const industryDisplay = industryLabel(lead.industry, lang);
+  const subtitleParts = [contactName ? lead.company_name : null, industryDisplay].filter(Boolean);
   const companyAndCategory = subtitleParts.join(' · ');
+  const services: PlannedService[] = Array.isArray(lead.services_planned)
+    ? (lead.services_planned as unknown as PlannedService[])
+    : [];
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
@@ -65,6 +73,11 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
           <div className="text-[10px] text-slate-500">
             👤 {owner ? owner.full_name || owner.email : t('owner.unassigned')}
           </div>
+          {services.length > 0 && (
+            <div className="text-[10px] text-slate-500">
+              {services.map((s) => tDeals(`services.types.${s.service_type}`)).join(' · ')}
+            </div>
+          )}
           {isWon && wonBy && (
             <div className="text-[10px] text-emerald-700">
               {t('sales_person.label')}: {wonBy.full_name || wonBy.email}

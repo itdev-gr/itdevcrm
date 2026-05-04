@@ -91,6 +91,7 @@
       "email_required": "Email is required.",
       "phone_or_address_required": "Phone or address is required.",
       "company_name_required": "Company name is required.",
+      "payment_method_required": "Payment method is required before converting to a client.",
       "contract_attachment_required": "A signed contract attachment is required."
     }
   },

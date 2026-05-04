@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
+import { INDUSTRIES } from '@/lib/industries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { ServicesPlannedField, type PlannedService } from './ServicesPlannedField';
 import type { DealRow } from './hooks/useDeals';
@@ -203,7 +204,22 @@ export function DealForm({ initial }: Props) {
         </div>
         <div>
           <Label htmlFor="ind">{tLeads('form.industry')}</Label>
-          <Input id="ind" value={industry} onChange={(e) => setIndustry(e.target.value)} />
+          <select
+            id="ind"
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="">—</option>
+            {INDUSTRIES.map((ind) => (
+              <option key={ind.code} value={ind.code}>
+                {ind.labels[lang]}
+              </option>
+            ))}
+            {industry && !INDUSTRIES.some((i) => i.code === industry) && (
+              <option value={industry}>{industry} (legacy)</option>
+            )}
+          </select>
         </div>
         <div>
           <Label htmlFor="addr">{tLeads('form.address')}</Label>
