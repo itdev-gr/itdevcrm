@@ -1,0 +1,10 @@
+{
+  "monthly_tasks": {
+    "title": "This month's tasks",
+    "for_period": "Tasks for {{period}}",
+    "progress": "{{done}} of {{total}} done",
+    "empty": "No template configured for this service.",
+    "blocked_hint": "Cannot edit while the client is blocked.",
+    "completed_by": "by {{name}} {{when}}"
+  }
+}

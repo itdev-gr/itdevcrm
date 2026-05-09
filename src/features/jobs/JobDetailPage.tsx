@@ -8,6 +8,7 @@ import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { useJob } from './hooks/useJob';
+import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
@@ -136,6 +137,13 @@ export function JobDetailPage() {
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-3 pt-4">
+          {job.billing_type === 'recurring_monthly' && (
+            <MonthlyTasksPanel
+              jobId={job.id}
+              serviceType={job.service_type}
+              isBlocked={!!job.is_blocked}
+            />
+          )}
           <div className="grid grid-cols-2 gap-4 rounded-md border bg-slate-50 p-4 text-sm">
             <div>
               <div className="text-xs text-slate-500">Service</div>
