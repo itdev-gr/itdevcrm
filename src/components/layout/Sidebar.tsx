@@ -2,14 +2,17 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/authStore';
 
-const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'ai_seo', 'hosting'] as const;
+// AI SEO is folded into Web SEO + Local SEO — no separate kanban. The
+// `ai_seo` permission group is still meaningful (members handle AI SEO
+// jobs); they get the Web SEO + Local SEO sidebar links via the bridge
+// in `visibleTechGroups` below.
+const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting'] as const;
 
 const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   web_seo: 'Web SEO',
   local_seo: 'Local SEO',
   web_dev: 'Web Dev',
   social_media: 'Social Media',
-  ai_seo: 'AI SEO',
   hosting: 'Hosting',
 };
 
@@ -18,7 +21,6 @@ const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   local_seo: '/tech/local-seo',
   web_dev: '/tech/web-dev',
   social_media: '/tech/social-media',
-  ai_seo: '/tech/ai-seo',
   hosting: '/tech/hosting',
 };
 
@@ -27,7 +29,6 @@ const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   local_seo: '/tech/local-seo/clients',
   web_dev: '/tech/web-dev/clients',
   social_media: '/tech/social-media/clients',
-  ai_seo: '/tech/ai-seo/clients',
   hosting: '/tech/hosting/clients',
 };
 
@@ -37,9 +38,14 @@ export function Sidebar() {
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const isSales = groupCodes.includes('sales');
   const isAccounting = groupCodes.includes('accounting');
+  // AI SEO members work AI SEO jobs which now live on the Web SEO + Local SEO
+  // boards, so grant them visibility into both kanbans.
+  const isAiSeo = groupCodes.includes('ai_seo');
   const visibleTechGroups = isAdmin
     ? [...TECH_GROUPS]
-    : TECH_GROUPS.filter((g) => groupCodes.includes(g));
+    : TECH_GROUPS.filter(
+        (g) => groupCodes.includes(g) || (isAiSeo && (g === 'web_seo' || g === 'local_seo')),
+      );
 
   return (
     <aside className="hidden w-56 flex-col gap-2 self-stretch border-r bg-slate-50 p-4 md:flex">

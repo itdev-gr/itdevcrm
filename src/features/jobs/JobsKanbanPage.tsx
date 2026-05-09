@@ -46,9 +46,16 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
 
   if (isLoading) return <div className="p-8">…</div>;
 
+  const stageById = new Map(stages.map((s) => [s.id, s]));
   const boardStages = stages
     .filter((s) => s.board === serviceType && !s.archived)
     .sort((a, b) => a.position - b.position);
+
+  // Map a stage code to its column for this kanban. Lets ai_seo jobs (which
+  // canonically live on the web_seo board) appear in the matching local_seo
+  // column when the codes line up.
+  const colByCode = new Map<string, (typeof boardStages)[number]>();
+  for (const s of boardStages) colByCode.set(s.code, s);
 
   const filteredJobs =
     onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
@@ -56,10 +63,12 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const jobsByStage = new Map<string, JobRow[]>();
   for (const s of boardStages) jobsByStage.set(s.id, []);
   for (const j of filteredJobs) {
-    const sid = j.stage_id;
-    if (!sid) continue;
-    const list = jobsByStage.get(sid);
-    if (list) list.push(j);
+    if (!j.stage_id) continue;
+    const jobStage = stageById.get(j.stage_id);
+    if (!jobStage) continue;
+    const col = colByCode.get(jobStage.code);
+    if (!col) continue;
+    jobsByStage.get(col.id)?.push(j);
   }
 
   function toggleScope() {
@@ -78,9 +87,24 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
     const job = jobs.find((j) => j.id === jobId);
-    if (!job || job.stage_id === stageId) return;
+    if (!job) return;
+
+    // ai_seo jobs canonically live on the Web SEO board. When dragged on a
+    // non-web-seo kanban (i.e. /tech/local-seo), translate the target stage
+    // to the matching web_seo stage so the job stays visible on both boards.
+    let targetStageId = stageId;
+    if (job.service_type === 'ai_seo' && serviceType !== 'web_seo') {
+      const targetStage = stageById.get(stageId);
+      if (!targetStage) return;
+      const webSeoStage = stages.find(
+        (s) => s.board === 'web_seo' && s.code === targetStage.code && !s.archived,
+      );
+      if (!webSeoStage) return;
+      targetStageId = webSeoStage.id;
+    }
+    if (job.stage_id === targetStageId) return;
     try {
-      await moveStage.mutateAsync({ jobId, stageId });
+      await moveStage.mutateAsync({ jobId, stageId: targetStageId });
     } catch (err) {
       alert((err as Error).message);
     }

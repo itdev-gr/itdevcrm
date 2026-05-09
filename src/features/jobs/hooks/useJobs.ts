@@ -19,6 +19,16 @@ export type JobRow = JobBase & {
   stage?: { id: string; code: string; board: string; display_names: unknown } | null;
 };
 
+// Web SEO and Local SEO kanbans also surface ai_seo jobs (AI SEO has no
+// dedicated board — see migration 20260509000005). Other service types
+// only see their own jobs.
+function serviceTypesForBoard(serviceType: ServiceType): ServiceType[] {
+  if (serviceType === 'web_seo' || serviceType === 'local_seo') {
+    return [serviceType, 'ai_seo'];
+  }
+  return [serviceType];
+}
+
 export function useJobs(serviceType: ServiceType) {
   return useQuery({
     queryKey: queryKeys.jobsByService(serviceType),
@@ -28,7 +38,7 @@ export function useJobs(serviceType: ServiceType) {
         .select(
           '*, client:clients(id, name, contact_first_name, contact_last_name, industry), deal:deals(id, code, title), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
         )
-        .eq('service_type', serviceType)
+        .in('service_type', serviceTypesForBoard(serviceType))
         .eq('archived', false)
         .order('updated_at', { ascending: false });
       if (error) throw new Error(error.message);

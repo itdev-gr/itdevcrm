@@ -39,6 +39,14 @@ export function JobsKanbanCard({ job }: { job: JobRow }) {
               </Link>
             </div>
             <div className="flex items-center gap-1">
+              {job.service_type === 'ai_seo' && (
+                <span
+                  className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700"
+                  title="AI SEO"
+                >
+                  AI SEO
+                </span>
+              )}
               {job.is_blocked && (
                 <span
                   className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700"
