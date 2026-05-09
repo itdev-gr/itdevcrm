@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import {
   DndContext,
   DragOverlay,
@@ -14,6 +15,7 @@ import { useJobs, type JobRow, type ServiceType } from './hooks/useJobs';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { useJobsRealtime } from './hooks/useJobsRealtime';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 
@@ -36,6 +38,9 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveJobStage(serviceType);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const userId = useAuthStore((s) => s.user?.id ?? '');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const onlyMine = searchParams.get('mine') !== '0';
 
   const activeJob = activeId ? (jobs.find((j) => j.id === activeId) ?? null) : null;
 
@@ -45,13 +50,23 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     .filter((s) => s.board === serviceType && !s.archived)
     .sort((a, b) => a.position - b.position);
 
+  const filteredJobs =
+    onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
+
   const jobsByStage = new Map<string, JobRow[]>();
   for (const s of boardStages) jobsByStage.set(s.id, []);
-  for (const j of jobs) {
+  for (const j of filteredJobs) {
     const sid = j.stage_id;
     if (!sid) continue;
     const list = jobsByStage.get(sid);
     if (list) list.push(j);
+  }
+
+  function toggleScope() {
+    const next = new URLSearchParams(searchParams);
+    if (onlyMine) next.set('mine', '0');
+    else next.delete('mine');
+    setSearchParams(next, { replace: true });
   }
 
   function onDragStart(e: DragStartEvent) {
@@ -73,8 +88,20 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 border-b bg-white/95 px-6 py-3">
+      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{SERVICE_LABELS[serviceType][lang]}</h1>
+        <button
+          type="button"
+          onClick={toggleScope}
+          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            onlyMine
+              ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200'
+              : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+          }`}
+        >
+          {onlyMine ? 'Only mine' : "All my group's"} ·{' '}
+          <span className="tabular-nums">{filteredJobs.length}</span>
+        </button>
       </div>
       <DndContext
         sensors={sensors}
