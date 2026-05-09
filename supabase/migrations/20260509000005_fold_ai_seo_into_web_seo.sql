@@ -118,20 +118,27 @@ update public.pipeline_stages
 --    their own service_type.
 create or replace view public.tech_my_clients
 with (security_invoker = true) as
-with sources as (
-  select
-    case
-      when j.service_type = 'ai_seo' then unnest(array['web_seo', 'local_seo'])
-      else j.service_type
-    end as service_type,
-    j.client_id,
-    j.updated_at,
-    j.status,
-    j.is_blocked
-  from public.jobs j
-  where j.archived = false
-    and j.status <> 'cancelled'
-    and j.updated_at > now() - interval '90 days'
+with base as (
+  select j.service_type, j.client_id, j.updated_at, j.status, j.is_blocked
+    from public.jobs j
+   where j.archived = false
+     and j.status <> 'cancelled'
+     and j.updated_at > now() - interval '90 days'
+),
+sources as (
+  -- Non-ai_seo jobs map 1:1 to their service_type.
+  select service_type, client_id, updated_at, status, is_blocked
+    from base
+   where service_type <> 'ai_seo'
+  union all
+  -- ai_seo jobs are duplicated under both web_seo and local_seo.
+  select 'web_seo'::text, client_id, updated_at, status, is_blocked
+    from base
+   where service_type = 'ai_seo'
+  union all
+  select 'local_seo'::text, client_id, updated_at, status, is_blocked
+    from base
+   where service_type = 'ai_seo'
 )
 select
   s.service_type,
