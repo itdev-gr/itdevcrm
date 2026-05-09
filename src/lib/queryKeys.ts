@@ -32,6 +32,10 @@ export const queryKeys = {
   serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
   job: (id: string) => ['job', id] as const,
+  jobMonthlyTasks: (id: string) => ['job-monthly-tasks', id] as const,
+  monthlyTaskTemplate: (serviceType: string) =>
+    ['monthly-task-template', serviceType] as const,
+  techMyClients: (serviceType: string) => ['tech-my-clients', serviceType] as const,
   recurringClients: () => ['recurring-clients'] as const,
   offerCatalog: () => ['offer-catalog'] as const,
   offer: (id: string) => ['offer', id] as const,
