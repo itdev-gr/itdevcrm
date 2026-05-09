@@ -79,6 +79,10 @@ const JobsKanbanPage = lazy(() =>
   import('@/features/jobs/JobsKanbanPage').then((m) => ({ default: m.JobsKanbanPage })),
 );
 const JobDetailPage = lazyPage(() => import('@/features/jobs/JobDetailPage'), 'JobDetailPage');
+const TechMyClientsPage = lazyPage(
+  () => import('@/features/tech/TechMyClientsPage'),
+  'TechMyClientsPage',
+);
 const OfferBuilderPage = lazyPage(
   () => import('@/features/offers/OfferBuilderPage'),
   'OfferBuilderPage',
@@ -150,6 +154,7 @@ export const router = createBrowserRouter([
           { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
           { path: 'ai-seo', element: <JobsKanbanPage serviceType="ai_seo" /> },
           { path: 'hosting', element: <JobsKanbanPage serviceType="hosting" /> },
+          { path: ':serviceType/clients', element: <TechMyClientsPage /> },
         ],
       },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },

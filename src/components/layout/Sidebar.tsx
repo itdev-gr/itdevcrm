@@ -22,6 +22,15 @@ const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   hosting: '/tech/hosting',
 };
 
+const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
+  web_seo: '/tech/web-seo/clients',
+  local_seo: '/tech/local-seo/clients',
+  web_dev: '/tech/web-dev/clients',
+  social_media: '/tech/social-media/clients',
+  ai_seo: '/tech/ai-seo/clients',
+  hosting: '/tech/hosting/clients',
+};
+
 export function Sidebar() {
   const { t } = useTranslation();
   const isAdmin = useAuthStore((state) => state.isAdmin);
@@ -97,15 +106,25 @@ export function Sidebar() {
         <div className="space-y-1 pt-2">
           <p className="px-3 text-xs font-medium uppercase text-slate-500">Technical</p>
           {visibleTechGroups.map((g) => (
-            <NavLink
-              key={g}
-              to={TECH_ROUTES[g]}
-              className={({ isActive }) =>
-                `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
-              }
-            >
-              {TECH_LABELS[g]}
-            </NavLink>
+            <div key={g} className="space-y-0.5">
+              <NavLink
+                to={TECH_ROUTES[g]}
+                end
+                className={({ isActive }) =>
+                  `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+                }
+              >
+                {TECH_LABELS[g]}
+              </NavLink>
+              <NavLink
+                to={TECH_CLIENTS_ROUTES[g]}
+                className={({ isActive }) =>
+                  `block rounded px-6 py-1 text-xs ${isActive ? 'bg-slate-200 font-medium text-slate-800' : 'text-slate-600 hover:bg-slate-100'}`
+                }
+              >
+                {t('clients:my_clients')}
+              </NavLink>
+            </div>
           ))}
         </div>
       )}
