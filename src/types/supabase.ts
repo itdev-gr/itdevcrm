@@ -162,6 +162,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "client_blocks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "client_blocks_unblocked_by_fkey"
             columns: ["unblocked_by"]
             isOneToOne: false
@@ -525,6 +532,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "deals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "deals_locked_by_fkey"
             columns: ["locked_by"]
             isOneToOne: false
@@ -782,6 +796,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "jobs_deal_id_fkey"
             columns: ["deal_id"]
             isOneToOne: false
@@ -938,6 +959,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "leads_converted_client_id_fkey"
+            columns: ["converted_client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "leads_converted_deal_id_fkey"
             columns: ["converted_deal_id"]
             isOneToOne: false
@@ -1077,6 +1105,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "offers_created_by_fkey"
@@ -1258,6 +1293,24 @@ export type Database = {
           },
         ]
       }
+      service_monthly_task_templates: {
+        Row: {
+          service_type: string
+          tasks: Json
+          updated_at: string
+        }
+        Insert: {
+          service_type: string
+          tasks?: Json
+          updated_at?: string
+        }
+        Update: {
+          service_type?: string
+          tasks?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       service_packages: {
         Row: {
           archived: boolean
@@ -1435,6 +1488,22 @@ export type Database = {
       }
     }
     Views: {
+      tech_my_clients: {
+        Row: {
+          active_jobs: number | null
+          any_blocked: boolean | null
+          client_id: string | null
+          client_name: string | null
+          client_status: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
+          email: string | null
+          industry: string | null
+          last_activity: string | null
+          service_type: string | null
+        }
+        Relationships: []
+      }
       user_effective_permissions: {
         Row: {
           action: string | null
@@ -1478,6 +1547,10 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      ensure_job_monthly_task_period: {
+        Args: { p_job_id: string }
+        Returns: undefined
+      }
       ensure_recurring_payments: { Args: never; Returns: number }
       generate_lead_code: { Args: never; Returns: string }
       global_search: {
@@ -1511,8 +1584,13 @@ export type Database = {
         Args: { partial_payment_mode: boolean; target_deal_id: string }
         Returns: number
       }
+      run_monthly_task_reset: { Args: never; Returns: undefined }
       seed_deal_payments: {
         Args: { target_deal_id: string }
+        Returns: undefined
+      }
+      set_job_monthly_task: {
+        Args: { p_code: string; p_completed: boolean; p_job_id: string }
         Returns: undefined
       }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }

@@ -23,36 +23,31 @@ export type MonthlyTasksData = {
 };
 
 async function fetchData(jobId: string, serviceType: string): Promise<MonthlyTasksData> {
-  // Casts to `never` keep the call sites clean until `npm run types:gen` runs
-  // after the schema migration lands.
-  const { error: rpcError } = await supabase.rpc(
-    'ensure_job_monthly_task_period' as never,
-    { p_job_id: jobId } as never,
-  );
-  if (rpcError) throw new Error((rpcError as { message: string }).message);
+  const { error: rpcError } = await supabase.rpc('ensure_job_monthly_task_period', {
+    p_job_id: jobId,
+  });
+  if (rpcError) throw new Error(rpcError.message);
 
-  const [{ data: job, error: jobError }, tplResult] = await Promise.all([
+  const [{ data: job, error: jobError }, { data: tpl, error: tplError }] = await Promise.all([
     supabase
       .from('jobs')
       .select('monthly_tasks, monthly_tasks_period')
       .eq('id', jobId)
       .single(),
     supabase
-      .from('service_monthly_task_templates' as never)
+      .from('service_monthly_task_templates')
       .select('tasks')
       .eq('service_type', serviceType)
       .maybeSingle(),
   ]);
 
   if (jobError || !job) throw new Error(jobError?.message ?? 'job not found');
-  const tplErr = (tplResult as { error: { message: string } | null }).error;
-  if (tplErr) throw new Error(tplErr.message);
-  const tplData = (tplResult as { data: { tasks: MonthlyTaskLabel[] } | null }).data;
+  if (tplError) throw new Error(tplError.message);
 
   return {
     period: job.monthly_tasks_period ?? null,
     tasks: (job.monthly_tasks as unknown as MonthlyTask[]) ?? [],
-    template: tplData?.tasks ?? [],
+    template: (tpl?.tasks as unknown as MonthlyTaskLabel[]) ?? [],
   };
 }
 

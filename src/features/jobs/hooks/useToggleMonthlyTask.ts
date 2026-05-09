@@ -12,15 +12,12 @@ export function useToggleMonthlyTask(jobId: string) {
       'jobs',
       'toggle_monthly_task',
       async ({ jobId: id, code, completed }: Input) => {
-        const { error } = await supabase.rpc(
-          'set_job_monthly_task' as never,
-          {
-            p_job_id: id,
-            p_code: code,
-            p_completed: completed,
-          } as never,
-        );
-        if (error) throw new Error((error as { message: string }).message);
+        const { error } = await supabase.rpc('set_job_monthly_task', {
+          p_job_id: id,
+          p_code: code,
+          p_completed: completed,
+        });
+        if (error) throw new Error(error.message);
       },
     ),
     onSuccess: () => {

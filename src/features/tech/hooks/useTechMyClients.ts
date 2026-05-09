@@ -20,26 +20,13 @@ export function useTechMyClients(serviceType: string) {
   return useQuery({
     queryKey: queryKeys.techMyClients(serviceType),
     queryFn: async (): Promise<TechMyClientRow[]> => {
-      const { data, error } = await (
-        supabase.from as unknown as (table: string) => {
-          select: (cols: string) => {
-            eq: (
-              c: string,
-              v: string,
-            ) => {
-              order: (
-                c: string,
-                opts: { ascending: boolean },
-              ) => Promise<{ data: TechMyClientRow[] | null; error: { message: string } | null }>;
-            };
-          };
-        }
-      )('tech_my_clients')
+      const { data, error } = await supabase
+        .from('tech_my_clients')
         .select('*')
         .eq('service_type', serviceType)
         .order('last_activity', { ascending: false });
       if (error) throw new Error(error.message);
-      return data ?? [];
+      return (data ?? []) as TechMyClientRow[];
     },
     enabled: !!serviceType,
   });
