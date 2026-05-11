@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useScheduledLeads, type ScheduledLead } from './hooks/useScheduledLeads';
 
-type View = 'day' | 'week' | 'month';
+type View = 'day' | 'week';
 
 // ── date helpers (no library) ────────────────────────────────────────────────
 
@@ -30,9 +30,6 @@ function startOfWeek(d: Date): Date {
   x.setDate(x.getDate() - dow);
   return x;
 }
-function startOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
 function sameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -43,12 +40,7 @@ function sameDay(a: Date, b: Date): boolean {
 
 function rangeFor(view: View, cursor: Date): { start: Date; end: Date } {
   if (view === 'day') return { start: startOfDay(cursor), end: addDays(endOfDay(cursor), 0) };
-  if (view === 'week') return { start: startOfWeek(cursor), end: addDays(startOfWeek(cursor), 7) };
-  // month: extend to fill the 6×7 grid
-  const monthStart = startOfMonth(cursor);
-  const gridStart = startOfWeek(monthStart);
-  const gridEnd = addDays(gridStart, 42);
-  return { start: gridStart, end: gridEnd };
+  return { start: startOfWeek(cursor), end: addDays(startOfWeek(cursor), 7) };
 }
 
 function leadHeadline(l: ScheduledLead): string {
@@ -145,75 +137,6 @@ function WeekView({ cursor, items, locale }: { cursor: Date; items: ScheduledLea
   );
 }
 
-function MonthView({
-  cursor,
-  items,
-  locale,
-  onPickDay,
-}: {
-  cursor: Date;
-  items: ScheduledLead[];
-  locale: string;
-  onPickDay: (d: Date) => void;
-}) {
-  const monthStart = startOfMonth(cursor);
-  const gridStart = startOfWeek(monthStart);
-  const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
-  const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-  const itemsByDay = new Map<string, ScheduledLead[]>();
-  for (const l of items) {
-    const k = new Date(l.scheduled_for).toDateString();
-    if (!itemsByDay.has(k)) itemsByDay.set(k, []);
-    itemsByDay.get(k)!.push(l);
-  }
-  const today = new Date();
-  return (
-    <div className="space-y-1">
-      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-slate-500">
-        {Array.from({ length: 7 }, (_, i) => (
-          <div key={i}>{weekdayFmt.format(addDays(gridStart, i))}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {days.map((d) => {
-          const list = itemsByDay.get(d.toDateString()) ?? [];
-          const inMonth = d.getMonth() === cursor.getMonth();
-          const isToday = sameDay(d, today);
-          return (
-            <button
-              key={d.toDateString()}
-              type="button"
-              onClick={() => onPickDay(d)}
-              className={`flex min-h-[6rem] flex-col items-stretch rounded-md border p-1 text-left text-xs transition-colors ${
-                inMonth ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
-              } ${isToday ? 'border-blue-300 ring-2 ring-blue-100' : ''}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className={`font-medium ${isToday ? 'text-blue-700' : ''}`}>{d.getDate()}</span>
-                {list.length > 0 && (
-                  <span className="rounded-full bg-blue-100 px-1.5 text-[10px] font-medium text-blue-700">
-                    {list.length}
-                  </span>
-                )}
-              </div>
-              <ul className="mt-1 space-y-0.5">
-                {list.slice(0, 2).map((l) => (
-                  <li key={l.id} className="truncate text-[10px] text-blue-800">
-                    {formatTime(l.scheduled_for, locale)} {leadHeadline(l)}
-                  </li>
-                ))}
-                {list.length > 2 && (
-                  <li className="text-[10px] text-slate-400">+{list.length - 2}</li>
-                )}
-              </ul>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ── shell ────────────────────────────────────────────────────────────────────
 
 export function CalendarPage() {
@@ -233,13 +156,7 @@ export function CalendarPage() {
 
   function shift(delta: number) {
     if (view === 'day') setCursor((c) => addDays(c, delta));
-    else if (view === 'week') setCursor((c) => addDays(c, delta * 7));
-    else
-      setCursor((c) => {
-        const next = new Date(c);
-        next.setMonth(next.getMonth() + delta);
-        return next;
-      });
+    else setCursor((c) => addDays(c, delta * 7));
   }
 
   const periodLabel = useMemo(() => {
@@ -251,13 +168,10 @@ export function CalendarPage() {
         year: 'numeric',
       }).format(cursor);
     }
-    if (view === 'week') {
-      const s = startOfWeek(cursor);
-      const e = addDays(s, 6);
-      const fmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
-      return `${fmt.format(s)} – ${fmt.format(e)}`;
-    }
-    return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(cursor);
+    const s = startOfWeek(cursor);
+    const e = addDays(s, 6);
+    const fmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+    return `${fmt.format(s)} – ${fmt.format(e)}`;
   }, [view, cursor, locale]);
 
   return (
@@ -305,7 +219,7 @@ export function CalendarPage() {
             </button>
           )}
           <div className="flex rounded-md border">
-            {(['day', 'week', 'month'] as const).map((v) => (
+            {(['day', 'week'] as const).map((v) => (
               <button
                 key={v}
                 type="button"
@@ -324,17 +238,6 @@ export function CalendarPage() {
       <div className="min-h-0 flex-1 overflow-auto">
         {view === 'day' && <DayView cursor={cursor} items={items} locale={locale} />}
         {view === 'week' && <WeekView cursor={cursor} items={items} locale={locale} />}
-        {view === 'month' && (
-          <MonthView
-            cursor={cursor}
-            items={items}
-            locale={locale}
-            onPickDay={(d) => {
-              setCursor(d);
-              setView('day');
-            }}
-          />
-        )}
       </div>
     </div>
   );
