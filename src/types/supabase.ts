@@ -1198,6 +1198,7 @@ export type Database = {
           is_admin: boolean
           job_title: string | null
           must_change_password: boolean
+          offer_followup_days: number
           phone: string | null
           phone_extension: string | null
           preferred_locale: string
@@ -1218,6 +1219,7 @@ export type Database = {
           is_admin?: boolean
           job_title?: string | null
           must_change_password?: boolean
+          offer_followup_days?: number
           phone?: string | null
           phone_extension?: string | null
           preferred_locale?: string
@@ -1238,6 +1240,7 @@ export type Database = {
           is_admin?: boolean
           job_title?: string | null
           must_change_password?: boolean
+          offer_followup_days?: number
           phone?: string | null
           phone_extension?: string | null
           preferred_locale?: string
