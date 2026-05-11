@@ -6,7 +6,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 // `ai_seo` permission group is still meaningful (members handle AI SEO
 // jobs); they get the Web SEO + Local SEO sidebar links via the bridge
 // in `visibleTechGroups` below.
-const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting'] as const;
+const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting', 'ads'] as const;
 
 const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   web_seo: 'Web SEO',
@@ -14,6 +14,7 @@ const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   web_dev: 'Web Dev',
   social_media: 'Social Media',
   hosting: 'Hosting',
+  ads: 'Ads',
 };
 
 const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -22,6 +23,7 @@ const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   web_dev: '/tech/web-dev',
   social_media: '/tech/social-media',
   hosting: '/tech/hosting',
+  ads: '/tech/ads',
 };
 
 const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -30,6 +32,7 @@ const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   web_dev: '/tech/web-dev/clients',
   social_media: '/tech/social-media/clients',
   hosting: '/tech/hosting/clients',
+  ads: '/tech/ads/clients',
 };
 
 export function Sidebar() {

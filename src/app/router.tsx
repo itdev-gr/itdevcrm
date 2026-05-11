@@ -142,7 +142,7 @@ export const router = createBrowserRouter([
         path: 'tech',
         element: (
           <RequireGroup
-            groups={['web_seo', 'local_seo', 'web_dev', 'social_media', 'ai_seo', 'hosting']}
+            groups={['web_seo', 'local_seo', 'web_dev', 'social_media', 'ai_seo', 'hosting', 'ads']}
           >
             {/* ai_seo stays in the access list so AI-SEO members can reach
                 /tech/web-seo and /tech/local-seo, where their jobs live. */}
@@ -155,6 +155,7 @@ export const router = createBrowserRouter([
           { path: 'web-dev', element: <JobsKanbanPage serviceType="web_dev" /> },
           { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
           { path: 'hosting', element: <JobsKanbanPage serviceType="hosting" /> },
+          { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
           { path: ':serviceType/clients', element: <TechMyClientsPage /> },
         ],
       },
