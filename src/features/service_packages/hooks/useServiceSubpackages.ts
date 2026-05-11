@@ -18,5 +18,6 @@ export function useServiceSubpackages(parentId: string) {
       if (error) throw new Error(error.message);
       return (data ?? []) as ServiceSubpackageRow[];
     },
+    enabled: !!parentId,
   });
 }
