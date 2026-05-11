@@ -18,6 +18,7 @@ import {
 } from '@/lib/permissions';
 import { useGroupPermissions } from './hooks/useGroupPermissions';
 import { useUpsertGroupPermission } from './hooks/useUpsertGroupPermission';
+import { TeamLeadsBadge } from './TeamLeadsBadge';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 
 export function GroupPermissionsPage() {
@@ -40,6 +41,8 @@ export function GroupPermissionsPage() {
       <h1 className="text-2xl font-bold">
         {t('permissions.title', { group: group.display_names[lang] })}
       </h1>
+
+      <TeamLeadsBadge groupId={groupId} />
 
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full border-collapse text-sm">
