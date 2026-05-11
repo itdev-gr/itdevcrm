@@ -32,12 +32,16 @@ function readString(p: NotifPayload, key: string): string | null {
 
 export function NotificationsBell() {
   const { t } = useTranslation('sales');
-  const { data: list = [] } = useNotifications();
+  const { data: all = [] } = useNotifications();
   const mark = useMarkNotificationRead();
   useNotificationsRealtime();
   const [open, setOpen] = useState(false);
 
-  const unreadCount = list.filter((n) => !n.read_at).length;
+  // The bell only displays unread items — once an item is cleared (from
+  // anywhere, including the home-page NotificationsColumn), it disappears
+  // from here. The full feed lives in NotificationsColumn.
+  const list = all.filter((n) => !n.read_at);
+  const unreadCount = list.length;
 
   function onItemClick(notifId: string, alreadyRead: boolean) {
     if (!alreadyRead) void mark.mutateAsync(notifId);
@@ -60,7 +64,9 @@ export function NotificationsBell() {
         <div className="space-y-2">
           <h3 className="text-sm font-medium">{t('notifications.title')}</h3>
           {list.length === 0 ? (
-            <p className="text-xs text-muted-foreground">{t('notifications.empty')}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('notifications.empty_unread', { defaultValue: 'All caught up.' })}
+            </p>
           ) : (
             <ul className="space-y-1">
               {list.map((n) => {

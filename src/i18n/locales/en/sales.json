@@ -37,6 +37,9 @@
   "notifications": {
     "title": "Notifications",
     "empty": "No notifications.",
-    "mark_all_read": "Mark all read"
+    "empty_unread": "All caught up.",
+    "mark_all_read": "Mark all read",
+    "clear_all": "Clear all",
+    "clear": "Clear"
   }
 }
