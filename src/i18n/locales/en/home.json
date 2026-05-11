@@ -1,0 +1,17 @@
+{
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "prev": "Previous",
+    "next": "Next",
+    "view": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "empty_day": "Nothing scheduled.",
+    "all_team": "All team (admin)",
+    "my_calendar": "My calendar",
+    "count": "{{count}} scheduled"
+  }
+}
