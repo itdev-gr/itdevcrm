@@ -855,6 +855,7 @@ export type Database = {
           owner_user_id: string | null
           payment_method: string | null
           phone: string | null
+          scheduled_for: string | null
           services_planned: Json
           source: string
           source_data: Json | null
@@ -894,6 +895,7 @@ export type Database = {
           owner_user_id?: string | null
           payment_method?: string | null
           phone?: string | null
+          scheduled_for?: string | null
           services_planned?: Json
           source: string
           source_data?: Json | null
@@ -933,6 +935,7 @@ export type Database = {
           owner_user_id?: string | null
           payment_method?: string | null
           phone?: string | null
+          scheduled_for?: string | null
           services_planned?: Json
           source?: string
           source_data?: Json | null
