@@ -4,7 +4,9 @@ import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
 
 export type UserRow = Database['public']['Tables']['profiles']['Row'] & {
-  user_groups: { groups: { id: string; code: string } | null }[] | null;
+  user_groups:
+    | { is_team_lead?: boolean; groups: { id: string; code: string } | null }[]
+    | null;
 };
 
 export function useUsers() {

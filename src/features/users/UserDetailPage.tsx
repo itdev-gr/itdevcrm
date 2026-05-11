@@ -9,6 +9,7 @@ import { useUser } from './hooks/useUser';
 import { useUpdateUser } from './hooks/useUpdateUser';
 import { useUpdateUserGroups } from './hooks/useUpdateUserGroups';
 import { useDeactivateUser } from './hooks/useDeactivateUser';
+import { useSetTeamLead } from './hooks/useSetTeamLead';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { ManageGroupsField } from './ManageGroupsField';
 
@@ -20,6 +21,7 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
   const updateUser = useUpdateUser();
   const updateGroups = useUpdateUserGroups();
   const deactivate = useDeactivateUser();
+  const setTeamLead = useSetTeamLead();
 
   const [fullName, setFullName] = useState(() => user.full_name ?? '');
   const [isAdmin, setIsAdmin] = useState(() => user.is_admin);
@@ -66,6 +68,44 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
           <Label>{t('table.groups')}</Label>
           <ManageGroupsField selected={groupCodes} onChange={setGroupCodes} />
         </div>
+
+        {(user.user_groups ?? []).filter((ug) => ug.groups).length > 0 && (
+          <div>
+            <Label>Team leadership</Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Auto-assign new jobs of these services to this user when the deal moves to Partial /
+              Paid In Full.
+            </p>
+            <ul className="space-y-1 rounded-md border p-3">
+              {(user.user_groups ?? [])
+                .filter((ug) => ug.groups)
+                .map((ug) => {
+                  const groupId = ug.groups!.id;
+                  const groupCode = ug.groups!.code;
+                  const checked = !!ug.is_team_lead;
+                  return (
+                    <li key={groupId} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        id={`team-lead-${groupId}`}
+                        checked={checked}
+                        disabled={setTeamLead.isPending}
+                        onCheckedChange={(v) => {
+                          setTeamLead.mutate({
+                            userId,
+                            groupId,
+                            isLead: v === true,
+                          });
+                        }}
+                      />
+                      <Label htmlFor={`team-lead-${groupId}`} className="font-normal">
+                        {groupCode}
+                      </Label>
+                    </li>
+                  );
+                })}
+            </ul>
+          </div>
+        )}
 
         <div className="flex gap-2">
           <Button onClick={onSave} disabled={updateUser.isPending || updateGroups.isPending}>

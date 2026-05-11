@@ -10,7 +10,7 @@ export function useUser(userId: string) {
       const { data, error } = await supabase
         .from('profiles')
         .select(
-          'user_id, full_name, email, avatar_url, is_admin, is_active, must_change_password, preferred_locale, archived, archived_at, archived_by, archived_reason, created_at, updated_at, user_groups(groups(id, code))',
+          'user_id, full_name, email, avatar_url, is_admin, is_active, must_change_password, preferred_locale, archived, archived_at, archived_by, archived_reason, created_at, updated_at, user_groups(is_team_lead, groups(id, code))',
         )
         .eq('user_id', userId)
         .single();
