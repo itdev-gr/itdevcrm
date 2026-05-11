@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { JobRow } from './useJobs';
 
 export function useJobsForClient(clientId: string) {
-  return useQuery({
+  const qc = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.jobsForClient(clientId),
     queryFn: async (): Promise<JobRow[]> => {
       const { data, error } = await supabase
@@ -20,4 +22,23 @@ export function useJobsForClient(clientId: string) {
     },
     enabled: !!clientId,
   });
+
+  useEffect(() => {
+    if (!clientId) return;
+    const channel = supabase
+      .channel(`jobs-for-client-${clientId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'jobs', filter: `client_id=eq.${clientId}` },
+        () => {
+          void qc.invalidateQueries({ queryKey: queryKeys.jobsForClient(clientId) });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [clientId, qc]);
+
+  return query;
 }

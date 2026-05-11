@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { ClientForm } from './ClientForm';
 import { useClient } from './hooks/useClient';
 import { useDeals } from '@/features/deals/hooks/useDeals';
 import { useJobsForClient } from '@/features/jobs/hooks/useJobsForClient';
+import { JobsTab } from '@/features/jobs/JobsTab';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
@@ -20,9 +21,8 @@ import { supabase } from '@/lib/supabase';
 
 export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
-  const { t, i18n } = useTranslation('clients');
+  const { t } = useTranslation('clients');
   const { t: tAcc } = useTranslation('accounting');
-  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: client, isLoading, error } = useClient(clientId);
   const { data: deals = [], isLoading: dealsLoading } = useDeals({ clientId });
   const { data: jobs = [] } = useJobsForClient(clientId);
@@ -113,38 +113,7 @@ export function ClientDetailPage() {
         </TabsContent>
 
         <TabsContent value="jobs" className="space-y-3 pt-4">
-          {jobs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No jobs yet.</p>
-          ) : (
-            <ul className="divide-y rounded-md border">
-              {jobs.map((j) => (
-                <li
-                  key={j.id}
-                  className="flex items-center justify-between gap-3 px-4 py-2 text-sm"
-                >
-                  <div>
-                    <div className="font-medium">
-                      {j.service_type}
-                      {j.stage && (
-                        <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-normal text-slate-600">
-                          {(j.stage.display_names as { en?: string; el?: string })[lang] ??
-                            j.stage.code}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      {j.billing_type}
-                      {Number(j.monthly_amount ?? 0) > 0 &&
-                        ` · €${Number(j.monthly_amount).toFixed(0)}/mo`}
-                    </div>
-                  </div>
-                  <Link to={`/jobs/${j.id}`} className="text-blue-600 underline text-xs">
-                    View →
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+          <JobsTab clientId={clientId} />
         </TabsContent>
 
         <TabsContent value="comments" className="pt-4">

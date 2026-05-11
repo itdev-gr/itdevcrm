@@ -18,7 +18,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
-import { JobsTab } from './JobsTab';
+import { JobsTab } from '@/features/jobs/JobsTab';
 
 const UNASSIGNED = '__unassigned__';
 

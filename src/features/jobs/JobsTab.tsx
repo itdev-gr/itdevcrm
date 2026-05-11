@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useJobsForDeal } from '@/features/jobs/hooks/useJobsForDeal';
+import { useJobsForDeal } from './hooks/useJobsForDeal';
+import { useJobsForClient } from './hooks/useJobsForClient';
 import { relativeFromNow } from '@/lib/datetime';
-import type { JobRow, ServiceType } from '@/features/jobs/hooks/useJobs';
+import type { JobRow, ServiceType } from './hooks/useJobs';
 
 const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   web_seo:      { en: 'Web SEO',         el: 'Web SEO' },
@@ -54,28 +55,35 @@ function BlockedBadge({ reason }: { reason: string | null }) {
   );
 }
 
-type Props = {
-  dealId: string;
-  accountingCompletedAt: string | null;
-};
+type Scope =
+  | { dealId: string; accountingCompletedAt: string | null }
+  | { clientId: string };
 
-export function JobsTab({ dealId, accountingCompletedAt }: Props) {
+export function JobsTab(props: Scope) {
   const { i18n } = useTranslation();
   const lang: 'en' | 'el' = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
-  const { data: jobs = [], isLoading, error } = useJobsForDeal(dealId);
+
+  const isDeal = 'dealId' in props;
+  const dealQuery = useJobsForDeal(isDeal ? props.dealId : '');
+  const clientQuery = useJobsForClient(isDeal ? '' : props.clientId);
+  const { data: jobs = [], isLoading, error } = isDeal ? dealQuery : clientQuery;
 
   if (isLoading) return <div className="text-sm text-slate-500">…</div>;
   if (error)
     return <div className="text-sm text-red-600">{(error as Error).message}</div>;
 
   if (jobs.length === 0) {
-    const message = accountingCompletedAt
-      ? lang === 'el'
-        ? 'Δεν δημιουργήθηκαν εργασίες. Ελέγξτε τις υπηρεσίες του deal.'
-        : 'No jobs were spawned. Check the deal’s planned services.'
+    const message = isDeal
+      ? props.accountingCompletedAt
+        ? lang === 'el'
+          ? 'Δεν δημιουργήθηκαν εργασίες. Ελέγξτε τις υπηρεσίες του deal.'
+          : 'No jobs were spawned. Check the deal’s planned services.'
+        : lang === 'el'
+          ? 'Οι εργασίες θα δημιουργηθούν όταν το deal φτάσει σε Μερική Πληρωμή (μπλοκαρισμένες εκτός Web Dev) ή Πλήρως Εξοφλημένο.'
+          : 'Jobs will be created when this deal reaches Partial Payment (blocked until full payment, except Web Dev) or Paid In Full.'
       : lang === 'el'
-        ? 'Οι εργασίες θα δημιουργηθούν όταν το deal φτάσει σε Μερική Πληρωμή (μπλοκαρισμένες εκτός Web Dev) ή Πλήρως Εξοφλημένο.'
-        : 'Jobs will be created when this deal reaches Partial Payment (blocked until full payment, except Web Dev) or Paid In Full.';
+        ? 'Δεν υπάρχουν ακόμα εργασίες για αυτόν τον πελάτη.'
+        : 'No jobs yet for this client.';
     return <p className="text-sm text-muted-foreground">{message}</p>;
   }
 
@@ -89,6 +97,9 @@ export function JobsTab({ dealId, accountingCompletedAt }: Props) {
             <th className="px-3 py-2 font-normal text-right">{lang === 'el' ? 'Ποσό' : 'Amount'}</th>
             <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Στάδιο' : 'Stage'}</th>
             <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Κατάσταση' : 'Status'}</th>
+            {!isDeal && (
+              <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Deal' : 'Deal'}</th>
+            )}
             <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Ενημέρωση' : 'Updated'}</th>
             <th className="px-3 py-2 font-normal"></th>
           </tr>
@@ -129,6 +140,20 @@ export function JobsTab({ dealId, accountingCompletedAt }: Props) {
                     </span>
                   )}
                 </td>
+                {!isDeal && (
+                  <td className="px-3 py-2 text-xs">
+                    {j.deal ? (
+                      <Link
+                        to={`/deals/${j.deal.id}`}
+                        className="text-blue-700 hover:underline"
+                      >
+                        {j.deal.code ?? j.deal.title ?? '—'}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                )}
                 <td className="px-3 py-2 text-xs text-slate-500">
                   {relativeFromNow(j.updated_at)}
                 </td>
