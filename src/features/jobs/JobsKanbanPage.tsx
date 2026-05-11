@@ -39,8 +39,11 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const moveStage = useMoveJobStage(serviceType);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const userId = useAuthStore((s) => s.user?.id ?? '');
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const [searchParams, setSearchParams] = useSearchParams();
-  const onlyMine = searchParams.get('mine') !== '0';
+  // Admins always see every job in the department — the Only-mine filter
+  // is a per-tech-user convenience, not a permissions boundary.
+  const onlyMine = !isAdmin && searchParams.get('mine') !== '0';
 
   const activeJob = activeId ? (jobs.find((j) => j.id === activeId) ?? null) : null;
 
@@ -114,18 +117,24 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
       <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{SERVICE_LABELS[serviceType][lang]}</h1>
-        <button
-          type="button"
-          onClick={toggleScope}
-          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-            onlyMine
-              ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200'
-              : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
-          }`}
-        >
-          {onlyMine ? 'Only mine' : "All my group's"} ·{' '}
-          <span className="tabular-nums">{filteredJobs.length}</span>
-        </button>
+        {isAdmin ? (
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+            Admin view · {filteredJobs.length}
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={toggleScope}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              onlyMine
+                ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+            }`}
+          >
+            {onlyMine ? 'Only mine' : "All my group's"} ·{' '}
+            <span className="tabular-nums">{filteredJobs.length}</span>
+          </button>
+        )}
       </div>
       <DndContext
         sensors={sensors}
