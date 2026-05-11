@@ -43,9 +43,19 @@ function rangeFor(view: View, cursor: Date): { start: Date; end: Date } {
   return { start: startOfWeek(cursor), end: addDays(startOfWeek(cursor), 7) };
 }
 
-function leadHeadline(l: ScheduledLead): string {
+function leadName(l: ScheduledLead): string {
   const contact = [l.contact_first_name, l.contact_last_name].filter(Boolean).join(' ').trim();
   return contact || l.company_name || l.title || '—';
+}
+
+function leadHeadline(l: ScheduledLead): string {
+  // Offer-sent leads with a scheduled_for represent the auto follow-up the
+  // offers trigger seeds (per-user offer_followup_days). Relabel them so the
+  // calendar makes the source obvious.
+  if (l.stage?.code === 'offer_sent') {
+    return `Offer sent follow up · ${leadName(l)}`;
+  }
+  return leadName(l);
 }
 
 function formatTime(iso: string, locale: string): string {

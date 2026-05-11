@@ -51,6 +51,9 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
   const [preferredLocale, setPreferredLocale] = useState<'en' | 'el'>(
     (p.preferred_locale as 'en' | 'el') ?? 'en',
   );
+  const [offerFollowupDays, setOfferFollowupDays] = useState<number>(
+    typeof p.offer_followup_days === 'number' ? p.offer_followup_days : 0,
+  );
 
   const patch = useMemo(
     () => ({
@@ -62,8 +65,19 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
       timezone: timezone.trim() || null,
       avatar_url: avatarUrl.trim() || null,
       preferred_locale: preferredLocale,
+      offer_followup_days: Math.max(0, Math.floor(Number(offerFollowupDays) || 0)),
     }),
-    [fullName, email, phone, phoneExt, jobTitle, timezone, avatarUrl, preferredLocale],
+    [
+      fullName,
+      email,
+      phone,
+      phoneExt,
+      jobTitle,
+      timezone,
+      avatarUrl,
+      preferredLocale,
+      offerFollowupDays,
+    ],
   );
 
   const status = useAutoSave(patch, async (next) => {
@@ -131,6 +145,25 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
             value={avatarUrl}
             onChange={(e) => setAvatarUrl(e.target.value)}
           />
+        </div>
+        <div className="md:col-span-2">
+          <Label htmlFor="ofd">
+            {t('profile.offer_followup_days', { defaultValue: 'Offer follow-up (days)' })}
+          </Label>
+          <Input
+            id="ofd"
+            type="number"
+            min={0}
+            step={1}
+            value={offerFollowupDays}
+            onChange={(e) => setOfferFollowupDays(Number(e.target.value))}
+          />
+          <p className="mt-1 text-[11px] text-slate-500">
+            {t('profile.offer_followup_days_hint', {
+              defaultValue:
+                'When you create an offer, the lead moves to Offer Sent and a calendar follow-up is scheduled this many days later. 0 disables it.',
+            })}
+          </p>
         </div>
       </div>
       <div className="text-xs text-slate-500">{autoSaveLabel(status, lang)}</div>

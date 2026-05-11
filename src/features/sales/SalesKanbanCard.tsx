@@ -83,6 +83,19 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
               {t('sales_person.label')}: {wonBy.full_name || wonBy.email}
             </div>
           )}
+          {lead.scheduled_for && (
+            <div
+              className="text-[10px] font-medium text-blue-700"
+              title={new Date(lead.scheduled_for).toLocaleString()}
+            >
+              📞 {lead.stage?.code === 'offer_sent' ? 'Follow-up' : 'Scheduled'}:{' '}
+              {formatDate(lead.scheduled_for)}{' '}
+              {new Intl.DateTimeFormat(lang === 'el' ? 'el-GR' : 'en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }).format(new Date(lead.scheduled_for))}
+            </div>
+          )}
           <div className="text-[10px] text-slate-400" title={formatDate(lead.created_at)}>
             🗓 {relativeFromNow(lead.created_at)}
           </div>

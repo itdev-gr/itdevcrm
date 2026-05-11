@@ -35,6 +35,8 @@
     "job_title": "Θέση",
     "timezone": "Ζώνη ώρας",
     "preferred_locale": "Γλώσσα",
-    "avatar_url": "URL avatar"
+    "avatar_url": "URL avatar",
+    "offer_followup_days": "Follow-up προσφοράς (ημέρες)",
+    "offer_followup_days_hint": "Όταν δημιουργείτε προσφορά, το lead μεταφέρεται στο Offer Sent και προγραμματίζεται follow-up στο ημερολόγιο μετά από τόσες ημέρες. Το 0 απενεργοποιεί τη λειτουργία."
   }
 }

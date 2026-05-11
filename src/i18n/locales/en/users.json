@@ -35,6 +35,8 @@
     "job_title": "Job title",
     "timezone": "Time zone",
     "preferred_locale": "Language",
-    "avatar_url": "Avatar URL"
+    "avatar_url": "Avatar URL",
+    "offer_followup_days": "Offer follow-up (days)",
+    "offer_followup_days_hint": "When you create an offer, the lead moves to Offer Sent and a calendar follow-up is scheduled this many days later. 0 disables it."
   }
 }
