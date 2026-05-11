@@ -72,7 +72,9 @@
     "payment_method_options": {
       "cash": "Cash",
       "online": "Online payment"
-    }
+    },
+    "scheduled_for": "Scheduled for",
+    "scheduled_for_hint": "Picking a date moves the lead to Scheduled and adds it to the home calendar."
   },
   "tabs": {
     "overview": "Overview",

@@ -57,6 +57,14 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [address, setAddress] = useState(lead.address ?? '');
   const [vatNumber, setVatNumber] = useState(lead.vat_number ?? '');
   const [paymentMethod, setPaymentMethod] = useState(lead.payment_method ?? '');
+  // datetime-local needs YYYY-MM-DDTHH:mm in *local* time, not ISO/UTC, so the
+  // user sees their picked moment unchanged after a round-trip.
+  const [scheduledFor, setScheduledFor] = useState<string>(() => {
+    if (!lead.scheduled_for) return '';
+    const d = new Date(lead.scheduled_for);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
   const [notes, setNotes] = useState(lead.notes ?? '');
   const [additionalNotes, setAdditionalNotes] = useState(lead.additional_notes ?? '');
   const [services, setServices] = useState<PlannedService[]>(
@@ -88,6 +96,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       address: address.trim() || null,
       vat_number: vatNumber.trim() || null,
       payment_method: paymentMethod || null,
+      scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
       notes: notes.trim() || null,
       additional_notes: additionalNotes.trim() || null,
       estimated_one_time_value: oneTimeNum,
@@ -107,6 +116,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       address,
       vatNumber,
       paymentMethod,
+      scheduledFor,
       notes,
       additionalNotes,
       oneTimeNum,
@@ -275,6 +285,25 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 <option value="cash">{t('form.payment_method_options.cash')}</option>
                 <option value="online">{t('form.payment_method_options.online')}</option>
               </select>
+            </div>
+            <div>
+              <Label htmlFor="scheduled-for">
+                {t('form.scheduled_for', { defaultValue: 'Scheduled for' })}
+              </Label>
+              <input
+                id="scheduled-for"
+                type="datetime-local"
+                value={scheduledFor}
+                onChange={(e) => setScheduledFor(e.target.value)}
+                disabled={readOnly}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">
+                {t('form.scheduled_for_hint', {
+                  defaultValue:
+                    'Picking a date moves the lead to Scheduled and adds it to the home calendar.',
+                })}
+              </p>
             </div>
           </div>
           <div>
