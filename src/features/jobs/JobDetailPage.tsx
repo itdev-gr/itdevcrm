@@ -135,69 +135,75 @@ export function JobDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="comments">Comments</TabsTrigger>
           <TabsTrigger value="attachments">Attachments</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
-        <TabsContent value="overview" className="space-y-3 pt-4">
-          {job.billing_type === 'recurring_monthly' && (
-            <MonthlyTasksPanel
-              jobId={job.id}
-              serviceType={job.service_type}
-              isBlocked={!!job.is_blocked}
-            />
-          )}
-          <div className="grid grid-cols-2 gap-4 rounded-md border bg-slate-50 p-4 text-sm">
-            <div>
-              <div className="text-xs text-slate-500">Service</div>
-              <div className="font-medium">{job.service_type}</div>
+        <TabsContent value="overview" className="pt-4">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem]">
+            <div className="space-y-3">
+              {job.billing_type === 'recurring_monthly' && (
+                <MonthlyTasksPanel
+                  jobId={job.id}
+                  serviceType={job.service_type}
+                  isBlocked={!!job.is_blocked}
+                />
+              )}
+              <div className="grid grid-cols-2 gap-4 rounded-md border bg-slate-50 p-4 text-sm">
+                <div>
+                  <div className="text-xs text-slate-500">Service</div>
+                  <div className="font-medium">{job.service_type}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Billing</div>
+                  <div className="font-medium">{job.billing_type}</div>
+                </div>
+                {Number(job.monthly_amount ?? 0) > 0 && (
+                  <div>
+                    <div className="text-xs text-slate-500">Monthly</div>
+                    <div className="font-medium">€{Number(job.monthly_amount).toFixed(2)}</div>
+                  </div>
+                )}
+                {Number(job.one_time_amount ?? 0) > 0 && (
+                  <div>
+                    <div className="text-xs text-slate-500">One-time</div>
+                    <div className="font-medium">€{Number(job.one_time_amount).toFixed(2)}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs text-slate-500">Status</div>
+                  <div className="font-medium">{job.status}</div>
+                </div>
+                {job.client && (
+                  <div>
+                    <div className="text-xs text-slate-500">Client</div>
+                    <Link
+                      to={`/clients/${job.client.id}`}
+                      className="font-medium text-blue-700 hover:underline"
+                    >
+                      {job.client.name}
+                    </Link>
+                  </div>
+                )}
+                {job.deal && (
+                  <div>
+                    <div className="text-xs text-slate-500">Deal</div>
+                    <Link
+                      to={`/deals/${job.deal.id}`}
+                      className="font-medium text-blue-700 hover:underline"
+                    >
+                      {job.deal.code ?? job.deal.title}
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <div className="text-xs text-slate-500">Billing</div>
-              <div className="font-medium">{job.billing_type}</div>
-            </div>
-            {Number(job.monthly_amount ?? 0) > 0 && (
-              <div>
-                <div className="text-xs text-slate-500">Monthly</div>
-                <div className="font-medium">€{Number(job.monthly_amount).toFixed(2)}</div>
-              </div>
-            )}
-            {Number(job.one_time_amount ?? 0) > 0 && (
-              <div>
-                <div className="text-xs text-slate-500">One-time</div>
-                <div className="font-medium">€{Number(job.one_time_amount).toFixed(2)}</div>
-              </div>
-            )}
-            <div>
-              <div className="text-xs text-slate-500">Status</div>
-              <div className="font-medium">{job.status}</div>
-            </div>
-            {job.client && (
-              <div>
-                <div className="text-xs text-slate-500">Client</div>
-                <Link
-                  to={`/clients/${job.client.id}`}
-                  className="font-medium text-blue-700 hover:underline"
-                >
-                  {job.client.name}
-                </Link>
-              </div>
-            )}
-            {job.deal && (
-              <div>
-                <div className="text-xs text-slate-500">Deal</div>
-                <Link
-                  to={`/deals/${job.deal.id}`}
-                  className="font-medium text-blue-700 hover:underline"
-                >
-                  {job.deal.code ?? job.deal.title}
-                </Link>
-              </div>
-            )}
+            <aside className="min-w-0 lg:border-l lg:pl-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+                Comments
+              </h2>
+              <CommentsPanel parentType="job" parentId={job.id} />
+            </aside>
           </div>
-        </TabsContent>
-        <TabsContent value="comments" className="pt-4">
-          <CommentsPanel parentType="job" parentId={job.id} />
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="job" parentId={job.id} />
