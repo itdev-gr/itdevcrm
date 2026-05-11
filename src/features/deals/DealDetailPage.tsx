@@ -18,6 +18,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
+import { JobsTab } from './JobsTab';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -211,7 +212,7 @@ export function DealDetailPage() {
           <PaymentsPanel dealId={dealId} services={dealServices} />
         </TabsContent>
         <TabsContent value="jobs" className="pt-4">
-          <p className="text-sm text-muted-foreground">Jobs (Phase 6)</p>
+          <JobsTab dealId={dealId} accountingCompletedAt={deal.accounting_completed_at} />
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="deal" parentId={dealId} />

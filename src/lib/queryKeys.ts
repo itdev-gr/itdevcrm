@@ -31,6 +31,7 @@ export const queryKeys = {
   servicePackages: () => ['service-packages'] as const,
   serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
+  jobsForDeal: (dealId: string) => ['jobs', 'deal', dealId] as const,
   job: (id: string) => ['job', id] as const,
   jobMonthlyTasks: (id: string) => ['job-monthly-tasks', id] as const,
   monthlyTaskTemplate: (serviceType: string) =>
