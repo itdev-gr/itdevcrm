@@ -61,6 +61,9 @@ export function JobDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+              Job
+            </span>
             {job.deal?.code && <CopyableCode code={job.deal.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{fullName}</h1>
             {job.is_blocked && (

@@ -102,6 +102,9 @@ export function DealDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
+            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700">
+              Deal
+            </span>
             {deal.code && <CopyableCode code={deal.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{deal.title}</h1>
           </div>

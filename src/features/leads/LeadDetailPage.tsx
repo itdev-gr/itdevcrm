@@ -117,6 +117,9 @@ export function LeadDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700">
+              Lead
+            </span>
             {lead.code && <CopyableCode code={lead.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{lead.title}</h1>
           </div>
