@@ -3,14 +3,14 @@ import type { Database } from '@/types/supabase';
 
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 
-export async function fetchProfile(userId: string): Promise<Profile> {
+export async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('user_id', userId)
-    .single();
-  if (error || !data) {
-    throw new Error(error?.message ?? 'Profile not found');
+    .maybeSingle();
+  if (error) {
+    throw new Error(error.message);
   }
   return data;
 }

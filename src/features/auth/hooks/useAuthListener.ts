@@ -18,9 +18,17 @@ async function hydrate(session: Session | null, user: User | null) {
         fetchProfile(user.id),
         fetchUserGroupCodes(user.id),
       ]);
+      if (!profile) {
+        // Orphan session: auth row exists for this user but the profile row
+        // doesn't (e.g. they were deleted out-of-band). Drop the session so
+        // the app bounces back to /login cleanly instead of running with a
+        // half-hydrated state and 406s in the console.
+        await supabase.auth.signOut();
+        return;
+      }
       setProfile({ isAdmin: profile.is_admin, groupCodes });
     } catch {
-      // Profile fetch failure: keep session, treat as no admin / no groups.
+      // Network / RLS failure: keep session, treat as no admin / no groups.
       setProfile({ isAdmin: false, groupCodes: [] });
     }
   } else {

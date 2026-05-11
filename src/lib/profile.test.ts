@@ -4,7 +4,7 @@ vi.mock('@/lib/supabase', () => {
   const builder = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    single: vi.fn(),
+    maybeSingle: vi.fn(),
   };
   const supabase = { from: vi.fn().mockReturnValue(builder) };
   return { supabase, _builder: builder };
@@ -16,7 +16,7 @@ import { fetchProfile, fetchUserGroupCodes } from './profile';
 const builder = (
   supabaseMock as unknown as {
     _builder: {
-      single: ReturnType<typeof vi.fn>;
+      maybeSingle: ReturnType<typeof vi.fn>;
       eq: ReturnType<typeof vi.fn>;
       select: ReturnType<typeof vi.fn>;
     };
@@ -29,7 +29,7 @@ describe('profile helpers', () => {
   });
 
   it('fetchProfile queries profiles by user_id and returns the row', async () => {
-    builder.single.mockResolvedValue({
+    builder.maybeSingle.mockResolvedValue({
       data: { user_id: 'u1', email: 'a@b.com', is_admin: false, must_change_password: true },
       error: null,
     });
@@ -37,13 +37,18 @@ describe('profile helpers', () => {
     expect(supabaseMock.supabase.from).toHaveBeenCalledWith('profiles');
     expect(builder.select).toHaveBeenCalled();
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'u1');
-    expect(builder.single).toHaveBeenCalled();
-    expect(result.email).toBe('a@b.com');
+    expect(builder.maybeSingle).toHaveBeenCalled();
+    expect(result?.email).toBe('a@b.com');
   });
 
-  it('fetchProfile throws on error', async () => {
-    builder.single.mockResolvedValue({ data: null, error: { message: 'Not found' } });
-    await expect(fetchProfile('u1')).rejects.toThrow('Not found');
+  it('fetchProfile returns null when no row exists (orphan session)', async () => {
+    builder.maybeSingle.mockResolvedValue({ data: null, error: null });
+    await expect(fetchProfile('u1')).resolves.toBeNull();
+  });
+
+  it('fetchProfile throws on supabase error', async () => {
+    builder.maybeSingle.mockResolvedValue({ data: null, error: { message: 'boom' } });
+    await expect(fetchProfile('u1')).rejects.toThrow('boom');
   });
 
   it('fetchUserGroupCodes returns array of group codes', async () => {

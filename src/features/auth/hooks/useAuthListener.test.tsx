@@ -8,6 +8,7 @@ vi.mock('@/lib/supabase', () => ({
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
       onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe } } })),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   },
 }));
@@ -25,6 +26,7 @@ vi.mock('@/lib/profile', () => ({
 }));
 
 import { supabase } from '@/lib/supabase';
+import { fetchProfile } from '@/lib/profile';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useAuthListener } from './useAuthListener';
 
@@ -64,5 +66,20 @@ describe('useAuthListener', () => {
     expect(supabase.auth.onAuthStateChange).toHaveBeenCalled();
     unmount();
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it('signs out when the session points at a user with no profile row', async () => {
+    const fakeSession = {
+      access_token: 't',
+      user: { id: 'orphan-user', email: 'gone@example.test' },
+    };
+    (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { session: fakeSession },
+    });
+    (fetchProfile as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+    renderHook(() => useAuthListener());
+    await waitFor(() => {
+      expect(supabase.auth.signOut).toHaveBeenCalled();
+    });
   });
 });
