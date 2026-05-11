@@ -1416,16 +1416,19 @@ export type Database = {
         Row: {
           created_at: string
           group_id: string
+          is_team_lead: boolean
           user_id: string
         }
         Insert: {
           created_at?: string
           group_id: string
+          is_team_lead?: boolean
           user_id: string
         }
         Update: {
           created_at?: string
           group_id?: string
+          is_team_lead?: boolean
           user_id?: string
         }
         Relationships: [
@@ -1593,6 +1596,7 @@ export type Database = {
         Args: { p_code: string; p_completed: boolean; p_job_id: string }
         Returns: undefined
       }
+      team_lead_for_group: { Args: { p_group_code: string }; Returns: string }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
       unblock_job: { Args: { target_job_id: string }; Returns: Json }
     }
