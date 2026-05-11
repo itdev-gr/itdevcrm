@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useScheduledLeads, type ScheduledLead } from './hooks/useScheduledLeads';
+import { useUserTasks, type UserTaskRow } from './hooks/useUserTasks';
+import { useToggleTaskComplete } from './hooks/useDeleteTask';
+import { TaskDialog } from './TaskDialog';
 
 type View = 'day' | 'week';
 
@@ -49,9 +52,6 @@ function leadName(l: ScheduledLead): string {
 }
 
 function leadHeadline(l: ScheduledLead): string {
-  // Offer-sent leads with a scheduled_for represent the auto follow-up the
-  // offers trigger seeds (per-user offer_followup_days). Relabel them so the
-  // calendar makes the source obvious.
   if (l.stage?.code === 'offer_sent') {
     return `Offer sent follow up · ${leadName(l)}`;
   }
@@ -65,12 +65,86 @@ function formatTime(iso: string, locale: string): string {
   }).format(new Date(iso));
 }
 
+// ── unified calendar entry ───────────────────────────────────────────────────
+
+type CalendarEntry =
+  | { kind: 'lead'; lead: ScheduledLead; date: string }
+  | { kind: 'task'; task: UserTaskRow; date: string };
+
+function mergeEntries(leads: ScheduledLead[], tasks: UserTaskRow[]): CalendarEntry[] {
+  const out: CalendarEntry[] = [];
+  for (const l of leads) out.push({ kind: 'lead', lead: l, date: l.scheduled_for });
+  for (const t of tasks) out.push({ kind: 'task', task: t, date: t.due_at });
+  out.sort((a, b) => a.date.localeCompare(b.date));
+  return out;
+}
+
 // ── views ────────────────────────────────────────────────────────────────────
 
-function DayView({ cursor, items, locale }: { cursor: Date; items: ScheduledLead[]; locale: string }) {
+type ViewProps = {
+  cursor: Date;
+  entries: CalendarEntry[];
+  locale: string;
+  onEditTask: (task: UserTaskRow) => void;
+};
+
+function TaskRow({
+  task,
+  locale,
+  onEdit,
+  layout,
+}: {
+  task: UserTaskRow;
+  locale: string;
+  onEdit: (t: UserTaskRow) => void;
+  layout: 'day' | 'week';
+}) {
+  const toggle = useToggleTaskComplete();
+  const done = !!task.completed_at;
+  const className =
+    layout === 'day'
+      ? `flex items-center gap-3 px-4 py-3 hover:bg-slate-50 ${done ? 'opacity-60' : ''}`
+      : `flex items-start gap-1.5 rounded bg-amber-50 px-1.5 py-1 text-amber-900 hover:bg-amber-100 ${done ? 'opacity-60' : ''}`;
+  return (
+    <div className={className}>
+      <input
+        type="checkbox"
+        className="mt-0.5 size-3.5 shrink-0 accent-amber-600"
+        checked={done}
+        onChange={(e) => {
+          e.stopPropagation();
+          toggle.mutate({ id: task.id, completed: e.target.checked });
+        }}
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Toggle complete"
+      />
+      {layout === 'day' && (
+        <span className="w-16 shrink-0 font-mono text-xs text-slate-600">
+          {formatTime(task.due_at, locale)}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => onEdit(task)}
+        className={`min-w-0 flex-1 text-left ${
+          layout === 'day' ? 'text-sm font-medium' : 'text-xs'
+        } ${done ? 'line-through' : ''}`}
+      >
+        {layout === 'week' && (
+          <span className="mr-1 font-mono text-[10px] opacity-70">
+            {formatTime(task.due_at, locale)}
+          </span>
+        )}
+        {task.title}
+      </button>
+    </div>
+  );
+}
+
+function DayView({ cursor, entries, locale, onEditTask }: ViewProps) {
   const { t } = useTranslation('home');
-  const today = items.filter((l) => sameDay(new Date(l.scheduled_for), cursor));
-  if (today.length === 0) {
+  const todayEntries = entries.filter((e) => sameDay(new Date(e.date), cursor));
+  if (todayEntries.length === 0) {
     return (
       <div className="rounded-md border bg-slate-50 p-6 text-center text-sm text-slate-500">
         {t('calendar.empty_day')}
@@ -79,41 +153,53 @@ function DayView({ cursor, items, locale }: { cursor: Date; items: ScheduledLead
   }
   return (
     <ul className="divide-y rounded-md border">
-      {today.map((l) => (
-        <li key={l.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
-          <span className="w-16 shrink-0 font-mono text-xs text-slate-600">
-            {formatTime(l.scheduled_for, locale)}
-          </span>
-          <Link
-            to={`/leads/${l.id}`}
-            className="min-w-0 flex-1 truncate text-sm font-medium text-blue-700 hover:underline"
+      {todayEntries.map((e) =>
+        e.kind === 'lead' ? (
+          <li
+            key={`lead-${e.lead.id}`}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50"
           >
-            {leadHeadline(l)}
-          </Link>
-          {l.code && <span className="text-[10px] text-slate-400">{l.code}</span>}
-        </li>
-      ))}
+            <span className="w-16 shrink-0 font-mono text-xs text-slate-600">
+              {formatTime(e.lead.scheduled_for, locale)}
+            </span>
+            <Link
+              to={`/leads/${e.lead.id}`}
+              className="min-w-0 flex-1 truncate text-sm font-medium text-blue-700 hover:underline"
+            >
+              {leadHeadline(e.lead)}
+            </Link>
+            {e.lead.code && <span className="text-[10px] text-slate-400">{e.lead.code}</span>}
+          </li>
+        ) : (
+          <li key={`task-${e.task.id}`}>
+            <TaskRow task={e.task} locale={locale} onEdit={onEditTask} layout="day" />
+          </li>
+        ),
+      )}
     </ul>
   );
 }
 
-function WeekView({ cursor, items, locale }: { cursor: Date; items: ScheduledLead[]; locale: string }) {
+function WeekView({ cursor, entries, locale, onEditTask }: ViewProps) {
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  const itemsByDay = new Map<string, ScheduledLead[]>();
-  for (const d of days) itemsByDay.set(d.toDateString(), []);
-  for (const l of items) {
-    const k = new Date(l.scheduled_for).toDateString();
-    itemsByDay.get(k)?.push(l);
+  const byDay = new Map<string, CalendarEntry[]>();
+  for (const d of days) byDay.set(d.toDateString(), []);
+  for (const e of entries) {
+    const k = new Date(e.date).toDateString();
+    byDay.get(k)?.push(e);
   }
   const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric' });
   return (
     <div className="grid grid-cols-7 gap-2">
       {days.map((d) => {
-        const list = itemsByDay.get(d.toDateString()) ?? [];
+        const list = byDay.get(d.toDateString()) ?? [];
         const isToday = sameDay(d, new Date());
         return (
-          <div key={d.toDateString()} className="flex min-h-[10rem] flex-col rounded-md border bg-white">
+          <div
+            key={d.toDateString()}
+            className="flex min-h-[10rem] flex-col rounded-md border bg-white"
+          >
             <div
               className={`border-b px-2 py-1 text-xs font-medium ${
                 isToday ? 'bg-blue-50 text-blue-800' : 'bg-slate-50 text-slate-600'
@@ -125,19 +211,25 @@ function WeekView({ cursor, items, locale }: { cursor: Date; items: ScheduledLea
               {list.length === 0 ? (
                 <li className="text-slate-300">·</li>
               ) : (
-                list.map((l) => (
-                  <li key={l.id}>
-                    <Link
-                      to={`/leads/${l.id}`}
-                      className="block rounded bg-blue-50 px-1.5 py-1 text-blue-800 hover:bg-blue-100"
-                    >
-                      <span className="font-mono text-[10px] opacity-70">
-                        {formatTime(l.scheduled_for, locale)}
-                      </span>{' '}
-                      <span className="truncate">{leadHeadline(l)}</span>
-                    </Link>
-                  </li>
-                ))
+                list.map((e) =>
+                  e.kind === 'lead' ? (
+                    <li key={`lead-${e.lead.id}`}>
+                      <Link
+                        to={`/leads/${e.lead.id}`}
+                        className="block rounded bg-blue-50 px-1.5 py-1 text-blue-800 hover:bg-blue-100"
+                      >
+                        <span className="font-mono text-[10px] opacity-70">
+                          {formatTime(e.lead.scheduled_for, locale)}
+                        </span>{' '}
+                        <span className="truncate">{leadHeadline(e.lead)}</span>
+                      </Link>
+                    </li>
+                  ) : (
+                    <li key={`task-${e.task.id}`}>
+                      <TaskRow task={e.task} locale={locale} onEdit={onEditTask} layout="week" />
+                    </li>
+                  ),
+                )
               )}
             </ul>
           </div>
@@ -159,14 +251,28 @@ export function CalendarPage() {
   const [cursor, setCursor] = useState<Date>(new Date());
   const [showAllAdmin, setShowAllAdmin] = useState(false);
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<UserTaskRow | null>(null);
+
   const { start, end } = useMemo(() => rangeFor(view, cursor), [view, cursor]);
   const ownerUserId = isAdmin && showAllAdmin ? null : userId || null;
 
-  const { data: items = [] } = useScheduledLeads({ start, end, ownerUserId });
+  const { data: leads = [] } = useScheduledLeads({ start, end, ownerUserId });
+  const { data: tasks = [] } = useUserTasks({ start, end, ownerUserId });
+  const entries = useMemo(() => mergeEntries(leads, tasks), [leads, tasks]);
 
   function shift(delta: number) {
     if (view === 'day') setCursor((c) => addDays(c, delta));
     else setCursor((c) => addDays(c, delta * 7));
+  }
+
+  function openNewTask() {
+    setEditingTask(null);
+    setDialogOpen(true);
+  }
+  function openEditTask(task: UserTaskRow) {
+    setEditingTask(task);
+    setDialogOpen(true);
   }
 
   const periodLabel = useMemo(() => {
@@ -215,6 +321,13 @@ export function CalendarPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openNewTask}
+            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+          >
+            {t('calendar.new_task')}
+          </button>
           {isAdmin && (
             <button
               type="button"
@@ -246,9 +359,20 @@ export function CalendarPage() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {view === 'day' && <DayView cursor={cursor} items={items} locale={locale} />}
-        {view === 'week' && <WeekView cursor={cursor} items={items} locale={locale} />}
+        {view === 'day' && (
+          <DayView cursor={cursor} entries={entries} locale={locale} onEditTask={openEditTask} />
+        )}
+        {view === 'week' && (
+          <WeekView cursor={cursor} entries={entries} locale={locale} onEditTask={openEditTask} />
+        )}
       </div>
+
+      <TaskDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        task={editingTask}
+        defaultDueAt={view === 'day' ? cursor : null}
+      />
     </div>
   );
 }

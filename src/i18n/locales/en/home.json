@@ -11,6 +11,19 @@
     "empty_day": "Nothing scheduled.",
     "all_team": "All team (admin)",
     "my_calendar": "My calendar",
-    "count": "{{count}} scheduled"
+    "count": "{{count}} scheduled",
+    "new_task": "+ Task"
+  },
+  "task": {
+    "new_title": "New task",
+    "edit_title": "Edit task",
+    "title": "Title",
+    "due_at": "Due",
+    "notes": "Notes",
+    "completed": "Completed",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "confirm_delete": "Delete this task?"
   }
 }

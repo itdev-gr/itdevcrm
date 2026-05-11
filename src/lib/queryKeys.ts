@@ -30,6 +30,8 @@ export const queryKeys = {
   lead: (id: string) => ['lead', id] as const,
   scheduledLeads: (start: string, end: string, ownerId: string | null) =>
     ['scheduled-leads', start, end, ownerId ?? 'all'] as const,
+  userTasks: (start: string, end: string, ownerId: string | null) =>
+    ['user-tasks', start, end, ownerId ?? 'all'] as const,
   servicePackages: () => ['service-packages'] as const,
   serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
