@@ -31,8 +31,10 @@ export function useMoveAccountingStage() {
     onError: (_err, _vars, ctx) => {
       ctx?.previous?.forEach(([key, value]) => qc.setQueryData(key, value));
     },
-    onSettled: () => {
+    onSettled: (_data, _err, vars) => {
       void qc.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
+      void qc.invalidateQueries({ queryKey: queryKeys.deal(vars.dealId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.clients() });
     },
   });
 }
