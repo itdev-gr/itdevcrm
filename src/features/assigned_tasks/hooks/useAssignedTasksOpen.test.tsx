@@ -5,7 +5,8 @@ import { vi, beforeEach, describe, it, expect } from 'vitest';
 
 const { order, eq, select, from } = vi.hoisted(() => {
   const order = vi.fn();
-  const eq = vi.fn().mockReturnValue({ order });
+  const eq: ReturnType<typeof vi.fn> = vi.fn();
+  eq.mockReturnValue({ eq, order });
   const select = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ select });
   return { order, eq, select, from };
