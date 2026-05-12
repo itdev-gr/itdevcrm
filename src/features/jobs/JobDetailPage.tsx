@@ -9,6 +9,7 @@ import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { useJob } from './hooks/useJob';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
+import { ContactsCard } from './ContactsCard';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
@@ -148,6 +149,7 @@ export function JobDetailPage() {
                   isBlocked={!!job.is_blocked}
                 />
               )}
+              <ContactsCard client={job.client ?? null} />
               <div className="grid grid-cols-2 gap-4 rounded-md border bg-slate-50 p-4 text-sm">
                 <div>
                   <div className="text-xs text-slate-500">Service</div>
