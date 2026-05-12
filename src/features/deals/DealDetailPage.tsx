@@ -205,7 +205,7 @@ export function DealDetailPage() {
             <div className="min-w-0 lg:pr-6">
               <DealForm initial={deal} />
             </div>
-            <aside className="min-w-0 lg:border-l lg:pl-6">
+            <aside className="min-w-0 lg:sticky lg:top-8 lg:flex lg:max-h-[calc(100vh-8rem)] lg:flex-col lg:self-start lg:border-l lg:pl-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
                 {tLeads('tabs.comments')}
               </h2>
