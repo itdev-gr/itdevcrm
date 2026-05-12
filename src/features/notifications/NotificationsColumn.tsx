@@ -19,6 +19,8 @@ function readPath(parentType: unknown, parentId: unknown): string | null {
       return `/clients/${parentId}`;
     case 'deal':
       return `/deals/${parentId}`;
+    case 'job':
+      return `/jobs/${parentId}`;
     default:
       return null;
   }
@@ -94,6 +96,40 @@ export function NotificationsColumn() {
                       </div>
                       {preview && (
                         <div className="italic text-slate-600">&ldquo;{preview}&rdquo;</div>
+                      )}
+                    </>
+                  ) : n.type === 'task_assigned' ? (
+                    <>
+                      <div className={isRead ? '' : 'font-medium'}>
+                        You were assigned a task
+                        {readString(payload, 'source_code') && (
+                          <>
+                            {' '}on{' '}
+                            <span className="rounded bg-slate-100 px-1 font-mono text-[10px] text-slate-600">
+                              {readString(payload, 'source_code')}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {readString(payload, 'title') && (
+                        <div className="italic text-slate-700">&ldquo;{readString(payload, 'title')}&rdquo;</div>
+                      )}
+                    </>
+                  ) : n.type === 'task_resolved' ? (
+                    <>
+                      <div className={isRead ? '' : 'font-medium'}>
+                        A task you created was resolved
+                        {readString(payload, 'source_code') && (
+                          <>
+                            {' '}on{' '}
+                            <span className="rounded bg-slate-100 px-1 font-mono text-[10px] text-slate-600">
+                              {readString(payload, 'source_code')}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {readString(payload, 'title') && (
+                        <div className="italic text-slate-700">&ldquo;{readString(payload, 'title')}&rdquo;</div>
                       )}
                     </>
                   ) : (
