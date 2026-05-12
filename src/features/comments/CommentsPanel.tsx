@@ -26,16 +26,16 @@ export function CommentsPanel({ parentType, parentId }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      {tops.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('comments.empty')}</p>
-      ) : (
-        <div className="space-y-2">
-          {tops.map((c) => (
+    <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
+      <div className="space-y-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+        {tops.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('comments.empty')}</p>
+        ) : (
+          tops.map((c) => (
             <CommentItem key={c.id} comment={c} replies={repliesByParent.get(c.id) ?? []} />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
       <CommentForm parentType={parentType} parentId={parentId} />
     </div>
   );
