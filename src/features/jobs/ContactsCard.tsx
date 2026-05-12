@@ -1,163 +1,139 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { AddContactDialog } from './AddContactDialog';
+import { useMemo, useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/lib/supabase';
+import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import {
-  useUpdateClientAdditionalContacts,
+  AdditionalContactsField,
+  parseAdditionalContacts,
   type AdditionalContact,
-} from '@/features/clients/hooks/useUpdateClientAdditionalContacts';
+} from '@/features/contacts/AdditionalContactsField';
 
-type DisplayContact = {
-  name: string;
+type ClientShape = {
+  id?: string;
+  contact_first_name?: string | null;
+  contact_last_name?: string | null;
   email?: string | null;
   phone?: string | null;
-  info?: string | null;
-  /** Index into clients.additional_contacts; null = primary contact (read-only here). */
-  additionalIndex: number | null;
+  contact_info?: string | null;
+  additional_contacts?:
+    | { full_name?: string | null; email?: string | null; phone?: string | null; info?: string | null }[]
+    | null;
 };
 
-type Props = {
-  client: {
-    id?: string;
-    contact_first_name?: string | null;
-    contact_last_name?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    contact_info?: string | null;
-    additional_contacts?:
-      | { full_name?: string | null; email?: string | null; phone?: string | null; info?: string | null }[]
-      | null;
-  } | null;
-};
+type Props = { client: ClientShape | null };
 
-function compact(value: string | null | undefined): string {
-  return (value ?? '').trim();
+function joinName(first: string | null | undefined, last: string | null | undefined): string {
+  return [first ?? '', last ?? ''].filter((s) => s.trim().length > 0).join(' ');
+}
+
+function splitName(full: string): { first: string | null; last: string | null } {
+  const trimmed = full.trim();
+  if (!trimmed) return { first: null, last: null };
+  const parts = trimmed.split(/\s+/);
+  const first = parts[0] ?? null;
+  const last = parts.length > 1 ? parts.slice(1).join(' ') : null;
+  return { first, last };
 }
 
 export function ContactsCard({ client }: Props) {
-  const [addOpen, setAddOpen] = useState(false);
-  const remove = useUpdateClientAdditionalContacts();
+  if (!client?.id) {
+    return (
+      <div className="rounded-md border bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        No client linked.
+      </div>
+    );
+  }
+  return <ContactsForm key={client.id} client={client} clientId={client.id} />;
+}
 
-  const primaryName = compact(
-    [compact(client?.contact_first_name), compact(client?.contact_last_name)].filter(Boolean).join(' '),
+function ContactsForm({ client, clientId }: { client: ClientShape; clientId: string }) {
+  const [fullName, setFullName] = useState<string>(
+    joinName(client.contact_first_name, client.contact_last_name),
   );
-  const contacts: DisplayContact[] = [];
+  const [email, setEmail] = useState<string>(client.email ?? '');
+  const [phone, setPhone] = useState<string>(client.phone ?? '');
+  const [contactInfo, setContactInfo] = useState<string>(client.contact_info ?? '');
+  const [additional, setAdditional] = useState<AdditionalContact[]>(
+    parseAdditionalContacts(client.additional_contacts ?? []),
+  );
 
-  if (primaryName || client?.email || client?.phone || client?.contact_info) {
-    contacts.push({
-      name: primaryName || '—',
-      email: client?.email ?? null,
-      phone: client?.phone ?? null,
-      info: client?.contact_info ?? null,
-      additionalIndex: null,
-    });
-  }
-  (client?.additional_contacts ?? []).forEach((c, idx) => {
-    if (!compact(c?.full_name) && !compact(c?.email) && !compact(c?.phone) && !compact(c?.info)) return;
-    contacts.push({
-      name: compact(c?.full_name) || '—',
-      email: c?.email ?? null,
-      phone: c?.phone ?? null,
-      info: c?.info ?? null,
-      additionalIndex: idx,
-    });
+  const patch = useMemo(() => {
+    const { first, last } = splitName(fullName);
+    return {
+      contact_first_name: first,
+      contact_last_name: last,
+      email: email.trim() || null,
+      phone: phone.trim() || null,
+      contact_info: contactInfo.trim() || null,
+      additional_contacts: additional,
+    };
+  }, [fullName, email, phone, contactInfo, additional]);
+
+  const status = useAutoSave(patch, async (next) => {
+    const { error } = await supabase.from('clients').update(next).eq('id', clientId);
+    if (error) throw new Error(error.message);
   });
-
-  const existingAdditional: AdditionalContact[] = (client?.additional_contacts ?? []).map((c) => ({
-    full_name: compact(c?.full_name),
-    email: compact(c?.email),
-    phone: compact(c?.phone),
-    info: compact(c?.info),
-  }));
-
-  function onRemove(idx: number) {
-    if (!client?.id) return;
-    if (!confirm('Remove this contact?')) return;
-    remove.mutate({
-      clientId: client.id,
-      contacts: existingAdditional.filter((_, i) => i !== idx),
-    });
-  }
 
   return (
     <div className="rounded-md border bg-white">
       <header className="flex items-center justify-between border-b bg-slate-50 px-4 py-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-          Contacts ({contacts.length})
+          Contacts
         </span>
-        {client?.id && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setAddOpen(true)}
-            className="h-7 px-2 text-xs"
-          >
-            + Add contact
-          </Button>
-        )}
+        <span className="text-[11px] text-slate-500">{autoSaveLabel(status)}</span>
       </header>
-      {contacts.length === 0 ? (
-        <p className="px-4 py-3 text-sm text-slate-500">No contact info on file.</p>
-      ) : (
-        <ul className="divide-y">
-          {contacts.map((c) => (
-            <li
-              key={`${c.additionalIndex ?? 'primary'}-${c.name}-${c.email ?? ''}`}
-              className="flex items-start gap-2 px-4 py-3 text-sm"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="font-medium text-slate-900">
-                  {c.name}
-                  {c.additionalIndex === null && (
-                    <span className="ml-2 text-[10px] font-normal uppercase tracking-wide text-slate-400">
-                      Primary
-                    </span>
-                  )}
-                </div>
-                {(c.email || c.phone) && (
-                  <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-600">
-                    {c.email && (
-                      <a href={`mailto:${c.email}`} className="text-blue-700 hover:underline">
-                        {c.email}
-                      </a>
-                    )}
-                    {c.phone && (
-                      <a href={`tel:${c.phone}`} className="text-blue-700 hover:underline">
-                        {c.phone}
-                      </a>
-                    )}
-                  </div>
-                )}
-                {c.info && (
-                  <div className="mt-0.5 text-[11px] italic text-slate-500">{c.info}</div>
-                )}
-              </div>
-              {c.additionalIndex !== null && client?.id && (
-                <button
-                  type="button"
-                  onClick={() => onRemove(c.additionalIndex!)}
-                  title="Remove contact"
-                  aria-label="Remove contact"
-                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-red-600"
-                  disabled={remove.isPending}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
 
-      {client?.id && (
-        <AddContactDialog
-          open={addOpen}
-          onOpenChange={setAddOpen}
-          clientId={client.id}
-          existing={existingAdditional}
-        />
-      )}
+      <div className="space-y-4 p-4">
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Primary contact
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label htmlFor="cc-name">Full name</Label>
+              <Input
+                id="cc-name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="cc-email">Email</Label>
+              <Input
+                id="cc-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="cc-phone">Phone</Label>
+              <Input
+                id="cc-phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="cc-info">Info</Label>
+              <Input
+                id="cc-info"
+                value={contactInfo}
+                onChange={(e) => setContactInfo(e.target.value)}
+                placeholder="e.g. CEO · prefers WhatsApp"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Additional contacts
+          </h3>
+          <AdditionalContactsField value={additional} onChange={setAdditional} />
+        </section>
+      </div>
     </div>
   );
 }
