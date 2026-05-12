@@ -22,7 +22,22 @@
     "jobs": "Jobs",
     "comments": "Comments",
     "attachments": "Attachments",
-    "activity": "Activity"
+    "activity": "Activity",
+    "tasks": "Tasks"
+  },
+  "assigned_tasks": {
+    "section_open": "Open",
+    "section_resolved": "Resolved",
+    "new_task": "New task",
+    "title_placeholder": "Task title",
+    "description_placeholder": "Notes, context, what to do…",
+    "assignee_label": "Assign to",
+    "create": "Create task",
+    "resolve": "Resolve",
+    "empty": "No tasks yet for this deal.",
+    "empty_job": "No tasks yet for this job.",
+    "created_by": "by",
+    "resolved_by": "resolved by"
   },
   "payments": {
     "title": "Payments",

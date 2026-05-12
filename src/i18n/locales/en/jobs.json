@@ -6,5 +6,22 @@
     "empty": "No template configured for this service.",
     "blocked_hint": "Cannot edit while the client is blocked.",
     "completed_by": "by {{name}} {{when}}"
+  },
+  "tabs": {
+    "tasks": "Tasks"
+  },
+  "assigned_tasks": {
+    "section_open": "Open",
+    "section_resolved": "Resolved",
+    "new_task": "New task",
+    "title_placeholder": "Task title",
+    "description_placeholder": "Notes, context, what to do…",
+    "assignee_label": "Assign to",
+    "create": "Create task",
+    "resolve": "Resolve",
+    "empty": "No tasks yet for this deal.",
+    "empty_job": "No tasks yet for this job.",
+    "created_by": "by",
+    "resolved_by": "resolved by"
   }
 }

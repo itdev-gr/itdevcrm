@@ -22,6 +22,12 @@ export const queryKeys = {
     ['attachments', parentType, parentId] as const,
   activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
   notifications: () => ['notifications'] as const,
+  assignedTasksOpen: (assigneeId: string | null) =>
+    ['assigned-tasks', 'open', assigneeId ?? 'all'] as const,
+  assignedTasksForDeal: (dealId: string) =>
+    ['assigned-tasks', 'deal', dealId] as const,
+  assignedTasksForJob: (jobId: string) =>
+    ['assigned-tasks', 'job', jobId] as const,
   savedFilters: (board: string) => ['saved-filters', board] as const,
   accountingDeals: () => ['accounting-deals'] as const,
   clientBlock: (clientId: string) => ['client-block', clientId] as const,

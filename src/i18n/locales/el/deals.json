@@ -22,7 +22,22 @@
     "jobs": "Εργασίες",
     "comments": "Σχόλια",
     "attachments": "Συνημμένα",
-    "activity": "Δραστηριότητα"
+    "activity": "Δραστηριότητα",
+    "tasks": "Εργασίες"
+  },
+  "assigned_tasks": {
+    "section_open": "Ανοιχτές",
+    "section_resolved": "Επιλυμένες",
+    "new_task": "Νέα εργασία",
+    "title_placeholder": "Τίτλος εργασίας",
+    "description_placeholder": "Σημειώσεις, πλαίσιο, τι πρέπει να γίνει…",
+    "assignee_label": "Ανάθεση σε",
+    "create": "Δημιουργία",
+    "resolve": "Επίλυση",
+    "empty": "Δεν υπάρχουν ακόμα εργασίες.",
+    "empty_job": "Δεν υπάρχουν ακόμα εργασίες.",
+    "created_by": "από",
+    "resolved_by": "επιλύθηκε από"
   },
   "payments": {
     "title": "Πληρωμές",
