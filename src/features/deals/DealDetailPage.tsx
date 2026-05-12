@@ -99,7 +99,7 @@ export function DealDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-6 p-8">
+    <div className="flex min-h-full flex-col gap-6 p-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
@@ -189,7 +189,7 @@ export function DealDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="overview" className="lg:min-h-0 lg:flex-1">
         <TabsList>
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
           <TabsTrigger value="payment">{t('tabs.payment')}</TabsTrigger>
@@ -200,12 +200,12 @@ export function DealDetailPage() {
           <TabsTrigger value="offers">Offers</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="pt-4">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[65%_35%]">
-            <div className="min-w-0 lg:pr-6">
+        <TabsContent value="overview" className="pt-4 lg:min-h-0 lg:overflow-hidden">
+          <div className="grid grid-cols-1 gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[65%_35%]">
+            <div className="min-w-0 lg:h-full lg:overflow-y-auto lg:pr-6">
               <DealForm initial={deal} />
             </div>
-            <aside className="min-w-0 lg:sticky lg:top-8 lg:flex lg:h-[calc(100vh-8rem)] lg:flex-col lg:self-start lg:border-l lg:pl-6">
+            <aside className="min-w-0 lg:flex lg:h-full lg:flex-col lg:border-l lg:pl-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
                 {tLeads('tabs.comments')}
               </h2>
@@ -213,22 +213,22 @@ export function DealDetailPage() {
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value="payment" className="pt-4">
+        <TabsContent value="payment" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <PaymentsPanel dealId={dealId} services={dealServices} />
         </TabsContent>
-        <TabsContent value="jobs" className="pt-4">
+        <TabsContent value="jobs" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <JobsTab dealId={dealId} accountingCompletedAt={deal.accounting_completed_at} />
         </TabsContent>
-        <TabsContent value="tasks" className="pt-4">
+        <TabsContent value="tasks" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <AssignedTasksTab source={{ kind: 'deal', id: dealId }} />
         </TabsContent>
-        <TabsContent value="attachments" className="pt-4">
+        <TabsContent value="attachments" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <AttachmentsPanel parentType="deal" parentId={dealId} />
         </TabsContent>
-        <TabsContent value="activity" className="pt-4">
+        <TabsContent value="activity" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <ActivityPanel entityType="deals" entityId={dealId} />
         </TabsContent>
-        <TabsContent value="offers" className="pt-4">
+        <TabsContent value="offers" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <OffersTab dealId={dealId} />
         </TabsContent>
       </Tabs>
