@@ -19,6 +19,7 @@ import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
 import { JobsTab } from '@/features/jobs/JobsTab';
+import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -193,6 +194,7 @@ export function DealDetailPage() {
           <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
           <TabsTrigger value="payment">{t('tabs.payment')}</TabsTrigger>
           <TabsTrigger value="jobs">{t('tabs.jobs')}</TabsTrigger>
+          <TabsTrigger value="tasks">{t('tabs.tasks')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
           <TabsTrigger value="offers">Offers</TabsTrigger>
@@ -216,6 +218,9 @@ export function DealDetailPage() {
         </TabsContent>
         <TabsContent value="jobs" className="pt-4">
           <JobsTab dealId={dealId} accountingCompletedAt={deal.accounting_completed_at} />
+        </TabsContent>
+        <TabsContent value="tasks" className="pt-4">
+          <AssignedTasksTab source={{ kind: 'deal', id: dealId }} />
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="deal" parentId={dealId} />

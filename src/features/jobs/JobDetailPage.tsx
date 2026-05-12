@@ -9,6 +9,7 @@ import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { useJob } from './hooks/useJob';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
+import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { ContactsCard } from './ContactsCard';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
@@ -136,6 +137,7 @@ export function JobDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="attachments">Attachments</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
@@ -196,6 +198,9 @@ export function JobDetailPage() {
               <CommentsPanel parentType="job" parentId={job.id} />
             </aside>
           </div>
+        </TabsContent>
+        <TabsContent value="tasks" className="pt-4">
+          <AssignedTasksTab source={{ kind: 'job', id: job.id }} />
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="job" parentId={job.id} />
