@@ -8,7 +8,7 @@
     "completed_by": "από {{name}} {{when}}"
   },
   "tabs": {
-    "tasks": "Εργασίες"
+    "tasks": "Καθήκοντα"
   },
   "assigned_tasks": {
     "section_open": "Ανοιχτές",
