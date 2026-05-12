@@ -77,7 +77,7 @@ export function JobDetailPage() {
             )}
           </div>
           <p className="text-xs text-slate-500">
-            {job.service_type} · {job.billing_type} · 🗓 {formatDate(job.created_at)} ·{' '}
+            {job.service_type} · 🗓 {formatDate(job.created_at)} ·{' '}
             {relativeFromNow(job.created_at)}
           </p>
         </div>
@@ -153,16 +153,6 @@ export function JobDetailPage() {
                   <div className="text-xs text-slate-500">Service</div>
                   <div className="font-medium">{job.service_type}</div>
                 </div>
-                <div>
-                  <div className="text-xs text-slate-500">Billing</div>
-                  <div className="font-medium">{job.billing_type}</div>
-                </div>
-                {Number(job.monthly_amount ?? 0) > 0 && (
-                  <div>
-                    <div className="text-xs text-slate-500">Monthly</div>
-                    <div className="font-medium">€{Number(job.monthly_amount).toFixed(2)}</div>
-                  </div>
-                )}
                 {Number(job.one_time_amount ?? 0) > 0 && (
                   <div>
                     <div className="text-xs text-slate-500">One-time</div>
