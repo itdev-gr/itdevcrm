@@ -9,6 +9,12 @@ export type UserRow = Database['public']['Tables']['profiles']['Row'] & {
     | null;
 };
 
+const HIDDEN_DASHBOARD_USER_EMAILS = new Set(['test@itdev.gr']);
+
+export function filterDashboardVisibleUsers<T extends { email: string }>(users: T[]): T[] {
+  return users.filter((user) => !HIDDEN_DASHBOARD_USER_EMAILS.has(user.email.toLowerCase()));
+}
+
 export function useUsers() {
   return useQuery({
     queryKey: queryKeys.users(),
@@ -21,7 +27,7 @@ export function useUsers() {
         .eq('archived', false)
         .order('created_at', { ascending: false });
       if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as UserRow[];
+      return filterDashboardVisibleUsers((data ?? []) as unknown as UserRow[]);
     },
   });
 }
