@@ -15,7 +15,7 @@ import { useJobs, type JobRow, type ServiceType } from './hooks/useJobs';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { useJobsRealtime } from './hooks/useJobsRealtime';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 
@@ -38,8 +38,8 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveJobStage(serviceType);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const userId = useAuthStore((s) => s.user?.id ?? '');
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const userId = useEffectiveUserId() ?? '';
+  const isAdmin = useEffectiveIsAdmin();
   const [searchParams, setSearchParams] = useSearchParams();
   // Admins always see every job in the department — the Only-mine filter
   // is a per-tech-user convenience, not a permissions boundary.

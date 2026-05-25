@@ -47,4 +47,34 @@ describe('AdminGuard', () => {
     );
     expect(screen.getByText('admin')).toBeInTheDocument();
   });
+
+  it('uses the selected view-as account for admin visibility', () => {
+    useAuthStore.getState().setSession({ access_token: 't' } as never, { id: 'u' } as never);
+    useAuthStore.getState().setProfile({ isAdmin: true, groupCodes: [] });
+    useAuthStore.getState().setViewAsUser({
+      userId: 'sales-user',
+      email: 'sales@example.com',
+      fullName: 'Sales User',
+      isAdmin: false,
+      groupCodes: ['sales'],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin']}>
+        <Routes>
+          <Route path="/" element={<p>home</p>} />
+          <Route
+            path="/admin"
+            element={
+              <AdminGuard>
+                <p>admin</p>
+              </AdminGuard>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('home')).toBeInTheDocument();
+  });
 });

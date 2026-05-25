@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import type { CommentRow } from './hooks/useComments';
 import { useUpdateComment } from './hooks/useUpdateComment';
 import { useArchiveComment } from './hooks/useArchiveComment';
@@ -25,8 +25,8 @@ type Props = {
 
 export function CommentItem({ comment, replies = [] }: Props) {
   const { t } = useTranslation('sales');
-  const myId = useAuthStore((s) => s.user?.id ?? null);
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const myId = useEffectiveUserId();
+  const isAdmin = useEffectiveIsAdmin();
   const update = useUpdateComment();
   const archive = useArchiveComment();
   const [editing, setEditing] = useState(false);

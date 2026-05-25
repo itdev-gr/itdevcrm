@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { signOut } from '@/lib/auth';
 import { NotificationsBell } from '@/features/notifications/NotificationsBell';
 import { GlobalSearch } from '@/features/search/GlobalSearch';
+import { ViewAsAccountSwitcher } from './ViewAsAccountSwitcher';
 
 export function Topbar() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function Topbar() {
       <span className="font-semibold">{t('app_title')}</span>
       <div className="flex justify-center">{session && <GlobalSearch />}</div>
       <div className="flex items-center gap-3">
+        {session && <ViewAsAccountSwitcher />}
         {session && (
           <Link
             to="/profile"

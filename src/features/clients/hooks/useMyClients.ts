@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveGroupCodes, useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import type { ClientRow } from './useClients';
 
 export function useMyClients() {
-  const userId = useAuthStore((s) => s.user?.id ?? null);
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const userId = useEffectiveUserId();
+  const isAdmin = useEffectiveIsAdmin();
+  const groupCodes = useEffectiveGroupCodes();
 
   return useQuery({
     queryKey: [...queryKeys.myClients(), userId, isAdmin, groupCodes.join(',')] as const,
