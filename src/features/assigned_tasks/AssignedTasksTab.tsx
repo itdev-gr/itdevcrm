@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveGroupCodes, useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import { relativeFromNow } from '@/lib/datetime';
 import { useAssignedTasksForSource } from './hooks/useAssignedTasksForSource';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
@@ -14,8 +14,8 @@ type Props = { source: { kind: 'deal' | 'job'; id: string } };
 
 function TaskRow({ task }: { task: AssignedTaskRow }) {
   const { t } = useTranslation('jobs');
-  const userId = useAuthStore((s) => s.user?.id ?? '');
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const userId = useEffectiveUserId() ?? '';
+  const isAdmin = useEffectiveIsAdmin();
   const resolve = useResolveAssignedTask();
   const isAssignee = task.assignee_user_id === userId;
   const canResolve = task.status === 'open' && (isAssignee || isAdmin);
@@ -60,8 +60,8 @@ function TaskRow({ task }: { task: AssignedTaskRow }) {
 export function AssignedTasksTab({ source }: Props) {
   const { t } = useTranslation('jobs');
   useAssignedTasksRealtime();
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const isAdmin = useEffectiveIsAdmin();
+  const groupCodes = useEffectiveGroupCodes();
   const canCreate = canCreateAssignedTask({ isAdmin, groupCodes });
   const [dialogOpen, setDialogOpen] = useState(false);
 

@@ -9,7 +9,7 @@ export type UserRow = Database['public']['Tables']['profiles']['Row'] & {
     | null;
 };
 
-export function useUsers() {
+export function useUsers(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.users(),
     queryFn: async (): Promise<UserRow[]> => {
@@ -23,5 +23,6 @@ export function useUsers() {
       if (error) throw new Error(error.message);
       return (data ?? []) as unknown as UserRow[];
     },
+    enabled: options.enabled ?? true,
   });
 }

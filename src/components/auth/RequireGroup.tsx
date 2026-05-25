@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveGroupCodes, useEffectiveIsAdmin } from '@/lib/viewAs';
 
 type Props = {
   groups: string[];
@@ -8,9 +9,9 @@ type Props = {
 };
 
 export function RequireGroup({ groups, children }: Props) {
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const isAdmin = useEffectiveIsAdmin();
   const isLoading = useAuthStore((s) => s.isLoading);
-  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const groupCodes = useEffectiveGroupCodes();
 
   if (isLoading) return <div className="p-8">…</div>;
   if (isAdmin) return <>{children}</>;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import { useScheduledLeads, type ScheduledLead } from './hooks/useScheduledLeads';
 import { useUserTasks, type UserTaskRow } from './hooks/useUserTasks';
 import { useToggleTaskComplete } from './hooks/useDeleteTask';
@@ -244,8 +244,8 @@ function WeekView({ cursor, entries, locale, onEditTask }: ViewProps) {
 export function CalendarPage() {
   const { t, i18n } = useTranslation('home');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const userId = useAuthStore((s) => s.user?.id ?? '');
+  const isAdmin = useEffectiveIsAdmin();
+  const userId = useEffectiveUserId() ?? '';
 
   const [view, setView] = useState<View>('week');
   const [cursor, setCursor] = useState<Date>(new Date());

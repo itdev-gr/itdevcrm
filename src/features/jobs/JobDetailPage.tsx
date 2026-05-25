@@ -15,7 +15,7 @@ import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners'
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { useBlockJob, useUnblockJob } from './hooks/useBlockJob';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveGroupCodes, useEffectiveIsAdmin } from '@/lib/viewAs';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import type { ServiceType } from './hooks/useJobs';
 
@@ -31,8 +31,8 @@ export function JobDetailPage() {
   const moveStage = useMoveJobStage(serviceType);
   const block = useBlockJob(job?.id ?? '');
   const unblock = useUnblockJob(job?.id ?? '');
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const isAdmin = useEffectiveIsAdmin();
+  const groupCodes = useEffectiveGroupCodes();
   const canBlockJob = isAdmin || groupCodes.includes('accounting');
 
   if (isLoading) return <div className="p-8">…</div>;
