@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveGroupCodes, useEffectiveIsAdmin } from '@/lib/viewAs';
 
 // AI SEO is folded into Web SEO + Local SEO — no separate kanban. The
 // `ai_seo` permission group is still meaningful (members handle AI SEO
@@ -37,8 +37,8 @@ const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
 
 export function Sidebar() {
   const { t } = useTranslation();
-  const isAdmin = useAuthStore((state) => state.isAdmin);
-  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const isAdmin = useEffectiveIsAdmin();
+  const groupCodes = useEffectiveGroupCodes();
   const isSales = groupCodes.includes('sales');
   const isAccounting = groupCodes.includes('accounting');
   // AI SEO members work AI SEO jobs which now live on the Web SEO + Local SEO

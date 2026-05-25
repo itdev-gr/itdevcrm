@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveGroupCodes, useEffectiveUserId } from '@/lib/viewAs';
 import { queryKeys } from '@/lib/queryKeys';
 
 export type FieldMode = 'hidden' | 'readonly';
@@ -14,8 +14,8 @@ type Row = {
 };
 
 export function useFieldPermissionsAll() {
-  const userId = useAuthStore((s) => s.user?.id ?? null);
-  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const userId = useEffectiveUserId();
+  const groupCodes = useEffectiveGroupCodes();
 
   return useQuery({
     queryKey: [...queryKeys.fieldPermissions(), userId, groupCodes.join(',')] as const,

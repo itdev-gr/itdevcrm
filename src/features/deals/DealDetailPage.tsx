@@ -14,7 +14,7 @@ import type { PlannedService } from './ServicesPlannedField';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveIsAdmin } from '@/lib/viewAs';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
@@ -35,10 +35,8 @@ export function DealDetailPage() {
   const complete = useCompleteAccounting();
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const wonBy = deal?.won_by_user_id
-    ? owners.find((o) => o.user_id === deal.won_by_user_id)
-    : null;
+  const isAdmin = useEffectiveIsAdmin();
+  const wonBy = deal?.won_by_user_id ? owners.find((o) => o.user_id === deal.won_by_user_id) : null;
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !deal)

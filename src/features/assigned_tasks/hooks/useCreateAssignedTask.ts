@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import type { Database } from '@/types/supabase';
 
 export type CreateAssignedTaskInput = {
   source: { kind: 'deal' | 'job'; id: string };
@@ -17,16 +18,17 @@ export function useCreateAssignedTask() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
+      const payload = {
+        title: input.title,
+        description: input.description,
+        deal_id: input.source.kind === 'deal' ? input.source.id : null,
+        job_id: input.source.kind === 'job' ? input.source.id : null,
+        assignee_user_id: input.assigneeUserId,
+        created_by_user_id: user.id,
+      } as Database['public']['Tables']['assigned_tasks']['Insert'];
       const { data, error } = await supabase
         .from('assigned_tasks')
-        .insert({
-          title: input.title,
-          description: input.description,
-          deal_id: input.source.kind === 'deal' ? input.source.id : null,
-          job_id: input.source.kind === 'job' ? input.source.id : null,
-          assignee_user_id: input.assigneeUserId,
-          created_by_user_id: user.id,
-        })
+        .insert(payload)
         .select('id')
         .single();
       if (error) throw new Error(error.message);

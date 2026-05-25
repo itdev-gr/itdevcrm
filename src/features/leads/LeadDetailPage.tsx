@@ -15,7 +15,7 @@ import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
@@ -34,8 +34,8 @@ export function LeadDetailPage() {
   const moveStage = useMoveLeadStage();
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const isAdmin = useEffectiveIsAdmin();
+  const userId = useEffectiveUserId();
 
   const newLeadStageId = stages.find(
     (s) => s.board === 'sales' && s.code === 'new_lead' && !s.archived,

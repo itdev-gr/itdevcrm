@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveGroupCodes, useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import { relativeFromNow } from '@/lib/datetime';
 import { useAssignedTasksForSource } from './hooks/useAssignedTasksForSource';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
@@ -14,8 +14,8 @@ type Props = { source: { kind: 'deal' | 'job'; id: string } };
 
 function TaskRow({ task }: { task: AssignedTaskRow }) {
   const { t } = useTranslation('jobs');
-  const userId = useAuthStore((s) => s.user?.id ?? '');
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const userId = useEffectiveUserId() ?? '';
+  const isAdmin = useEffectiveIsAdmin();
   const resolve = useResolveAssignedTask();
   const isAssignee = task.assignee_user_id === userId;
   const canResolve = task.status === 'open' && (isAssignee || isAdmin);
@@ -30,16 +30,15 @@ function TaskRow({ task }: { task: AssignedTaskRow }) {
               {task.source_code}
             </span>
           )}
-          {task.client && (
-            <span className="text-[11px] text-slate-500">· {task.client.name}</span>
-          )}
+          {task.client && <span className="text-[11px] text-slate-500">· {task.client.name}</span>}
         </div>
         {task.description && (
           <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{task.description}</p>
         )}
         <p className="mt-1 text-[10px] text-slate-400">
           {relativeFromNow(task.created_at)}
-          {task.resolved_at && ` · ${t('assigned_tasks.resolved_by')} ${relativeFromNow(task.resolved_at)}`}
+          {task.resolved_at &&
+            ` · ${t('assigned_tasks.resolved_by')} ${relativeFromNow(task.resolved_at)}`}
         </p>
       </div>
       {canResolve && (
@@ -60,8 +59,8 @@ function TaskRow({ task }: { task: AssignedTaskRow }) {
 export function AssignedTasksTab({ source }: Props) {
   const { t } = useTranslation('jobs');
   useAssignedTasksRealtime();
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const isAdmin = useEffectiveIsAdmin();
+  const groupCodes = useEffectiveGroupCodes();
   const canCreate = canCreateAssignedTask({ isAdmin, groupCodes });
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -90,7 +89,9 @@ export function AssignedTasksTab({ source }: Props) {
         <p className="rounded-md border bg-slate-50 p-4 text-sm text-slate-500">{t(emptyKey)}</p>
       ) : (
         <ul className="rounded-md border bg-white">
-          {open.map((task) => <TaskRow key={task.id} task={task} />)}
+          {open.map((task) => (
+            <TaskRow key={task.id} task={task} />
+          ))}
         </ul>
       )}
 
@@ -99,7 +100,9 @@ export function AssignedTasksTab({ source }: Props) {
       </h2>
       {resolved.length > 0 && (
         <ul className="rounded-md border bg-white opacity-70">
-          {resolved.map((task) => <TaskRow key={task.id} task={task} />)}
+          {resolved.map((task) => (
+            <TaskRow key={task.id} task={task} />
+          ))}
         </ul>
       )}
 

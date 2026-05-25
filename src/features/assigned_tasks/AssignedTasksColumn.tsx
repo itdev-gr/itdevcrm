@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveIsAdmin, useEffectiveUserId } from '@/lib/viewAs';
 import { useAssignedTasksOpen, type AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
@@ -28,9 +28,7 @@ function Row({ task, canResolve }: { task: AssignedTaskRow; canResolve: boolean 
             {task.source_code ?? '—'}
           </Link>
         </div>
-        {task.client && (
-          <p className="truncate text-[11px] text-slate-500">{task.client.name}</p>
-        )}
+        {task.client && <p className="truncate text-[11px] text-slate-500">{task.client.name}</p>}
         {task.description && (
           <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{task.description}</p>
         )}
@@ -53,8 +51,8 @@ function Row({ task, canResolve }: { task: AssignedTaskRow; canResolve: boolean 
 
 export function AssignedTasksColumn() {
   const { t } = useTranslation('home');
-  const isAdmin = useAuthStore((s) => s.isAdmin);
-  const userId = useAuthStore((s) => s.user?.id ?? '');
+  const isAdmin = useEffectiveIsAdmin();
+  const userId = useEffectiveUserId() ?? '';
   const [showAllAdmin, setShowAllAdmin] = useState(false);
   useAssignedTasksRealtime();
 
@@ -67,7 +65,9 @@ export function AssignedTasksColumn() {
   return (
     <section className="flex h-80 min-h-0 flex-col border-t bg-white">
       <header className="flex shrink-0 items-center justify-between border-b px-6 py-2.5">
-        <h2 className="text-sm font-semibold">{title} ({tasks.length})</h2>
+        <h2 className="text-sm font-semibold">
+          {title} ({tasks.length})
+        </h2>
         {isAdmin && (
           <button
             type="button"
