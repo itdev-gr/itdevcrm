@@ -60,8 +60,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const colByCode = new Map<string, (typeof boardStages)[number]>();
   for (const s of boardStages) colByCode.set(s.code, s);
 
-  const filteredJobs =
-    onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
+  const filteredJobs = onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
 
   const jobsByStage = new Map<string, JobRow[]>();
   for (const s of boardStages) jobsByStage.set(s.id, []);

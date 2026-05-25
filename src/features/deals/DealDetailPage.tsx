@@ -36,9 +36,7 @@ export function DealDetailPage() {
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const isAdmin = useEffectiveIsAdmin();
-  const wonBy = deal?.won_by_user_id
-    ? owners.find((o) => o.user_id === deal.won_by_user_id)
-    : null;
+  const wonBy = deal?.won_by_user_id ? owners.find((o) => o.user_id === deal.won_by_user_id) : null;
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !deal)

@@ -30,10 +30,12 @@ describe('view-as helpers', () => {
   });
 
   it('returns the selected account as the effective user', () => {
-    useAuthStore.getState().setSession(
-      { access_token: 't' } as never,
-      { id: 'actual', email: TEST_VIEW_AS_EMAIL } as never,
-    );
+    useAuthStore
+      .getState()
+      .setSession(
+        { access_token: 't' } as never,
+        { id: 'actual', email: TEST_VIEW_AS_EMAIL } as never,
+      );
     useAuthStore.getState().setProfile({ isAdmin: true, groupCodes: ['accounting'] });
     useAuthStore.getState().setViewAsUser({
       userId: 'target',

@@ -348,7 +348,9 @@ export function CalendarPage() {
                 type="button"
                 onClick={() => setView(v)}
                 className={`px-3 py-1 text-xs font-medium ${
-                  view === v ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'
+                  view === v
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 {t(`calendar.view.${v}`)}

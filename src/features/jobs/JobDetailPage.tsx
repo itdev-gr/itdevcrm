@@ -36,8 +36,7 @@ export function JobDetailPage() {
   const canBlockJob = isAdmin || groupCodes.includes('accounting');
 
   if (isLoading) return <div className="p-8">…</div>;
-  if (error || !job)
-    return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+  if (error || !job) return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
 
   const owner = job.owner_user_id ? owners.find((o) => o.user_id === job.owner_user_id) : null;
   const boardStages = stages
@@ -79,8 +78,7 @@ export function JobDetailPage() {
             )}
           </div>
           <p className="text-xs text-slate-500">
-            {job.service_type} · 🗓 {formatDate(job.created_at)} ·{' '}
-            {relativeFromNow(job.created_at)}
+            {job.service_type} · 🗓 {formatDate(job.created_at)} · {relativeFromNow(job.created_at)}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

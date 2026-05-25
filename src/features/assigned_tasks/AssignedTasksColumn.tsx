@@ -28,9 +28,7 @@ function Row({ task, canResolve }: { task: AssignedTaskRow; canResolve: boolean 
             {task.source_code ?? '—'}
           </Link>
         </div>
-        {task.client && (
-          <p className="truncate text-[11px] text-slate-500">{task.client.name}</p>
-        )}
+        {task.client && <p className="truncate text-[11px] text-slate-500">{task.client.name}</p>}
         {task.description && (
           <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{task.description}</p>
         )}
@@ -67,7 +65,9 @@ export function AssignedTasksColumn() {
   return (
     <section className="flex h-80 min-h-0 flex-col border-t bg-white">
       <header className="flex shrink-0 items-center justify-between border-b px-6 py-2.5">
-        <h2 className="text-sm font-semibold">{title} ({tasks.length})</h2>
+        <h2 className="text-sm font-semibold">
+          {title} ({tasks.length})
+        </h2>
         {isAdmin && (
           <button
             type="button"
