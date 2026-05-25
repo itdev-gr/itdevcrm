@@ -6,6 +6,11 @@
     "login": "Login",
     "logout": "Logout"
   },
+  "view_as": {
+    "label": "View as account",
+    "self": "My account",
+    "active": "Viewing as {{name}}"
+  },
   "locale": {
     "label": "Language",
     "en": "English",
