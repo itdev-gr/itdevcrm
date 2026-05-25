@@ -29,16 +29,15 @@ describe('useAssignedTasksOpen', () => {
       data: [{ id: 't1', title: 'Renew domain', status: 'open' }],
       error: null,
     });
-    const { result } = renderHook(
-      () => useAssignedTasksOpen({ assigneeUserId: 'u1' }),
-      { wrapper: ({ children }) => wrap(children) },
-    );
+    const { result } = renderHook(() => useAssignedTasksOpen({ assigneeUserId: 'u1' }), {
+      wrapper: ({ children }) => wrap(children),
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(from).toHaveBeenCalledWith('assigned_tasks');
     expect(select).toHaveBeenCalledWith(expect.stringContaining('client:client_id'));
     expect(eq).toHaveBeenCalledWith('assignee_user_id', 'u1');
     expect(order).toHaveBeenCalledWith('created_at', { ascending: false });
-    expect(result.current.data?.[0].id).toBe('t1');
+    expect(result.current.data?.[0]?.id).toBe('t1');
   });
 
   it('skips the assignee filter when assigneeUserId is null (admin all-team)', async () => {
@@ -49,10 +48,9 @@ describe('useAssignedTasksOpen', () => {
     const selectAll = vi.fn().mockReturnValue({ eq: eqStatus });
     from.mockReturnValueOnce({ select: selectAll });
 
-    const { result } = renderHook(
-      () => useAssignedTasksOpen({ assigneeUserId: null }),
-      { wrapper: ({ children }) => wrap(children) },
-    );
+    const { result } = renderHook(() => useAssignedTasksOpen({ assigneeUserId: null }), {
+      wrapper: ({ children }) => wrap(children),
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(eqStatus).toHaveBeenCalledWith('status', 'open');
     expect(orderDirect).toHaveBeenCalledWith('created_at', { ascending: false });

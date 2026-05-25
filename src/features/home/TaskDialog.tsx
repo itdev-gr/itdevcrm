@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffectiveUserId } from '@/lib/viewAs';
 import { useUpsertTask } from './hooks/useUpsertTask';
 import { useDeleteTask } from './hooks/useDeleteTask';
 import type { UserTaskRow } from './hooks/useUserTasks';
@@ -32,7 +32,7 @@ function toLocalInputValue(d: Date): string {
 
 export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
   const { t } = useTranslation('home');
-  const userId = useAuthStore((s) => s.user?.id ?? '');
+  const userId = useEffectiveUserId() ?? '';
   const upsert = useUpsertTask();
   const del = useDeleteTask();
 
@@ -64,7 +64,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
       title: title.trim(),
       notes: notes.trim() || null,
       due_at: new Date(dueAt).toISOString(),
-      completed_at: completed ? task?.completed_at ?? new Date().toISOString() : null,
+      completed_at: completed ? (task?.completed_at ?? new Date().toISOString()) : null,
     };
     await upsert.mutateAsync(task?.id ? { ...payload, id: task.id } : payload);
     onOpenChange(false);
