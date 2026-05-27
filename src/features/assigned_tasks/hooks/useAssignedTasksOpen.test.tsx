@@ -26,7 +26,7 @@ describe('useAssignedTasksOpen', () => {
 
   it('fetches open tasks for a specific assignee, newest first', async () => {
     order.mockResolvedValue({
-      data: [{ id: 't1', title: 'Renew domain', status: 'open' }],
+      data: [{ id: 't1', title: 'Renew domain', status: 'open', department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } }],
       error: null,
     });
     const { result } = renderHook(
@@ -56,5 +56,38 @@ describe('useAssignedTasksOpen', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(eqStatus).toHaveBeenCalledWith('status', 'open');
     expect(orderDirect).toHaveBeenCalledWith('created_at', { ascending: false });
+  });
+
+  it('returns the nested department per task', async () => {
+    order.mockResolvedValue({
+      data: [
+        {
+          id: 't1',
+          title: 'x',
+          description: null,
+          deal_id: 'd1',
+          job_id: null,
+          client_id: 'c1',
+          source_code: '000013',
+          assignee_user_id: 'u-me',
+          created_by_user_id: 'u-other',
+          status: 'open',
+          resolved_at: null,
+          resolved_by_user_id: null,
+          created_at: 't',
+          department_group_id: 'g1',
+          client: { id: 'c1', name: 'Acme' },
+          department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
+        },
+      ],
+      error: null,
+    });
+    const { result } = renderHook(
+      () => useAssignedTasksOpen({ assigneeUserId: 'u-me' }),
+      { wrapper: ({ children }) => wrap(children) },
+    );
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.[0]?.department?.code).toBe('web_dev');
+    expect(select).toHaveBeenCalledWith(expect.stringContaining('department:department_group_id'));
   });
 });
