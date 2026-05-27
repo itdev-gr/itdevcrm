@@ -17,6 +17,8 @@
     "title_placeholder": "Τίτλος εργασίας",
     "description_placeholder": "Σημειώσεις, πλαίσιο, τι πρέπει να γίνει…",
     "assignee_label": "Ανάθεση σε",
+    "department_label": "Τμήμα",
+    "department_hint": "Επίλεξε ένα",
     "create": "Δημιουργία",
     "resolve": "Επίλυση",
     "empty": "Δεν υπάρχουν ακόμα εργασίες.",
