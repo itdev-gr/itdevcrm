@@ -8,11 +8,19 @@ import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { NewAssignedTaskDialog } from './NewAssignedTaskDialog';
 import { canCreateAssignedTask } from './canCreateAssignedTask';
+import { DepartmentChip } from './DepartmentChip';
+import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 import type { AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 
 type Props = { source: { kind: 'deal' | 'job'; id: string } };
 
-function TaskRow({ task }: { task: AssignedTaskRow }) {
+function TaskRow({
+  task,
+  onOpen,
+}: {
+  task: AssignedTaskRow;
+  onOpen: (id: string) => void;
+}) {
   const { t } = useTranslation('jobs');
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -21,38 +29,49 @@ function TaskRow({ task }: { task: AssignedTaskRow }) {
   const canResolve = task.status === 'open' && (isAssignee || isAdmin);
 
   return (
-    <li className="flex items-start gap-3 border-t px-3 py-3 first:border-t-0">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{task.title}</span>
-          {task.source_code && (
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
-              {task.source_code}
-            </span>
+    <li className="border-t first:border-t-0">
+      <button
+        type="button"
+        aria-label={task.title}
+        onClick={() => onOpen(task.id)}
+        className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-slate-50"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{task.title}</span>
+            <DepartmentChip department={task.department} />
+            {task.source_code && (
+              <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+                {task.source_code}
+              </span>
+            )}
+            {task.client && (
+              <span className="text-[11px] text-slate-500">· {task.client.name}</span>
+            )}
+          </div>
+          {task.description && (
+            <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{task.description}</p>
           )}
-          {task.client && (
-            <span className="text-[11px] text-slate-500">· {task.client.name}</span>
-          )}
+          <p className="mt-1 text-[10px] text-slate-400">
+            {relativeFromNow(task.created_at)}
+            {task.resolved_at && ` · ${t('assigned_tasks.resolved_by')} ${relativeFromNow(task.resolved_at)}`}
+          </p>
         </div>
-        {task.description && (
-          <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{task.description}</p>
+        {canResolve && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              resolve.mutate({ id: task.id });
+            }}
+            disabled={resolve.isPending}
+          >
+            {t('assigned_tasks.resolve')}
+          </Button>
         )}
-        <p className="mt-1 text-[10px] text-slate-400">
-          {relativeFromNow(task.created_at)}
-          {task.resolved_at && ` · ${t('assigned_tasks.resolved_by')} ${relativeFromNow(task.resolved_at)}`}
-        </p>
-      </div>
-      {canResolve && (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => resolve.mutate({ id: task.id })}
-          disabled={resolve.isPending}
-        >
-          {t('assigned_tasks.resolve')}
-        </Button>
-      )}
+      </button>
     </li>
   );
 }
@@ -64,6 +83,7 @@ export function AssignedTasksTab({ source }: Props) {
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canCreate = canCreateAssignedTask({ isAdmin, groupCodes });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const { data: tasks = [], isLoading, error } = useAssignedTasksForSource(source);
 
@@ -90,7 +110,7 @@ export function AssignedTasksTab({ source }: Props) {
         <p className="rounded-md border bg-slate-50 p-4 text-sm text-slate-500">{t(emptyKey)}</p>
       ) : (
         <ul className="rounded-md border bg-white">
-          {open.map((task) => <TaskRow key={task.id} task={task} />)}
+          {open.map((task) => <TaskRow key={task.id} task={task} onOpen={setOpenTaskId} />)}
         </ul>
       )}
 
@@ -99,11 +119,15 @@ export function AssignedTasksTab({ source }: Props) {
       </h2>
       {resolved.length > 0 && (
         <ul className="rounded-md border bg-white opacity-70">
-          {resolved.map((task) => <TaskRow key={task.id} task={task} />)}
+          {resolved.map((task) => <TaskRow key={task.id} task={task} onOpen={setOpenTaskId} />)}
         </ul>
       )}
 
       <NewAssignedTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} source={source} />
+      <AssignedTaskDetailDialog
+        taskId={openTaskId}
+        onOpenChange={(open) => !open && setOpenTaskId(null)}
+      />
     </div>
   );
 }
