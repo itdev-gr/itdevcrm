@@ -24,6 +24,7 @@ export const queryKeys = {
   notifications: () => ['notifications'] as const,
   assignedTasksOpen: (assigneeId: string | null) =>
     ['assigned-tasks', 'open', assigneeId ?? 'all'] as const,
+  assignedTaskDetail: (taskId: string) => ['assigned-task', taskId] as const,
   assignedTasksForDeal: (dealId: string) =>
     ['assigned-tasks', 'deal', dealId] as const,
   assignedTasksForJob: (jobId: string) =>
