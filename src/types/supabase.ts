@@ -1,4 +1,3 @@
-Initialising login role...
 export type Json =
   | string
   | number
@@ -12,31 +11,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -85,6 +59,7 @@ export type Database = {
           created_at: string
           created_by_user_id: string
           deal_id: string | null
+          department_group_id: string
           description: string | null
           id: string
           job_id: string | null
@@ -101,6 +76,7 @@ export type Database = {
           created_at?: string
           created_by_user_id: string
           deal_id?: string | null
+          department_group_id: string
           description?: string | null
           id?: string
           job_id?: string | null
@@ -117,6 +93,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string
           deal_id?: string | null
+          department_group_id?: string
           description?: string | null
           id?: string
           job_id?: string | null
@@ -161,6 +138,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assigned_tasks_department_group_id_fkey"
+            columns: ["department_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {
@@ -1901,13 +1885,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />
-A new version of Supabase CLI is available: v2.98.2 (currently installed v2.98.0)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
