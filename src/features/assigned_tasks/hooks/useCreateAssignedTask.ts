@@ -7,6 +7,7 @@ export type CreateAssignedTaskInput = {
   title: string;
   description: string | null;
   assigneeUserId: string;
+  departmentId: string;
 };
 
 export function useCreateAssignedTask() {
@@ -26,6 +27,7 @@ export function useCreateAssignedTask() {
           job_id: input.source.kind === 'job' ? input.source.id : null,
           assignee_user_id: input.assigneeUserId,
           created_by_user_id: user.id,
+          department_group_id: input.departmentId,
         })
         .select('id')
         .single();

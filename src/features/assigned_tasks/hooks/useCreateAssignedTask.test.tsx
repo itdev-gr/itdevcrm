@@ -28,7 +28,7 @@ function wrap(c: ReactNode) {
 describe('useCreateAssignedTask', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('inserts a deal-scoped task with the current user as creator', async () => {
+  it('inserts a deal-scoped task with departmentId', async () => {
     single.mockResolvedValue({ data: { id: 't1' }, error: null });
     const { result } = renderHook(() => useCreateAssignedTask(), {
       wrapper: ({ children }) => wrap(children),
@@ -38,6 +38,7 @@ describe('useCreateAssignedTask', () => {
       title: 'Renew domain',
       description: 'before May 30',
       assigneeUserId: 'u2',
+      departmentId: 'g-web-dev',
     });
     expect(id).toBe('t1');
     expect(insert).toHaveBeenCalledWith({
@@ -47,10 +48,11 @@ describe('useCreateAssignedTask', () => {
       job_id: null,
       assignee_user_id: 'u2',
       created_by_user_id: 'me',
+      department_group_id: 'g-web-dev',
     });
   });
 
-  it('inserts a job-scoped task and sets deal_id null', async () => {
+  it('inserts a job-scoped task with departmentId', async () => {
     single.mockResolvedValue({ data: { id: 't2' }, error: null });
     const { result } = renderHook(() => useCreateAssignedTask(), {
       wrapper: ({ children }) => wrap(children),
@@ -60,6 +62,7 @@ describe('useCreateAssignedTask', () => {
       title: 'Hotfix',
       description: null,
       assigneeUserId: 'u3',
+      departmentId: 'g-hosting',
     });
     expect(insert).toHaveBeenCalledWith({
       title: 'Hotfix',
@@ -68,6 +71,7 @@ describe('useCreateAssignedTask', () => {
       job_id: 'j1',
       assignee_user_id: 'u3',
       created_by_user_id: 'me',
+      department_group_id: 'g-hosting',
     });
   });
 
@@ -82,6 +86,7 @@ describe('useCreateAssignedTask', () => {
         title: 'x',
         description: null,
         assigneeUserId: 'u2',
+        departmentId: 'g-web-dev',
       }),
     ).rejects.toThrow('rls denied');
   });
