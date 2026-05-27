@@ -32,6 +32,15 @@
     "empty": "No open tasks. You're clear.",
     "empty_admin": "No open tasks across the team.",
     "resolve": "Resolve",
-    "open_source": "Open"
+    "open_source": "Open",
+    "detail_title": "Task detail",
+    "department_label": "Department",
+    "client_section": "Client",
+    "open_deal": "Open deal",
+    "open_job": "Open job",
+    "loading": "Loading…",
+    "error_loading": "Couldn't load this task.",
+    "created_by_label": "Created by",
+    "created_label": "Created"
   }
 }

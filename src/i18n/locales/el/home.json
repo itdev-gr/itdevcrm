@@ -32,6 +32,15 @@
     "empty": "Καμία ανοιχτή εργασία.",
     "empty_admin": "Καμία ανοιχτή εργασία στην ομάδα.",
     "resolve": "Επίλυση",
-    "open_source": "Άνοιγμα"
+    "open_source": "Άνοιγμα",
+    "detail_title": "Λεπτομέρειες εργασίας",
+    "department_label": "Τμήμα",
+    "client_section": "Πελάτης",
+    "open_deal": "Άνοιγμα deal",
+    "open_job": "Άνοιγμα job",
+    "loading": "Φόρτωση…",
+    "error_loading": "Αδυναμία φόρτωσης της εργασίας.",
+    "created_by_label": "Δημιουργήθηκε από",
+    "created_label": "Δημιουργήθηκε"
   }
 }
