@@ -38,7 +38,7 @@ describe('useAssignedTasksOpen', () => {
     expect(select).toHaveBeenCalledWith(expect.stringContaining('client:client_id'));
     expect(eq).toHaveBeenCalledWith('assignee_user_id', 'u1');
     expect(order).toHaveBeenCalledWith('created_at', { ascending: false });
-    expect(result.current.data?.[0].id).toBe('t1');
+    expect(result.current.data?.[0]?.id).toBe('t1');
   });
 
   it('skips the assignee filter when assigneeUserId is null (admin all-team)', async () => {

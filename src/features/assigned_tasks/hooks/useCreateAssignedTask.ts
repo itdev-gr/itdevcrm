@@ -20,6 +20,10 @@ export function useCreateAssignedTask() {
       if (!user) throw new Error('Not signed in');
       const { data, error } = await supabase
         .from('assigned_tasks')
+        // client_id + source_code are filled by the
+        // assigned_tasks_populate_source BEFORE INSERT trigger from
+        // deal_id/job_id, so the caller never supplies them. The generated
+        // supabase types still mark them NOT NULL — hence the cast.
         .insert({
           title: input.title,
           description: input.description,
@@ -28,7 +32,7 @@ export function useCreateAssignedTask() {
           assignee_user_id: input.assigneeUserId,
           created_by_user_id: user.id,
           department_group_id: input.departmentId,
-        })
+        } as never)
         .select('id')
         .single();
       if (error) throw new Error(error.message);
