@@ -1,14 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
-import type { AssignedTaskRow } from './useAssignedTasksOpen';
+import type { AssignedTaskRow, AssignedTaskDepartment } from './useAssignedTasksOpen';
+
+export type { AssignedTaskDepartment };
 
 const SELECT = `
   id, title, description,
   deal_id, job_id, client_id, source_code,
   assignee_user_id, created_by_user_id,
   status, resolved_at, resolved_by_user_id, created_at,
-  client:client_id ( id, name )
+  department_group_id,
+  client:client_id ( id, name ),
+  department:department_group_id ( id, code, display_names, position )
 `;
 
 export function useAssignedTasksForSource(source: { kind: 'deal' | 'job'; id: string }) {
