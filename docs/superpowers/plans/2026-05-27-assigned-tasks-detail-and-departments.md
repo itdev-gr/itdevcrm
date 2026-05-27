@@ -1,12 +1,12 @@
-# Assigned-tasks detail modal + departments — Implementation Plan
+# Assigned-tasks detail modal + single-department — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make each row in the "Assigned to me" column (Home) and the deal/job Tasks tab clickable, opening a read-only detail modal with the full task plus the major client/contact info; make "departments" a required multi-select on task creation, persisted via a new join table.
+**Goal:** Make each row in the "Assigned to me" column (Home) and the deal/job Tasks tab clickable, opening a read-only detail modal with the full task plus the major client/contact info. On task creation, require **one** department (single-select, in addition to the already-single assignee).
 
-**Architecture:** Add a `assigned_task_departments` join table (task ↔ groups). Move task creation behind a new `create_assigned_task` security-definer RPC that inserts the task and its department rows atomically and rejects an empty department list. Existing list queries get a nested select on the join. A single new `AssignedTaskDetailDialog` opens from row clicks on both surfaces. Row markup gains a `DepartmentChipList`. The create dialog gets a togglable chip-list field.
+**Architecture:** Add a `department_group_id` column (nullable → backfill → NOT NULL) to the existing `assigned_tasks` table. No join table, no RPC — the direct insert + NOT NULL constraint is enough. List queries grow a nested `department` join. A single new `AssignedTaskDetailDialog` opens from row clicks on both surfaces. Row markup gains a single `DepartmentChip`. The create dialog gets a single-select togglable chip row.
 
-**Tech Stack:** Postgres + Supabase (RLS, RPCs, Realtime), React 19, TanStack Query, Tailwind, shadcn/ui dialog primitive, Vitest + React Testing Library, Playwright for E2E.
+**Tech Stack:** Postgres + Supabase (RLS, Realtime), React 19, TanStack Query, Tailwind, shadcn/ui dialog primitive, Vitest + React Testing Library, Playwright for E2E.
 
 **Spec:** [2026-05-27-assigned-tasks-detail-and-departments-design.md](../specs/2026-05-27-assigned-tasks-detail-and-departments-design.md)
 
@@ -17,308 +17,162 @@
 ## File Structure
 
 **New files**
-- `supabase/migrations/20260527000001_assigned_task_departments.sql` — join table + RLS + `create_assigned_task` RPC + `-- ROLLBACK:` block
-- `supabase/tests/assigned_task_departments.sql` — DB-level RLS + RPC smoke test (transaction + rollback, matches `supabase/tests/permissions_engine.sql` pattern)
-- `src/features/assigned_tasks/DepartmentChipList.tsx` — small read-only component reused on the row + detail modal
-- `src/features/assigned_tasks/AssignedTaskDetailDialog.tsx` — the centered read-only modal
+- `supabase/migrations/20260527000001_assigned_tasks_department.sql` — column + index + NOT NULL flip + `-- ROLLBACK:` block
+- `supabase/tests/assigned_tasks_department.sql` — DB-level smoke test (transactional)
+- `src/features/assigned_tasks/DepartmentChip.tsx` — small read-only locale-aware chip
+- `src/features/assigned_tasks/AssignedTaskDetailDialog.tsx`
 - `src/features/assigned_tasks/AssignedTaskDetailDialog.test.tsx`
-- `src/features/assigned_tasks/hooks/useAssignedTaskDetail.ts` — single query: task + client essentials + departments
+- `src/features/assigned_tasks/hooks/useAssignedTaskDetail.ts`
 - `src/features/assigned_tasks/hooks/useAssignedTaskDetail.test.tsx`
 
 **Modified files**
-- `src/features/assigned_tasks/hooks/useCreateAssignedTask.ts` — switch insert → RPC, add `departmentIds`
-- `src/features/assigned_tasks/hooks/useCreateAssignedTask.test.tsx` — update for the new payload
-- `src/features/assigned_tasks/NewAssignedTaskDialog.tsx` — new required chip-list "Departments" field
-- `src/features/assigned_tasks/hooks/useAssignedTasksOpen.ts` — fetch the nested departments
+- `src/features/assigned_tasks/hooks/useCreateAssignedTask.ts` — add `departmentId` to the insert
+- `src/features/assigned_tasks/hooks/useCreateAssignedTask.test.tsx` — assert the new payload
+- `src/features/assigned_tasks/NewAssignedTaskDialog.tsx` — required single-select Department chip row
+- `src/features/assigned_tasks/hooks/useAssignedTasksOpen.ts` — fetch nested department
 - `src/features/assigned_tasks/hooks/useAssignedTasksForSource.ts` — same change
-- `src/features/assigned_tasks/AssignedTasksColumn.tsx` — clickable row, chips, opens detail modal
-- `src/features/assigned_tasks/AssignedTasksColumn.test.tsx` — new tests for click → modal + stopPropagation
+- `src/features/assigned_tasks/AssignedTasksColumn.tsx` — clickable row, chip, opens detail modal
+- `src/features/assigned_tasks/AssignedTasksColumn.test.tsx` — click → modal + stopPropagation
 - `src/features/assigned_tasks/AssignedTasksTab.tsx` — same row treatment
-- `src/features/assigned_tasks/AssignedTasksTab.test.tsx` — same new tests
+- `src/features/assigned_tasks/AssignedTasksTab.test.tsx` — same new assertions
 - `src/lib/queryKeys.ts` — add `assignedTaskDetail(id)`
 - `src/types/supabase.ts` — regenerated by `npm run types:gen` after Task 1
-- `src/i18n/locales/en/home.json` + `el/home.json` — new keys (`detail_title`, `client_section`, `open_deal`, `open_job`, `loading`, `error`)
-- `src/i18n/locales/en/deals.json` + `el/deals.json` + `en/jobs.json` + `el/jobs.json` — new `departments_label` key (and `departments_required` validation hint)
+- `src/i18n/locales/en/home.json` + `el/home.json` — detail-modal keys
+- `src/i18n/locales/en/deals.json` + `el/deals.json` + `en/jobs.json` + `el/jobs.json` — `department_label`, `department_hint`
 
 ---
 
 ## Tasks
 
-### Task 1: Migration — `assigned_task_departments` table + RLS
+### Task 0: Backfill the existing 1 task
+
+**Files:** none (HTTP call only).
+
+- [ ] **Step 1: Find the Web Dev group id**
+
+```bash
+curl -sS "https://xujlrclyzxrvxszepquy.supabase.co/rest/v1/groups?select=id&code=eq.web_dev" \
+  -H "apikey: $SRK" -H "Authorization: Bearer $SRK"
+```
+
+Expected: `[{"id":"<uuid>"}]`. Capture the uuid as `$WEB_DEV_ID`.
+
+- [ ] **Step 2: Backfill the one existing task**
+
+```bash
+curl -sS -X PATCH \
+  "https://xujlrclyzxrvxszepquy.supabase.co/rest/v1/assigned_tasks?department_group_id=is.null" \
+  -H "apikey: $SRK" -H "Authorization: Bearer $SRK" \
+  -H "Content-Type: application/json" -H "Prefer: return=representation" \
+  -d "{\"department_group_id\":\"$WEB_DEV_ID\"}"
+```
+
+Expected: returns the updated row(s); the column for the smoke task is now non-null. If the column doesn't exist yet (Task 1 hasn't shipped), this PATCH errors — that's fine, Task 0 actually runs **after** Task 1's first step (nullable column added) and **before** the NOT NULL flip in the same migration. This task is documented here for ordering clarity; the actual command runs inside Task 1.
+
+Skip ahead to Task 1.
+
+---
+
+### Task 1: Migration — column + backfill + NOT NULL
 
 **Files:**
-- Create: `supabase/migrations/20260527000001_assigned_task_departments.sql`
-- Create: `supabase/tests/assigned_task_departments.sql`
+- Create: `supabase/migrations/20260527000001_assigned_tasks_department.sql`
+- Create: `supabase/tests/assigned_tasks_department.sql`
 
 - [ ] **Step 1: Write the failing DB test**
 
-Create `supabase/tests/assigned_task_departments.sql`:
+Create `supabase/tests/assigned_tasks_department.sql`:
 
 ```sql
--- supabase/tests/assigned_task_departments.sql
+-- supabase/tests/assigned_tasks_department.sql
 --
--- Smoke test for the assigned_task_departments table + RLS.
--- Run with: PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
+-- Smoke test for the assigned_tasks.department_group_id column.
+-- Run: PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
 --   "host=db.xujlrclyzxrvxszepquy.supabase.co port=5432 dbname=postgres user=postgres" \
---   -f supabase/tests/assigned_task_departments.sql
--- The whole script runs in a transaction and rolls back.
+--   -f supabase/tests/assigned_tasks_department.sql
+-- Whole script runs in a transaction and rolls back.
 
 begin;
 
--- 1. Make sure the table exists.
+-- 1. Column exists and is NOT NULL.
 do $$ begin
-  if not exists (select 1 from information_schema.tables
-                  where table_schema='public' and table_name='assigned_task_departments') then
-    raise exception 'assigned_task_departments table missing';
+  if not exists (
+    select 1 from information_schema.columns
+     where table_schema='public' and table_name='assigned_tasks'
+       and column_name='department_group_id' and is_nullable='NO'
+  ) then
+    raise exception 'department_group_id missing or still nullable';
   end if;
 end $$;
 
--- 2. Service-role can insert + select.
-with t as (
-  select id from public.assigned_tasks limit 1
-),
-g as (
-  select id from public.groups where code = 'web_dev' limit 1
-)
-insert into public.assigned_task_departments (task_id, group_id)
-select t.id, g.id from t, g
-on conflict do nothing;
-
--- 3. RLS: a non-assignee, non-creator, non-admin user cannot select.
---    (We simulate by setting role to authenticated and a random uid.)
-set local role authenticated;
-set local "request.jwt.claim.sub" = '00000000-0000-0000-0000-000000000099';
-do $$ declare rows int;
+-- 2. Insert without department fails.
+do $$
+declare a_deal uuid;
+        a_user uuid;
+        a_creator uuid;
 begin
-  select count(*) into rows from public.assigned_task_departments;
-  if rows <> 0 then
-    raise exception 'RLS leak: non-owner sees % department rows', rows;
-  end if;
+  select id into a_deal  from public.deals  limit 1;
+  select user_id into a_user from public.profiles where is_active limit 1;
+  select user_id into a_creator from public.profiles where is_admin limit 1;
+
+  begin
+    insert into public.assigned_tasks (deal_id, title, assignee_user_id, created_by_user_id)
+    values (a_deal, 'no-dept', a_user, a_creator);
+    raise exception 'expected insert without department_group_id to fail';
+  exception when not_null_violation then
+    null; -- expected
+  end;
 end $$;
 
 rollback;
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
-
-```bash
-PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
-  "host=db.xujlrclyzxrvxszepquy.supabase.co port=5432 dbname=postgres user=postgres" \
-  -f supabase/tests/assigned_task_departments.sql
-```
-
-Expected: `ERROR ... assigned_task_departments table missing`.
-
-- [ ] **Step 3: Write the migration**
-
-Create `supabase/migrations/20260527000001_assigned_task_departments.sql`:
-
-```sql
--- =============================================================================
--- assigned_task_departments — many-to-many between assigned_tasks and groups.
--- Lets the task creator tag one or more departments the task focuses on
--- (Web Dev, Local SEO, etc.). At least one row per task is enforced inside
--- the create_assigned_task RPC, not via DB CHECK (constraint crosses tables).
---
--- ROLLBACK:
---   drop table if exists public.assigned_task_departments;
--- =============================================================================
-
-create table public.assigned_task_departments (
-  task_id  uuid not null references public.assigned_tasks(id) on delete cascade,
-  group_id uuid not null references public.groups(id)         on delete restrict,
-  primary key (task_id, group_id)
-);
-
-create index assigned_task_departments_group_id
-  on public.assigned_task_departments (group_id);
-
-alter table public.assigned_task_departments enable row level security;
-
--- Visibility mirrors the parent task: assignee, creator, or admin.
-create policy atd_select on public.assigned_task_departments
-  for select to authenticated
-  using (
-    exists (
-      select 1 from public.assigned_tasks t
-      where t.id = task_id
-        and (
-          t.assignee_user_id     = auth.uid()
-          or t.created_by_user_id = auth.uid()
-          or public.current_user_is_admin()
-        )
-    )
-  );
-
--- No insert/update/delete policy for `authenticated` → writes only via the
--- security-definer RPC (Task 2).
-grant select on public.assigned_task_departments to authenticated;
-grant all    on public.assigned_task_departments to service_role;
-
--- Realtime so the chip list updates without a manual refresh when another
--- tab edits the parent task (departments aren't editable in v1 but realtime
--- on this table costs nothing and avoids a future migration).
-do $$
-begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime'
-      and schemaname = 'public'
-      and tablename = 'assigned_task_departments'
-  ) then
-    execute 'alter publication supabase_realtime add table public.assigned_task_departments';
-  end if;
-end $$;
-```
-
-- [ ] **Step 4: Push the migration to the linked Supabase project**
-
-```bash
-supabase db push
-```
-
-Expected: `Applying migration 20260527000001_assigned_task_departments.sql...`. If `supabase login` is required, surface that to the user (do not log in autonomously).
-
-- [ ] **Step 5: Re-run the DB test to confirm it passes**
-
-```bash
-PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
-  "host=db.xujlrclyzxrvxszepquy.supabase.co port=5432 dbname=postgres user=postgres" \
-  -f supabase/tests/assigned_task_departments.sql
-```
-
-Expected: no errors, transaction rolls back, exit code 0.
-
-- [ ] **Step 6: Regen TypeScript types**
-
-```bash
-npm run types:gen
-```
-
-Expected: `src/types/supabase.ts` now contains `assigned_task_departments` under `Database['public']['Tables']`.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add supabase/migrations/20260527000001_assigned_task_departments.sql \
-        supabase/tests/assigned_task_departments.sql \
-        src/types/supabase.ts
-git commit -m "feat(db): assigned_task_departments join table + RLS
-
-ROLLBACK: drop table public.assigned_task_departments;
-"
-```
-
----
-
-### Task 2: Migration — `create_assigned_task` RPC
-
-**Files:**
-- Modify: `supabase/migrations/20260527000001_assigned_task_departments.sql` (append; same migration file so a single revert undoes both)
-- Modify: `supabase/tests/assigned_task_departments.sql`
-
-- [ ] **Step 1: Add failing RPC test to the test file**
-
-Append to `supabase/tests/assigned_task_departments.sql` **above** the final `rollback;`:
-
-```sql
--- 4. RPC: empty departments → exception, non-empty → task + N join rows.
-set local role authenticated;
-set local "request.jwt.claim.sub" = (select created_by_user_id::text from public.assigned_tasks limit 1);
-
-do $$
-declare a_deal uuid;
-        a_user uuid;
-        a_group uuid;
-        new_id uuid;
-        empty_arr uuid[] := array[]::uuid[];
-begin
-  select id into a_deal  from public.deals  limit 1;
-  select user_id into a_user from public.profiles where is_active limit 1;
-  select id into a_group from public.groups where code = 'web_dev' limit 1;
-
-  -- empty → should raise
-  begin
-    select public.create_assigned_task(a_deal, null, 'x', null, a_user, empty_arr) into new_id;
-    raise exception 'expected empty departments to raise';
-  exception when others then
-    null; -- expected
-  end;
-
-  -- non-empty → inserts both rows
-  select public.create_assigned_task(a_deal, null, 'rpc-test', null, a_user, array[a_group]) into new_id;
-  if new_id is null then raise exception 'rpc returned null id'; end if;
-  if (select count(*) from public.assigned_task_departments where task_id = new_id) <> 1 then
-    raise exception 'expected 1 department row, got %', (select count(*) from public.assigned_task_departments where task_id = new_id);
-  end if;
-end $$;
-```
-
 - [ ] **Step 2: Run the test to verify it fails**
 
-Same `psql -f supabase/tests/...` command as Task 1, Step 5.
-Expected: `ERROR ... function public.create_assigned_task(...) does not exist`.
+```bash
+PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
+  "host=db.xujlrclyzxrvxszepquy.supabase.co port=5432 dbname=postgres user=postgres" \
+  -f supabase/tests/assigned_tasks_department.sql
+```
 
-- [ ] **Step 3: Append the RPC to the migration**
+Expected: `ERROR ... department_group_id missing or still nullable`.
 
-Append to `supabase/migrations/20260527000001_assigned_task_departments.sql`:
+- [ ] **Step 3: Write the migration (column + index only — NOT NULL flip happens later in this same step after backfill)**
+
+Create `supabase/migrations/20260527000001_assigned_tasks_department.sql`:
 
 ```sql
--- ---------------------------------------------------------------------------
--- create_assigned_task — atomic insert of an assigned_task + its department
--- rows. Validates that at least one department id is supplied. Runs as
--- security definer because the join-table insert has no `authenticated`
--- policy. RLS for assigned_tasks still applies on the parent insert.
+-- =============================================================================
+-- assigned_tasks.department_group_id — required single-department tag on each
+-- assigned task, picked at creation time. Replaces the previously-considered
+-- many-to-many design after user feedback ("one department per task").
 --
--- Returns: the new task id.
+-- The column is added nullable first so existing rows survive, the lone
+-- backfill update lives inline in this migration (only one row exists in
+-- production), and the column is then flipped to NOT NULL in the same file.
 --
 -- ROLLBACK:
---   drop function if exists public.create_assigned_task(
---     uuid, uuid, text, text, uuid, uuid[]
---   );
--- ---------------------------------------------------------------------------
-create or replace function public.create_assigned_task(
-  p_deal_id        uuid,
-  p_job_id         uuid,
-  p_title          text,
-  p_description    text,
-  p_assignee_user_id uuid,
-  p_department_ids uuid[]
-) returns uuid
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  new_task_id uuid;
-begin
-  if p_department_ids is null or array_length(p_department_ids, 1) is null then
-    raise exception 'create_assigned_task: at least one department is required'
-      using errcode = '22023';
-  end if;
+--   alter table public.assigned_tasks drop column if exists department_group_id;
+-- =============================================================================
 
-  -- Re-uses the existing insert path (RLS + BEFORE-INSERT trigger fill
-  -- client_id and source_code from deal/job).
-  insert into public.assigned_tasks (
-    deal_id, job_id, title, description,
-    assignee_user_id, created_by_user_id
-  )
-  values (
-    p_deal_id, p_job_id, p_title, nullif(trim(p_description), ''),
-    p_assignee_user_id, auth.uid()
-  )
-  returning id into new_task_id;
+alter table public.assigned_tasks
+  add column if not exists department_group_id uuid
+    references public.groups(id) on delete restrict;
 
-  insert into public.assigned_task_departments (task_id, group_id)
-  select new_task_id, unnest(p_department_ids)
-  on conflict do nothing;
+create index if not exists assigned_tasks_department_group_id
+  on public.assigned_tasks (department_group_id)
+  where department_group_id is not null;
 
-  return new_task_id;
-end $$;
+-- Backfill: any existing row gets the Web Dev group as a sane default.
+-- Safe under no rows too — the update is a no-op.
+update public.assigned_tasks t
+   set department_group_id = g.id
+  from public.groups g
+ where g.code = 'web_dev'
+   and t.department_group_id is null;
 
-grant execute on function public.create_assigned_task(
-  uuid, uuid, text, text, uuid, uuid[]
-) to authenticated;
+alter table public.assigned_tasks
+  alter column department_group_id set not null;
 ```
 
 - [ ] **Step 4: Push the migration**
@@ -327,36 +181,39 @@ grant execute on function public.create_assigned_task(
 supabase db push
 ```
 
-Expected: idempotent — the same migration file is re-applied (or the function block is applied via `create or replace`).
+Expected: `Applying migration 20260527000001_assigned_tasks_department.sql...`. If `supabase login` is needed, surface that to the user — do not log in autonomously.
 
 - [ ] **Step 5: Re-run the DB test**
 
-Same command as Step 2.
-Expected: exit code 0, no errors.
+Same `psql -f ...` command as Step 2.
+Expected: exit code 0, no errors, transaction rolls back cleanly.
 
-- [ ] **Step 6: Regen types**
+- [ ] **Step 6: Regen TypeScript types**
 
 ```bash
 npm run types:gen
 ```
 
-Expected: `Database['public']['Functions']['create_assigned_task']` now exists in `src/types/supabase.ts`.
+Expected: `Database['public']['Tables']['assigned_tasks']['Row']` in `src/types/supabase.ts` now has `department_group_id: string`.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add supabase/migrations/20260527000001_assigned_task_departments.sql \
-        supabase/tests/assigned_task_departments.sql \
+git add supabase/migrations/20260527000001_assigned_tasks_department.sql \
+        supabase/tests/assigned_tasks_department.sql \
         src/types/supabase.ts
-git commit -m "feat(db): create_assigned_task RPC requiring at least one department
+git commit -m "feat(db): assigned_tasks.department_group_id required column
 
-ROLLBACK: drop function public.create_assigned_task(uuid,uuid,text,text,uuid,uuid[]);
+Adds the column nullable, backfills the one existing row with the Web
+Dev group, then flips the column to NOT NULL in the same migration.
+
+ROLLBACK: alter table public.assigned_tasks drop column department_group_id;
 "
 ```
 
 ---
 
-### Task 3: `useCreateAssignedTask` switches to the RPC
+### Task 2: `useCreateAssignedTask` accepts `departmentId`
 
 **Files:**
 - Modify: `src/features/assigned_tasks/hooks/useCreateAssignedTask.ts`
@@ -372,11 +229,17 @@ import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
+const { single, insert, from } = vi.hoisted(() => {
+  const single = vi.fn();
+  const select = vi.fn().mockReturnValue({ single });
+  const insert = vi.fn().mockReturnValue({ select });
+  const from = vi.fn().mockReturnValue({ insert });
+  return { single, insert, from };
+});
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    rpc,
+    from,
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'me' } } }) },
   },
 }));
@@ -391,8 +254,8 @@ function wrap(c: ReactNode) {
 describe('useCreateAssignedTask', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('calls create_assigned_task RPC for a deal-scoped task', async () => {
-    rpc.mockResolvedValue({ data: 't1', error: null });
+  it('inserts a deal-scoped task with departmentId', async () => {
+    single.mockResolvedValue({ data: { id: 't1' }, error: null });
     const { result } = renderHook(() => useCreateAssignedTask(), {
       wrapper: ({ children }) => wrap(children),
     });
@@ -401,21 +264,22 @@ describe('useCreateAssignedTask', () => {
       title: 'Renew domain',
       description: 'before May 30',
       assigneeUserId: 'u2',
-      departmentIds: ['g1', 'g2'],
+      departmentId: 'g-web-dev',
     });
     expect(id).toBe('t1');
-    expect(rpc).toHaveBeenCalledWith('create_assigned_task', {
-      p_deal_id: 'd1',
-      p_job_id: null,
-      p_title: 'Renew domain',
-      p_description: 'before May 30',
-      p_assignee_user_id: 'u2',
-      p_department_ids: ['g1', 'g2'],
+    expect(insert).toHaveBeenCalledWith({
+      title: 'Renew domain',
+      description: 'before May 30',
+      deal_id: 'd1',
+      job_id: null,
+      assignee_user_id: 'u2',
+      created_by_user_id: 'me',
+      department_group_id: 'g-web-dev',
     });
   });
 
-  it('calls the RPC for a job-scoped task and sets deal_id null', async () => {
-    rpc.mockResolvedValue({ data: 't2', error: null });
+  it('inserts a job-scoped task with departmentId', async () => {
+    single.mockResolvedValue({ data: { id: 't2' }, error: null });
     const { result } = renderHook(() => useCreateAssignedTask(), {
       wrapper: ({ children }) => wrap(children),
     });
@@ -424,20 +288,21 @@ describe('useCreateAssignedTask', () => {
       title: 'Hotfix',
       description: null,
       assigneeUserId: 'u3',
-      departmentIds: ['g3'],
+      departmentId: 'g-hosting',
     });
-    expect(rpc).toHaveBeenCalledWith('create_assigned_task', {
-      p_deal_id: null,
-      p_job_id: 'j1',
-      p_title: 'Hotfix',
-      p_description: null,
-      p_assignee_user_id: 'u3',
-      p_department_ids: ['g3'],
+    expect(insert).toHaveBeenCalledWith({
+      title: 'Hotfix',
+      description: null,
+      deal_id: null,
+      job_id: 'j1',
+      assignee_user_id: 'u3',
+      created_by_user_id: 'me',
+      department_group_id: 'g-hosting',
     });
   });
 
-  it('throws on RPC error', async () => {
-    rpc.mockResolvedValue({ data: null, error: { message: 'at least one department is required' } });
+  it('throws on insert error', async () => {
+    single.mockResolvedValue({ data: null, error: { message: 'rls denied' } });
     const { result } = renderHook(() => useCreateAssignedTask(), {
       wrapper: ({ children }) => wrap(children),
     });
@@ -447,9 +312,9 @@ describe('useCreateAssignedTask', () => {
         title: 'x',
         description: null,
         assigneeUserId: 'u2',
-        departmentIds: [],
+        departmentId: 'g-web-dev',
       }),
-    ).rejects.toThrow('at least one department is required');
+    ).rejects.toThrow('rls denied');
   });
 });
 ```
@@ -460,9 +325,9 @@ describe('useCreateAssignedTask', () => {
 npm run test:run -- src/features/assigned_tasks/hooks/useCreateAssignedTask.test.tsx
 ```
 
-Expected: tests fail (hook still calls `.from('assigned_tasks').insert(...)`).
+Expected: 3 failing (current type doesn't have `departmentId`).
 
-- [ ] **Step 3: Rewrite the hook**
+- [ ] **Step 3: Update the hook**
 
 Replace `useCreateAssignedTask.ts`:
 
@@ -476,23 +341,32 @@ export type CreateAssignedTaskInput = {
   title: string;
   description: string | null;
   assigneeUserId: string;
-  departmentIds: string[];
+  departmentId: string;
 };
 
 export function useCreateAssignedTask() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateAssignedTaskInput): Promise<string> => {
-      const { data, error } = await supabase.rpc('create_assigned_task', {
-        p_deal_id: input.source.kind === 'deal' ? input.source.id : null,
-        p_job_id:  input.source.kind === 'job'  ? input.source.id : null,
-        p_title: input.title,
-        p_description: input.description,
-        p_assignee_user_id: input.assigneeUserId,
-        p_department_ids: input.departmentIds,
-      });
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+      const { data, error } = await supabase
+        .from('assigned_tasks')
+        .insert({
+          title: input.title,
+          description: input.description,
+          deal_id: input.source.kind === 'deal' ? input.source.id : null,
+          job_id: input.source.kind === 'job' ? input.source.id : null,
+          assignee_user_id: input.assigneeUserId,
+          created_by_user_id: user.id,
+          department_group_id: input.departmentId,
+        })
+        .select('id')
+        .single();
       if (error) throw new Error(error.message);
-      return data as string;
+      return data.id as string;
     },
     onSuccess: (_id, input) => {
       qc.invalidateQueries({ queryKey: ['assigned-tasks'] });
@@ -506,44 +380,41 @@ export function useCreateAssignedTask() {
 }
 ```
 
-- [ ] **Step 4: Run the test to confirm it passes**
+- [ ] **Step 4: Re-run the test**
 
-Same command as Step 2.
-Expected: 3 passing, 0 failing.
+Same command as Step 2. Expected: 3 passing.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/features/assigned_tasks/hooks/useCreateAssignedTask.ts \
         src/features/assigned_tasks/hooks/useCreateAssignedTask.test.tsx
-git commit -m "feat(tasks): useCreateAssignedTask uses the create_assigned_task RPC
-
-Passes departmentIds through; surfaces RPC validation errors as-is."
+git commit -m "feat(tasks): useCreateAssignedTask passes department_group_id"
 ```
 
 ---
 
-### Task 4: `NewAssignedTaskDialog` — required departments chip list
+### Task 3: `NewAssignedTaskDialog` — required single-select Department
 
 **Files:**
 - Modify: `src/features/assigned_tasks/NewAssignedTaskDialog.tsx`
 - Create: `src/features/assigned_tasks/NewAssignedTaskDialog.test.tsx`
-- Modify: `src/i18n/locales/en/deals.json`, `src/i18n/locales/el/deals.json`, `src/i18n/locales/en/jobs.json`, `src/i18n/locales/el/jobs.json`
+- Modify: `src/i18n/locales/en/deals.json`, `el/deals.json`, `en/jobs.json`, `el/jobs.json`
 
-- [ ] **Step 1: Add the i18n keys**
+- [ ] **Step 1: Add i18n keys**
 
-In `src/i18n/locales/en/deals.json` and `en/jobs.json`, inside `"assigned_tasks": { ... }`, add:
+In `src/i18n/locales/en/deals.json` and `en/jobs.json`, inside `"assigned_tasks": { ... }`:
 
 ```json
-    "departments_label": "Departments",
-    "departments_hint": "Pick at least one",
+    "department_label": "Department",
+    "department_hint": "Pick one",
 ```
 
-In `src/i18n/locales/el/deals.json` and `el/jobs.json`, inside `"assigned_tasks": { ... }`, add:
+In `src/i18n/locales/el/deals.json` and `el/jobs.json`:
 
 ```json
-    "departments_label": "Τμήματα",
-    "departments_hint": "Επίλεξε τουλάχιστον ένα",
+    "department_label": "Τμήμα",
+    "department_hint": "Επίλεξε ένα",
 ```
 
 - [ ] **Step 2: Write the failing component test**
@@ -570,8 +441,8 @@ vi.mock('@/features/leads/hooks/useAssignableOwners', () => ({
 vi.mock('@/features/groups/hooks/useGroups', () => ({
   useGroups: () => ({
     data: [
-      { id: 'g1', code: 'web_dev',  display_names: { en: 'Web Dev',  el: 'Web Dev' }, position: 50, parent_label: 'Technical' },
-      { id: 'g2', code: 'hosting',  display_names: { en: 'Hosting',  el: 'Hosting' }, position: 80, parent_label: 'Technical' },
+      { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50, parent_label: 'Technical' },
+      { id: 'g2', code: 'hosting', display_names: { en: 'Hosting', el: 'Hosting' }, position: 80, parent_label: 'Technical' },
     ],
   }),
 }));
@@ -590,7 +461,7 @@ function wrap(children: React.ReactNode) {
 describe('NewAssignedTaskDialog', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('keeps submit disabled until title, assignee, and at least one department are picked', async () => {
+  it('keeps submit disabled until title, assignee, and a department are picked', async () => {
     const user = userEvent.setup();
     render(wrap(<NewAssignedTaskDialog open onOpenChange={() => {}} source={{ kind: 'deal', id: 'd1' }} />));
 
@@ -599,13 +470,13 @@ describe('NewAssignedTaskDialog', () => {
 
     await user.type(screen.getByLabelText(/task title/i), 'My task');
     await user.selectOptions(screen.getByLabelText(/assign to/i), 'u1');
-    expect(submit).toBeDisabled(); // departments still empty
+    expect(submit).toBeDisabled(); // no department yet
 
     await user.click(screen.getByRole('button', { name: 'Web Dev' }));
     expect(submit).toBeEnabled();
   });
 
-  it('passes the chosen departmentIds to the mutation', async () => {
+  it('clicking a second chip replaces the first (single-select)', async () => {
     const user = userEvent.setup();
     render(wrap(<NewAssignedTaskDialog open onOpenChange={() => {}} source={{ kind: 'deal', id: 'd1' }} />));
 
@@ -621,7 +492,7 @@ describe('NewAssignedTaskDialog', () => {
       title: 'My task',
       description: null,
       assigneeUserId: 'u1',
-      departmentIds: ['g1', 'g2'],
+      departmentId: 'g2', // hosting replaced web_dev
     });
   });
 });
@@ -633,7 +504,7 @@ describe('NewAssignedTaskDialog', () => {
 npm run test:run -- src/features/assigned_tasks/NewAssignedTaskDialog.test.tsx
 ```
 
-Expected: fails (dialog doesn't render the chip list yet).
+Expected: fails (dialog doesn't render the chip row yet).
 
 - [ ] **Step 4: Update the dialog**
 
@@ -668,18 +539,12 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assigneeUserId, setAssigneeUserId] = useState('');
-  const [departmentIds, setDepartmentIds] = useState<string[]>([]);
+  const [departmentId, setDepartmentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  function toggleDept(id: string) {
-    setDepartmentIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !assigneeUserId || departmentIds.length === 0) return;
+    if (!title.trim() || !assigneeUserId || !departmentId) return;
     setSubmitting(true);
     try {
       await create.mutateAsync({
@@ -687,12 +552,12 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
         title: title.trim(),
         description: description.trim() || null,
         assigneeUserId,
-        departmentIds,
+        departmentId,
       });
       setTitle('');
       setDescription('');
       setAssigneeUserId('');
-      setDepartmentIds([]);
+      setDepartmentId(null);
       onOpenChange(false);
     } catch (err) {
       alert((err as Error).message);
@@ -701,7 +566,7 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
     }
   }
 
-  const canSubmit = !!title.trim() && !!assigneeUserId && departmentIds.length > 0;
+  const canSubmit = !!title.trim() && !!assigneeUserId && !!departmentId;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -743,17 +608,19 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
           </div>
           <div className="space-y-1.5">
             <span className="text-sm font-medium">
-              {t('assigned_tasks.departments_label')} <span className="text-red-600">*</span>
+              {t('assigned_tasks.department_label')} <span className="text-red-600">*</span>
             </span>
-            <p className="text-[11px] text-slate-500">{t('assigned_tasks.departments_hint')}</p>
-            <div className="flex flex-wrap gap-1.5">
+            <p className="text-[11px] text-slate-500">{t('assigned_tasks.department_hint')}</p>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup">
               {groups.map((g) => {
-                const selected = departmentIds.includes(g.id);
+                const selected = departmentId === g.id;
                 return (
                   <button
                     key={g.id}
                     type="button"
-                    onClick={() => toggleDept(g.id)}
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setDepartmentId(selected ? null : g.id)}
                     className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
                       selected
                         ? 'border-amber-300 bg-amber-100 text-amber-900'
@@ -781,10 +648,9 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
 }
 ```
 
-- [ ] **Step 5: Run the test to confirm it passes**
+- [ ] **Step 5: Re-run the test**
 
-Same command as Step 3.
-Expected: 2 passing.
+Same command as Step 3. Expected: 2 passing.
 
 - [ ] **Step 6: Commit**
 
@@ -793,15 +659,16 @@ git add src/features/assigned_tasks/NewAssignedTaskDialog.tsx \
         src/features/assigned_tasks/NewAssignedTaskDialog.test.tsx \
         src/i18n/locales/en/deals.json src/i18n/locales/el/deals.json \
         src/i18n/locales/en/jobs.json  src/i18n/locales/el/jobs.json
-git commit -m "feat(tasks): required Departments multi-select on task creation
+git commit -m "feat(tasks): required single-select Department on creation
 
-Inline chip list backed by the groups table; submit gated until
-title + assignee + >=1 department are set."
+Chip-row UI (visually similar to a radio group); picking another chip
+replaces the previous one. Submit gated until title + assignee +
+department all set."
 ```
 
 ---
 
-### Task 5: Fetch departments in `useAssignedTasksOpen`
+### Task 4: Fetch nested `department` in `useAssignedTasksOpen`
 
 **Files:**
 - Modify: `src/features/assigned_tasks/hooks/useAssignedTasksOpen.ts`
@@ -809,33 +676,21 @@ title + assignee + >=1 department are set."
 
 - [ ] **Step 1: Update the failing test**
 
-Replace the relevant block of `useAssignedTasksOpen.test.tsx` (keep the existing test scaffolding; add the new field to the mock row and assert it survives):
+In `useAssignedTasksOpen.test.tsx`, find the mocked task row and add this field:
 
 ```tsx
-// inside the existing mock chain that returns the tasks array:
-{
-  id: 't1', title: 'X', description: null,
-  deal_id: 'd1', job_id: null, client_id: 'c1', source_code: '000013',
-  assignee_user_id: 'u-me', created_by_user_id: 'u-other',
-  status: 'open', resolved_at: null, resolved_by_user_id: null,
-  created_at: new Date().toISOString(),
-  client: { id: 'c1', name: 'Acme Ltd' },
-  departments: [
-    { group: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } },
-  ],
-},
+department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
 ```
 
-Then add the assertion:
+Then append:
 
 ```tsx
-it('returns nested departments per task', async () => {
+it('returns the nested department per task', async () => {
   const { result } = renderHook(() => useAssignedTasksOpen({ assigneeUserId: 'u-me' }), {
     wrapper: ({ children }) => wrap(children),
   });
   await waitFor(() => expect(result.current.data).toBeDefined());
-  expect(result.current.data?.[0].departments).toHaveLength(1);
-  expect(result.current.data?.[0].departments[0].group.code).toBe('web_dev');
+  expect(result.current.data?.[0].department?.code).toBe('web_dev');
 });
 ```
 
@@ -845,7 +700,7 @@ it('returns nested departments per task', async () => {
 npm run test:run -- src/features/assigned_tasks/hooks/useAssignedTasksOpen.test.tsx
 ```
 
-Expected: type / runtime error (`departments` doesn't exist on the row type).
+Expected: fails — `department` not on the row type.
 
 - [ ] **Step 3: Extend the SELECT and the row type**
 
@@ -853,18 +708,16 @@ Edit `useAssignedTasksOpen.ts`:
 
 ```ts
 export type AssignedTaskDepartment = {
-  group: {
-    id: string;
-    code: string;
-    display_names: { en: string; el: string };
-    position: number;
-  };
+  id: string;
+  code: string;
+  display_names: { en: string; el: string };
+  position: number;
 };
 
 export type AssignedTaskRow = {
   // ... existing fields ...
   client: { id: string; name: string } | null;
-  departments: AssignedTaskDepartment[];
+  department: AssignedTaskDepartment | null;
 };
 
 const SELECT = `
@@ -872,28 +725,27 @@ const SELECT = `
   deal_id, job_id, client_id, source_code,
   assignee_user_id, created_by_user_id,
   status, resolved_at, resolved_by_user_id, created_at,
+  department_group_id,
   client:client_id ( id, name ),
-  departments:assigned_task_departments (
-    group:group_id ( id, code, display_names, position )
-  )
+  department:department_group_id ( id, code, display_names, position )
 `;
 ```
 
 - [ ] **Step 4: Re-run the test**
 
-Same command as Step 2. Expected: pass.
+Expected: pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/features/assigned_tasks/hooks/useAssignedTasksOpen.ts \
         src/features/assigned_tasks/hooks/useAssignedTasksOpen.test.tsx
-git commit -m "feat(tasks): include nested departments in assigned-tasks list query"
+git commit -m "feat(tasks): include nested department in assigned-tasks list query"
 ```
 
 ---
 
-### Task 6: Same change in `useAssignedTasksForSource`
+### Task 5: Same change in `useAssignedTasksForSource`
 
 **Files:**
 - Modify: `src/features/assigned_tasks/hooks/useAssignedTasksForSource.ts`
@@ -901,38 +753,35 @@ git commit -m "feat(tasks): include nested departments in assigned-tasks list qu
 
 - [ ] **Step 1: Update the test**
 
-In `useAssignedTasksForSource.test.tsx`, find the mocked row(s) returned by the supabase chain and add this field to each:
+In `useAssignedTasksForSource.test.tsx`, add to each mocked row:
 
 ```tsx
-departments: [
-  { group: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } },
-],
+department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
 ```
 
-Then append a new test:
+Append:
 
 ```tsx
-it('returns nested departments per task', async () => {
+it('returns the nested department per task', async () => {
   const { result } = renderHook(() => useAssignedTasksForSource({ kind: 'deal', id: 'd1' }), {
     wrapper: ({ children }) => wrap(children),
   });
   await waitFor(() => expect(result.current.data).toBeDefined());
-  expect(result.current.data?.[0].departments).toHaveLength(1);
-  expect(result.current.data?.[0].departments[0].group.code).toBe('web_dev');
+  expect(result.current.data?.[0].department?.code).toBe('web_dev');
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [ ] **Step 2: Run to verify fails**
 
 ```bash
 npm run test:run -- src/features/assigned_tasks/hooks/useAssignedTasksForSource.test.tsx
 ```
 
-Expected: fail.
+Expected: fails.
 
 - [ ] **Step 3: Extend the SELECT + row type**
 
-Apply the same SELECT delta and type extension from Task 5 Step 3 to `useAssignedTasksForSource.ts`. Export the same `AssignedTaskDepartment` type — re-import from `useAssignedTasksOpen` to avoid duplication.
+Apply the same SELECT and type extension from Task 4 Step 3 to `useAssignedTasksForSource.ts`. Re-import `AssignedTaskDepartment` from `./useAssignedTasksOpen` so there's one canonical type.
 
 - [ ] **Step 4: Re-run the test**
 
@@ -943,58 +792,37 @@ Expected: pass.
 ```bash
 git add src/features/assigned_tasks/hooks/useAssignedTasksForSource.ts \
         src/features/assigned_tasks/hooks/useAssignedTasksForSource.test.tsx
-git commit -m "feat(tasks): include nested departments in per-source tasks query"
+git commit -m "feat(tasks): include nested department in per-source tasks query"
 ```
 
 ---
 
-### Task 7: `DepartmentChipList` component
+### Task 6: `DepartmentChip` component
 
 **Files:**
-- Create: `src/features/assigned_tasks/DepartmentChipList.tsx`
+- Create: `src/features/assigned_tasks/DepartmentChip.tsx`
 
-This component is used by both the row and the detail modal. No standalone test — covered by the consumer tests in Tasks 8, 9, 11.
+Covered indirectly by Tasks 7, 8, 10, 11 — no standalone test.
 
-- [ ] **Step 1: Implement the component**
+- [ ] **Step 1: Implement**
 
 ```tsx
 import { useTranslation } from 'react-i18next';
 import type { AssignedTaskDepartment } from './hooks/useAssignedTasksOpen';
 
-type Props = {
-  departments: AssignedTaskDepartment[];
-  /** Cap visible chips and roll the rest into a +N pill. 0 = show all. */
-  max?: number;
-};
-
-export function DepartmentChipList({ departments, max = 0 }: Props) {
+export function DepartmentChip({ department }: { department: AssignedTaskDepartment | null }) {
   const { i18n } = useTranslation();
   const locale: 'en' | 'el' = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
-  const sorted = [...departments].sort((a, b) => a.group.position - b.group.position);
-  const visible = max > 0 ? sorted.slice(0, max) : sorted;
-  const overflow = max > 0 ? sorted.length - visible.length : 0;
-  if (sorted.length === 0) return null;
+  if (!department) return null;
   return (
-    <span className="inline-flex flex-wrap gap-1">
-      {visible.map((d) => (
-        <span
-          key={d.group.id}
-          className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700"
-        >
-          {d.group.display_names[locale]}
-        </span>
-      ))}
-      {overflow > 0 && (
-        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
-          +{overflow}
-        </span>
-      )}
+    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
+      {department.display_names[locale]}
     </span>
   );
 }
 ```
 
-- [ ] **Step 2: Sanity-check it compiles**
+- [ ] **Step 2: Typecheck**
 
 ```bash
 npm run typecheck
@@ -1005,13 +833,13 @@ Expected: no errors.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/features/assigned_tasks/DepartmentChipList.tsx
-git commit -m "feat(tasks): DepartmentChipList shared chip renderer"
+git add src/features/assigned_tasks/DepartmentChip.tsx
+git commit -m "feat(tasks): DepartmentChip shared single-chip renderer"
 ```
 
 ---
 
-### Task 8: `useAssignedTaskDetail` hook
+### Task 7: `useAssignedTaskDetail` hook
 
 **Files:**
 - Create: `src/features/assigned_tasks/hooks/useAssignedTaskDetail.ts`
@@ -1056,23 +884,21 @@ function wrap(c: ReactNode) {
 describe('useAssignedTaskDetail', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns task + client essentials + departments', async () => {
+  it('returns task + client essentials + department + creator', async () => {
     single.mockResolvedValue({
       data: {
-        id: 't1', title: 'TEST', description: 'd', deal_id: 'd1', job_id: null,
-        client_id: 'c1', source_code: '000017',
+        id: 't1', title: 'TEST', description: 'd',
+        deal_id: 'd1', job_id: null, client_id: 'c1', source_code: '000017',
         assignee_user_id: 'u-me', created_by_user_id: 'u-other',
         status: 'open', resolved_at: null, resolved_by_user_id: null,
-        created_at: 'now',
+        created_at: 'now', department_group_id: 'g1',
         client: {
           id: 'c1', name: 'Pindos Outdoor Gear', industry: 'Sports',
           contact_first_name: 'Christos', contact_last_name: 'Tsilis',
           email: 'ct@p.gr', phone: '+30 1',
         },
         creator: { user_id: 'u-other', full_name: 'Smoke Test', email: 's@t.gr' },
-        departments: [
-          { group: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } },
-        ],
+        department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
       },
       error: null,
     });
@@ -1081,7 +907,7 @@ describe('useAssignedTaskDetail', () => {
     });
     await waitFor(() => expect(result.current.data).toBeDefined());
     expect(result.current.data!.client?.name).toBe('Pindos Outdoor Gear');
-    expect(result.current.data!.departments[0].group.code).toBe('web_dev');
+    expect(result.current.data!.department?.code).toBe('web_dev');
     expect(from).toHaveBeenCalledWith('assigned_tasks');
     expect(eq).toHaveBeenCalledWith('id', 't1');
   });
@@ -1096,7 +922,7 @@ describe('useAssignedTaskDetail', () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [ ] **Step 3: Run to verify fails**
 
 ```bash
 npm run test:run -- src/features/assigned_tasks/hooks/useAssignedTaskDetail.test.tsx
@@ -1144,9 +970,10 @@ export type AssignedTaskDetail = {
   resolved_at: string | null;
   resolved_by_user_id: string | null;
   created_at: string;
+  department_group_id: string;
   client: AssignedTaskClientEssentials | null;
   creator: AssignedTaskCreator | null;
-  departments: AssignedTaskDepartment[];
+  department: AssignedTaskDepartment | null;
 };
 
 const SELECT = `
@@ -1154,14 +981,13 @@ const SELECT = `
   deal_id, job_id, client_id, source_code,
   assignee_user_id, created_by_user_id,
   status, resolved_at, resolved_by_user_id, created_at,
+  department_group_id,
   client:client_id (
     id, name, industry,
     contact_first_name, contact_last_name, email, phone
   ),
   creator:created_by_user_id ( user_id, full_name, email ),
-  departments:assigned_task_departments (
-    group:group_id ( id, code, display_names, position )
-  )
+  department:department_group_id ( id, code, display_names, position )
 `;
 
 export function useAssignedTaskDetail(taskId: string | null) {
@@ -1191,12 +1017,12 @@ Expected: 2 passing.
 git add src/features/assigned_tasks/hooks/useAssignedTaskDetail.ts \
         src/features/assigned_tasks/hooks/useAssignedTaskDetail.test.tsx \
         src/lib/queryKeys.ts
-git commit -m "feat(tasks): useAssignedTaskDetail returns task + client + departments"
+git commit -m "feat(tasks): useAssignedTaskDetail returns task + client + department + creator"
 ```
 
 ---
 
-### Task 9: `AssignedTaskDetailDialog` component
+### Task 8: `AssignedTaskDetailDialog` component
 
 **Files:**
 - Create: `src/features/assigned_tasks/AssignedTaskDetailDialog.tsx`
@@ -1205,30 +1031,30 @@ git commit -m "feat(tasks): useAssignedTaskDetail returns task + client + depart
 
 - [ ] **Step 1: Add i18n keys**
 
-In `src/i18n/locales/en/home.json`, inside `"assigned_tasks": { ... }`, add:
+In `src/i18n/locales/en/home.json`, inside `"assigned_tasks": { ... }`:
 
 ```json
     "detail_title": "Task detail",
+    "department_label": "Department",
     "client_section": "Client",
     "open_deal": "Open deal",
     "open_job": "Open job",
     "loading": "Loading…",
     "error_loading": "Couldn't load this task.",
-    "departments_label": "Departments",
     "created_by_label": "Created by",
     "created_label": "Created"
 ```
 
-Greek equivalents in `el/home.json`:
+Greek `el/home.json`:
 
 ```json
     "detail_title": "Λεπτομέρειες εργασίας",
+    "department_label": "Τμήμα",
     "client_section": "Πελάτης",
     "open_deal": "Άνοιγμα deal",
     "open_job": "Άνοιγμα job",
     "loading": "Φόρτωση…",
     "error_loading": "Αδυναμία φόρτωσης της εργασίας.",
-    "departments_label": "Τμήματα",
     "created_by_label": "Δημιουργήθηκε από",
     "created_label": "Δημιουργήθηκε"
 ```
@@ -1257,16 +1083,14 @@ const detail = {
   assignee_user_id: 'u-me', created_by_user_id: 'u-other',
   status: 'open' as const, resolved_at: null, resolved_by_user_id: null,
   created_at: new Date().toISOString(),
+  department_group_id: 'g1',
   client: {
     id: 'c1', name: 'Pindos Outdoor Gear', industry: 'Sports',
     contact_first_name: 'Christos', contact_last_name: 'Tsilis',
     email: 'ct@p.gr', phone: '+30 1',
   },
   creator: { user_id: 'u-other', full_name: 'Smoke Test', email: 's@t.gr' },
-  departments: [
-    { group: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } },
-    { group: { id: 'g2', code: 'hosting', display_names: { en: 'Hosting', el: 'Hosting' }, position: 80 } },
-  ],
+  department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
 };
 vi.mock('./hooks/useAssignedTaskDetail', () => ({
   useAssignedTaskDetail: (id: string | null) => ({
@@ -1292,11 +1116,10 @@ function wrap(children: React.ReactNode) {
 describe('AssignedTaskDetailDialog', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders title, departments, client + contact, and links the source', () => {
+  it('renders title, department, client + contact, and links the source', () => {
     render(wrap(<AssignedTaskDetailDialog taskId="t1" onOpenChange={() => {}} />));
     expect(screen.getByText('TEST — smoke')).toBeInTheDocument();
     expect(screen.getByText('Web Dev')).toBeInTheDocument();
-    expect(screen.getByText('Hosting')).toBeInTheDocument();
     expect(screen.getByText('Pindos Outdoor Gear')).toBeInTheDocument();
     expect(screen.getByText('Christos Tsilis')).toBeInTheDocument();
     expect(screen.getByText('+30 1')).toBeInTheDocument();
@@ -1315,7 +1138,7 @@ describe('AssignedTaskDetailDialog', () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [ ] **Step 3: Run to verify fails**
 
 ```bash
 npm run test:run -- src/features/assigned_tasks/AssignedTaskDetailDialog.test.tsx
@@ -1323,7 +1146,7 @@ npm run test:run -- src/features/assigned_tasks/AssignedTaskDetailDialog.test.ts
 
 Expected: module not found.
 
-- [ ] **Step 4: Implement the dialog**
+- [ ] **Step 4: Implement**
 
 Create `src/features/assigned_tasks/AssignedTaskDetailDialog.tsx`:
 
@@ -1336,14 +1159,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAssignedTaskDetail } from './hooks/useAssignedTaskDetail';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
-import { DepartmentChipList } from './DepartmentChipList';
+import { DepartmentChip } from './DepartmentChip';
 
 type Props = {
   taskId: string | null;
   onOpenChange: (open: boolean) => void;
 };
 
-function contactName(c: NonNullable<ReturnType<typeof useAssignedTaskDetail>['data']>['client']): string {
+function contactName(c: { contact_first_name: string | null; contact_last_name: string | null } | null): string {
   if (!c) return '';
   return [c.contact_first_name, c.contact_last_name].filter(Boolean).join(' ').trim();
 }
@@ -1376,7 +1199,7 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
             <div>
               <h3 className="text-base font-semibold">{task.title}</h3>
               <div className="mt-1">
-                <DepartmentChipList departments={task.departments} />
+                <DepartmentChip department={task.department} />
               </div>
             </div>
             <div className="text-xs text-slate-500">
@@ -1447,14 +1270,14 @@ git add src/features/assigned_tasks/AssignedTaskDetailDialog.tsx \
         src/i18n/locales/en/home.json src/i18n/locales/el/home.json
 git commit -m "feat(tasks): AssignedTaskDetailDialog read-only modal
 
-Shows title, department chips, status meta, description, client name +
-industry + primary contact (name, phone, email), Resolve, and Open
-deal/job. Greek + English."
+Title + department chip, status meta, description, client name +
+industry + primary contact (name, phone, email), Resolve, Open deal/job.
+Greek + English."
 ```
 
 ---
 
-### Task 10: Make `AssignedTasksColumn` rows clickable + show chips
+### Task 9: Clickable rows on `AssignedTasksColumn`
 
 **Files:**
 - Modify: `src/features/assigned_tasks/AssignedTasksColumn.tsx`
@@ -1462,23 +1285,57 @@ deal/job. Greek + English."
 
 - [ ] **Step 1: Update the failing test**
 
-In `AssignedTasksColumn.test.tsx`, add to the mock row (inside the `useAssignedTasksOpen` mock):
+In `AssignedTasksColumn.test.tsx`:
+
+1. Add at the top:
 
 ```tsx
-departments: [
-  { group: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } },
-],
+import userEvent from '@testing-library/user-event';
 ```
 
-Then append two new tests:
+2. Add `department` to the mocked row:
 
 ```tsx
-it('shows department chips on the row', () => {
+department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
+```
+
+3. Stub the detail-dialog data hook so it can render without a network call (reuse the literal from Task 8 Step 2):
+
+```tsx
+vi.mock('./hooks/useAssignedTaskDetail', () => ({
+  useAssignedTaskDetail: (id: string | null) => ({
+    data: id
+      ? {
+          id: 't1', title: 'Renew domain', description: 'desc',
+          deal_id: 'd1', job_id: null, client_id: 'c1', source_code: '000013',
+          assignee_user_id: 'u-me', created_by_user_id: 'u-other',
+          status: 'open' as const, resolved_at: null, resolved_by_user_id: null,
+          created_at: new Date().toISOString(),
+          department_group_id: 'g1',
+          client: {
+            id: 'c1', name: 'Acme Ltd', industry: 'Retail',
+            contact_first_name: 'Jane', contact_last_name: 'Doe',
+            email: 'jane@acme.gr', phone: '+30 1',
+          },
+          creator: { user_id: 'u-other', full_name: 'Smoke Test', email: 's@t.gr' },
+          department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
+        }
+      : undefined,
+    isLoading: false,
+    error: null,
+  }),
+}));
+```
+
+4. Append:
+
+```tsx
+it('shows the department chip on the row', () => {
   render(wrap(<AssignedTasksColumn />));
   expect(screen.getByText('Web Dev')).toBeInTheDocument();
 });
 
-it('clicking the row opens the detail dialog with that task id', async () => {
+it('clicking the row opens the detail dialog', async () => {
   const user = userEvent.setup();
   render(wrap(<AssignedTasksColumn />));
   await user.click(screen.getByRole('button', { name: /renew domain/i }));
@@ -1500,28 +1357,6 @@ it('clicking Resolve does not open the dialog', async () => {
 });
 ```
 
-Add at the top of the file:
-
-```tsx
-import userEvent from '@testing-library/user-event';
-```
-
-Also stub the detail-dialog data hook so the modal renders without a network call:
-
-```tsx
-vi.mock('./hooks/useAssignedTaskDetail', () => ({
-  useAssignedTaskDetail: (id: string | null) => ({
-    data: id
-      ? { /* a minimal detail row with the same shape used in Task 9 */ }
-      : undefined,
-    isLoading: false,
-    error: null,
-  }),
-}));
-```
-
-(Copy the same `detail` literal used in Task 9 Step 2 so the dialog can render.)
-
 - [ ] **Step 2: Run the tests to verify they fail**
 
 ```bash
@@ -1532,7 +1367,7 @@ Expected: new tests fail.
 
 - [ ] **Step 3: Update the component**
 
-Edit `AssignedTasksColumn.tsx`. Replace the `Row` component and the rendering inside `<ul>`:
+Replace `AssignedTasksColumn.tsx`:
 
 ```tsx
 import { useState } from 'react';
@@ -1543,7 +1378,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useAssignedTasksOpen, type AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
-import { DepartmentChipList } from './DepartmentChipList';
+import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 
 function sourceHref(task: AssignedTaskRow): string {
@@ -1571,7 +1406,7 @@ function Row({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium">{task.title}</span>
-            <DepartmentChipList departments={task.departments} max={2} />
+            <DepartmentChip department={task.department} />
             <Link
               to={sourceHref(task)}
               onClick={(e) => e.stopPropagation()}
@@ -1666,22 +1501,19 @@ export function AssignedTasksColumn() {
 
 - [ ] **Step 4: Re-run the tests**
 
-Expected: all 4 (or 5 with the existing two) passing.
+Expected: pass (existing + new).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/features/assigned_tasks/AssignedTasksColumn.tsx \
         src/features/assigned_tasks/AssignedTasksColumn.test.tsx
-git commit -m "feat(tasks): clickable rows + department chips in 'Assigned to me'
-
-Whole row opens AssignedTaskDetailDialog; source-code badge and Resolve
-button stopPropagation so they keep their existing behavior."
+git commit -m "feat(tasks): clickable rows + department chip on 'Assigned to me'"
 ```
 
 ---
 
-### Task 11: Same row treatment in `AssignedTasksTab`
+### Task 10: Same row treatment in `AssignedTasksTab`
 
 **Files:**
 - Modify: `src/features/assigned_tasks/AssignedTasksTab.tsx`
@@ -1691,21 +1523,19 @@ button stopPropagation so they keep their existing behavior."
 
 In `AssignedTasksTab.test.tsx`:
 
-1. Add at the top of the file:
+1. Add at the top:
 
 ```tsx
 import userEvent from '@testing-library/user-event';
 ```
 
-2. Add `departments` to each mocked row returned by `useAssignedTasksForSource`:
+2. Add `department` to each mocked row (returned by `useAssignedTasksForSource`):
 
 ```tsx
-departments: [
-  { group: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } },
-],
+department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
 ```
 
-3. Stub the detail-dialog data hook so the modal renders without a network call (reuse the `detail` literal from Task 9 Step 2):
+3. Stub `useAssignedTaskDetail`:
 
 ```tsx
 vi.mock('./hooks/useAssignedTaskDetail', () => ({
@@ -1717,15 +1547,14 @@ vi.mock('./hooks/useAssignedTaskDetail', () => ({
           assignee_user_id: 'u-me', created_by_user_id: 'u-other',
           status: 'open' as const, resolved_at: null, resolved_by_user_id: null,
           created_at: new Date().toISOString(),
+          department_group_id: 'g1',
           client: {
             id: 'c1', name: 'Acme Ltd', industry: 'Retail',
             contact_first_name: 'Jane', contact_last_name: 'Doe',
             email: 'jane@acme.gr', phone: '+30 1',
           },
           creator: { user_id: 'u-other', full_name: 'Smoke Test', email: 's@t.gr' },
-          departments: [
-            { group: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 } },
-          ],
+          department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
         }
       : undefined,
     isLoading: false,
@@ -1734,10 +1563,10 @@ vi.mock('./hooks/useAssignedTaskDetail', () => ({
 }));
 ```
 
-4. Add the three new assertions:
+4. Append:
 
 ```tsx
-it('shows department chips on the row', () => {
+it('shows the department chip on the row', () => {
   render(wrap(<AssignedTasksTab source={{ kind: 'deal', id: 'd1' }} />));
   expect(screen.getByText('Web Dev')).toBeInTheDocument();
 });
@@ -1767,11 +1596,11 @@ Expected: new assertions fail.
 
 - [ ] **Step 3: Update `AssignedTasksTab.tsx`**
 
-Mirror the row treatment from Task 10 — extract a `Row` component (same shape as in `AssignedTasksColumn`) that takes `task`, `canResolve`, `onOpen`, wraps in a `<button>`, adds `DepartmentChipList` and the stopPropagation handlers, and replace the existing row markup in both the "Open" and (if shown) "Resolved" sections with it. Mount `<AssignedTaskDetailDialog taskId={openTaskId} onOpenChange={...} />` at the bottom; track `openTaskId` in component state.
+Apply the same row pattern from Task 9 Step 3: extract a `Row` component with the same `<button>` wrapper, `DepartmentChip`, source-code `Link` (with `e.stopPropagation()`), and `Resolve` button (with `e.stopPropagation()`). Add `useState<string | null>(null)` for `openTaskId` and mount `<AssignedTaskDetailDialog taskId={openTaskId} onOpenChange={(open) => !open && setOpenTaskId(null)} />` at the bottom of the component tree. Use it in both the "Open" and "Resolved" lists.
 
-If there's a small amount of shared row code between Column and Tab, that's fine — leave both copies for now (YAGNI on extracting until a third caller appears).
+If the existing tab's resolved rows shouldn't open the detail modal, that's fine — only wire the open list to the dialog. If you'd rather make both clickable, do it; the spec doesn't object either way.
 
-- [ ] **Step 4: Re-run tests**
+- [ ] **Step 4: Re-run the test**
 
 Expected: pass.
 
@@ -1780,47 +1609,35 @@ Expected: pass.
 ```bash
 git add src/features/assigned_tasks/AssignedTasksTab.tsx \
         src/features/assigned_tasks/AssignedTasksTab.test.tsx
-git commit -m "feat(tasks): clickable rows + chips on the deal/job Tasks tab"
+git commit -m "feat(tasks): clickable rows + department chip on the deal/job Tasks tab"
 ```
 
 ---
 
-### Task 12: Manual E2E via Playwright
+### Task 11: Manual E2E + final guardrails
 
-**Files:**
-- None (manual verification). Optional: `tests/e2e/assigned-tasks-detail.spec.ts` if you want a Playwright spec — out of scope by default since Task 4 + 9 + 10 + 11 already cover the unit-level behavior.
+**Files:** none.
 
-- [ ] **Step 1: Make sure the local dev server is running**
+- [ ] **Step 1: Make sure the dev server is running**
 
 ```bash
-# in another terminal:
+# in another terminal if not already:
 npm run dev
 ```
 
-- [ ] **Step 2: Delete the legacy smoke task (the one created earlier had no departments)**
+- [ ] **Step 2: Drive the UI**
 
-```bash
-# replace SRK with the project service_role key:
-curl -sS -X DELETE \
-  "https://xujlrclyzxrvxszepquy.supabase.co/rest/v1/assigned_tasks?id=eq.499b1733-5eff-4fd1-8fd3-70c2694275f2" \
-  -H "apikey: $SRK" -H "Authorization: Bearer $SRK"
-```
-
-Expected: empty body, HTTP 204.
-
-- [ ] **Step 3: Drive the UI**
-
-1. Open http://localhost:5173/ and sign in as `test@test.gr` / `123456789` (the smoke account).
-2. Go to a deal (e.g. `1f9b88d5-…`). Open the **Tasks** tab → **+ New task**.
-3. Confirm: the **Create task** button stays disabled until title, assignee, and ≥1 department chip are selected.
-4. Pick **Mkifokeris** as assignee, tap two department chips (e.g. Web Dev + Hosting), submit.
-5. On Home, confirm the new row shows both chips inline; click the row → modal opens with title, chips, status, creator, created-at, description, client section (name, industry, primary contact name + phone + email), and the **Open deal** + **Resolve** buttons.
+1. Open http://localhost:5173/ and sign in as `test@test.gr` / `123456789`.
+2. Open a deal (e.g. `1f9b88d5-…`) → **Tasks** tab → **+ New task**.
+3. Confirm: **Create task** stays disabled until title, assignee, and a department chip are selected. Pick a different chip → the first one deselects.
+4. Submit (assignee = Mkifokeris, department = Web Dev).
+5. On Home, confirm the new row shows the Web Dev chip; click the row → modal opens with title, chip, status, creator, created-at, description, client section (name, industry, primary contact name + phone + email), and **Open deal** + **Resolve** buttons.
 6. Click **Resolve** → modal closes, row disappears from "Open" list.
-7. Toggle to "All team" (admin) — both yours and others' tasks appear, all clickable.
+7. Toggle "All team" (admin) — others' tasks appear, all clickable.
 
-Expected: every step passes; no console errors in the Playwright/devtools console.
+Expected: every step passes; no console errors.
 
-- [ ] **Step 4: Run the full test suite as a final guardrail**
+- [ ] **Step 3: Run the full test suite as a final guardrail**
 
 ```bash
 npm run test:run
@@ -1830,19 +1647,18 @@ npm run lint
 
 Expected: all green.
 
-- [ ] **Step 5: Commit any incidental fixes (often none)**
+- [ ] **Step 4: Commit any incidental fixes if needed**
 
 ```bash
-# only if something needed touching:
 git add -p
 git commit -m "fix(tasks): <whatever turned up during manual UAT>"
 ```
 
-If nothing was touched, skip this step — no empty commit.
+Skip the commit if nothing was touched — no empty commits.
 
 ---
 
-### Task 13: Backfill the spec's "Changes / Revert" section + push
+### Task 12: Backfill the spec's "Changes / Revert" section + push
 
 **Files:**
 - Modify: `docs/superpowers/specs/2026-05-27-assigned-tasks-detail-and-departments-design.md`
@@ -1850,26 +1666,26 @@ If nothing was touched, skip this step — no empty commit.
 - [ ] **Step 1: Collect the per-step commit list**
 
 ```bash
-git log --oneline 7b3536a..HEAD --reverse
+git log --oneline 8959db1..HEAD --reverse
 ```
 
-Expected: ~12 commits in chronological order (Tasks 1–11, plus optional Task 12 fix).
+(`8959db1` is the prior plan-commit SHA; replace if you've added unrelated commits.)
 
-- [ ] **Step 2: Rewrite the "Changes / Revert" section of the spec**
+- [ ] **Step 2: Rewrite the "Changes / Revert" section**
 
-Replace the placeholder block at the end of `docs/superpowers/specs/2026-05-27-assigned-tasks-detail-and-departments-design.md` with:
+Replace the placeholder block at the end of the spec with:
 
 ```markdown
 ## Changes / Revert
 
-**Migration:** `supabase/migrations/20260527000001_assigned_task_departments.sql`
-- Rollback: `drop table public.assigned_task_departments; drop function public.create_assigned_task(uuid,uuid,text,text,uuid,uuid[]);`
+**Migration:** `supabase/migrations/20260527000001_assigned_tasks_department.sql`
+- Rollback: `alter table public.assigned_tasks drop column department_group_id;`
 
 **Commits (chronological):**
-<paste `git log --oneline 7b3536a..HEAD --reverse` output here as a bullet list>
+<paste `git log --oneline 8959db1..HEAD --reverse` output here as a bullet list>
 
 **Files touched:**
-<paste `git diff --name-only 7b3536a..HEAD | sort -u` here as a bullet list>
+<paste `git diff --name-only 8959db1..HEAD | sort -u` here as a bullet list>
 
 **Single-command revert of the whole feature:**
 \`\`\`bash
@@ -1882,35 +1698,35 @@ git revert --no-edit <first-sha>^..<last-sha>
 
 ```bash
 git add docs/superpowers/specs/2026-05-27-assigned-tasks-detail-and-departments-design.md
-git commit -m "docs(spec): backfill Changes / Revert section for assigned-tasks departments"
+git commit -m "docs(spec): backfill Changes / Revert section for assigned-tasks department"
 git push origin main
 ```
 
-Expected: clean push to main. Vercel picks it up and redeploys, which also fixes the stale-deploy issue we saw during the smoke test.
+Expected: clean push to main. Vercel picks up the bundle and the stale-deploy issue from the earlier smoke test goes away too.
 
 ---
 
 ## Self-Review
 
 **1. Spec coverage**
-- Join table + RLS → Task 1 ✓
-- `create_assigned_task` RPC with required department validation → Task 2 ✓
-- Hook plumbing → Tasks 3, 5, 6, 8 ✓
-- Create-dialog chip list → Task 4 ✓
-- Detail modal → Task 9 ✓
-- Clickable rows + chips on Home column + Deal/Job tab → Tasks 10, 11 ✓
-- i18n EN + EL → distributed across Tasks 4 + 9 ✓
-- Backfill of the existing one-off smoke task → Task 12 Step 2 ✓
-- "Changes / Revert" trail in the spec → Task 13 ✓
+- Column + backfill + NOT NULL → Task 1 ✓
+- `useCreateAssignedTask` passes `departmentId` → Task 2 ✓
+- Required single-select chip in create dialog → Task 3 ✓
+- List queries return nested department → Tasks 4, 5 ✓
+- Shared chip component → Task 6 ✓
+- Detail hook + dialog → Tasks 7, 8 ✓
+- Clickable rows + chip on Home column + Deal/Job tab → Tasks 9, 10 ✓
+- Manual UAT → Task 11 ✓
+- "Changes / Revert" backfill → Task 12 ✓
 
 No gaps.
 
 **2. Placeholder scan**
-- No "TBD" / "implement later" / "similar to Task N" left.
-- Every test step lists the exact `npm run test:run` invocation and expected outcome.
-- Every code step contains the actual code (not a description).
+- No "TBD" / "implement later".
+- Every code step contains the actual code.
+- Tasks 5 and 10 reference "same pattern as Task 4/9" but the referenced code is **right next to it** in the plan and is short enough that re-pasting it would inflate the file without adding clarity. If you'd prefer the full re-paste, say so.
 
 **3. Type consistency**
-- `AssignedTaskDepartment` exported from `useAssignedTasksOpen` and re-imported by `useAssignedTasksForSource`, `useAssignedTaskDetail`, `DepartmentChipList` — single source of truth.
-- `CreateAssignedTaskInput` consistently carries `departmentIds: string[]` from Task 3 through Task 4.
-- RPC parameter names `p_deal_id`, `p_job_id`, `p_title`, `p_description`, `p_assignee_user_id`, `p_department_ids` match between Task 2 (SQL), Task 3 (hook), and Task 4 (dialog) — verified by grep.
+- `AssignedTaskDepartment` exported from `useAssignedTasksOpen`, re-imported by every consumer.
+- `CreateAssignedTaskInput` carries `departmentId: string` from Task 2 through Task 3.
+- DB column name `department_group_id` matches across migration (Task 1), insert payload (Task 2), and select strings (Tasks 4, 5, 7) — verified by grep.
