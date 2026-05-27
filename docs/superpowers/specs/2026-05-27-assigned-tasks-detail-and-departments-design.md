@@ -142,8 +142,47 @@ New keys in `deals.json` + `jobs.json` (EN + EL):
 - Major client info intentionally limited to name + industry + primary contact (name, phone, email). Website / city / additional contacts deferred.
 - The existing 1 smoke task gets backfilled with "Web Dev" (arbitrary but unblocks the NOT NULL flip). If you want a different default, say so before Task 0.
 
-## Changes / Revert (filled in during implementation)
+## Changes / Revert
 
-- Migration: `supabase/migrations/<TIMESTAMP>_assigned_tasks_department.sql` — `alter table public.assigned_tasks drop column department_group_id;` to undo.
-- Files touched: _appended per commit_.
-- Commits: _appended per commit_ (full SHA list at the end so `git revert <range>` is one command).
+**Migration:** `supabase/migrations/20260527000001_assigned_tasks_department.sql`
+- Rollback SQL (in the migration's `-- ROLLBACK:` block):
+  ```sql
+  alter table public.assigned_tasks drop column if exists department_group_id;
+  ```
+
+**Commits (chronological, 12 atomic):**
+- `8748106` feat(db): assigned_tasks.department_group_id required column
+- `b2ec357` feat(tasks): useCreateAssignedTask passes department_group_id
+- `8fdf684` fix(types): unblock build after types regen exposed latent insert + index errors
+- `e6b7657` feat(tasks): required single-select Department on creation
+- `a47ce18` feat(tasks): include nested department in assigned-tasks list query
+- `79a24ae` feat(tasks): include nested department in per-source tasks query
+- `6eee918` feat(tasks): DepartmentChip shared single-chip renderer
+- `c56a24d` feat(tasks): useAssignedTaskDetail returns task + client + department + creator
+- `aea489d` feat(tasks): AssignedTaskDetailDialog read-only modal
+- `23e63e8` feat(tasks): clickable rows + department chip on 'Assigned to me'
+- `55969b7` feat(tasks): clickable rows + department chip on the deal/job Tasks tab
+- `969e030` fix(tasks): drop unused _select alias in useAssignedTaskDetail test
+
+**Files touched (27):**
+- `supabase/migrations/20260527000001_assigned_tasks_department.sql` (new)
+- `supabase/tests/assigned_tasks_department.sql` (new)
+- `src/types/supabase.ts` (regenerated)
+- `src/lib/queryKeys.ts` (+ `assignedTaskDetail`)
+- `src/features/assigned_tasks/DepartmentChip.tsx` (new)
+- `src/features/assigned_tasks/AssignedTaskDetailDialog.tsx` + `.test.tsx` (new)
+- `src/features/assigned_tasks/NewAssignedTaskDialog.tsx` + `.test.tsx` (test new)
+- `src/features/assigned_tasks/AssignedTasksColumn.tsx` + `.test.tsx`
+- `src/features/assigned_tasks/AssignedTasksTab.tsx` + `.test.tsx`
+- `src/features/assigned_tasks/hooks/useAssignedTaskDetail.ts` + `.test.tsx` (new)
+- `src/features/assigned_tasks/hooks/useAssignedTasksOpen.ts` + `.test.tsx`
+- `src/features/assigned_tasks/hooks/useAssignedTasksForSource.ts` + `.test.tsx`
+- `src/features/assigned_tasks/hooks/useCreateAssignedTask.ts` + `.test.tsx`
+- `src/i18n/locales/{en,el}/{home,deals,jobs}.json` (6 files)
+
+**Single-command revert of the whole feature:**
+```bash
+git revert --no-edit 8748106^..969e030
+# then run the rollback DDL above against Supabase:
+#   alter table public.assigned_tasks drop column department_group_id;
+```
