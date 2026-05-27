@@ -6,6 +6,8 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useAssignedTasksOpen, type AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
+import { DepartmentChip } from './DepartmentChip';
+import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 
 function sourceHref(task: AssignedTaskRow): string {
   if (task.deal_id) return `/deals/${task.deal_id}`;
@@ -13,40 +15,58 @@ function sourceHref(task: AssignedTaskRow): string {
   return '#';
 }
 
-function Row({ task, canResolve }: { task: AssignedTaskRow; canResolve: boolean }) {
+function Row({
+  task, canResolve, onOpen,
+}: {
+  task: AssignedTaskRow;
+  canResolve: boolean;
+  onOpen: (id: string) => void;
+}) {
   const { t } = useTranslation('home');
   const resolve = useResolveAssignedTask();
   return (
-    <li className="flex items-start gap-3 border-t px-3 py-2.5 first:border-t-0 hover:bg-slate-50">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium">{task.title}</span>
-          <Link
-            to={sourceHref(task)}
-            className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 hover:bg-slate-200"
-          >
-            {task.source_code ?? '—'}
-          </Link>
+    <li className="border-t first:border-t-0">
+      <button
+        type="button"
+        aria-label={task.title}
+        onClick={() => onOpen(task.id)}
+        className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-slate-50"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-medium">{task.title}</span>
+            <DepartmentChip department={task.department} />
+            <Link
+              to={sourceHref(task)}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 hover:bg-slate-200"
+            >
+              {task.source_code ?? '—'}
+            </Link>
+          </div>
+          {task.client && (
+            <p className="truncate text-[11px] text-slate-500">{task.client.name}</p>
+          )}
+          {task.description && (
+            <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{task.description}</p>
+          )}
         </div>
-        {task.client && (
-          <p className="truncate text-[11px] text-slate-500">{task.client.name}</p>
+        {canResolve && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              resolve.mutate({ id: task.id });
+            }}
+            disabled={resolve.isPending}
+          >
+            {t('assigned_tasks.resolve')}
+          </Button>
         )}
-        {task.description && (
-          <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{task.description}</p>
-        )}
-      </div>
-      {canResolve && (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="shrink-0"
-          onClick={() => resolve.mutate({ id: task.id })}
-          disabled={resolve.isPending}
-        >
-          {t('assigned_tasks.resolve')}
-        </Button>
-      )}
+      </button>
     </li>
   );
 }
@@ -56,6 +76,7 @@ export function AssignedTasksColumn() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const [showAllAdmin, setShowAllAdmin] = useState(false);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   useAssignedTasksRealtime();
 
   const assigneeUserId = isAdmin && showAllAdmin ? null : userId || null;
@@ -92,11 +113,16 @@ export function AssignedTasksColumn() {
                 key={task.id}
                 task={task}
                 canResolve={isAdmin || task.assignee_user_id === userId}
+                onOpen={setOpenTaskId}
               />
             ))}
           </ul>
         )}
       </div>
+      <AssignedTaskDetailDialog
+        taskId={openTaskId}
+        onOpenChange={(open) => !open && setOpenTaskId(null)}
+      />
     </section>
   );
 }
