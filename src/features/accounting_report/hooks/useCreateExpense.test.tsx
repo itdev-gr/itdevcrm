@@ -3,12 +3,12 @@ import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { single, select, insert, from } = vi.hoisted(() => {
+const { single, insert, from } = vi.hoisted(() => {
   const single = vi.fn();
   const select = vi.fn().mockReturnValue({ single });
   const insert = vi.fn().mockReturnValue({ select });
   const from = vi.fn().mockReturnValue({ insert });
-  return { single, select, insert, from };
+  return { single, insert, from };
 });
 
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
@@ -75,7 +75,7 @@ describe('useCreateExpense', () => {
         paidByUserId: 'user-1',
       });
     });
-    const payload = insert.mock.calls[0][0];
+    const payload = insert.mock.calls[0]![0];
     expect(payload.status).toBe('paid');
     expect(payload.payment_method).toBe('cash');
     expect(payload.paid_by).toBe('user-1');

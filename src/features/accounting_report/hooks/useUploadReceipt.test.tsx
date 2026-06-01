@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { upload, fromBucket, single, select, eq, update, from } = vi.hoisted(() => {
+const { upload, fromBucket, eq, update, from } = vi.hoisted(() => {
   const upload = vi.fn().mockResolvedValue({ data: { path: 'p' }, error: null });
   const fromBucket = vi.fn().mockReturnValue({ upload });
   const single = vi.fn().mockResolvedValue({ data: { id: 'e1' }, error: null });
@@ -11,7 +11,7 @@ const { upload, fromBucket, single, select, eq, update, from } = vi.hoisted(() =
   const eq = vi.fn().mockReturnValue({ select });
   const update = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ update });
-  return { upload, fromBucket, single, select, eq, update, from };
+  return { upload, fromBucket, eq, update, from };
 });
 
 vi.mock('@/lib/supabase', () => ({
@@ -41,7 +41,7 @@ describe('useUploadReceipt', () => {
       await result.current.mutateAsync({ expenseId: 'e1', file });
     });
     expect(fromBucket).toHaveBeenCalledWith('expense-receipts');
-    const [path, body] = upload.mock.calls[0];
+    const [path, body] = upload.mock.calls[0]!;
     expect(path).toMatch(/^e1\//);
     expect(body).toBe(file);
     expect(update).toHaveBeenCalledWith({ receipt_path: expect.stringMatching(/^e1\//) });

@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { order, lte, gte, select, from } = vi.hoisted(() => {
+const { order, lte, gte, from } = vi.hoisted(() => {
   const order = vi.fn();
   const lte = vi.fn();
   const gte = vi.fn();
@@ -12,7 +12,7 @@ const { order, lte, gte, select, from } = vi.hoisted(() => {
   lte.mockReturnValue(chain);
   const select = vi.fn().mockReturnValue(chain);
   const from = vi.fn().mockReturnValue({ select });
-  return { order, lte, gte, select, from };
+  return { order, lte, gte, from };
 });
 
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));

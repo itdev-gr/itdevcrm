@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { order, ilike, gte, lte, eq, select, from } = vi.hoisted(() => {
+const { order, ilike, gte, lte, eq, from } = vi.hoisted(() => {
   const order = vi.fn();
   const lte = vi.fn();
   const gte = vi.fn();
@@ -16,7 +16,7 @@ const { order, ilike, gte, lte, eq, select, from } = vi.hoisted(() => {
   lte.mockReturnValue(chain);
   const select = vi.fn().mockReturnValue(chain);
   const from = vi.fn().mockReturnValue({ select });
-  return { order, ilike, gte, lte, eq, select, from };
+  return { order, ilike, gte, lte, eq, from };
 });
 
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
@@ -55,6 +55,6 @@ describe('useExpenses', () => {
     expect(gte).toHaveBeenCalledWith('start_date', '2026-06-01');
     expect(lte).toHaveBeenCalledWith('start_date', '2026-06-30');
     expect(order).toHaveBeenCalledWith('start_date', { ascending: false });
-    expect(result.current.data?.[0].vendor).toBe('Adobe');
+    expect(result.current.data?.[0]?.vendor).toBe('Adobe');
   });
 });

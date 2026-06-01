@@ -3,14 +3,14 @@ import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { single, select, eq, update, from, getUser } = vi.hoisted(() => {
+const { single, eq, update, from, getUser } = vi.hoisted(() => {
   const single = vi.fn();
   const select = vi.fn().mockReturnValue({ single });
   const eq = vi.fn().mockReturnValue({ select });
   const update = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ update });
   const getUser = vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } });
-  return { single, select, eq, update, from, getUser };
+  return { single, eq, update, from, getUser };
 });
 
 vi.mock('@/lib/supabase', () => ({
@@ -38,7 +38,7 @@ describe('useMarkExpensePaid', () => {
     await act(async () => {
       await result.current.mutateAsync({ id: 'e1', paymentMethod: 'bank_transfer' });
     });
-    const payload = update.mock.calls[0][0];
+    const payload = update.mock.calls[0]![0];
     expect(payload.status).toBe('paid');
     expect(payload.payment_method).toBe('bank_transfer');
     expect(payload.paid_by).toBe('user-1');

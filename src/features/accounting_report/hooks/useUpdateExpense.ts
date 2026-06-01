@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import type { Database } from '@/types/supabase';
+
+type ExpenseUpdate = Database['public']['Tables']['expenses']['Update'];
 
 export type UpdateExpensePatch = {
   vendor?: string | null;
@@ -14,8 +17,8 @@ export type UpdateExpensePatch = {
   receiptPath?: string | null;
 };
 
-function toDbPatch(p: UpdateExpensePatch): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
+function toDbPatch(p: UpdateExpensePatch): ExpenseUpdate {
+  const out: ExpenseUpdate = {};
   if (p.vendor !== undefined) out.vendor = p.vendor;
   if (p.categoryId !== undefined) out.category_id = p.categoryId;
   if (p.billingType !== undefined) out.billing_type = p.billingType;
