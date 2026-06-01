@@ -16,6 +16,7 @@
   },
   "create_dialog": {
     "title": "Invite a new user",
+    "description": "Invite a new user and assign their group.",
     "full_name": "Full name",
     "email": "Email",
     "temp_password": "Temporary password",

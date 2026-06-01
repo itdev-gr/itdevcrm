@@ -14,6 +14,7 @@
     "section_open": "Open",
     "section_resolved": "Resolved",
     "new_task": "New task",
+    "new_task_description": "Create a new task assigned to a team member.",
     "title_placeholder": "Task title",
     "description_placeholder": "Notes, context, what to do…",
     "assignee_label": "Assign to",

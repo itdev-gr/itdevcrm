@@ -24,7 +24,8 @@
     "delete": "Delete",
     "cancel": "Cancel",
     "save": "Save",
-    "confirm_delete": "Delete this task?"
+    "confirm_delete": "Delete this task?",
+    "dialog_description": "Create or edit a calendar task."
   },
   "assigned_tasks": {
     "title": "Assigned to me",
@@ -41,6 +42,7 @@
     "loading": "Loading…",
     "error_loading": "Couldn't load this task.",
     "created_by_label": "Created by",
-    "created_label": "Created"
+    "created_label": "Created",
+    "detail_description": "View and update this assigned task."
   }
 }

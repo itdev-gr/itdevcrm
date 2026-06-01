@@ -1,5 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ClientForm } from './ClientForm';
 
 type Props = {
@@ -15,6 +21,7 @@ export function CreateClientDialog({ open, onOpenChange, onCreated }: Props) {
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>{t('new_client')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('new_client_description')}</DialogDescription>
         </DialogHeader>
         <ClientForm
           onDone={(id) => {

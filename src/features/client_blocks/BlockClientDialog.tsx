@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -38,6 +39,7 @@ export function BlockClientDialog({ open, onOpenChange, clientId }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('block.dialog_title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('block.dialog_description')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-3">
           <div>

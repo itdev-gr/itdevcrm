@@ -14,6 +14,7 @@
     "section_open": "Ανοιχτές",
     "section_resolved": "Επιλυμένες",
     "new_task": "Νέα εργασία",
+    "new_task_description": "Δημιουργία νέας εργασίας ανατεθειμένης σε μέλος της ομάδας.",
     "title_placeholder": "Τίτλος εργασίας",
     "description_placeholder": "Σημειώσεις, πλαίσιο, τι πρέπει να γίνει…",
     "assignee_label": "Ανάθεση σε",

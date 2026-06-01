@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -157,6 +158,7 @@ export function SubpackageDialog({ open, onOpenChange, parentId, initial }: Prop
               ? t('service_packages.subpackages.edit_title')
               : t('service_packages.subpackages.add_title')}
           </DialogTitle>
+          <DialogDescription className="sr-only">{t('service_packages.subpackages.dialog_description')}</DialogDescription>
         </DialogHeader>
         <SubpackageForm
           key={open ? (initial?.id ?? 'new') : 'closed'}

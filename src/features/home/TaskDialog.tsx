@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -89,6 +90,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
               ? t('task.edit_title', { defaultValue: 'Edit task' })
               : t('task.new_title', { defaultValue: 'New task' })}
           </DialogTitle>
+          <DialogDescription className="sr-only">{t('task.dialog_description')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>

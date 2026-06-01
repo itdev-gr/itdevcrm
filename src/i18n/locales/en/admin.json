@@ -22,6 +22,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "show_archived": "Show archived",
+    "dialog_description": "Add or edit a service package.",
     "fields": {
       "service_type": "Service",
       "code": "Code",
@@ -42,7 +43,8 @@
       "add": "+ Add sub-product",
       "add_title": "Add sub-product",
       "edit_title": "Edit sub-product",
-      "empty": "No sub-products"
+      "empty": "No sub-products",
+      "dialog_description": "Add or edit a sub-package."
     }
   },
   "groups": {

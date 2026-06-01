@@ -59,6 +59,7 @@
     "button": "Block client",
     "button_unblock": "Unblock client",
     "dialog_title": "Block this client?",
+    "dialog_description": "Block or unblock this client's services.",
     "dialog_body": "Reason (visible to other staff):",
     "submit": "Block",
     "cancel": "Cancel",

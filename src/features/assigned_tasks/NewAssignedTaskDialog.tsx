@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -60,6 +60,7 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('assigned_tasks.new_task')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('assigned_tasks.new_task_description')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">

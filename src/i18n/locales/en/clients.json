@@ -2,6 +2,7 @@
   "title": "Clients",
   "my_clients": "My Clients",
   "new_client": "New client",
+  "new_client_description": "Add a new client to your account.",
   "table": {
     "name": "Company",
     "contact": "Contact",

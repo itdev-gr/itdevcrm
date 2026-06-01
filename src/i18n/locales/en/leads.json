@@ -1,6 +1,7 @@
 {
   "title": "Leads",
   "new_lead": "New lead",
+  "new_lead_description": "Add a new lead to the sales pipeline.",
   "actions": {
     "create": "Add lead",
     "save": "Save",

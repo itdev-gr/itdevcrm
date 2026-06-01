@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -214,6 +215,7 @@ export function ServicePackageDialog({ open, onOpenChange, initial }: Props) {
           <DialogTitle>
             {initial ? t('service_packages.edit_title') : t('service_packages.add_title')}
           </DialogTitle>
+          <DialogDescription className="sr-only">{t('service_packages.dialog_description')}</DialogDescription>
         </DialogHeader>
         <ServicePackageForm
           key={open ? (initial?.id ?? 'new') : 'closed'}

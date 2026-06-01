@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useAssignedTaskDetail } from './hooks/useAssignedTaskDetail';
@@ -38,6 +38,7 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t('assigned_tasks.detail_title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('assigned_tasks.detail_description')}</DialogDescription>
         </DialogHeader>
         {isLoading && <p className="text-sm text-slate-500">{t('assigned_tasks.loading')}</p>}
         {error && <p className="text-sm text-red-600">{t('assigned_tasks.error_loading')}</p>}
