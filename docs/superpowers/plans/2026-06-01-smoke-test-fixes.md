@@ -491,6 +491,14 @@ Confirm the final line reads `0 failed`. If anything fails, STOP and use superpo
 
 ---
 
+## Task 5: sr-only descriptions for all 9 dialogs (added after the smoke test)
+
+Follow-up: the e2e run surfaced a Radix runtime warning — `Missing 'Description' or 'aria-describedby={undefined}' for {DialogContent}` — on every dialog. All 9 dialogs rendered a `DialogTitle` but no `DialogDescription`. Fix: add a visually-hidden (`className="sr-only"`) `DialogDescription` with an i18n key to each dialog (screen-reader-only, no visual change).
+
+Dialogs and keys (namespace → key): `home`→`task.dialog_description`; `clients`→`new_client_description`; `admin`→`service_packages.subpackages.dialog_description`; `admin`→`service_packages.dialog_description`; `home`→`assigned_tasks.detail_description`; `jobs`→`assigned_tasks.new_task_description`; `leads`→`new_lead_description`; `accounting`→`block.dialog_description`; `users`→`create_dialog.description`. Each added to both `en` and `el` locale files (18 keys total).
+
+Verified: all 18 keys resolve in both locales, `typecheck`/`lint` clean, e2e 19 passed / 0 failed, and the DialogContent warning count is 0. Commit `c0d5ce9`.
+
 ## Changes / Revert
 
 **Changed:**
@@ -498,6 +506,7 @@ Confirm the final line reads `0 failed`. If anything fails, STOP and use superpo
 - `tests/leads-smoke.spec.ts` — `/accounting/recurring` 404 test replaced with "board renders" + "translates to Greek" tests.
 - `src/i18n/locales/{en,el}/accounting.json` — new `recurring_clients` block (additive; existing `recurring` block untouched).
 - `src/features/accounting/AccountingRecurringPage.tsx` — all user-facing strings via `useTranslation`; service labels via `deals:services.types.*`; localized dates.
+- 9 dialog components + 7 namespaces × 2 locales — sr-only `DialogDescription` added (Task 5).
 
 **Revert:** All changes are additive or in-place edits across 5 files with one commit per task (Tasks 1–3). To roll back a single concern, `git revert <task-commit>`. No database migrations, no schema changes, no config changes — nothing to undo server-side. The new `recurring_clients` i18n keys are inert if the component revert leaves them unused.
 
