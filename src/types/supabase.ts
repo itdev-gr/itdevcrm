@@ -679,6 +679,39 @@ export type Database = {
           },
         ]
       }
+      expense_categories: {
+        Row: {
+          archived: boolean
+          created_at: string
+          id: string
+          key: string
+          name_el: string
+          name_en: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          id?: string
+          key: string
+          name_el: string
+          name_en: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          id?: string
+          key?: string
+          name_el?: string
+          name_en?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       field_permissions: {
         Row: {
           created_at: string
