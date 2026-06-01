@@ -44,11 +44,11 @@ export function ReportPage() {
   const [showNew, setShowNew] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
 
-  function openIncomeGroup(key: string | null, rows: LedgerRow[]) {
-    setDrawer({ title: key ?? t('income_breakdown.unknown'), rows });
+  function openIncomeGroup(_key: string | null, rows: LedgerRow[], title: string) {
+    setDrawer({ title, rows });
   }
-  function openExpenseGroup(key: string | null, rows: LedgerRow[]) {
-    setDrawer({ title: key ?? t('expense_breakdown.category'), rows });
+  function openExpenseGroup(_key: string | null, rows: LedgerRow[], title: string) {
+    setDrawer({ title, rows });
   }
 
   return (

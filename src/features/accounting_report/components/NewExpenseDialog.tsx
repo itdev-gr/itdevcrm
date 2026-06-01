@@ -113,17 +113,20 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
           />
         </label>
 
-        <div className="mt-3 flex gap-2 text-sm">
-          {(['one_time','recurring_monthly','recurring_yearly'] as BillingType[]).map((bt) => (
-            <button
-              key={bt}
-              type="button"
-              onClick={() => onBillingChange(bt)}
-              className={`rounded border px-2 py-1 ${billingType === bt ? 'bg-neutral-900 text-white' : ''}`}
-            >
-              {t(`expense_form.${bt}`)}
-            </button>
-          ))}
+        <div className="mt-3 text-sm">
+          <p className="mb-1 text-neutral-700">{t('expense_form.billing_type')}</p>
+          <div className="flex gap-2">
+            {(['one_time','recurring_monthly','recurring_yearly'] as BillingType[]).map((bt) => (
+              <button
+                key={bt}
+                type="button"
+                onClick={() => onBillingChange(bt)}
+                className={`rounded border px-2 py-1 ${billingType === bt ? 'bg-neutral-900 text-white' : ''}`}
+              >
+                {t(`expense_form.${bt}`)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mt-3 grid grid-cols-3 gap-2 text-sm">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LedgerRow } from '../hooks/useLedger';
 import type { PLSummary } from '../hooks/usePLSummary';
@@ -17,6 +17,16 @@ export type ExportMenuProps = {
 export function ExportMenu({ rangeLabel, from, to, summary, incomeRows, expenseRows }: ExportMenuProps) {
   const { t } = useTranslation('accounting_report');
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    window.addEventListener('mousedown', onClick);
+    return () => window.removeEventListener('mousedown', onClick);
+  }, [open]);
 
   function csv() {
     const all = [...incomeRows, ...expenseRows];
@@ -29,7 +39,7 @@ export function ExportMenu({ rangeLabel, from, to, summary, incomeRows, expenseR
   }
 
   return (
-    <div className="relative inline-block">
+    <div ref={ref} className="relative inline-block">
       <button
         type="button"
         className="rounded border px-3 py-1.5 text-sm"

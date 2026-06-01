@@ -4,7 +4,7 @@ import type { LedgerRow } from '../hooks/useLedger';
 
 export type IncomeBreakdownProps = {
   rows: LedgerRow[];
-  onSelectGroup: (categoryKey: string | null, rows: LedgerRow[]) => void;
+  onSelectGroup: (categoryKey: string | null, rows: LedgerRow[], title: string) => void;
 };
 
 type Group = {
@@ -17,7 +17,7 @@ type Group = {
 };
 
 export function IncomeBreakdown({ rows, onSelectGroup }: IncomeBreakdownProps) {
-  const { t } = useTranslation('accounting_report');
+  const { t } = useTranslation(['accounting_report', 'deals']);
   const groups = useMemo<Group[]>(() => {
     const map = new Map<string, Group>();
     for (const r of rows) {
@@ -36,18 +36,23 @@ export function IncomeBreakdown({ rows, onSelectGroup }: IncomeBreakdownProps) {
 
   const totalGross = groups.reduce((s, g) => s + g.gross, 0);
 
+  function labelFor(key: string | null): string {
+    if (!key) return t('accounting_report:income_breakdown.unknown');
+    return t(`deals:services.types.${key}`, { defaultValue: key });
+  }
+
   return (
     <section>
-      <h3 className="mb-2 font-semibold">{t('income_breakdown.title')}</h3>
+      <h3 className="mb-2 font-semibold">{t('accounting_report:income_breakdown.title')}</h3>
       <table className="w-full text-sm">
         <thead className="bg-neutral-50 text-left">
           <tr>
-            <th className="px-3 py-2">{t('income_breakdown.service')}</th>
-            <th className="px-3 py-2 text-right">{t('income_breakdown.count')}</th>
-            <th className="px-3 py-2 text-right">{t('income_breakdown.net')}</th>
-            <th className="px-3 py-2 text-right">{t('income_breakdown.vat')}</th>
-            <th className="px-3 py-2 text-right">{t('income_breakdown.gross')}</th>
-            <th className="px-3 py-2 text-right">{t('income_breakdown.percent')}</th>
+            <th className="px-3 py-2">{t('accounting_report:income_breakdown.service')}</th>
+            <th className="px-3 py-2 text-right">{t('accounting_report:income_breakdown.count')}</th>
+            <th className="px-3 py-2 text-right">{t('accounting_report:income_breakdown.net')}</th>
+            <th className="px-3 py-2 text-right">{t('accounting_report:income_breakdown.vat')}</th>
+            <th className="px-3 py-2 text-right">{t('accounting_report:income_breakdown.gross')}</th>
+            <th className="px-3 py-2 text-right">{t('accounting_report:income_breakdown.percent')}</th>
           </tr>
         </thead>
         <tbody>
@@ -55,9 +60,9 @@ export function IncomeBreakdown({ rows, onSelectGroup }: IncomeBreakdownProps) {
             <tr
               key={g.key ?? 'unspecified'}
               className="cursor-pointer hover:bg-neutral-50"
-              onClick={() => onSelectGroup(g.key, g.rows)}
+              onClick={() => onSelectGroup(g.key, g.rows, labelFor(g.key))}
             >
-              <td className="px-3 py-2">{g.key ?? t('income_breakdown.unknown')}</td>
+              <td className="px-3 py-2">{labelFor(g.key)}</td>
               <td className="px-3 py-2 text-right">{g.count}</td>
               <td className="px-3 py-2 text-right">€{g.net.toFixed(2)}</td>
               <td className="px-3 py-2 text-right">€{g.vat.toFixed(2)}</td>

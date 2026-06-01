@@ -1,6 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useExpenseDetail } from '../hooks/useExpenseDetail';
+
+function formatPaidAt(iso: string | null, locale: string): string {
+  if (!iso) return '';
+  try {
+    return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
 import { useMarkExpensePaid } from '../hooks/useMarkExpensePaid';
 import { useDeleteExpense } from '../hooks/useDeleteExpense';
 import { useUploadReceipt } from '../hooks/useUploadReceipt';
@@ -62,12 +75,17 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
               {t('expense_form.amount_gross')}: €{e.amount_gross.toFixed(2)}
             </p>
             <p className="mt-1 text-sm">
+              {t('expense_form.billing_type')}: {t(`expense_form.${e.billing_type}`)}
+            </p>
+            <p className="mt-1 text-sm">
               {t('expense_form.start_date')}: {e.start_date}
-              {e.end_date && ` → ${e.end_date}`}
+              {e.billing_type !== 'one_time' && e.end_date && e.end_date !== e.start_date && (
+                <> → {e.end_date}</>
+              )}
             </p>
             <p className="mt-1 text-sm">
               {t('transaction_drawer.status')}: {t(`status.${e.status}`)}
-              {e.status === 'paid' && e.paid_at && ` (${e.paid_at})`}
+              {e.status === 'paid' && e.paid_at && ` (${formatPaidAt(e.paid_at, i18n.language)})`}
             </p>
             {e.notes && <p className="mt-2 text-sm">{e.notes}</p>}
 

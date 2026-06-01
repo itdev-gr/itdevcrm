@@ -5,7 +5,7 @@ import { useExpenseCategories } from '../hooks/useExpenseCategories';
 
 export type ExpenseBreakdownProps = {
   rows: LedgerRow[];
-  onSelectGroup: (categoryKey: string | null, rows: LedgerRow[]) => void;
+  onSelectGroup: (categoryKey: string | null, rows: LedgerRow[], title: string) => void;
   onNewExpense: () => void;
 };
 
@@ -77,7 +77,7 @@ export function ExpenseBreakdown({ rows, onSelectGroup, onNewExpense }: ExpenseB
             <tr
               key={g.key ?? 'unspecified'}
               className="cursor-pointer hover:bg-neutral-50"
-              onClick={() => onSelectGroup(g.key, g.rows)}
+              onClick={() => onSelectGroup(g.key, g.rows, g.key ? (labelByKey.get(g.key) ?? g.key) : t('expense_breakdown.category'))}
             >
               <td className="px-3 py-2">{g.key ? (labelByKey.get(g.key) ?? g.key) : '—'}</td>
               <td className="px-3 py-2 text-right">{g.count}</td>
