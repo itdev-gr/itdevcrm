@@ -1792,6 +1792,37 @@ export type Database = {
       }
     }
     Views: {
+      accounting_ledger_v: {
+        Row: {
+          amount_gross: number | null
+          amount_net: number | null
+          billing_type: string | null
+          category_key: string | null
+          counterparty: string | null
+          direction: string | null
+          event_date: string | null
+          period: string | null
+          source_id: string | null
+          source_table: string | null
+          status: string | null
+          vat_amount: number | null
+        }
+        Relationships: []
+      }
+      accounting_pl_summary_v: {
+        Row: {
+          net_profit_gross: number | null
+          net_profit_net: number | null
+          period: string | null
+          total_expense_gross: number | null
+          total_expense_net: number | null
+          total_expense_vat: number | null
+          total_income_gross: number | null
+          total_income_net: number | null
+          total_income_vat: number | null
+        }
+        Relationships: []
+      }
       tech_my_clients: {
         Row: {
           active_jobs: number | null
