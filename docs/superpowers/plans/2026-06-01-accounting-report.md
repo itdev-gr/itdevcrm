@@ -175,7 +175,7 @@ Expected: PASS (3 of 3).
 
 - [ ] **Step 6: Regen TypeScript types**
 
-Run: `npm run gen:types`
+Run: `npm run types:gen`
 Expected: `src/types/supabase.ts` now contains `expense_categories`.
 
 - [ ] **Step 7: Commit**
@@ -419,7 +419,7 @@ Expected: all PASS.
 
 - [ ] **Step 8: Regen TypeScript types**
 
-Run: `npm run gen:types`
+Run: `npm run types:gen`
 
 - [ ] **Step 9: Commit**
 
@@ -695,9 +695,23 @@ alter table public.deal_payments
   add column if not exists amount_gross numeric(12,2)
     generated always as (round(amount_net + amount_net * vat_rate / 100, 2)) stored;
 
-update public.deal_payments
-  set amount_net = round(amount / 1.24, 2)
-  where amount_net is null and amount is not null;
+-- Country-aware backfill: GR clients are billed at 24% VAT (existing `amount`
+-- is gross), every other country is billed at 0% (existing `amount` is already
+-- net). Confirmed against live data on 2026-06-01: 7 GR clients + 1 CY client.
+update public.deal_payments dp
+  set amount_net = case
+        when c.country = 'Greece' then round(dp.amount / 1.24, 2)
+        else dp.amount
+      end,
+      vat_rate = case
+        when c.country = 'Greece' then 24.00
+        else 0.00
+      end
+  from public.deals d
+  join public.clients c on c.id = d.client_id
+  where d.id = dp.deal_id
+    and dp.amount_net is null
+    and dp.amount is not null;
 
 alter table public.deal_payments
   alter column amount_net set not null;
@@ -837,7 +851,7 @@ Expected: PASS (2 of 2).
 
 - [ ] **Step 6: Regen TypeScript types**
 
-Run: `npm run gen:types`
+Run: `npm run types:gen`
 
 - [ ] **Step 7: Commit**
 
