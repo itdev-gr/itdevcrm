@@ -712,6 +712,104 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount_gross: number | null
+          amount_net: number
+          billing_type: string
+          category_id: string
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          parent_expense_id: string | null
+          payment_method: string | null
+          receipt_path: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          vat_amount: number | null
+          vat_rate: number
+          vendor: string | null
+        }
+        Insert: {
+          amount_gross?: number | null
+          amount_net: number
+          billing_type: string
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          parent_expense_id?: string | null
+          payment_method?: string | null
+          receipt_path?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          vat_amount?: number | null
+          vat_rate?: number
+          vendor?: string | null
+        }
+        Update: {
+          amount_gross?: number | null
+          amount_net?: number
+          billing_type?: string
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          parent_expense_id?: string | null
+          payment_method?: string | null
+          receipt_path?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          vat_amount?: number | null
+          vat_rate?: number
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "expenses_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "expenses_parent_expense_id_fkey"
+            columns: ["parent_expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field_permissions: {
         Row: {
           created_at: string
