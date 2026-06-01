@@ -12,7 +12,8 @@ test.describe('auth flow', () => {
     await page.getByLabel(/password/i).fill(ADMIN_PASSWORD!);
     await page.getByRole('button', { name: /sign in/i }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
-    await expect(page.getByRole('heading', { name: /itdevcrm/i })).toBeVisible();
+    // The authenticated app shell renders the brand inside the top-bar <header> (banner).
+    await expect(page.getByRole('banner').getByText(/itdevcrm/i)).toBeVisible();
   });
 
   test('admin sees Settings in the sidebar and can navigate to /admin', async ({ page }) => {
