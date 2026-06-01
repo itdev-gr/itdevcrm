@@ -25,4 +25,16 @@ test.describe('leads smoke', () => {
     await page.goto('/accounting/recurring');
     await expect(page.getByRole('heading', { name: /recurring clients/i })).toBeVisible();
   });
+
+  test('recurring clients board translates to Greek', async ({ page }) => {
+    await signIn(page);
+    await page.goto('/accounting/recurring');
+    await expect(page.getByRole('heading', { name: /recurring clients/i })).toBeVisible();
+    // Switch to Greek via the top-bar locale switcher (Radix Select, role=combobox).
+    await page.getByRole('combobox', { name: /language|γλώσσα/i }).click();
+    await page.getByRole('option', { name: 'Ελληνικά' }).click();
+    await expect(
+      page.getByRole('heading', { name: /Επαναλαμβανόμενοι πελάτες/i }),
+    ).toBeVisible();
+  });
 });

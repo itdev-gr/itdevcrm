@@ -111,5 +111,29 @@
       "description": "Description"
     },
     "empty": "No invoices yet — click \"Generate invoices\" to create them for the current month."
+  },
+  "recurring_clients": {
+    "title": "Recurring clients",
+    "stats": {
+      "active_clients": "Active clients",
+      "monthly": "Monthly recurring",
+      "overdue": "Overdue",
+      "blocked": "Blocked"
+    },
+    "filter_placeholder": "Filter by client, email, industry…",
+    "empty": "No recurring clients match.",
+    "table": {
+      "client": "Client",
+      "services": "Services",
+      "monthly": "Monthly",
+      "next_due": "Next due",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "overdue": "Overdue",
+      "done": "Done",
+      "blocked": "Blocked"
+    }
   }
 }
