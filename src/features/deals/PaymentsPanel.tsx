@@ -15,6 +15,7 @@ import type { PlannedService } from './ServicesPlannedField';
 type Props = {
   dealId: string;
   services: PlannedService[];
+  defaultVatRate: number;
 };
 
 const BILLING_OPTIONS: PlannedService['billing_type'][] = [
@@ -167,7 +168,7 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
   );
 }
 
-export function PaymentsPanel({ dealId, services }: Props) {
+export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
   const { t } = useTranslation('deals');
   const { data: payments = [], isLoading } = useDealPayments(dealId);
   const add = useAddDealPayment(dealId);
@@ -179,7 +180,7 @@ export function PaymentsPanel({ dealId, services }: Props) {
   );
   const [newBilling, setNewBilling] = useState<PlannedService['billing_type']>('one_time');
   const [newAmountNet, setNewAmountNet] = useState('');
-  const [newVatRate, setNewVatRate] = useState('24');
+  const [newVatRate, setNewVatRate] = useState(String(defaultVatRate));
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
 
@@ -200,7 +201,7 @@ export function PaymentsPanel({ dealId, services }: Props) {
     setShowAdd(false);
     setNewLabel('');
     setNewAmountNet('');
-    setNewVatRate('24');
+    setNewVatRate(String(defaultVatRate));
     setNewStart('');
     setNewEnd('');
   }

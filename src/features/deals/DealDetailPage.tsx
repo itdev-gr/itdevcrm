@@ -214,7 +214,11 @@ export function DealDetailPage() {
           </div>
         </TabsContent>
         <TabsContent value="payment" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
-          <PaymentsPanel dealId={dealId} services={dealServices} />
+          <PaymentsPanel
+            dealId={dealId}
+            services={dealServices}
+            defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+          />
         </TabsContent>
         <TabsContent value="jobs" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <JobsTab dealId={dealId} accountingCompletedAt={deal.accounting_completed_at} />
