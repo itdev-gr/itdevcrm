@@ -466,6 +466,8 @@ export type Database = {
       deal_payments: {
         Row: {
           amount: number
+          amount_gross: number | null
+          amount_net: number
           billing_type: string
           created_at: string
           deal_id: string
@@ -479,9 +481,13 @@ export type Database = {
           start_date: string | null
           status: string
           updated_at: string
+          vat_amount: number | null
+          vat_rate: number
         }
         Insert: {
           amount?: number
+          amount_gross?: number | null
+          amount_net: number
           billing_type: string
           created_at?: string
           deal_id: string
@@ -495,9 +501,13 @@ export type Database = {
           start_date?: string | null
           status?: string
           updated_at?: string
+          vat_amount?: number | null
+          vat_rate?: number
         }
         Update: {
           amount?: number
+          amount_gross?: number | null
+          amount_net?: number
           billing_type?: string
           created_at?: string
           deal_id?: string
@@ -511,6 +521,8 @@ export type Database = {
           start_date?: string | null
           status?: string
           updated_at?: string
+          vat_amount?: number | null
+          vat_rate?: number
         }
         Relationships: [
           {
@@ -1843,6 +1855,7 @@ export type Database = {
         Args: { p_job_id: string }
         Returns: undefined
       }
+      ensure_recurring_expenses: { Args: never; Returns: number }
       ensure_recurring_payments: { Args: never; Returns: number }
       generate_lead_code: { Args: never; Returns: string }
       global_search: {
