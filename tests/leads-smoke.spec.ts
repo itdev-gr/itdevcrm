@@ -20,9 +20,9 @@ test.describe('leads smoke', () => {
     await expect(page.getByRole('button', { name: /add lead|προσθήκη επαφής/i })).toBeVisible();
   });
 
-  test('/accounting/recurring is gone (404 / NotFound)', async ({ page }) => {
+  test('/accounting/recurring renders the recurring clients board', async ({ page }) => {
     await signIn(page);
     await page.goto('/accounting/recurring');
-    await expect(page.getByText(/not found|404/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /recurring clients/i })).toBeVisible();
   });
 });
