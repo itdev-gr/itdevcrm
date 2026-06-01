@@ -1,0 +1,124 @@
+{
+  "page_title": "Λογιστική Αναφορά",
+  "page_subtitle": "Έσοδα, έξοδα και καθαρό κέρδος",
+  "expenses_page_title": "Έξοδα",
+  "nav": {
+    "report": "Αναφορά",
+    "expenses": "Έξοδα"
+  },
+  "range": {
+    "this_month": "Αυτός ο μήνας",
+    "last_month": "Προηγούμενος μήνας",
+    "this_year": "Φέτος",
+    "last_year": "Πέρυσι",
+    "custom": "Προσαρμοσμένο διάστημα",
+    "from": "Από",
+    "to": "Έως"
+  },
+  "kpi": {
+    "income": "Σύνολο εσόδων",
+    "expense": "Σύνολο εξόδων",
+    "net_profit": "Καθαρό κέρδος",
+    "mrr": "MRR",
+    "net_suffix": "καθαρό",
+    "gross_suffix": "μικτό",
+    "ytd": "Από αρχή έτους"
+  },
+  "income_breakdown": {
+    "title": "Έσοδα ανά υπηρεσία",
+    "service": "Υπηρεσία",
+    "count": "Πλήθος",
+    "net": "Καθαρό",
+    "vat": "ΦΠΑ",
+    "gross": "Μικτό",
+    "percent": "%",
+    "unknown": "Χωρίς κατηγορία"
+  },
+  "expense_breakdown": {
+    "title": "Έξοδα ανά κατηγορία",
+    "category": "Κατηγορία",
+    "count": "Πλήθος",
+    "net": "Καθαρό",
+    "vat": "ΦΠΑ",
+    "gross": "Μικτό",
+    "percent": "%",
+    "new_expense": "+ Νέο έξοδο"
+  },
+  "transaction_drawer": {
+    "title": "Συναλλαγές",
+    "close": "Κλείσιμο",
+    "date": "Ημ/νία",
+    "counterparty": "Αντισυμβαλλόμενος",
+    "billing_type": "Χρέωση",
+    "net": "Καθαρό",
+    "vat": "ΦΠΑ",
+    "gross": "Μικτό",
+    "status": "Κατάσταση",
+    "empty": "Καμία συναλλαγή σε αυτή την κατηγορία."
+  },
+  "expense_form": {
+    "create_title": "Νέο έξοδο",
+    "edit_title": "Επεξεργασία εξόδου",
+    "category": "Κατηγορία",
+    "category_placeholder": "Επιλέξτε κατηγορία",
+    "vendor": "Προμηθευτής",
+    "billing_type": "Τύπος χρέωσης",
+    "one_time": "Εφάπαξ",
+    "recurring_monthly": "Μηνιαία",
+    "recurring_yearly": "Ετήσια",
+    "amount_net": "Ποσό (καθαρό)",
+    "vat_rate": "Συντελεστής ΦΠΑ (%)",
+    "amount_gross": "Μικτό",
+    "start_date": "Ημ/νία έναρξης",
+    "end_date": "Ημ/νία λήξης",
+    "payment_method": "Τρόπος πληρωμής",
+    "paid_by": "Πληρώθηκε από",
+    "notes": "Σημειώσεις",
+    "receipt": "Παραστατικό",
+    "upload_receipt": "Μεταφόρτωση παραστατικού",
+    "view_receipt": "Προβολή παραστατικού",
+    "submit": "Αποθήκευση",
+    "submit_and_mark_paid": "Αποθήκευση & σήμανση πληρωμένου",
+    "cancel": "Άκυρο",
+    "validation": {
+      "category_required": "Επιλέξτε κατηγορία.",
+      "amount_required": "Το καθαρό ποσό είναι υποχρεωτικό.",
+      "start_date_required": "Η ημερομηνία έναρξης είναι υποχρεωτική.",
+      "end_date_after_start": "Η ημ/νία λήξης πρέπει να είναι μεταγενέστερη της έναρξης.",
+      "file_too_large": "Το αρχείο ξεπερνά τα 10 MB.",
+      "file_wrong_type": "Επιτρέπονται μόνο PDF / PNG / JPEG / WebP."
+    }
+  },
+  "expense_detail": {
+    "title": "Έξοδο",
+    "mark_paid": "Σήμανση ως πληρωμένο",
+    "delete": "Διαγραφή",
+    "delete_confirm": "Διαγραφή αυτού του εξόδου; Η ενέργεια είναι μη αναστρέψιμη.",
+    "created_by": "Δημιουργήθηκε από",
+    "created_at": "Δημιουργήθηκε"
+  },
+  "expenses_list": {
+    "search_placeholder": "Αναζήτηση προμηθευτή…",
+    "status_all": "Όλα",
+    "status_pending": "Εκκρεμή",
+    "status_paid": "Πληρωμένα",
+    "category_all": "Όλες οι κατηγορίες",
+    "empty": "Δεν βρέθηκαν έξοδα με αυτά τα φίλτρα.",
+    "bulk_mark_paid": "Σήμανση επιλεγμένων ως πληρωμένα"
+  },
+  "export": {
+    "menu": "Εξαγωγή",
+    "csv": "Λήψη CSV",
+    "pdf": "Λήψη PDF"
+  },
+  "status": {
+    "pending": "Εκκρεμές",
+    "paid": "Πληρωμένο"
+  },
+  "errors": {
+    "load_failed": "Αποτυχία φόρτωσης αναφοράς.",
+    "save_failed": "Αποτυχία αποθήκευσης εξόδου.",
+    "delete_failed": "Αποτυχία διαγραφής εξόδου.",
+    "upload_failed": "Αποτυχία μεταφόρτωσης παραστατικού."
+  }
+}

@@ -41,8 +41,12 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
   const [label, setLabel] = useState(row.label ?? '');
   const [start, setStart] = useState(row.start_date ?? '');
   const [end, setEnd] = useState(row.end_date ?? '');
-  const [amount, setAmount] = useState(String(row.amount ?? ''));
+  const [amountNet, setAmountNet] = useState(String(row.amount_net ?? ''));
+  const [vatRate, setVatRate] = useState(String(row.vat_rate ?? 24));
   const [invoice, setInvoice] = useState(row.invoice_number ?? '');
+
+  const grossPreview =
+    Number(amountNet || 0) + (Number(amountNet || 0) * Number(vatRate || 0)) / 100;
 
   function commit(patch: Record<string, unknown>) {
     void update.mutateAsync({ id: row.id, patch });
@@ -102,11 +106,26 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
           type="number"
           step="0.01"
           min="0"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          onBlur={() => commit({ amount: Number(amount || 0) })}
+          value={amountNet}
+          onChange={(e) => setAmountNet(e.target.value)}
+          onBlur={() => commit({ amount_net: Number(amountNet || 0) })}
           className="h-8 text-xs"
         />
+      </td>
+      <td className="px-2 py-2">
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          max="100"
+          value={vatRate}
+          onChange={(e) => setVatRate(e.target.value)}
+          onBlur={() => commit({ vat_rate: Number(vatRate || 0) })}
+          className="h-8 w-16 text-xs"
+        />
+      </td>
+      <td className="px-2 py-2 text-xs tabular-nums text-slate-700">
+        €{grossPreview.toFixed(2)}
       </td>
       <td className="px-2 py-2">
         <button
@@ -159,23 +178,29 @@ export function PaymentsPanel({ dealId, services }: Props) {
     services[0]?.service_type ?? '',
   );
   const [newBilling, setNewBilling] = useState<PlannedService['billing_type']>('one_time');
-  const [newAmount, setNewAmount] = useState('');
+  const [newAmountNet, setNewAmountNet] = useState('');
+  const [newVatRate, setNewVatRate] = useState('24');
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
 
+  const newGross =
+    Number(newAmountNet || 0) + (Number(newAmountNet || 0) * Number(newVatRate || 0)) / 100;
+
   function submitNew() {
-    if (!newAmount) return;
+    if (!newAmountNet) return;
     void add.mutateAsync({
       service_type: newServiceType || null,
       billing_type: newBilling,
       label: newLabel || null,
-      amount: Number(newAmount),
+      amount_net: Number(newAmountNet),
+      vat_rate: Number(newVatRate),
       start_date: newStart || null,
       end_date: newEnd || null,
     });
     setShowAdd(false);
     setNewLabel('');
-    setNewAmount('');
+    setNewAmountNet('');
+    setNewVatRate('24');
     setNewStart('');
     setNewEnd('');
   }
@@ -204,7 +229,9 @@ export function PaymentsPanel({ dealId, services }: Props) {
                 <th className="px-2 py-2 font-normal">{t('payments.label')}</th>
                 <th className="px-2 py-2 font-normal">{t('payments.start')}</th>
                 <th className="px-2 py-2 font-normal">{t('payments.end')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.amount')}</th>
+                <th className="px-2 py-2 font-normal">{t('payments.amount_net')}</th>
+                <th className="px-2 py-2 font-normal">{t('payments.vat_rate')}</th>
+                <th className="px-2 py-2 font-normal">{t('payments.amount_gross')}</th>
                 <th className="px-2 py-2 font-normal">{t('payments.status')}</th>
                 <th className="px-2 py-2 font-normal">{t('payments.invoice_number')}</th>
                 <th className="px-2 py-2 font-normal text-right"></th>
@@ -279,18 +306,36 @@ export function PaymentsPanel({ dealId, services }: Props) {
             />
           </div>
           <div>
-            <Label className="text-xs">{t('payments.amount')}</Label>
+            <Label className="text-xs">{t('payments.amount_net')}</Label>
             <Input
               type="number"
               step="0.01"
               min="0"
-              value={newAmount}
-              onChange={(e) => setNewAmount(e.target.value)}
+              value={newAmountNet}
+              onChange={(e) => setNewAmountNet(e.target.value)}
               className="h-8 text-xs"
             />
           </div>
+          <div>
+            <Label className="text-xs">{t('payments.vat_rate')}</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              value={newVatRate}
+              onChange={(e) => setNewVatRate(e.target.value)}
+              className="h-8 text-xs"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">{t('payments.amount_gross')}</Label>
+            <div className="mt-1 rounded-md border bg-white px-2 py-1 text-xs tabular-nums">
+              €{newGross.toFixed(2)}
+            </div>
+          </div>
           <div className="col-span-2 sm:col-span-6">
-            <Button type="button" size="sm" onClick={submitNew} disabled={!newAmount}>
+            <Button type="button" size="sm" onClick={submitNew} disabled={!newAmountNet}>
               {t('payments.add')}
             </Button>
           </div>

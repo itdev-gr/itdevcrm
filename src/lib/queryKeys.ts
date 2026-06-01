@@ -53,4 +53,12 @@ export const queryKeys = {
   offer: (id: string) => ['offer', id] as const,
   offersForLead: (leadId: string) => ['offers', 'lead', leadId] as const,
   offersForDeal: (dealId: string) => ['offers', 'deal', dealId] as const,
+  expenseCategories: () => ['expense-categories'] as const,
+  expenses: (filters?: Record<string, string | undefined>) =>
+    filters ? (['expenses', filters] as const) : (['expenses'] as const),
+  expense: (id: string) => ['expense', id] as const,
+  accountingLedger: (from: string, to: string) =>
+    ['accounting-ledger', from, to] as const,
+  accountingPLSummary: (from: string, to: string) =>
+    ['accounting-pl-summary', from, to] as const,
 };

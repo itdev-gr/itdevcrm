@@ -1,0 +1,124 @@
+{
+  "page_title": "Accounting Report",
+  "page_subtitle": "Income, expenses, and net profit",
+  "expenses_page_title": "Expenses",
+  "nav": {
+    "report": "Report",
+    "expenses": "Expenses"
+  },
+  "range": {
+    "this_month": "This month",
+    "last_month": "Last month",
+    "this_year": "This year",
+    "last_year": "Last year",
+    "custom": "Custom range",
+    "from": "From",
+    "to": "To"
+  },
+  "kpi": {
+    "income": "Total income",
+    "expense": "Total expenses",
+    "net_profit": "Net profit",
+    "mrr": "MRR",
+    "net_suffix": "net",
+    "gross_suffix": "gross",
+    "ytd": "YTD"
+  },
+  "income_breakdown": {
+    "title": "Income by service",
+    "service": "Service",
+    "count": "Count",
+    "net": "Net",
+    "vat": "VAT",
+    "gross": "Gross",
+    "percent": "%",
+    "unknown": "Unspecified"
+  },
+  "expense_breakdown": {
+    "title": "Expenses by category",
+    "category": "Category",
+    "count": "Count",
+    "net": "Net",
+    "vat": "VAT",
+    "gross": "Gross",
+    "percent": "%",
+    "new_expense": "+ New expense"
+  },
+  "transaction_drawer": {
+    "title": "Transactions",
+    "close": "Close",
+    "date": "Date",
+    "counterparty": "Counterparty",
+    "billing_type": "Billing",
+    "net": "Net",
+    "vat": "VAT",
+    "gross": "Gross",
+    "status": "Status",
+    "empty": "No transactions in this slice."
+  },
+  "expense_form": {
+    "create_title": "New expense",
+    "edit_title": "Edit expense",
+    "category": "Category",
+    "category_placeholder": "Select a category",
+    "vendor": "Vendor",
+    "billing_type": "Billing type",
+    "one_time": "One-time",
+    "recurring_monthly": "Monthly",
+    "recurring_yearly": "Yearly",
+    "amount_net": "Amount (net)",
+    "vat_rate": "VAT rate (%)",
+    "amount_gross": "Gross",
+    "start_date": "Start date",
+    "end_date": "End date",
+    "payment_method": "Payment method",
+    "paid_by": "Paid by",
+    "notes": "Notes",
+    "receipt": "Receipt",
+    "upload_receipt": "Upload receipt",
+    "view_receipt": "View receipt",
+    "submit": "Save",
+    "submit_and_mark_paid": "Save & mark paid",
+    "cancel": "Cancel",
+    "validation": {
+      "category_required": "Pick a category.",
+      "amount_required": "Net amount is required.",
+      "start_date_required": "Start date is required.",
+      "end_date_after_start": "End date must be on or after start date.",
+      "file_too_large": "File is larger than 10 MB.",
+      "file_wrong_type": "Only PDF / PNG / JPEG / WebP are allowed."
+    }
+  },
+  "expense_detail": {
+    "title": "Expense",
+    "mark_paid": "Mark paid",
+    "delete": "Delete",
+    "delete_confirm": "Delete this expense? This cannot be undone.",
+    "created_by": "Created by",
+    "created_at": "Created"
+  },
+  "expenses_list": {
+    "search_placeholder": "Search vendor…",
+    "status_all": "All",
+    "status_pending": "Pending",
+    "status_paid": "Paid",
+    "category_all": "All categories",
+    "empty": "No expenses match these filters.",
+    "bulk_mark_paid": "Mark selected paid"
+  },
+  "export": {
+    "menu": "Export",
+    "csv": "Download CSV",
+    "pdf": "Download PDF"
+  },
+  "status": {
+    "pending": "Pending",
+    "paid": "Paid"
+  },
+  "errors": {
+    "load_failed": "Could not load the report.",
+    "save_failed": "Could not save the expense.",
+    "delete_failed": "Could not delete the expense.",
+    "upload_failed": "Could not upload the receipt."
+  }
+}
