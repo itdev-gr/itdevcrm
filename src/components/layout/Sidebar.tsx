@@ -63,7 +63,7 @@ export function Sidebar() {
       </NavLink>
       {(isAdmin || isSales) && (
         <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-slate-500">Sales</p>
+          <p className="px-3 text-xs font-medium uppercase text-slate-500">{t('common:nav.section.sales')}</p>
           <NavLink
             to="/sales/clients"
             className={({ isActive }) =>
@@ -84,7 +84,7 @@ export function Sidebar() {
       )}
       {(isAdmin || isAccounting) && (
         <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-slate-500">Accounting</p>
+          <p className="px-3 text-xs font-medium uppercase text-slate-500">{t('common:nav.section.accounting')}</p>
           <NavLink
             to="/accounting/clients"
             className={({ isActive }) =>
@@ -133,7 +133,7 @@ export function Sidebar() {
       )}
       {visibleTechGroups.length > 0 && (
         <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-slate-500">Technical</p>
+          <p className="px-3 text-xs font-medium uppercase text-slate-500">{t('common:nav.section.technical')}</p>
           {visibleTechGroups.map((g) => (
             <div key={g} className="space-y-0.5">
               <NavLink

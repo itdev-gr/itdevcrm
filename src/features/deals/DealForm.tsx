@@ -89,7 +89,9 @@ export function DealForm({ initial }: Props) {
   // fields. Use a one-shot ref-style sentinel so subsequent realtime refreshes
   // don't clobber edits in progress.
   const seededRef = useState<{ done: boolean }>({ done: false })[0];
+   
   if (fullClient && !seededRef.done) {
+    // eslint-disable-next-line react-hooks/immutability -- one-shot seeding sentinel; ref-style pattern via useState
     seededRef.done = true;
     setContactInfo((fullClient as unknown as { contact_info?: string | null }).contact_info ?? '');
     setAdditionalContacts(

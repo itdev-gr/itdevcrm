@@ -4,7 +4,12 @@
   "nav": {
     "home": "Home",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "section": {
+      "sales": "Sales",
+      "accounting": "Accounting",
+      "technical": "Technical"
+    }
   },
   "locale": {
     "label": "Language",

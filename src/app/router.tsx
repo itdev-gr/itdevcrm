@@ -83,7 +83,9 @@ const AccountingExpensesPage = lazyPage(
 );
 // JobsKanbanPage takes a `serviceType` prop, so we can't go through the
 // unknown-typed lazyPage helper — invoke React.lazy directly to preserve the
-// original component's prop signature.
+// original component's prop signature. The fast-refresh-only-export-components
+// rule misreads the lazy() pattern; intent is component, not utility.
+ 
 const JobsKanbanPage = lazy(() =>
   import('@/features/jobs/JobsKanbanPage').then((m) => ({ default: m.JobsKanbanPage })),
 );

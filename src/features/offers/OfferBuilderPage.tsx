@@ -69,6 +69,7 @@ export function OfferBuilderPage() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Initialise category once catalog loads
+   
   useEffect(() => {
     if (categories.length > 0 && !selectedCategory) {
       setSelectedCategory(categories[0] ?? '');
@@ -95,6 +96,7 @@ export function OfferBuilderPage() {
   // country dictates — Greece 24%, Cyprus 0%, fallback 24%. The user can
   // still override the field manually.
   const vatSeededRef = useRef(false);
+   
   useEffect(() => {
     if (!lead) return;
     const name =
@@ -115,6 +117,7 @@ export function OfferBuilderPage() {
   // with them already in the cart so they don't have to re-pick. One-shot via
   // a ref so subsequent realtime refreshes of the lead don't clobber edits.
   const seededRef = useRef(false);
+   
   useEffect(() => {
     if (seededRef.current) return;
     if (!lead || catalog.length === 0) return;

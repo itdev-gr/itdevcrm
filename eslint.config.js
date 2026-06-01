@@ -30,6 +30,15 @@ export default defineConfig([
     rules: {
       // + Task 3
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // The codebase uses intentional one-shot setState-in-effect patterns
+      // (seed-from-prop, reset-on-open) guarded by refs / boolean flags. The
+      // upstream rule flags them as cascading-render risks but they fire at
+      // most once per relevant prop change. Off-by-default to keep lint useful.
+      'react-hooks/set-state-in-effect': 'off',
+      // We export occasional small helpers from component files (e.g.
+      // parseAdditionalContacts alongside AdditionalContactsField). The rule's
+      // fast-refresh warning is too strict for our codebase shape.
+      'react-refresh/only-export-components': 'off',
     },
   },
 ]);

@@ -4,7 +4,12 @@
   "nav": {
     "home": "Αρχική",
     "login": "Σύνδεση",
-    "logout": "Αποσύνδεση"
+    "logout": "Αποσύνδεση",
+    "section": {
+      "sales": "Πωλήσεις",
+      "accounting": "Λογιστήριο",
+      "technical": "Τεχνικό"
+    }
   },
   "locale": {
     "label": "Γλώσσα",

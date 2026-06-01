@@ -42,6 +42,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
   const [completed, setCompleted] = useState(false);
 
   // Reset state every time the dialog opens with a different target.
+   
   useEffect(() => {
     if (!open) return;
     if (task) {

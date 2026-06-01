@@ -20,6 +20,7 @@ export function useUploadAttachment() {
       if (vars.file.size > MAX_BYTES) throw new Error('file_too_large');
       const userId = useAuthStore.getState().user?.id;
       if (!userId) throw new Error('not_authenticated');
+      // eslint-disable-next-line react-hooks/purity -- mutationFn body runs imperatively, not during render
       const path = `${vars.parent_type}/${vars.parent_id}/${Date.now()}-${vars.file.name}`;
       const { error: e1 } = await supabase.storage.from('attachments').upload(path, vars.file, {
         contentType: vars.file.type,
