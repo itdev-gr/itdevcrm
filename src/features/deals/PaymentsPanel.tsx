@@ -42,7 +42,9 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
   const [label, setLabel] = useState(row.label ?? '');
   const [start, setStart] = useState(row.start_date ?? '');
   const [end, setEnd] = useState(row.end_date ?? '');
-  const [amountNet, setAmountNet] = useState(String(row.amount_net ?? ''));
+  const [amountNet, setAmountNet] = useState(
+    row.amount_net != null ? Number(row.amount_net).toFixed(2) : '',
+  );
   const [vatRate, setVatRate] = useState(String(row.vat_rate ?? 24));
   const [invoice, setInvoice] = useState(row.invoice_number ?? '');
 
