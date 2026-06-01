@@ -517,12 +517,51 @@ Each migration carries its own `-- ROLLBACK:` block (drafted inline in the data-
 
 ## Changes / Revert
 
-This section will be backfilled at the end of implementation with the actual commit hashes (per `feedback_track_changes_for_revert`). Tracked here so the structure is reserved:
+Shipped to `main` on 2026-06-01. Every commit is atomic and revertable via `git revert <hash>`. Each DB migration also carries a `-- ROLLBACK:` block inline.
 
-- Migrations 1–8 listed above — rollback SQL in each migration's `-- ROLLBACK:` block.
-- Hook commits (`feat(accounting): …`) — revert by `git revert <hash>`.
-- Component commits — revert by `git revert <hash>`.
-- Page commits — revert by `git revert <hash>`.
-- i18n commits — revert by `git revert <hash>`.
+**Database (migrations + tests):**
 
-Complete revert order (most-recent first): components/pages/hooks/i18n → views → cron extension → `deal_payments` VAT columns → `ensure_recurring_expenses` function → receipts bucket → `expenses` table → `expense_categories` table.
+- `b686048` feat(db): expense_categories table + 15-row seed
+- `e610ea7` feat(db): expenses table with VAT generated columns + admin RLS
+- `f828fa8` feat(db): private expense-receipts storage bucket (admin-only)
+- `9d6b8e2` feat(db): ensure_recurring_expenses() auto-extends recurring chains
+- `3a9b885` feat(db): deal_payments amount_net + vat_rate + generated vat/gross (country-aware backfill, verified against live data)
+- `447e7bd` feat(db): accounting_ledger_v + accounting_pl_summary_v + expenses cron
+
+**Frontend foundation (i18n, query keys, existing-UI VAT update):**
+
+- `9ea0b56` feat(accounting,deals,i18n): VAT-aware payments UI + accounting_report ns + query keys
+
+**Hooks:**
+
+- `873af1d` feat(accounting): useExpenseCategories + useExpenses + useExpensesRealtime
+- `1075cba` feat(accounting): useLedger + usePLSummary + useMRR read hooks
+- `1362d57` feat(accounting): useCreateExpense + useUpdateExpense + useMarkExpensePaid + useDeleteExpense + useUploadReceipt
+- `e4baa30` feat(accounting): utils (formatRange/exportCSV/exportPDF) + useExpenseDetail + jspdf
+
+**Components, pages, routes:**
+
+- `6fe05ba` feat(accounting): components + pages + admin-gated routes + sidebar
+
+**Documentation:**
+
+- `135e89c` docs(plan): country-aware deal_payments VAT backfill + script-name fix
+- `0cdd765` docs(spec): accounting report — incomes + expenses with VAT
+- `79f500f` docs(plan): accounting report — 39-task TDD implementation plan
+
+**Full revert order (most-recent first):**
+
+1. `6fe05ba` — components/pages/routes/sidebar
+2. `e4baa30` — utils + useExpenseDetail + jspdf
+3. `1362d57` — mutation hooks
+4. `1075cba` — read hooks (ledger/PL/MRR)
+5. `873af1d` — list hooks (categories/expenses/realtime)
+6. `9ea0b56` — i18n + queryKeys + PaymentsPanel VAT UI
+7. `447e7bd` — views + cron (run the migration's `-- ROLLBACK:` block as inverse SQL)
+8. `3a9b885` — deal_payments VAT columns (rollback also restores pre-migration `seed_deal_payments` and `ensure_recurring_payments` definitions from `20260503000010_deal_payments.sql`)
+9. `9d6b8e2` — `ensure_recurring_expenses` function
+10. `f828fa8` — receipts bucket
+11. `e610ea7` — `expenses` table
+12. `b686048` — `expense_categories` table
+
+For frontend reverts, `git revert <hash>` is sufficient. For DB reverts, write a new migration that runs the corresponding `-- ROLLBACK:` block, push, then `git revert` the original migration commit. Never edit a pushed migration in place.
