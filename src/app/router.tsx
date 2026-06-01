@@ -1,6 +1,7 @@
 import { lazy, type ComponentType } from 'react';
 import { createBrowserRouter, Outlet } from 'react-router-dom';
 import { RequireGroup } from '@/components/auth/RequireGroup';
+import { AdminGuard } from '@/components/auth/AdminGuard';
 import { ShellLayout } from './ShellLayout';
 import { SetPasswordLayout } from './SetPasswordLayout';
 import { AdminLayout } from './AdminLayout';
@@ -72,6 +73,14 @@ const AccountingRecurringPage = lazyPage(
   () => import('@/features/accounting/AccountingRecurringPage'),
   'AccountingRecurringPage',
 );
+const AccountingReportPage = lazyPage(
+  () => import('@/features/accounting_report/ReportPage'),
+  'ReportPage',
+);
+const AccountingExpensesPage = lazyPage(
+  () => import('@/features/accounting_report/ExpensesPage'),
+  'ExpensesPage',
+);
 // JobsKanbanPage takes a `serviceType` prop, so we can't go through the
 // unknown-typed lazyPage helper — invoke React.lazy directly to preserve the
 // original component's prop signature.
@@ -136,6 +145,8 @@ export const router = createBrowserRouter([
           { path: 'onboarding', element: <AccountingOnboardingKanbanPage /> },
           { path: 'clients', element: <AccountingClientsPage /> },
           { path: 'recurring', element: <AccountingRecurringPage /> },
+          { path: 'report', element: <AdminGuard><AccountingReportPage /></AdminGuard> },
+          { path: 'expenses', element: <AdminGuard><AccountingExpensesPage /></AdminGuard> },
         ],
       },
       {

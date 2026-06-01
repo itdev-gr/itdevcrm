@@ -109,6 +109,26 @@ export function Sidebar() {
           >
             Recurring
           </NavLink>
+          {isAdmin && (
+            <>
+              <NavLink
+                to="/accounting/report"
+                className={({ isActive }) =>
+                  `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+                }
+              >
+                {t('accounting_report:nav.report')}
+              </NavLink>
+              <NavLink
+                to="/accounting/expenses"
+                className={({ isActive }) =>
+                  `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+                }
+              >
+                {t('accounting_report:nav.expenses')}
+              </NavLink>
+            </>
+          )}
         </div>
       )}
       {visibleTechGroups.length > 0 && (
