@@ -62,6 +62,8 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
     if (!startDate) return setError(t('expense_form.validation.start_date_required'));
     if (endDate && endDate < startDate)
       return setError(t('expense_form.validation.end_date_after_start'));
+    if (markPaid && !paymentMethod.trim())
+      return setError(t('expense_form.validation.payment_method_required'));
     try {
       await create.mutateAsync({
         categoryId,
