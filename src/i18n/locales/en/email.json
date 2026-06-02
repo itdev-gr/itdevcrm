@@ -1,0 +1,21 @@
+{
+  "dialog": {
+    "title": "Send email",
+    "to": "To",
+    "subject": "Subject",
+    "body": "Message",
+    "send": "Send",
+    "cancel": "Cancel",
+    "sent": "Email sent.",
+    "failed": "Sending failed.",
+    "to_required": "Recipient email is required."
+  },
+  "offer": {
+    "subject": "Your offer from ITDev",
+    "body": "Dear {{name}},\n\nThank you for your interest. You can view your offer here: {{offerUrl}}\n\nBest regards,\nThe ITDev team"
+  },
+  "won": {
+    "subject": "Welcome to ITDev",
+    "body": "Dear {{name}},\n\nWe're glad to start working together! We'll be in touch shortly with next steps.\n\nBest regards,\nThe ITDev team"
+  }
+}
