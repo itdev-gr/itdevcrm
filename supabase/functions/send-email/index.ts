@@ -20,6 +20,7 @@ const DRY_RUN = (Deno.env.get('EMAIL_DRY_RUN') ?? 'false').toLowerCase() === 'tr
 const G_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') ?? '';
 const G_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '';
 const G_TOKEN_KEY = Deno.env.get('GMAIL_TOKEN_KEY') ?? '';
+const DRAIN_SECRET = Deno.env.get('EMAIL_DRAIN_SECRET') ?? '';
 
 const admin = createClient(URL, SERVICE_KEY);
 
@@ -123,7 +124,7 @@ Deno.serve(async (req) => {
 
   const authHeader = req.headers.get('Authorization') ?? '';
   const token = authHeader.replace('Bearer ', '');
-  const isServiceRole = token === SERVICE_KEY;
+  const isServiceRole = token === SERVICE_KEY || (DRAIN_SECRET !== '' && token === DRAIN_SECRET);
 
   const body = (await req.json().catch(() => null)) as (SendInput & { drain?: boolean }) | null;
   if (!body) return json({ error: 'Bad request' }, 400);
