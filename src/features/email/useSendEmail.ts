@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 export type SendEmailVars = {
-  identity: 'sales' | 'accounting' | 'internal';
+  identity: 'sales' | 'accounting' | 'internal' | 'personal';
   to: string;
   subject: string;
   body: string; // plain text; newlines become <br/> in html

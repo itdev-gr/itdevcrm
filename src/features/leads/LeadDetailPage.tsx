@@ -257,7 +257,7 @@ export function LeadDetailPage() {
 
       <SendEmailDialog
         open={offerEmailOpen}
-        identity="sales"
+        identity="personal"
         to={lead.email ?? ''}
         subject={offerDraft.subject}
         body={offerDraft.body}

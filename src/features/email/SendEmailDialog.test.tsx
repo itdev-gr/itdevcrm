@@ -6,6 +6,7 @@ import '@/lib/i18n';
 
 const { mutateAsync } = vi.hoisted(() => ({ mutateAsync: vi.fn() }));
 vi.mock('./useSendEmail', () => ({ useSendEmail: () => ({ mutateAsync, isPending: false }) }));
+vi.mock('./useGoogleConnection', () => ({ useGoogleConnection: () => ({ connected: false, email: null, connect: vi.fn(), disconnect: vi.fn(), isLoading: false }) }));
 
 import { SendEmailDialog } from './SendEmailDialog';
 
@@ -29,5 +30,10 @@ describe('SendEmailDialog', () => {
     expect(mutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({ identity: 'sales', to: 'c@x.gr', subject: 'S', body: 'B' }),
     );
+  });
+
+  it('shows the connect prompt for a personal send when not connected', () => {
+    render(wrap(<SendEmailDialog open identity="personal" to="c@x.gr" subject="S" body="B" onClose={() => {}} />));
+    expect(screen.getAllByText(/Connect Google|Συνδέστε το Google/).length).toBeGreaterThan(0);
   });
 });

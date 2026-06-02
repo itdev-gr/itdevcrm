@@ -151,7 +151,7 @@ export function DealDetailPage() {
           )}
           <SendEmailDialog
             open={welcomeOpen}
-            identity="sales"
+            identity="personal"
             to={deal.client?.email ?? ''}
             subject={wonWelcomeDraft.subject}
             body={wonWelcomeDraft.body}
