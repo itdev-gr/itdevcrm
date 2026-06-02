@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
@@ -20,6 +22,8 @@ import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
+import { SendEmailDialog } from '@/features/email/SendEmailDialog';
+import { buildWonDraft } from '@/features/email/buildDraft';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -39,11 +43,13 @@ export function DealDetailPage() {
   const wonBy = deal?.won_by_user_id
     ? owners.find((o) => o.user_id === deal.won_by_user_id)
     : null;
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !deal)
     return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
 
+  const wonWelcomeDraft = buildWonDraft(deal.client?.name ?? '');
   const completed = !!deal.accounting_completed_at;
   const onAccountingKanban = !!deal.accounting_stage_id && !completed;
   const dealServices: PlannedService[] = Array.isArray(deal.services_planned)
@@ -138,6 +144,20 @@ export function DealDetailPage() {
               </span>
             </div>
           )}
+          {deal.won_by_user_id && (
+            <Button variant="outline" size="sm" onClick={() => setWelcomeOpen(true)}>
+              Αποστολή welcome email
+            </Button>
+          )}
+          <SendEmailDialog
+            open={welcomeOpen}
+            identity="sales"
+            to={deal.client?.email ?? ''}
+            subject={wonWelcomeDraft.subject}
+            body={wonWelcomeDraft.body}
+            dedupeKey={`won:${deal.id}`}
+            onClose={() => setWelcomeOpen(false)}
+          />
           <div className="flex items-center gap-2">
             <Label htmlFor="owner" className="text-sm">
               {tLeads('owner.label')}:
