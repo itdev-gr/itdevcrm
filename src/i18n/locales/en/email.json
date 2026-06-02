@@ -17,5 +17,14 @@
   "won": {
     "subject": "Welcome to ITDev",
     "body": "Dear {{name}},\n\nWe're glad to start working together! We'll be in touch shortly with next steps.\n\nBest regards,\nThe ITDev team"
+  },
+  "connect": {
+    "title": "Google connection",
+    "connect": "Connect Google",
+    "connected_as": "Connected as {{email}}",
+    "disconnect": "Disconnect",
+    "needed": "Connect Google to send from your address.",
+    "success": "Google connected.",
+    "error": "Google connection failed."
   }
 }
