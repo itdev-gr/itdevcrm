@@ -51,7 +51,7 @@ export function Sidebar() {
       );
 
   return (
-    <aside className="hidden w-56 flex-col gap-2 self-stretch border-r bg-slate-50 p-4 md:flex">
+    <aside className="hidden w-56 flex-col gap-2 self-stretch overflow-y-auto border-r bg-slate-50 p-4 md:flex">
       <NavLink
         to="/"
         end
