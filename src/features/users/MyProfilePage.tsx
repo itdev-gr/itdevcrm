@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
+import { useGoogleConnection } from '@/features/email/useGoogleConnection';
 import type { Database } from '@/types/supabase';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -38,8 +39,11 @@ export function MyProfilePage() {
 
 function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: string }) {
   const { t, i18n } = useTranslation('users');
+  const { t: tEmail } = useTranslation('email');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const qc = useQueryClient();
+  const google = useGoogleConnection();
+  const googleResult = new URLSearchParams(window.location.search).get('google');
 
   const [fullName, setFullName] = useState(p.full_name ?? '');
   const [email, setEmail] = useState(p.email ?? '');
@@ -165,6 +169,37 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
             })}
           </p>
         </div>
+      </div>
+      <div className="rounded-md border p-4">
+        <h2 className="text-sm font-medium">{tEmail('connect.title')}</h2>
+        {googleResult === 'connected' && (
+          <p className="mt-1 text-sm text-green-700">{tEmail('connect.success')}</p>
+        )}
+        {googleResult === 'error' && (
+          <p className="mt-1 text-sm text-red-600">{tEmail('connect.error')}</p>
+        )}
+        {google.connected ? (
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <span className="text-sm text-slate-600">
+              {tEmail('connect.connected_as', { email: google.email })}
+            </span>
+            <button
+              type="button"
+              className="rounded border px-3 py-1.5 text-sm"
+              onClick={() => google.disconnect()}
+            >
+              {tEmail('connect.disconnect')}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="mt-2 rounded bg-neutral-900 px-3 py-1.5 text-sm text-white"
+            onClick={() => google.connect()}
+          >
+            {tEmail('connect.connect')}
+          </button>
+        )}
       </div>
       <div className="text-xs text-slate-500">{autoSaveLabel(status, lang)}</div>
     </div>
