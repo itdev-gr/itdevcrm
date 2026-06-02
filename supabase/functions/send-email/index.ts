@@ -2,6 +2,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 import { IDENTITIES, type Identity } from './identities.ts';
 import { renderTemplate } from './templates.ts';
+import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +17,9 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const DRY_RUN = (Deno.env.get('EMAIL_DRY_RUN') ?? 'false').toLowerCase() === 'true';
+const G_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') ?? '';
+const G_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '';
+const G_TOKEN_KEY = Deno.env.get('GMAIL_TOKEN_KEY') ?? '';
 
 const admin = createClient(URL, SERVICE_KEY);
 
@@ -86,6 +90,32 @@ async function drain(): Promise<{ processed: number; sent: number; failed: numbe
   return { processed: (rows ?? []).length, sent, failed };
 }
 
+async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
+  if (dedupeKey) {
+    const { data: prior } = await admin.from('email_log').select('id').eq('dedupe_key', dedupeKey).eq('status', 'sent').limit(1);
+    if (prior && prior.length > 0) return { status: 'skipped' };
+  }
+  const { data: acct } = await admin.from('user_google_accounts').select('google_email, refresh_token_enc, revoked_at').eq('user_id', uid).maybeSingle();
+  if (!acct || acct.revoked_at) return { status: 'not_connected' };
+
+  const subject = String(data.subject ?? '');
+  const html = String(data.html ?? '');
+  if (DRY_RUN) {
+    await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'sent', resend_id: 'dry-run', dedupe_key: dedupeKey });
+    return { status: 'sent', id: 'dry-run' };
+  }
+  const refresh = await decryptToken(acct.refresh_token_enc, G_TOKEN_KEY);
+  const access = await refreshAccessToken(refresh, G_CLIENT_ID, G_CLIENT_SECRET);
+  if (!access) {
+    await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'failed', dedupe_key: dedupeKey, error: 'token_refresh_failed' });
+    return { status: 'failed', error: 'token_refresh_failed' };
+  }
+  const raw = buildMime({ from: acct.google_email, to, subject, html });
+  const res = await sendGmail(access, raw);
+  await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: res.ok ? 'sent' : 'failed', resend_id: res.id ?? null, dedupe_key: dedupeKey, error: res.ok ? null : res.error });
+  return res.ok ? { status: 'sent', id: res.id } : { status: 'failed', error: res.error };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -102,6 +132,17 @@ Deno.serve(async (req) => {
   if (body.drain) {
     if (!isServiceRole) return json({ error: 'Forbidden' }, 403);
     return json(await drain());
+  }
+
+  // Personal send: send as the connected user via Gmail (requires a user JWT).
+  if ((body.identity as string) === 'personal') {
+    if (isServiceRole) return json({ error: 'personal requires a user' }, 400);
+    const caller = createClient(URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
+    const { data: u } = await caller.auth.getUser();
+    if (!u?.user) return json({ error: 'Unauthorized' }, 401);
+    const r = await sendPersonal(u.user.id, body.to, body.data ?? {}, body.dedupeKey ?? null);
+    if (r.status === 'not_connected') return json({ status: 'not_connected' }, 409);
+    return json({ status: r.status, id: r.id, error: r.error }, r.status === 'failed' ? 502 : 200);
   }
 
   // Single-send mode: allow service role OR an authenticated admin/staff user.
