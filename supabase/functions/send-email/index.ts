@@ -92,6 +92,10 @@ async function drain(): Promise<{ processed: number; sent: number; failed: numbe
 }
 
 async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
+  // Reject header injection / malformed recipients before building the MIME message.
+  if (/[\r\n]/.test(to) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
+    return { status: 'failed', error: 'invalid_recipient' };
+  }
   if (dedupeKey) {
     const { data: prior } = await admin.from('email_log').select('id').eq('dedupe_key', dedupeKey).eq('status', 'sent').limit(1);
     if (prior && prior.length > 0) return { status: 'skipped' };
@@ -113,8 +117,9 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
   }
   const raw = buildMime({ from: acct.google_email, to, subject, html });
   const res = await sendGmail(access, raw);
+  // Keep the raw Gmail error in email_log for debugging; return a generic code to the client.
   await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: res.ok ? 'sent' : 'failed', resend_id: res.id ?? null, dedupe_key: dedupeKey, error: res.ok ? null : res.error });
-  return res.ok ? { status: 'sent', id: res.id } : { status: 'failed', error: res.error };
+  return res.ok ? { status: 'sent', id: res.id } : { status: 'failed', error: 'send_failed' };
 }
 
 Deno.serve(async (req) => {
