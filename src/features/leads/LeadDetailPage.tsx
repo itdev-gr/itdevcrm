@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -19,6 +20,8 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
+import { SendEmailDialog } from '@/features/email/SendEmailDialog';
+import { buildOfferDraft } from '@/features/email/buildDraft';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -72,6 +75,23 @@ export function LeadDetailPage() {
     staleTime: 30_000,
   });
 
+  const [offerEmailOpen, setOfferEmailOpen] = useState(false);
+  const latestOffer = useQuery({
+    queryKey: ['latest-offer', leadId] as const,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error: e } = await supabase
+        .from('offers')
+        .select('id')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (e) throw new Error(e.message);
+      return data?.[0]?.id ?? null;
+    },
+    enabled: !!leadId,
+    staleTime: 30_000,
+  });
+
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !lead)
     return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
@@ -92,6 +112,11 @@ export function LeadDetailPage() {
     .filter((s) => s.board === 'sales' && !s.archived)
     .sort((a, b) => a.position - b.position);
   const wonStage = salesStages.find((s) => s.code === 'won');
+  const currentStageCode = salesStages.find((s) => s.id === lead.stage_id)?.code;
+  const offerDraft = buildOfferDraft(
+    lead.contact_first_name || lead.company_name || '',
+    latestOffer.data ? `${window.location.origin}/offers/${latestOffer.data}` : window.location.origin,
+  );
 
   async function onChangeStage(targetStageId: string) {
     if (!lead || !targetStageId || targetStageId === lead.stage_id) return;
@@ -177,6 +202,11 @@ export function LeadDetailPage() {
               </select>
             </div>
           )}
+          {currentStageCode === 'offer_sent' && (
+            <Button variant="outline" size="sm" onClick={() => setOfferEmailOpen(true)}>
+              Αποστολή προσφοράς
+            </Button>
+          )}
           {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}
           <Button
             variant="outline"
@@ -224,6 +254,16 @@ export function LeadDetailPage() {
           <OffersTab leadId={leadId} />
         </TabsContent>
       </Tabs>
+
+      <SendEmailDialog
+        open={offerEmailOpen}
+        identity="sales"
+        to={lead.email ?? ''}
+        subject={offerDraft.subject}
+        body={offerDraft.body}
+        dedupeKey={`offer:${lead.id}`}
+        onClose={() => setOfferEmailOpen(false)}
+      />
     </div>
   );
 }
