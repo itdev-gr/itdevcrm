@@ -6,7 +6,8 @@
     "fields": "Field rules",
     "stages": "Pipeline stages",
     "service_packages": "Service packages",
-    "permissions_test": "Permissions test page"
+    "permissions_test": "Permissions test page",
+    "email_automations": "Email automations"
   },
   "settings": {
     "title": "Settings"
@@ -129,5 +130,20 @@
     "description": "Use this page to verify that field-level rules hide / lock fields for your user.",
     "demo_field": "Demo field",
     "evaluation": "Evaluated mode: {{mode}}"
+  },
+  "email_automations": {
+    "title": "Email automations",
+    "global_switch": "Automations active",
+    "one_shots": "Single emails",
+    "sequences": "Sequences (cadences)",
+    "templates": "Email texts",
+    "subject": "Subject",
+    "body": "Body",
+    "variables": "Available variables",
+    "save": "Save",
+    "reset": "Reset",
+    "step_day": "Day",
+    "step_email": "Email",
+    "step_enabled": "Active"
   }
 }

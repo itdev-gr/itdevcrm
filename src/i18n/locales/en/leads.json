@@ -105,5 +105,10 @@
   "empty": "No leads yet. Click \"Add lead\" to create one.",
   "offer_email": {
     "send": "Send offer"
+  },
+  "automations": {
+    "label": "Auto emails",
+    "opted_out": "Unsubscribed",
+    "opted_out_hint": "The lead unsubscribed from automated emails."
   }
 }

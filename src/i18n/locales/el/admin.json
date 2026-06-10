@@ -6,7 +6,8 @@
     "fields": "Κανόνες πεδίων",
     "stages": "Στάδια Pipeline",
     "service_packages": "Πακέτα υπηρεσιών",
-    "permissions_test": "Δοκιμή δικαιωμάτων"
+    "permissions_test": "Δοκιμή δικαιωμάτων",
+    "email_automations": "Αυτοματισμοί email"
   },
   "settings": {
     "title": "Ρυθμίσεις"
@@ -129,5 +130,20 @@
     "description": "Χρησιμοποιήστε αυτή τη σελίδα για να επιβεβαιώσετε ότι οι κανόνες πεδίων κρύβουν / κλειδώνουν πεδία για τον χρήστη σας.",
     "demo_field": "Demo πεδίο",
     "evaluation": "Αξιολογημένος τρόπος: {{mode}}"
+  },
+  "email_automations": {
+    "title": "Αυτοματισμοί email",
+    "global_switch": "Αυτοματισμοί ενεργοί",
+    "one_shots": "Μεμονωμένα emails",
+    "sequences": "Ακολουθίες (cadences)",
+    "templates": "Κείμενα email",
+    "subject": "Θέμα",
+    "body": "Κείμενο",
+    "variables": "Διαθέσιμες μεταβλητές",
+    "save": "Αποθήκευση",
+    "reset": "Επαναφορά",
+    "step_day": "Ημέρα",
+    "step_email": "Email",
+    "step_enabled": "Ενεργό"
   }
 }

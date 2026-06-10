@@ -8,6 +8,7 @@ const SETTINGS_TABS = [
   { to: '/admin/fields', key: 'fields' },
   { to: '/admin/stages', key: 'stages' },
   { to: '/admin/service-packages', key: 'service_packages' },
+  { to: '/admin/email-automations', key: 'email_automations' },
 ] as const;
 
 export function AdminLayout() {

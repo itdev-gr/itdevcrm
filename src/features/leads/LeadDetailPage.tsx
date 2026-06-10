@@ -208,6 +208,25 @@ export function LeadDetailPage() {
             </Button>
           )}
           {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}
+          {lead.email_opt_out ? (
+            <span
+              className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700"
+              title={t('automations.opted_out_hint')}
+            >
+              {t('automations.opted_out')}
+            </span>
+          ) : (
+            <label className="flex items-center gap-1.5 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={lead.automations_enabled}
+                onChange={(e) =>
+                  update.mutate({ id: lead.id, patch: { automations_enabled: e.target.checked } })
+                }
+              />
+              {t('automations.label')}
+            </label>
+          )}
           <Button
             variant="outline"
             size="sm"

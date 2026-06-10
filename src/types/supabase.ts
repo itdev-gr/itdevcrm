@@ -691,6 +691,207 @@ export type Database = {
           },
         ]
       }
+      email_automation_settings: {
+        Row: {
+          description: string
+          enabled: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          description: string
+          enabled?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_log: {
+        Row: {
+          created_at: string
+          dedupe_key: string | null
+          error: string | null
+          id: string
+          identity: string
+          resend_id: string | null
+          status: string
+          template_key: string
+          to_email: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key?: string | null
+          error?: string | null
+          id?: string
+          identity: string
+          resend_id?: string | null
+          status: string
+          template_key: string
+          to_email: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string | null
+          error?: string | null
+          id?: string
+          identity?: string
+          resend_id?: string | null
+          status?: string
+          template_key?: string
+          to_email?: string
+        }
+        Relationships: []
+      }
+      email_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          data: Json
+          dedupe_key: string | null
+          id: string
+          identity: string
+          last_error: string | null
+          sent_at: string | null
+          status: string
+          template_key: string
+          to_email: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          data?: Json
+          dedupe_key?: string | null
+          id?: string
+          identity: string
+          last_error?: string | null
+          sent_at?: string | null
+          status?: string
+          template_key: string
+          to_email: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          data?: Json
+          dedupe_key?: string | null
+          id?: string
+          identity?: string
+          last_error?: string | null
+          sent_at?: string | null
+          status?: string
+          template_key?: string
+          to_email?: string
+        }
+        Relationships: []
+      }
+      email_sequence_steps: {
+        Row: {
+          day_offset: number
+          enabled: boolean
+          id: string
+          position: number
+          sequence_id: string
+          template_key: string
+        }
+        Insert: {
+          day_offset: number
+          enabled?: boolean
+          id?: string
+          position: number
+          sequence_id: string
+          template_key: string
+        }
+        Update: {
+          day_offset?: number
+          enabled?: boolean
+          id?: string
+          position?: number
+          sequence_id?: string
+          template_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sequence_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "email_sequences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_sequence_steps_template_key_fkey"
+            columns: ["template_key"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      email_sequences: {
+        Row: {
+          active_stage_codes: string[]
+          description: string
+          display_name: string
+          enabled: boolean
+          id: string
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          active_stage_codes: string[]
+          description: string
+          display_name: string
+          enabled?: boolean
+          id?: string
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          active_stage_codes?: string[]
+          description?: string
+          display_name?: string
+          enabled?: boolean
+          id?: string
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          client_facing: boolean
+          description: string
+          key: string
+          subject: string
+          updated_at: string
+          variables: string
+        }
+        Insert: {
+          body: string
+          client_facing?: boolean
+          description: string
+          key: string
+          subject: string
+          updated_at?: string
+          variables?: string
+        }
+        Update: {
+          body?: string
+          client_facing?: boolean
+          description?: string
+          key?: string
+          subject?: string
+          updated_at?: string
+          variables?: string
+        }
+        Relationships: []
+      }
       expense_categories: {
         Row: {
           archived: boolean
@@ -1079,6 +1280,54 @@ export type Database = {
           },
         ]
       }
+      lead_sequence_runs: {
+        Row: {
+          created_at: string
+          id: string
+          last_step_position: number
+          lead_id: string
+          sequence_id: string
+          started_on: string
+          stopped_at: string | null
+          stopped_reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_step_position?: number
+          lead_id: string
+          sequence_id: string
+          started_on?: string
+          stopped_at?: string | null
+          stopped_reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_step_position?: number
+          lead_id?: string
+          sequence_id?: string
+          started_on?: string
+          stopped_at?: string | null
+          stopped_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_sequence_runs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_sequence_runs_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "email_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           additional_contacts: Json
@@ -1088,6 +1337,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          automations_enabled: boolean
           code: string
           company_name: string | null
           contact_first_name: string | null
@@ -1100,6 +1350,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           email: string | null
+          email_opt_out: boolean
           estimated_monthly_value: number
           estimated_one_time_value: number
           expected_close_date: string | null
@@ -1115,6 +1366,7 @@ export type Database = {
           source_data: Json | null
           stage_id: string | null
           title: string
+          unsubscribe_token: string
           updated_at: string
           vat_number: string | null
           website: string | null
@@ -1128,6 +1380,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          automations_enabled?: boolean
           code?: string
           company_name?: string | null
           contact_first_name?: string | null
@@ -1140,6 +1393,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          email_opt_out?: boolean
           estimated_monthly_value?: number
           estimated_one_time_value?: number
           expected_close_date?: string | null
@@ -1155,6 +1409,7 @@ export type Database = {
           source_data?: Json | null
           stage_id?: string | null
           title: string
+          unsubscribe_token?: string
           updated_at?: string
           vat_number?: string | null
           website?: string | null
@@ -1168,6 +1423,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          automations_enabled?: boolean
           code?: string
           company_name?: string | null
           contact_first_name?: string | null
@@ -1180,6 +1436,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          email_opt_out?: boolean
           estimated_monthly_value?: number
           estimated_one_time_value?: number
           expected_close_date?: string | null
@@ -1195,6 +1452,7 @@ export type Database = {
           source_data?: Json | null
           stage_id?: string | null
           title?: string
+          unsubscribe_token?: string
           updated_at?: string
           vat_number?: string | null
           website?: string | null
@@ -1672,6 +1930,38 @@ export type Database = {
           },
         ]
       }
+      user_google_accounts: {
+        Row: {
+          connected_at: string
+          google_email: string
+          refresh_token_enc: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string
+          google_email: string
+          refresh_token_enc: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          connected_at?: string
+          google_email?: string
+          refresh_token_enc?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_google_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_groups: {
         Row: {
           created_at: string
@@ -1859,6 +2149,32 @@ export type Database = {
         }
         Relationships: []
       }
+      user_google_status: {
+        Row: {
+          connected: boolean | null
+          google_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          connected?: never
+          google_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          connected?: never
+          google_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_google_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Functions: {
       assignable_owners: {
@@ -1892,6 +2208,15 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      email_automation_enabled: {
+        Args: { setting_key: string }
+        Returns: boolean
+      }
+      enqueue_lead_email: {
+        Args: { dkey: string; target_lead_id: string; tpl_key: string }
+        Returns: boolean
+      }
+      enqueue_payment_reminders: { Args: never; Returns: number }
       ensure_job_monthly_task_period: {
         Args: { p_job_id: string }
         Returns: undefined
@@ -1914,7 +2239,12 @@ export type Database = {
         Args: { target_client_id: string }
         Returns: boolean
       }
+      lead_email_payload: {
+        Args: { l: Database["public"]["Tables"]["leads"]["Row"] }
+        Returns: Json
+      }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
+      mark_overdue_payments: { Args: never; Returns: number }
       mentionable_users: {
         Args: never
         Returns: {
@@ -1926,6 +2256,14 @@ export type Database = {
         }[]
       }
       move_overdue_deals_to_on_hold: { Args: never; Returns: number }
+      my_google_status: {
+        Args: never
+        Returns: {
+          connected: boolean
+          google_email: string
+        }[]
+      }
+      process_email_sequences: { Args: never; Returns: number }
       release_jobs_for_deal: {
         Args: { partial_payment_mode: boolean; target_deal_id: string }
         Returns: number
