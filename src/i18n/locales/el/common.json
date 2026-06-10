@@ -9,7 +9,8 @@
       "sales": "Πωλήσεις",
       "accounting": "Λογιστήριο",
       "technical": "Τεχνικό"
-    }
+    },
+    "documentation": "Τεκμηρίωση"
   },
   "locale": {
     "label": "Γλώσσα",

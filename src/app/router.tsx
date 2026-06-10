@@ -94,6 +94,10 @@ const TechMyClientsPage = lazyPage(
   () => import('@/features/tech/TechMyClientsPage'),
   'TechMyClientsPage',
 );
+const TechBoardDocsPage = lazyPage(
+  () => import('@/features/tech/TechBoardDocsPage'),
+  'TechBoardDocsPage',
+);
 const OfferBuilderPage = lazyPage(
   () => import('@/features/offers/OfferBuilderPage'),
   'OfferBuilderPage',
@@ -170,6 +174,7 @@ export const router = createBrowserRouter([
           { path: 'hosting', element: <JobsKanbanPage serviceType="hosting" /> },
           { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
           { path: ':serviceType/clients', element: <TechMyClientsPage /> },
+          { path: ':serviceType/docs', element: <TechBoardDocsPage /> },
         ],
       },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },

@@ -9,7 +9,8 @@
       "sales": "Sales",
       "accounting": "Accounting",
       "technical": "Technical"
-    }
+    },
+    "documentation": "Documentation"
   },
   "locale": {
     "label": "Language",
