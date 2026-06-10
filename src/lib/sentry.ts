@@ -8,9 +8,15 @@ export function initSentry(): void {
   if (initialized) return;
   initialized = true;
 
+  // Dev sessions would burn the free-tier quota and ship local noise; only
+  // report from production builds.
+  if (!import.meta.env.PROD) return;
+
   Sentry.init({
     dsn: DSN,
-    sendDefaultPii: true,
+    // GDPR: don't attach IP / request headers by default. Sentry.setUser in
+    // the auth listener still tags events with the user id + email.
+    sendDefaultPii: false,
     environment: import.meta.env.MODE,
     release: import.meta.env.VITE_RELEASE ?? undefined,
     integrations: [Sentry.browserTracingIntegration()],
