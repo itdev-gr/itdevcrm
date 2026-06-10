@@ -28,11 +28,12 @@ vi.mock('@/lib/profile', () => ({
 import { supabase } from '@/lib/supabase';
 import { fetchProfile } from '@/lib/profile';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { useAuthListener } from './useAuthListener';
+import { useAuthListener, __resetAuthHydrationForTests } from './useAuthListener';
 
 describe('useAuthListener', () => {
   beforeEach(() => {
     useAuthStore.getState().reset();
+    __resetAuthHydrationForTests();
     vi.clearAllMocks();
   });
 
@@ -66,6 +67,30 @@ describe('useAuthListener', () => {
     expect(supabase.auth.onAuthStateChange).toHaveBeenCalled();
     unmount();
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it('fetches the profile once when auth events repeat for the same user', async () => {
+    const fakeSession = {
+      access_token: 't',
+      user: { id: 'u1', email: 'a@b.com' },
+    };
+    let fireAuthEvent: ((event: string, session: unknown) => void) | undefined;
+    (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { session: fakeSession },
+    });
+    (supabase.auth.onAuthStateChange as ReturnType<typeof vi.fn>).mockImplementation((cb) => {
+      fireAuthEvent = cb as typeof fireAuthEvent;
+      return { data: { subscription: { unsubscribe } } };
+    });
+    renderHook(() => useAuthListener());
+    await waitFor(() => expect(useAuthStore.getState().isAdmin).toBe(true));
+    // Supabase fires INITIAL_SESSION / SIGNED_IN / TOKEN_REFRESHED for the
+    // same user; none of these should re-query profiles + user_groups.
+    fireAuthEvent!('INITIAL_SESSION', fakeSession);
+    fireAuthEvent!('SIGNED_IN', fakeSession);
+    fireAuthEvent!('TOKEN_REFRESHED', fakeSession);
+    await waitFor(() => expect(useAuthStore.getState().isLoading).toBe(false));
+    expect(fetchProfile).toHaveBeenCalledTimes(1);
   });
 
   it('signs out when the session points at a user with no profile row', async () => {

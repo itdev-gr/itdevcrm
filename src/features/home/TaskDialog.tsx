@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUpsertTask } from './hooks/useUpsertTask';
 import { useDeleteTask } from './hooks/useDeleteTask';
@@ -41,6 +42,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
   const [notes, setNotes] = useState('');
   const [dueAt, setDueAt] = useState('');
   const [completed, setCompleted] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset state every time the dialog opens with a different target.
    
@@ -74,8 +76,8 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
 
   async function onDelete() {
     if (!task?.id) return;
-    if (!confirm(t('task.confirm_delete', { defaultValue: 'Delete this task?' }))) return;
     await del.mutateAsync(task.id);
+    setConfirmDelete(false);
     onOpenChange(false);
   }
 
@@ -139,7 +141,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
           {isEdit ? (
             <Button
               variant="destructive"
-              onClick={onDelete}
+              onClick={() => setConfirmDelete(true)}
               disabled={del.isPending || upsert.isPending}
             >
               {t('task.delete', { defaultValue: 'Delete' })}
@@ -159,6 +161,14 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
             </Button>
           </div>
         </DialogFooter>
+        <ConfirmDialog
+          open={confirmDelete}
+          onOpenChange={setConfirmDelete}
+          title={t('task.confirm_delete', { defaultValue: 'Delete this task?' })}
+          confirmLabel={t('task.delete', { defaultValue: 'Delete' })}
+          onConfirm={onDelete}
+          pending={del.isPending}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -5,11 +5,24 @@ import { fetchProfile, fetchUserGroupCodes } from '@/lib/profile';
 import { Sentry } from '@/lib/sentry';
 import type { Session, User } from '@supabase/supabase-js';
 
+// Supabase fires several auth events for one signed-in user (INITIAL_SESSION,
+// SIGNED_IN, TOKEN_REFRESHED, plus our own getSession bootstrap). The profile
+// and group rows only change on a real user switch, so remember who we last
+// hydrated and skip the duplicate round-trips.
+let lastHydratedUserId: string | null = null;
+
+/** Test-only: clear the module-level hydration memo between test cases. */
+export function __resetAuthHydrationForTests(): void {
+  lastHydratedUserId = null;
+}
+
 async function hydrate(session: Session | null, user: User | null) {
   const setSession = useAuthStore.getState().setSession;
   const setProfile = useAuthStore.getState().setProfile;
 
   setSession(session, user);
+
+  if (user && user.id === lastHydratedUserId) return;
 
   if (user) {
     Sentry.setUser({ id: user.id, ...(user.email ? { email: user.email } : {}) });
@@ -27,11 +40,15 @@ async function hydrate(session: Session | null, user: User | null) {
         return;
       }
       setProfile({ isAdmin: profile.is_admin, groupCodes });
+      // Only mark hydrated on success so a later auth event retries after a
+      // transient fetch failure.
+      lastHydratedUserId = user.id;
     } catch {
       // Network / RLS failure: keep session, treat as no admin / no groups.
       setProfile({ isAdmin: false, groupCodes: [] });
     }
   } else {
+    lastHydratedUserId = null;
     Sentry.setUser(null);
     setProfile({ isAdmin: false, groupCodes: [] });
   }
