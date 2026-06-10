@@ -19,7 +19,7 @@ const detail = {
   created_at: new Date().toISOString(),
   department_group_id: 'g1',
   client: {
-    id: 'c1', name: 'Pindos Outdoor Gear', industry: 'Sports',
+    id: 'c1', name: 'Pindos Outdoor Gear', industry: 'fitness_sports',
     contact_first_name: 'Christos', contact_last_name: 'Tsilis',
     email: 'ct@p.gr', phone: '+30 1',
   },
@@ -55,6 +55,9 @@ describe('AssignedTaskDetailDialog', () => {
     expect(screen.getByText('TEST — smoke')).toBeInTheDocument();
     expect(screen.getByText('Web Dev')).toBeInTheDocument();
     expect(screen.getByText('Pindos Outdoor Gear')).toBeInTheDocument();
+    // Industry codes render as display labels, never raw slugs.
+    expect(screen.getByText(/Fitness & Sports/)).toBeInTheDocument();
+    expect(screen.queryByText(/fitness_sports/)).not.toBeInTheDocument();
     expect(screen.getByText('Christos Tsilis')).toBeInTheDocument();
     expect(screen.getByText('+30 1')).toBeInTheDocument();
     expect(screen.getByText('ct@p.gr')).toBeInTheDocument();

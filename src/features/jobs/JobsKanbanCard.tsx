@@ -1,13 +1,17 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyableCode } from '@/components/CopyableCode';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { relativeFromNow } from '@/lib/datetime';
+import { industryLabel } from '@/lib/industries';
 import type { JobRow } from './hooks/useJobs';
 
 export function JobsKanbanCard({ job }: { job: JobRow }) {
+  const { i18n } = useTranslation();
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: owners = [] } = useAssignableOwners();
   const owner = job.owner_user_id ? owners.find((o) => o.user_id === job.owner_user_id) : null;
 
@@ -23,7 +27,7 @@ export function JobsKanbanCard({ job }: { job: JobRow }) {
     .filter(Boolean)
     .join(' ');
   const headline = contactName || job.client?.name || job.deal?.title || '—';
-  const subtitle = [contactName ? job.client?.name : null, job.client?.industry]
+  const subtitle = [contactName ? job.client?.name : null, industryLabel(job.client?.industry, lang)]
     .filter(Boolean)
     .join(' · ');
 

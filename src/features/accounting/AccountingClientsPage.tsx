@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAccountingClients, type AccountingClientRow } from './hooks/useAccountingClients';
 import { CopyableCode } from '@/components/CopyableCode';
 import { formatDate } from '@/lib/datetime';
+import { industryLabel } from '@/lib/industries';
 
 function isBlocked(c: AccountingClientRow): boolean {
   return (c.client_blocks ?? []).some((b) => b.unblocked_at == null);
@@ -26,7 +27,8 @@ function yearlyRevenue(c: AccountingClientRow): number {
 }
 
 export function AccountingClientsPage() {
-  const { t } = useTranslation('accounting');
+  const { t, i18n } = useTranslation('accounting');
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: clients = [], isLoading } = useAccountingClients();
   const [search, setSearch] = useState('');
   const [blockedOnly, setBlockedOnly] = useState(false);
@@ -43,6 +45,7 @@ export function AccountingClientsPage() {
       c.email,
       c.phone,
       c.industry,
+      industryLabel(c.industry, lang),
       c.country,
       c.vat_number,
     ]
@@ -149,7 +152,9 @@ export function AccountingClientsPage() {
                         {status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-slate-600">{c.industry ?? '—'}</td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {c.industry ? industryLabel(c.industry, lang) : '—'}
+                    </td>
                   </tr>
                 );
               })}

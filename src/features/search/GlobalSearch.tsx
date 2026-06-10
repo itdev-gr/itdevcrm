@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { industryLabel } from '@/lib/industries';
 
 type Hit = {
   entity_type: 'lead' | 'client' | 'deal';
@@ -27,7 +28,8 @@ const TYPE_LABEL: Record<Hit['entity_type'], string> = {
 };
 
 export function GlobalSearch() {
-  const { t } = useTranslation('leads');
+  const { t, i18n } = useTranslation('leads');
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
   const [open, setOpen] = useState(false);
@@ -145,7 +147,12 @@ export function GlobalSearch() {
                     </span>
                     <span className="flex-1 truncate">
                       <span className="font-medium">{h.label || '—'}</span>
-                      {h.sublabel && <span className="ml-1 text-slate-500">· {h.sublabel}</span>}
+                      {h.sublabel && (
+                        <span className="ml-1 text-slate-500">
+                          {/* Client sublabels carry the industry code; map to its label. */}
+                          · {h.entity_type === 'client' ? industryLabel(h.sublabel, lang) : h.sublabel}
+                        </span>
+                      )}
                     </span>
                     <span className="rounded bg-slate-50 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">
                       {TYPE_LABEL[h.entity_type]}

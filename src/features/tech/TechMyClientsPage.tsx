@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { useTechMyClients, type TechMyClientRow } from './hooks/useTechMyClients';
 import { relativeFromNow } from '@/lib/datetime';
+import { industryLabel } from '@/lib/industries';
 
 const SERVICE_LABELS: Record<string, { en: string; el: string }> = {
   'web-seo': { en: 'Web SEO', el: 'Web SEO' },
@@ -41,7 +42,8 @@ export function TechMyClientsPage() {
     return (
       r.client_name.toLowerCase().includes(q) ||
       (r.email ?? '').toLowerCase().includes(q) ||
-      (r.industry ?? '').toLowerCase().includes(q)
+      (r.industry ?? '').toLowerCase().includes(q) ||
+      industryLabel(r.industry, lang).toLowerCase().includes(q)
     );
   });
 
@@ -95,7 +97,9 @@ export function TechMyClientsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{r.industry ?? '—'}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600">
+                      {r.industry ? industryLabel(r.industry, lang) : '—'}
+                    </td>
                     <td className="px-3 py-2 text-right tabular-nums">{r.active_jobs}</td>
                     <td className="px-3 py-2 text-xs text-slate-600">
                       {relativeFromNow(r.last_activity)}

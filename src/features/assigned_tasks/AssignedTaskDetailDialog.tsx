@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAssignedTaskDetail } from './hooks/useAssignedTaskDetail';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { DepartmentChip } from './DepartmentChip';
+import { industryLabel } from '@/lib/industries';
 
 type Props = {
   taskId: string | null;
@@ -73,7 +74,11 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                 </h4>
                 <p className="text-sm font-medium text-slate-800">
                   {task.client.name}
-                  {task.client.industry && <span className="text-slate-500"> · {task.client.industry}</span>}
+                  {task.client.industry && (
+                    <span className="text-slate-500">
+                      {' '}· {industryLabel(task.client.industry, i18n.resolvedLanguage === 'el' ? 'el' : 'en')}
+                    </span>
+                  )}
                 </p>
                 {contactName(task.client) && (
                   <p className="text-sm text-slate-700">{contactName(task.client)}</p>
