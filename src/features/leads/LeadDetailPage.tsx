@@ -204,7 +204,7 @@ export function LeadDetailPage() {
           )}
           {currentStageCode === 'offer_sent' && (
             <Button variant="outline" size="sm" onClick={() => setOfferEmailOpen(true)}>
-              Αποστολή προσφοράς
+              {t('offer_email.send')}
             </Button>
           )}
           {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}

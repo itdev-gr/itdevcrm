@@ -1,7 +1,8 @@
 {
   "nav": {
     "onboarding": "Accounting onboarding",
-    "clients": "Clients"
+    "clients": "Clients",
+    "recurring": "Recurring"
   },
   "clients_page": {
     "title": "Clients",

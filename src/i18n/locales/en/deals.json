@@ -113,5 +113,8 @@
       "one_time": "One-time"
     }
   },
-  "empty": "No deals yet."
+  "empty": "No deals yet.",
+  "welcome_email": {
+    "send": "Send welcome email"
+  }
 }

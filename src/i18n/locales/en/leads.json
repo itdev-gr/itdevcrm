@@ -102,5 +102,8 @@
     "monthly": "/mo",
     "no_company": "(no company yet)"
   },
-  "empty": "No leads yet. Click \"Add lead\" to create one."
+  "empty": "No leads yet. Click \"Add lead\" to create one.",
+  "offer_email": {
+    "send": "Send offer"
+  }
 }

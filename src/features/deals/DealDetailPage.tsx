@@ -146,7 +146,7 @@ export function DealDetailPage() {
           )}
           {deal.won_by_user_id && (
             <Button variant="outline" size="sm" onClick={() => setWelcomeOpen(true)}>
-              Αποστολή welcome email
+              {t('welcome_email.send')}
             </Button>
           )}
           <SendEmailDialog

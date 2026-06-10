@@ -1,7 +1,8 @@
 {
   "nav": {
     "onboarding": "Λογιστήριο - Νέοι",
-    "clients": "Πελάτες"
+    "clients": "Πελάτες",
+    "recurring": "Επαναλαμβανόμενοι"
   },
   "clients_page": {
     "title": "Πελάτες",

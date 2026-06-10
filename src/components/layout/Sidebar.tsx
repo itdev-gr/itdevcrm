@@ -107,7 +107,7 @@ export function Sidebar() {
               `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
             }
           >
-            Recurring
+            {t('accounting:nav.recurring')}
           </NavLink>
           {isAdmin && (
             <>
