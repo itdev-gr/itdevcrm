@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { archiveE2eClients } from './helpers/cleanup';
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD;
@@ -13,6 +14,12 @@ async function signIn(page: Page) {
 
 test.describe('sales flow', () => {
   test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, 'E2E admin credentials not set');
+
+  // The create-client test writes to the shared database; archive whatever
+  // this run (or an earlier crashed run) left behind.
+  test.afterAll(async () => {
+    await archiveE2eClients();
+  });
 
   test('admin can navigate to /sales/clients', async ({ page }) => {
     await signIn(page);
