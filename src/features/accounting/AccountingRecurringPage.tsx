@@ -55,7 +55,8 @@ export function AccountingRecurringPage() {
 
   const totals = {
     count: rows.length,
-    monthly: rows.reduce((sum, r) => sum + r.monthly_total, 0),
+    // Yearly subscriptions contribute 1/12 of their annual amount.
+    monthly: rows.reduce((sum, r) => sum + r.monthly_total + r.yearly_total / 12, 0),
     overdue: rows.filter((r) => r.has_overdue_payment).length,
     blocked: rows.filter((r) => r.is_blocked).length,
   };
@@ -123,7 +124,13 @@ export function AccountingRecurringPage() {
                       {r.active_services.map((s) => tDeals(`services.types.${s}`)).join(' · ')}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      €{r.monthly_total.toFixed(0)}
+                      {r.monthly_total > 0 && <span>€{r.monthly_total.toFixed(0)}</span>}
+                      {r.yearly_total > 0 && (
+                        <span className="block text-xs text-slate-500">
+                          €{r.yearly_total.toFixed(0)}/yr
+                        </span>
+                      )}
+                      {r.monthly_total === 0 && r.yearly_total === 0 && <span>€0</span>}
                     </td>
                     <td className="px-3 py-2 text-xs text-slate-600">
                       {r.earliest_due ? formatDate(r.earliest_due, i18n.language) : '—'}

@@ -25,9 +25,15 @@ function wrap(c: ReactNode) {
 describe('useContractedMRR', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('sums monthly_amount of active recurring jobs (matches the Recurring page total)', async () => {
+  it('sums monthly jobs at face value and yearly jobs at amount/12', async () => {
     clientArchivedEq.mockResolvedValue({
-      data: [{ monthly_amount: 900 }, { monthly_amount: 650 }, { monthly_amount: null }],
+      data: [
+        { monthly_amount: 900, billing_type: 'recurring_monthly' },
+        { monthly_amount: 650, billing_type: 'recurring_monthly' },
+        // Yearly jobs store the ANNUAL amount in monthly_amount.
+        { monthly_amount: 30, billing_type: 'recurring_yearly' },
+        { monthly_amount: null, billing_type: 'recurring_monthly' },
+      ],
       error: null,
     });
     const { result } = renderHook(() => useContractedMRR(), {
@@ -35,6 +41,6 @@ describe('useContractedMRR', () => {
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(from).toHaveBeenCalledWith('jobs');
-    expect(result.current.data).toBe(1550);
+    expect(result.current.data).toBe(1552.5);
   });
 });

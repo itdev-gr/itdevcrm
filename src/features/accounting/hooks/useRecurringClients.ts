@@ -12,7 +12,10 @@ export type RecurringClientRow = {
   industry: string | null;
   status: string;
   active_services: string[];
+  /** Sum of recurring_monthly job amounts. */
   monthly_total: number;
+  /** Sum of recurring_yearly job amounts (annual figures). */
+  yearly_total: number;
   has_overdue_payment: boolean;
   is_blocked: boolean;
   earliest_due: string | null;
@@ -69,8 +72,17 @@ export function useRecurringClients() {
           );
           if (activeJobs.length === 0) return null;
 
+          // Yearly jobs store the ANNUAL price in monthly_amount — keep the
+          // two billing cadences in separate buckets so nothing gets counted
+          // as 12x its real monthly value.
           const monthlyTotal = activeJobs.reduce(
-            (sum, j) => sum + (Number(j.monthly_amount) || 0),
+            (sum, j) =>
+              sum + (j.billing_type === 'recurring_monthly' ? Number(j.monthly_amount) || 0 : 0),
+            0,
+          );
+          const yearlyTotal = activeJobs.reduce(
+            (sum, j) =>
+              sum + (j.billing_type === 'recurring_yearly' ? Number(j.monthly_amount) || 0 : 0),
             0,
           );
           const services = Array.from(new Set(activeJobs.map((j) => j.service_type)));
@@ -83,12 +95,14 @@ export function useRecurringClients() {
             .flatMap((d) => d.deal_payments ?? [])
             .filter(
               (p) =>
-                p.status === 'pending' &&
+                // The daily cron flips lapsed rows to 'overdue'; pending rows
+                // can still lapse between cron runs.
+                (p.status === 'pending' || p.status === 'overdue') &&
                 p.billing_type !== 'one_time' &&
                 p.end_date !== null,
             );
           const hasOverdue = recurringPayments.some(
-            (p) => (p.end_date ?? '9999') <= today,
+            (p) => p.status === 'overdue' || (p.end_date ?? '9999') <= today,
           );
           const earliestDue = recurringPayments
             .map((p) => p.end_date)
@@ -106,6 +120,7 @@ export function useRecurringClients() {
             status: c.status,
             active_services: services,
             monthly_total: monthlyTotal,
+            yearly_total: yearlyTotal,
             has_overdue_payment: hasOverdue,
             is_blocked: isBlocked,
             earliest_due: earliestDue,
