@@ -1753,6 +1753,7 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          created_by: string | null
           due_at: string
           id: string
           notes: string | null
@@ -1763,6 +1764,7 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           due_at: string
           id?: string
           notes?: string | null
@@ -1773,6 +1775,7 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           due_at?: string
           id?: string
           notes?: string | null
@@ -1781,6 +1784,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "user_tasks_user_id_fkey"
             columns: ["user_id"]

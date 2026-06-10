@@ -4,7 +4,10 @@ import { captureMutation } from '@/lib/sentry/captureMutation';
 
 type Input = {
   id?: string;
+  /** Assignee — whose calendar the task lands on. */
   user_id: string;
+  /** Who created the task; required when assigning to someone else (RLS). */
+  created_by?: string | null;
   title: string;
   notes: string | null;
   due_at: string; // ISO
@@ -24,6 +27,7 @@ export function useUpsertTask() {
           notes: input.notes,
           due_at: input.due_at,
           completed_at: input.completed_at ?? null,
+          ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
         };
         if (input.id) {
           const { data, error } = await supabase

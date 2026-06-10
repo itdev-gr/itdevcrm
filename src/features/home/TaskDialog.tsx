@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { useUpsertTask } from './hooks/useUpsertTask';
 import { useDeleteTask } from './hooks/useDeleteTask';
 import type { UserTaskRow } from './hooks/useUserTasks';
@@ -35,6 +36,7 @@ function toLocalInputValue(d: Date): string {
 export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
   const { t } = useTranslation('home');
   const userId = useAuthStore((s) => s.user?.id ?? '');
+  const { data: owners = [] } = useAssignableOwners();
   const upsert = useUpsertTask();
   const del = useDeleteTask();
 
@@ -42,6 +44,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
   const [notes, setNotes] = useState('');
   const [dueAt, setDueAt] = useState('');
   const [completed, setCompleted] = useState(false);
+  const [assigneeId, setAssigneeId] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset state every time the dialog opens with a different target.
@@ -53,18 +56,24 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
       setNotes(task.notes ?? '');
       setDueAt(toLocalInputValue(new Date(task.due_at)));
       setCompleted(!!task.completed_at);
+      setAssigneeId(task.user_id);
     } else {
       setTitle('');
       setNotes('');
       setDueAt(toLocalInputValue(defaultDueAt ?? new Date()));
       setCompleted(false);
+      setAssigneeId(userId);
     }
-  }, [open, task, defaultDueAt]);
+  }, [open, task, defaultDueAt, userId]);
 
   async function onSave() {
     if (!userId || !title.trim() || !dueAt) return;
+    const assignee = assigneeId || userId;
     const payload = {
-      user_id: task?.user_id ?? userId,
+      user_id: assignee,
+      // Stamp the creator when assigning to a colleague — RLS requires it.
+      // Self-tasks omit it so the insert also works pre-migration.
+      ...(assignee !== userId ? { created_by: task?.created_by ?? userId } : {}),
       title: title.trim(),
       notes: notes.trim() || null,
       due_at: new Date(dueAt).toISOString(),
@@ -103,6 +112,30 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
             />
+          </div>
+          <div>
+            <Label htmlFor="task-assignee">
+              {t('task.assignee', { defaultValue: 'Assign to' })}
+            </Label>
+            <select
+              id="task-assignee"
+              value={assigneeId || userId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {!owners.some((o) => o.user_id === (assigneeId || userId)) && (
+                <option value={assigneeId || userId}>
+                  {t('task.assignee_me', { defaultValue: 'Me' })}
+                </option>
+              )}
+              {owners.map((o) => (
+                <option key={o.user_id} value={o.user_id}>
+                  {o.user_id === userId
+                    ? t('task.assignee_me', { defaultValue: 'Me' })
+                    : o.full_name || o.email}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <Label htmlFor="task-due-at">{t('task.due_at', { defaultValue: 'Due' })}</Label>

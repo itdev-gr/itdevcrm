@@ -25,7 +25,9 @@
     "cancel": "Cancel",
     "save": "Save",
     "confirm_delete": "Delete this task?",
-    "dialog_description": "Create or edit a calendar task."
+    "dialog_description": "Create or edit a calendar task.",
+    "assignee": "Assign to",
+    "assignee_me": "Me"
   },
   "assigned_tasks": {
     "title": "Assigned to me",
