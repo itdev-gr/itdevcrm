@@ -10,7 +10,8 @@
       "accounting": "Λογιστήριο",
       "technical": "Τεχνικό"
     },
-    "documentation": "Τεκμηρίωση"
+    "documentation": "Τεκμηρίωση",
+    "open_menu": "Άνοιγμα μενού"
   },
   "locale": {
     "label": "Γλώσσα",

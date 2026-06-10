@@ -35,7 +35,12 @@ const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   ads: '/tech/ads/clients',
 };
 
-export function Sidebar() {
+/**
+ * The nav links themselves — rendered inside the desktop <aside> and inside
+ * the mobile drawer. onNavigate fires when any link is clicked (the drawer
+ * uses it to close itself).
+ */
+export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation();
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
@@ -51,7 +56,12 @@ export function Sidebar() {
       );
 
   return (
-    <aside className="hidden w-56 flex-col gap-2 self-stretch overflow-y-auto border-r bg-slate-50 p-4 md:flex">
+    <nav
+      className="flex min-h-full flex-col gap-2"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('a')) onNavigate?.();
+      }}
+    >
       <NavLink
         to="/"
         end
@@ -179,6 +189,15 @@ export function Sidebar() {
           </NavLink>
         </div>
       )}
+    </nav>
+  );
+}
+
+/** Desktop sidebar — hidden below md; mobile uses the drawer in AppShell. */
+export function Sidebar() {
+  return (
+    <aside className="hidden w-56 shrink-0 self-stretch overflow-y-auto border-r bg-slate-50 p-4 md:block">
+      <SidebarNav />
     </aside>
   );
 }

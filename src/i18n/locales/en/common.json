@@ -10,7 +10,8 @@
       "accounting": "Accounting",
       "technical": "Technical"
     },
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "open_menu": "Open menu"
   },
   "locale": {
     "label": "Language",
