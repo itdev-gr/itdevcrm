@@ -89,6 +89,46 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
   },
 };
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function interpolate(tpl: string, data: Record<string, unknown>): string {
+  return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => String(data[key] ?? ''));
+}
+
+type DbTemplateRow = { subject: string; body: string; client_facing: boolean };
+
+/**
+ * Render from the admin-editable email_templates table; built-ins above are
+ * the fallback for keys without a row (e.g. `custom`, internal_*). Lead
+ * emails carrying an unsubscribe token get the opt-out footer required for
+ * automated outreach.
+ */
+export function renderDbTemplate(
+  row: DbTemplateRow,
+  data: Record<string, unknown>,
+): Rendered {
+  const subject = interpolate(row.subject, data);
+  const bodyText = interpolate(row.body, data);
+  let footer = '';
+  let footerText = '';
+  const appUrl = Deno.env.get('APP_URL');
+  if (row.client_facing && data.unsubscribe_token && data.lead_id && appUrl) {
+    const url = `${appUrl}/api/unsubscribe?lead=${data.lead_id}&token=${data.unsubscribe_token}`;
+    footer = `<p style="font-size:11px;color:#94a3b8;margin-top:16px">Αν δεν θέλετε να λαμβάνετε ενημερώσεις από εμάς, <a href="${url}" style="color:#94a3b8">πατήστε εδώ</a>.</p>`;
+    footerText = `\n\nΑπεγγραφή: ${url}`;
+  }
+  const html = shell(
+    `<p>${escapeHtml(bodyText).replace(/\n/g, '<br/>')}</p>${footer}`,
+  );
+  return { subject, html, text: bodyText + footerText };
+}
+
 export function renderTemplate(templateKey: string, data: Record<string, unknown>): Rendered {
   const fn = TEMPLATES[templateKey];
   if (!fn) throw new Error(`Unknown template: ${templateKey}`);

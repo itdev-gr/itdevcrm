@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 import { IDENTITIES, type Identity } from './identities.ts';
-import { renderTemplate } from './templates.ts';
+import { renderTemplate, renderDbTemplate } from './templates.ts';
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 
 const corsHeaders = {
@@ -46,7 +46,14 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
 
   let rendered;
   try {
-    rendered = renderTemplate(templateKey, data);
+    // Admin-edited templates take precedence; built-ins are the fallback
+    // (and the only path for `custom` / internal_* keys without a row).
+    const { data: dbTpl } = await admin
+      .from('email_templates')
+      .select('subject, body, client_facing')
+      .eq('key', templateKey)
+      .maybeSingle();
+    rendered = dbTpl ? renderDbTemplate(dbTpl, data) : renderTemplate(templateKey, data);
   } catch (e) {
     await admin.from('email_log').insert({ identity, to_email: to, template_key: templateKey, status: 'failed', dedupe_key: dedupeKey, error: String(e) });
     return { status: 'failed', error: String(e) };
