@@ -71,7 +71,11 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
     Array.isArray(lead.services_planned) ? (lead.services_planned as PlannedService[]) : [],
   );
 
-  const oneTimeNum = services.reduce((sum, s) => sum + (Number(s.one_time_amount) || 0), 0);
+  // Setup fees are one-time charges, so they belong in the one-time bucket.
+  const oneTimeNum = services.reduce(
+    (sum, s) => sum + (Number(s.one_time_amount) || 0) + (Number(s.setup_fee) || 0),
+    0,
+  );
   const monthlyNum = services.reduce(
     (sum, s) => sum + (s.billing_type === 'recurring_monthly' ? Number(s.monthly_amount) || 0 : 0),
     0,

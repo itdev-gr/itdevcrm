@@ -64,7 +64,9 @@
       "partial": "Partial",
       "paid": "Paid"
     },
-    "card_invoiced": "Invoiced"
+    "card_invoiced": "Invoiced",
+    "status_overdue": "Overdue",
+    "vat_mismatch": "Client's country VAT is {{rate}}%"
   },
   "actions": {
     "view": "View",

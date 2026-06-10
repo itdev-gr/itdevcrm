@@ -34,7 +34,16 @@ const SERVICE_OPTIONS: PlannedService['service_type'][] = [
   'ads',
 ];
 
-function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
+function PaymentRow({
+  row,
+  dealId,
+  countryVatRate,
+}: {
+  row: DealPaymentRow;
+  dealId: string;
+  /** The VAT rate that matches the client's country (e.g. 0 for Cyprus). */
+  countryVatRate: number;
+}) {
   const { t } = useTranslation('deals');
   const update = useUpdateDealPayment(dealId);
   const remove = useDeleteDealPayment(dealId);
@@ -48,14 +57,20 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
   const [vatRate, setVatRate] = useState(String(row.vat_rate ?? 24));
   const [invoice, setInvoice] = useState(row.invoice_number ?? '');
 
+  // Round to cents the same way the DB generated column does, so the preview
+  // always matches what gets stored.
   const grossPreview =
-    Number(amountNet || 0) + (Number(amountNet || 0) * Number(vatRate || 0)) / 100;
+    Math.round(
+      (Number(amountNet || 0) + (Number(amountNet || 0) * Number(vatRate || 0)) / 100) * 100,
+    ) / 100;
+  const vatMismatch = Number(vatRate || 0) !== countryVatRate;
 
   function commit(patch: Record<string, unknown>) {
     void update.mutateAsync({ id: row.id, patch });
   }
 
   function toggleStatus() {
+    // Pending and overdue both flip to paid; paid flips back to pending.
     const next = row.status === 'paid' ? 'pending' : 'paid';
     void update.mutateAsync({
       id: row.id,
@@ -124,7 +139,15 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
           value={vatRate}
           onChange={(e) => setVatRate(e.target.value)}
           onBlur={() => commit({ vat_rate: Number(vatRate || 0) })}
-          className="h-8 w-16 text-xs"
+          className={`h-8 w-16 text-xs ${vatMismatch ? 'border-amber-400 bg-amber-50' : ''}`}
+          title={
+            vatMismatch
+              ? t('payments.vat_mismatch', {
+                  rate: countryVatRate,
+                  defaultValue: "Client's country VAT is {{rate}}%",
+                })
+              : undefined
+          }
         />
       </td>
       <td className="px-2 py-2 text-xs tabular-nums text-slate-700">
@@ -137,10 +160,16 @@ function PaymentRow({ row, dealId }: { row: DealPaymentRow; dealId: string }) {
           className={`rounded px-2 py-1 text-xs font-medium ${
             row.status === 'paid'
               ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-slate-100 text-slate-700'
+              : row.status === 'overdue'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-slate-100 text-slate-700'
           }`}
         >
-          {row.status === 'paid' ? t('payments.status_paid') : t('payments.status_pending')}
+          {row.status === 'paid'
+            ? t('payments.status_paid')
+            : row.status === 'overdue'
+              ? t('payments.status_overdue', { defaultValue: 'Overdue' })
+              : t('payments.status_pending')}
         </button>
       </td>
       <td className="px-2 py-2">
@@ -242,7 +271,7 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
             </thead>
             <tbody>
               {payments.map((p) => (
-                <PaymentRow key={p.id} row={p} dealId={dealId} />
+                <PaymentRow key={p.id} row={p} dealId={dealId} countryVatRate={defaultVatRate} />
               ))}
             </tbody>
           </table>

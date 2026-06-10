@@ -249,7 +249,25 @@ function ServiceRowEditor({
                       const next = new Set(row.subpackage_codes ?? []);
                       if (e.target.checked) next.add(sp.code);
                       else next.delete(sp.code);
-                      updateRow(idx, { subpackage_codes: [...next] });
+                      // The extra's price must reach the amounts that drive
+                      // pricing summaries and payment seeding — apply it to
+                      // the bucket matching the row's billing cadence.
+                      const delta = (e.target.checked ? 1 : -1) * (Number(sp.price) || 0);
+                      const amountPatch: Partial<PlannedService> =
+                        row.billing_type === 'one_time'
+                          ? {
+                              one_time_amount: Math.max(
+                                0,
+                                (Number(row.one_time_amount) || 0) + delta,
+                              ),
+                            }
+                          : {
+                              monthly_amount: Math.max(
+                                0,
+                                (Number(row.monthly_amount) || 0) + delta,
+                              ),
+                            };
+                      updateRow(idx, { subpackage_codes: [...next], ...amountPatch });
                     }}
                   />
                   <div className="flex-1">

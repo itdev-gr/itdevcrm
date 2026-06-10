@@ -64,7 +64,9 @@
       "partial": "Μερικώς",
       "paid": "Πληρώθηκε"
     },
-    "card_invoiced": "Τιμολογήθηκε"
+    "card_invoiced": "Τιμολογήθηκε",
+    "status_overdue": "Εκπρόθεσμο",
+    "vat_mismatch": "Ο ΦΠΑ της χώρας του πελάτη είναι {{rate}}%"
   },
   "actions": {
     "view": "Προβολή",

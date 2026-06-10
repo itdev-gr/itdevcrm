@@ -14,10 +14,10 @@ export type AccountingDealRow = DealRow & {
   } | null;
   deal_payments?: Array<{
     id: string;
-    status: 'pending' | 'paid';
+    status: 'pending' | 'paid' | 'overdue';
     invoice_number: string | null;
     end_date: string | null;
-    amount: number | string | null;
+    amount_gross: number | string | null;
   }>;
 };
 
@@ -28,7 +28,7 @@ export function useAccountingDeals() {
       const { data, error } = await supabase
         .from('deals')
         .select(
-          '*, client:clients(id, name, contact_first_name, contact_last_name, industry), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board), deal_payments(id, status, invoice_number, end_date, amount)',
+          '*, client:clients(id, name, contact_first_name, contact_last_name, industry), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board), deal_payments(id, status, invoice_number, end_date, amount_gross)',
         )
         .not('accounting_stage_id', 'is', null)
         .eq('archived', false)
