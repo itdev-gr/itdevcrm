@@ -9,7 +9,13 @@ import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import type { JobRow } from './hooks/useJobs';
 
-export function JobsKanbanCard({ job }: { job: JobRow }) {
+export function JobsKanbanCard({
+  job,
+  dragDisabled = false,
+}: {
+  job: JobRow;
+  dragDisabled?: boolean;
+}) {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: owners = [] } = useAssignableOwners();
@@ -18,6 +24,7 @@ export function JobsKanbanCard({ job }: { job: JobRow }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: job.id,
     data: { jobId: job.id, currentStage: job.stage_id },
+    disabled: dragDisabled,
   });
   const style = transform
     ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }
@@ -33,7 +40,7 @@ export function JobsKanbanCard({ job }: { job: JobRow }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Card className="cursor-grab active:cursor-grabbing">
+      <Card className={dragDisabled ? '' : 'cursor-grab active:cursor-grabbing'}>
         <CardContent className="space-y-1 p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">

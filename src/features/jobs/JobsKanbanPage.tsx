@@ -11,13 +11,14 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { useJobs, type JobRow, type ServiceType } from './hooks/useJobs';
+import { useJobs, type ServiceType } from './hooks/useJobs';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { useJobsRealtime } from './hooks/useJobsRealtime';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
+import { groupJobsForBoard, hasBlockedColumn, aiSeoTargetCode } from './kanbanGrouping';
 
 const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   web_seo: { en: 'Web SEO', el: 'Web SEO' },
@@ -54,25 +55,15 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     .filter((s) => s.board === serviceType && !s.archived)
     .sort((a, b) => a.position - b.position);
 
-  // Map a stage code to its column for this kanban. Lets ai_seo jobs (which
-  // canonically live on the web_seo board) appear in the matching local_seo
-  // column when the codes line up.
-  const colByCode = new Map<string, (typeof boardStages)[number]>();
-  for (const s of boardStages) colByCode.set(s.code, s);
-
   const filteredJobs =
     onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
 
-  const jobsByStage = new Map<string, JobRow[]>();
-  for (const s of boardStages) jobsByStage.set(s.id, []);
-  for (const j of filteredJobs) {
-    if (!j.stage_id) continue;
-    const jobStage = stageById.get(j.stage_id);
-    if (!jobStage) continue;
-    const col = colByCode.get(jobStage.code);
-    if (!col) continue;
-    jobsByStage.get(col.id)?.push(j);
-  }
+  const { byColumn: jobsByStage, blocked: blockedJobs } = groupJobsForBoard({
+    board: serviceType,
+    jobs: filteredJobs,
+    boardStages,
+    stageById,
+  });
 
   function toggleScope() {
     const next = new URLSearchParams(searchParams);
@@ -93,21 +84,31 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     if (!job) return;
 
     // ai_seo jobs canonically live on the Web SEO board. When dragged on a
-    // non-web-seo kanban (i.e. /tech/local-seo), translate the target stage
+    // non-web-seo kanban (i.e. /tech/local-seo), translate the target column
     // to the matching web_seo stage so the job stays visible on both boards.
     let targetStageId = stageId;
     if (job.service_type === 'ai_seo' && serviceType !== 'web_seo') {
       const targetStage = stageById.get(stageId);
       if (!targetStage) return;
+      const targetCode =
+        serviceType === 'local_seo' ? aiSeoTargetCode(targetStage.code) : targetStage.code;
+      if (!targetCode) return; // column has no web_seo equivalent
       const webSeoStage = stages.find(
-        (s) => s.board === 'web_seo' && s.code === targetStage.code && !s.archived,
+        (s) => s.board === 'web_seo' && s.code === targetCode && !s.archived,
       );
       if (!webSeoStage) return;
       targetStageId = webSeoStage.id;
     }
     if (job.stage_id === targetStageId) return;
+    const resolved = stageById.get(targetStageId);
     try {
-      await moveStage.mutateAsync({ jobId, stageId: targetStageId });
+      await moveStage.mutateAsync({
+        jobId,
+        stageId: targetStageId,
+        // Terminal "completed" stages (e.g. Local SEO "Done", Web Dev "Live")
+        // stamp the ✓; leaving them clears it.
+        completed: !!resolved?.is_terminal && resolved.terminal_outcome === 'completed',
+      });
     } catch (err) {
       alert((err as Error).message);
     }
@@ -152,6 +153,14 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
               jobs={jobsByStage.get(s.id) ?? []}
             />
           ))}
+          {hasBlockedColumn(serviceType) && (
+            <JobsKanbanColumn
+              stageId="__blocked__"
+              stageLabel={`🔒 ${lang === 'el' ? 'Μπλοκαρισμένο' : 'Blocked'}`}
+              jobs={blockedJobs}
+              interactive={false}
+            />
+          )}
         </div>
         <DragOverlay>{activeJob ? <JobsKanbanCard job={activeJob} /> : null}</DragOverlay>
       </DndContext>

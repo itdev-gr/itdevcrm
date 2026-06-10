@@ -4,13 +4,28 @@ import { queryKeys } from '@/lib/queryKeys';
 import type { JobRow, ServiceType } from './useJobs';
 import { captureMutation } from '@/lib/sentry/captureMutation';
 
+type MoveVars = {
+  jobId: string;
+  stageId: string;
+  /**
+   * true when the target stage is terminal with outcome 'completed' (stamps
+   * completed_at), false to clear it; omit to leave completed_at untouched.
+   */
+  completed?: boolean;
+};
+
 export function useMoveJobStage(serviceType: ServiceType) {
   const qc = useQueryClient();
-  return useMutation<void, DefaultError, { jobId: string; stageId: string }, { previous: [readonly unknown[], JobRow[] | undefined][] }>({
-    mutationFn: captureMutation('jobs', 'move_stage', async ({ jobId, stageId }: { jobId: string; stageId: string }) => {
+  return useMutation<void, DefaultError, MoveVars, { previous: [readonly unknown[], JobRow[] | undefined][] }>({
+    mutationFn: captureMutation('jobs', 'move_stage', async ({ jobId, stageId, completed }: MoveVars) => {
       const { error } = await supabase
         .from('jobs')
-        .update({ stage_id: stageId })
+        .update({
+          stage_id: stageId,
+          ...(completed !== undefined
+            ? { completed_at: completed ? new Date().toISOString() : null }
+            : {}),
+        })
         .eq('id', jobId);
       if (error) throw new Error(error.message);
     }),
