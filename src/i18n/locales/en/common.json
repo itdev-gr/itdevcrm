@@ -19,5 +19,35 @@
     "el": "Ελληνικά"
   },
   "cancel": "Cancel",
-  "confirm": "Confirm"
+  "confirm": "Confirm",
+  "dashboard": {
+    "title": "Dashboard",
+    "leads": "Leads",
+    "won": "Won",
+    "lost": "Lost",
+    "open": "Open",
+    "win_rate": "Win rate",
+    "win_rate_hint": "of decided leads",
+    "value_won": "Value won",
+    "no_leads": "No leads in this period.",
+    "leads_created": "Leads created",
+    "contracted_mrr": "Contracted MRR",
+    "collected": "Collected income",
+    "collected_hint": "paid in period",
+    "revenue_trend": "Revenue trend",
+    "income": "Income",
+    "expenses": "Expenses",
+    "profit": "Net profit",
+    "recurring_collected": "Recurring collected",
+    "conversion_by_person": "Conversion by sales person",
+    "by_person": "By sales person",
+    "by_source": "By source",
+    "unassigned": "Unassigned",
+    "unknown": "Unknown",
+    "range": {
+      "last_6_months": "Last 6 months",
+      "this_year": "This year",
+      "last_12_months": "Last 12 months"
+    }
+  }
 }

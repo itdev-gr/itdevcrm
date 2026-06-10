@@ -19,5 +19,35 @@
     "el": "Ελληνικά"
   },
   "cancel": "Άκυρο",
-  "confirm": "Επιβεβαίωση"
+  "confirm": "Επιβεβαίωση",
+  "dashboard": {
+    "title": "Πίνακας Αναφορών",
+    "leads": "Leads",
+    "won": "Κερδισμένα",
+    "lost": "Χαμένα",
+    "open": "Ανοιχτά",
+    "win_rate": "Ποσοστό επιτυχίας",
+    "win_rate_hint": "επί των κριθέντων leads",
+    "value_won": "Αξία κερδισμένων",
+    "no_leads": "Κανένα lead σε αυτή την περίοδο.",
+    "leads_created": "Νέα leads",
+    "contracted_mrr": "Συμβολαιοποιημένο MRR",
+    "collected": "Εισπραχθέντα έσοδα",
+    "collected_hint": "πληρωμένα στην περίοδο",
+    "revenue_trend": "Τάση εσόδων",
+    "income": "Έσοδα",
+    "expenses": "Έξοδα",
+    "profit": "Καθαρό κέρδος",
+    "recurring_collected": "Εισπραχθέντα συνδρομών",
+    "conversion_by_person": "Μετατροπή ανά πωλητή",
+    "by_person": "Ανά πωλητή",
+    "by_source": "Ανά πηγή",
+    "unassigned": "Μη ανατεθειμένο",
+    "unknown": "Άγνωστο",
+    "range": {
+      "last_6_months": "Τελευταίοι 6 μήνες",
+      "this_year": "Φέτος",
+      "last_12_months": "Τελευταίοι 12 μήνες"
+    }
+  }
 }

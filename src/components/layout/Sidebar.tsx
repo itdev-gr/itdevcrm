@@ -71,6 +71,16 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       >
         {t('nav.home')}
       </NavLink>
+      {isAdmin && (
+        <NavLink
+          to="/dashboard"
+          className={({ isActive }) =>
+            `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+          }
+        >
+          📊 {t('dashboard.title')}
+        </NavLink>
+      )}
       {(isAdmin || isSales) && (
         <div className="space-y-1 pt-2">
           <p className="px-3 text-xs font-medium uppercase text-slate-500">{t('common:nav.section.sales')}</p>

@@ -98,6 +98,10 @@ const TechBoardDocsPage = lazyPage(
   () => import('@/features/tech/TechBoardDocsPage'),
   'TechBoardDocsPage',
 );
+const DashboardPage = lazyPage(
+  () => import('@/features/dashboard/DashboardPage'),
+  'DashboardPage',
+);
 const OfferBuilderPage = lazyPage(
   () => import('@/features/offers/OfferBuilderPage'),
   'OfferBuilderPage',
@@ -112,6 +116,7 @@ export const router = createBrowserRouter([
     element: <ShellLayout />,
     children: [
       { path: '/', element: <HomePage /> },
+      { path: 'dashboard', element: <AdminGuard><DashboardPage /></AdminGuard> },
       {
         path: 'admin',
         element: <AdminLayout />,
