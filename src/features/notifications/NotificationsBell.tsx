@@ -102,6 +102,27 @@ export function NotificationsBell() {
                           <div className="text-slate-700 font-normal italic">"{preview}"</div>
                         )}
                       </div>
+                    ) : n.type === 'payment_overdue' ? (
+                      <div className="space-y-0.5">
+                        <div>
+                          <span className="font-semibold text-red-700">⚠ Payment overdue</span>
+                          {parentLabel && (
+                            <>
+                              {' '}<span className="font-normal">—</span>{' '}
+                              <span className="font-semibold">{parentLabel}</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="font-normal text-slate-700">
+                          {readString(payload, 'service_type')}
+                          {payload?.amount_gross != null && (
+                            <> · €{Number(payload.amount_gross).toFixed(2)}</>
+                          )}
+                          {readString(payload, 'due_date') && (
+                            <> · due {readString(payload, 'due_date')}</>
+                          )}
+                        </div>
+                      </div>
                     ) : (
                       <div className="font-normal">
                         <span className="font-semibold">{n.type}</span>

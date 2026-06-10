@@ -132,6 +132,26 @@ export function NotificationsColumn() {
                         <div className="italic text-slate-700">&ldquo;{readString(payload, 'title')}&rdquo;</div>
                       )}
                     </>
+                  ) : n.type === 'payment_overdue' ? (
+                    <>
+                      <div className={isRead ? '' : 'font-medium'}>
+                        <span className="font-semibold text-red-700">⚠ Payment overdue</span>
+                        {parentLabel && (
+                          <>
+                            {' '}— <span className="font-semibold">{parentLabel}</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="text-slate-600">
+                        {readString(payload, 'service_type')}
+                        {payload?.amount_gross != null && (
+                          <> · €{Number(payload.amount_gross).toFixed(2)}</>
+                        )}
+                        {readString(payload, 'due_date') && (
+                          <> · due {readString(payload, 'due_date')}</>
+                        )}
+                      </div>
+                    </>
                   ) : (
                     <div className={isRead ? '' : 'font-medium'}>
                       <span className="font-semibold">{n.type}</span>
