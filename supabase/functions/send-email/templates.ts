@@ -19,7 +19,7 @@ function shell(bodyHtml: string): string {
   return `<div style="font-family:Arial,sans-serif;font-size:14px;color:#0f172a;line-height:1.6">
 ${bodyHtml}
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0"/>
-<p style="font-size:12px;color:#64748b">ITDev · itdev.gr</p>
+<p style="font-size:12px;color:#64748b">ITDEV · itdev.gr</p>
 </div>`;
 }
 

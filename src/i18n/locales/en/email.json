@@ -11,12 +11,12 @@
     "to_required": "Recipient email is required."
   },
   "offer": {
-    "subject": "Your offer from ITDev",
-    "body": "Dear {{name}},\n\nThank you for your interest. You can view your offer here: {{offerUrl}}\n\nBest regards,\nThe ITDev team"
+    "subject": "Your offer from ITDEV",
+    "body": "Dear {{name}},\n\nThank you for your interest. You can view your offer here: {{offerUrl}}\n\nBest regards,\nThe ITDEV team"
   },
   "won": {
-    "subject": "Welcome to ITDev",
-    "body": "Dear {{name}},\n\nWe're glad to start working together! We'll be in touch shortly with next steps.\n\nBest regards,\nThe ITDev team"
+    "subject": "Welcome to ITDEV",
+    "body": "Dear {{name}},\n\nWe're glad to start working together! We'll be in touch shortly with next steps.\n\nBest regards,\nThe ITDEV team"
   },
   "connect": {
     "title": "Google connection",

@@ -16,7 +16,7 @@ function page(res: VercelResponse, status: number, title: string, body: string):
 <div style="max-width:420px;text-align:center">
 <h1 style="font-size:20px">${title}</h1>
 <p style="color:#475569">${body}</p>
-<p style="font-size:12px;color:#94a3b8;margin-top:32px">ITDev · itdev.gr</p>
+<p style="font-size:12px;color:#94a3b8;margin-top:32px">ITDEV · itdev.gr</p>
 </div></body></html>`);
 }
 
