@@ -9,7 +9,10 @@ export type ReportHeaderProps = {
   onCustomFrom: (iso: string) => void;
   onCustomTo: (iso: string) => void;
   summary: PLSummary | undefined;
+  /** Contracted MRR — matches the Recurring page total. */
   mrr: number;
+  /** Recurring amount actually collected inside the selected range. */
+  collectedMrr: number;
   ytdSummary: PLSummary | undefined;
 };
 
@@ -29,7 +32,7 @@ function Tile({
 
 export function ReportHeader({
   preset, range, onPreset, onCustomFrom, onCustomTo,
-  summary, mrr, ytdSummary,
+  summary, mrr, collectedMrr, ytdSummary,
 }: ReportHeaderProps) {
   const { t } = useTranslation('accounting_report');
   const presets: RangePreset[] = ['this_month', 'last_month', 'this_year', 'last_year', 'custom'];
@@ -90,7 +93,12 @@ export function ReportHeader({
           net={summary?.netProfitNet}
           suffix={t('kpi.net_suffix')}
         />
-        <Tile label={t('kpi.mrr')} gross={mrr} suffix="" />
+        <Tile
+          label={t('kpi.mrr')}
+          gross={mrr}
+          net={collectedMrr}
+          suffix={t('kpi.mrr_collected_suffix')}
+        />
       </div>
 
       {ytdSummary && (

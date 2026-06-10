@@ -4,6 +4,7 @@ import { rangeForPreset, type RangePreset, type DateRange } from './utils/format
 import { useLedger, type LedgerRow } from './hooks/useLedger';
 import { usePLSummary } from './hooks/usePLSummary';
 import { useMRR } from './hooks/useMRR';
+import { useContractedMRR } from './hooks/useContractedMRR';
 import { useExpensesRealtime } from './hooks/useExpensesRealtime';
 import { ReportHeader } from './components/ReportHeader';
 import { IncomeBreakdown } from './components/IncomeBreakdown';
@@ -28,7 +29,8 @@ export function ReportPage() {
   const summary = usePLSummary(range);
   const ytdRange = useMemo(() => rangeForPreset('this_year'), []);
   const ytdSummary = usePLSummary(ytdRange);
-  const mrr = useMRR(range);
+  const collectedMrr = useMRR(range);
+  const contractedMrr = useContractedMRR();
   const ledger = useLedger(range);
 
   const incomeRows = useMemo(
@@ -77,7 +79,8 @@ export function ReportPage() {
         onCustomFrom={(iso) => setRange((r) => ({ ...r, from: iso }))}
         onCustomTo={(iso) => setRange((r) => ({ ...r, to: iso }))}
         summary={summary.data}
-        mrr={mrr.data ?? 0}
+        mrr={contractedMrr.data ?? 0}
+        collectedMrr={collectedMrr.data ?? 0}
         ytdSummary={ytdSummary.data}
       />
 

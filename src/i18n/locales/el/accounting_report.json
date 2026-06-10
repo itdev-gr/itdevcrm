@@ -22,7 +22,8 @@
     "mrr": "MRR",
     "net_suffix": "καθαρό",
     "gross_suffix": "μικτό",
-    "ytd": "Από αρχή έτους"
+    "ytd": "Από αρχή έτους",
+    "mrr_collected_suffix": "εισπράχθηκαν στην περίοδο"
   },
   "income_breakdown": {
     "title": "Έσοδα ανά υπηρεσία",

@@ -22,7 +22,8 @@
     "mrr": "MRR",
     "net_suffix": "net",
     "gross_suffix": "gross",
-    "ytd": "YTD"
+    "ytd": "YTD",
+    "mrr_collected_suffix": "collected in period"
   },
   "income_breakdown": {
     "title": "Income by service",
