@@ -1,0 +1,48 @@
+{
+  "nav": { "title": "Contracts" },
+  "tab": { "title": "Contracts" },
+  "status": { "draft": "Draft", "sent": "Sent", "signed": "Signed", "declined": "Declined" },
+  "actions": {
+    "new": "New contract",
+    "view": "View",
+    "save": "Save",
+    "download_pdf": "Download PDF",
+    "send": "Send to client",
+    "create": "Create contract"
+  },
+  "list": {
+    "title": "Contracts",
+    "empty": "No contracts yet.",
+    "client": "Client",
+    "number": "Number",
+    "contract_title": "Title",
+    "status": "Status",
+    "created": "Created",
+    "pick_client": "Select client…"
+  },
+  "builder": {
+    "title": "New contract",
+    "missing_client": "Missing client — open this page from a client card.",
+    "template": "Template",
+    "pick_template": "Pick a template…",
+    "contract_title": "Title",
+    "body": "Contract text",
+    "hint": "Client fields were filled in from the client card. Review and edit the text before saving."
+  },
+  "detail": {
+    "confirm_send": "Send this contract as a PDF to {{email}}?",
+    "sent_ok": "Contract sent.",
+    "no_email": "The client card has no email address — add one to send.",
+    "status": "Status"
+  },
+  "templates_admin": {
+    "title": "Contract templates",
+    "name": "Name",
+    "body": "Body",
+    "new": "New template",
+    "save": "Save",
+    "delete": "Delete",
+    "empty": "No templates yet.",
+    "placeholders_hint": "Available placeholders (filled from the client card):"
+  }
+}

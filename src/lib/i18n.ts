@@ -27,6 +27,8 @@ import enAccountingReport from '@/i18n/locales/en/accounting_report.json';
 import elAccountingReport from '@/i18n/locales/el/accounting_report.json';
 import enEmail from '@/i18n/locales/en/email.json';
 import elEmail from '@/i18n/locales/el/email.json';
+import enContracts from '@/i18n/locales/en/contracts.json';
+import elContracts from '@/i18n/locales/el/contracts.json';
 
 void i18n
   .use(LanguageDetector)
@@ -35,7 +37,7 @@ void i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'el'],
     defaultNS: 'common',
-    ns: ['common', 'auth', 'users', 'admin', 'clients', 'deals', 'sales', 'accounting', 'leads', 'jobs', 'home', 'accounting_report', 'email'],
+    ns: ['common', 'auth', 'users', 'admin', 'clients', 'deals', 'sales', 'accounting', 'leads', 'jobs', 'home', 'accounting_report', 'email', 'contracts'],
     resources: {
       en: {
         common: enCommon,
@@ -51,6 +53,7 @@ void i18n
         home: enHome,
         accounting_report: enAccountingReport,
         email: enEmail,
+        contracts: enContracts,
       },
       el: {
         common: elCommon,
@@ -66,6 +69,7 @@ void i18n
         home: elHome,
         accounting_report: elAccountingReport,
         email: elEmail,
+        contracts: elContracts,
       },
     },
     interpolation: { escapeValue: false },

@@ -7,7 +7,8 @@
     "stages": "Στάδια Pipeline",
     "service_packages": "Πακέτα υπηρεσιών",
     "permissions_test": "Δοκιμή δικαιωμάτων",
-    "email_automations": "Αυτοματισμοί email"
+    "email_automations": "Αυτοματισμοί email",
+    "contract_templates": "Πρότυπα συμβάσεων"
   },
   "settings": {
     "title": "Ρυθμίσεις"
