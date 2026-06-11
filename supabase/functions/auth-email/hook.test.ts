@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { verifyWebhookSignature } from './hook';
+import { verifyWebhookSignature, buildRecoveryEmail } from './hook';
 
 const SECRET_BYTES = 'super-secret-hook-key-0123456789';
 const SECRET = `v1,whsec_${btoa(SECRET_BYTES)}`;
@@ -118,5 +118,53 @@ describe('verifyWebhookSignature', () => {
       nowSeconds: now,
     });
     expect(ok).toBe(false);
+  });
+});
+
+describe('buildRecoveryEmail', () => {
+  const SUPABASE_URL = 'https://xujlrclyzxrvxszepquy.supabase.co';
+
+  it('builds the verify URL and send payload for a recovery hook', () => {
+    const out = buildRecoveryEmail(
+      {
+        user: { email: 'marios@itdev.gr' },
+        email_data: {
+          token_hash: 'abc123',
+          redirect_to: 'https://app.itdev.gr/reset-password',
+          email_action_type: 'recovery',
+        },
+      },
+      SUPABASE_URL,
+    );
+    expect(out).not.toBeNull();
+    expect(out!.to).toBe('marios@itdev.gr');
+    expect(out!.templateKey).toBe('auth_password_reset');
+    expect(out!.data.reset_url).toBe(
+      `${SUPABASE_URL}/auth/v1/verify?token_hash=abc123&type=recovery` +
+        `&redirect_to=${encodeURIComponent('https://app.itdev.gr/reset-password')}`,
+    );
+    expect(out!.data.cta_url).toBe(out!.data.reset_url);
+    expect(out!.data.cta_label.length).toBeGreaterThan(0);
+  });
+
+  it('returns null for non-recovery action types', () => {
+    const out = buildRecoveryEmail(
+      {
+        user: { email: 'a@b.gr' },
+        email_data: { token_hash: 'x', redirect_to: 'https://a', email_action_type: 'magiclink' },
+      },
+      SUPABASE_URL,
+    );
+    expect(out).toBeNull();
+  });
+
+  it('returns null when required fields are missing', () => {
+    expect(buildRecoveryEmail({}, SUPABASE_URL)).toBeNull();
+    expect(
+      buildRecoveryEmail(
+        { user: {}, email_data: { token_hash: 'x', redirect_to: 'y', email_action_type: 'recovery' } },
+        SUPABASE_URL,
+      ),
+    ).toBeNull();
   });
 });
