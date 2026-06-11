@@ -23,6 +23,10 @@ const ForgotPasswordPage = lazyPage(
   () => import('@/features/auth/ForgotPasswordPage'),
   'ForgotPasswordPage',
 );
+const ResetPasswordPage = lazyPage(
+  () => import('@/features/auth/ResetPasswordPage'),
+  'ResetPasswordPage',
+);
 const UsersListPage = lazyPage(() => import('@/features/users/UsersListPage'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/UserDetailPage'), 'UserDetailPage');
 const GroupsListPage = lazyPage(
@@ -203,5 +207,6 @@ export const router = createBrowserRouter([
   },
   { path: '/login', element: <LoginPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   { path: '/set-password', element: <SetPasswordLayout /> },
 ]);
