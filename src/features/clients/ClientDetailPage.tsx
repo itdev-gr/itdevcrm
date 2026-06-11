@@ -11,6 +11,7 @@ import { useJobsForClient } from '@/features/jobs/hooks/useJobsForClient';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
+import { ContractsTab } from '@/features/contracts/ContractsTab';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { useClientBlock } from '@/features/client_blocks/hooks/useClientBlock';
 import { useUnblockClient } from '@/features/client_blocks/hooks/useUnblockClient';
@@ -23,6 +24,7 @@ export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const { t } = useTranslation('clients');
   const { t: tAcc } = useTranslation('accounting');
+  const { t: tContracts } = useTranslation('contracts');
   const { data: client, isLoading, error } = useClient(clientId);
   const { data: deals = [], isLoading: dealsLoading } = useDeals({ clientId });
   const { data: jobs = [] } = useJobsForClient(clientId);
@@ -105,6 +107,7 @@ export function ClientDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="comments">{t('tabs.comments')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
+          <TabsTrigger value="contracts">{tContracts('tab.title')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
         </TabsList>
 
@@ -121,6 +124,9 @@ export function ClientDetailPage() {
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="client" parentId={clientId} />
+        </TabsContent>
+        <TabsContent value="contracts" className="pt-4">
+          <ContractsTab clientId={clientId} />
         </TabsContent>
         <TabsContent value="activity" className="pt-4">
           <ActivityPanel entityType="clients" entityId={clientId} />

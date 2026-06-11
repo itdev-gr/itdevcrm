@@ -20,6 +20,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
+import { ContractsTab } from '@/features/contracts/ContractsTab';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
@@ -33,6 +34,7 @@ export function DealDetailPage() {
   const { t: tLeads } = useTranslation('leads');
   const { t: tAccounting } = useTranslation('accounting');
   const { t: tClients } = useTranslation('clients');
+  const { t: tContracts } = useTranslation('contracts');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: deal, isLoading, error } = useDeal(dealId);
   const moveAccounting = useMoveAccountingStage();
@@ -218,6 +220,7 @@ export function DealDetailPage() {
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
           <TabsTrigger value="offers">Offers</TabsTrigger>
+          <TabsTrigger value="contracts">{tContracts('tab.title')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="pt-4 lg:min-h-0 lg:overflow-hidden">
@@ -254,6 +257,9 @@ export function DealDetailPage() {
         </TabsContent>
         <TabsContent value="offers" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
           <OffersTab dealId={dealId} />
+        </TabsContent>
+        <TabsContent value="contracts" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
+          {deal.client_id && <ContractsTab clientId={deal.client_id} />}
         </TabsContent>
       </Tabs>
     </div>
