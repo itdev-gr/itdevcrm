@@ -14,12 +14,16 @@ export type ContractPdfInput = {
   createdAt: string;
 };
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+function escapeHtml(s: string | null | undefined): string {
+  if (s === null || s === undefined) return '';
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return String(s).replace(/[&<>"']/g, (m) => map[m]);
 }
 
 export function renderContractHtml(input: ContractPdfInput): string {
@@ -36,7 +40,7 @@ export function renderContractHtml(input: ContractPdfInput): string {
     .map(escapeHtml)
     .join('<br/>');
 
-  return `<!doctype html><html><head><meta charset="utf-8"/><style>
+  return `<!doctype html><html lang="el"><head><meta charset="utf-8"/><style>
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #0f172a; margin: 0; }
   .page { padding: 48px 56px; }
   .head { display: flex; justify-content: space-between; align-items: baseline;
@@ -49,11 +53,11 @@ export function renderContractHtml(input: ContractPdfInput): string {
   .party { flex: 1; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px; }
   .party b { display: block; margin-bottom: 6px; font-size: 11px;
              text-transform: uppercase; color: #64748b; }
-  .body { font-size: 13px; line-height: 1.7; }
+  .body { font-size: 13px; line-height: 1.7; overflow-wrap: break-word; }
   .sigs { display: flex; gap: 48px; margin-top: 64px; font-size: 12px; }
   .sig { flex: 1; border-top: 1px solid #0f172a; padding-top: 8px; text-align: center; }
   </style></head><body><div class="page">
-  <div class="head"><div class="brand">ITDEV</div><div class="num">${escapeHtml(input.contractNumber ?? '')}</div></div>
+  <div class="head"><div class="brand">ITDEV</div><div class="num">${escapeHtml(input.contractNumber)}</div></div>
   <h1>${escapeHtml(input.title)}</h1>
   <div class="meta">${escapeHtml(date)}</div>
   <div class="parties">
