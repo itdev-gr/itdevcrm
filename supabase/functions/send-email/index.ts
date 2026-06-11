@@ -2,6 +2,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 import { IDENTITIES, type Identity } from './identities.ts';
 import { renderTemplate, renderDbTemplate } from './templates.ts';
+import { validateAttachmentRefs, fetchAttachments, type AttachmentRef, type ResendAttachment } from './attachments.ts';
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 
 const corsHeaders = {
@@ -31,6 +32,7 @@ type SendInput = {
   data?: Record<string, unknown>;
   dedupeKey?: string | null;
   dryRun?: boolean;
+  attachments?: AttachmentRef[];
 };
 
 async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 'skipped'; resendId?: string; error?: string }> {
@@ -65,10 +67,24 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     return { status: 'sent', resendId: 'dry-run' };
   }
 
+  let attachments: ResendAttachment[] = [];
+  if (input.attachments && input.attachments.length > 0) {
+    try {
+      attachments = await fetchAttachments(admin.storage, validateAttachmentRefs(input.attachments));
+    } catch (e) {
+      await admin.from('email_log').insert({ identity, to_email: to, template_key: templateKey, status: 'failed', dedupe_key: dedupeKey, error: String(e) });
+      return { status: 'failed', error: String(e) };
+    }
+  }
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: id.from, reply_to: id.replyTo, to, subject: rendered.subject, html: rendered.html, text: rendered.text }),
+    body: JSON.stringify({
+      from: id.from, reply_to: id.replyTo, to,
+      subject: rendered.subject, html: rendered.html, text: rendered.text,
+      ...(attachments.length > 0 ? { attachments } : {}),
+    }),
   });
   if (!res.ok) {
     const error = await res.text();
