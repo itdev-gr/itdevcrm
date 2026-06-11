@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { select, eq, update, from, invoke, getSession } = vi.hoisted(() => {
+const { select, update, from, invoke, getSession } = vi.hoisted(() => {
   const select = vi.fn();
   const eq = vi.fn().mockReturnValue({ select });
   const update = vi.fn().mockReturnValue({ eq });
