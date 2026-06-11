@@ -80,6 +80,34 @@ describe('verifyWebhookSignature', () => {
     expect(ok).toBe(false);
   });
 
+  it('rejects (returns false, not throws) when the secret is not valid base64', async () => {
+    const ts = String(now);
+    const sig = await sign('msg_1', ts, '{"a":1}');
+    const ok = await verifyWebhookSignature({
+      secret: 'v1,whsec_!!!not-base64!!!',
+      msgId: 'msg_1',
+      timestamp: ts,
+      signatureHeader: `v1,${sig}`,
+      payload: '{"a":1}',
+      nowSeconds: now,
+    });
+    expect(ok).toBe(false);
+  });
+
+  it('rejects a valid signature sent under a wrong scheme version', async () => {
+    const ts = String(now);
+    const sig = await sign('msg_1', ts, '{"a":1}');
+    const ok = await verifyWebhookSignature({
+      secret: SECRET,
+      msgId: 'msg_1',
+      timestamp: ts,
+      signatureHeader: `v2,${sig}`,
+      payload: '{"a":1}',
+      nowSeconds: now,
+    });
+    expect(ok).toBe(false);
+  });
+
   it('rejects an empty or malformed signature header', async () => {
     const ok = await verifyWebhookSignature({
       secret: SECRET,
