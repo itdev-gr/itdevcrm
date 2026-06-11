@@ -38,23 +38,30 @@ Deno.serve(async (req) => {
     // Only recovery is wired; never log the payload (it carries the token).
     const action = payload.email_data?.email_action_type;
     if (action === 'recovery') {
+      // A recovery request we failed to handle must surface as an error —
+      // a 200 here would tell Auth "sent" while the user gets nothing.
       console.warn('auth-email: recovery payload missing required fields');
-    } else {
-      console.warn('auth-email: unhandled email_action_type', action);
+      return json({ error: 'invalid_recovery_payload' }, 500);
     }
+    console.warn('auth-email: unhandled email_action_type', action);
     return json({ skipped: true });
   }
 
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      identity: 'internal',
-      to: email.to,
-      templateKey: email.templateKey,
-      data: email.data,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identity: 'internal',
+        to: email.to,
+        templateKey: email.templateKey,
+        data: email.data,
+      }),
+    });
+  } catch {
+    return json({ error: 'send_failed' }, 500);
+  }
   const result = (await res.json().catch(() => ({}))) as { status?: string };
   if (!res.ok || result.status === 'failed') return json({ error: 'send_failed' }, 500);
   return json({ sent: true });
