@@ -24,7 +24,11 @@ describe('validateAttachmentRefs', () => {
   });
 
   it('rejects traversal, empty, and malformed paths', () => {
-    const bad = ['../avatars/x.png', 'a/../../x', '', 'a//b', './x', 'a/./b', 'a\\b', 'a/%2e%2e/b'];
+    const bad = [
+      '../avatars/x.png', 'a/../../x', '', 'a//b', './x', 'a/./b', 'a\\b', 'a/%2e%2e/b',
+      // WHATWG URL parser strips \t \n \r before parsing — these reassemble into dot segments
+      '.\t./avatars/x', '.\n./avatars/x', '.\r./avatars/x', 'a/.\t./.\t./avatars/x', 'a/ x', 'a b/x',
+    ];
     for (const path of bad) {
       expect(
         () => validateAttachmentRefs([{ bucket: 'contract-pdfs', path, filename: 'x.pdf' }]),

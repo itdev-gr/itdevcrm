@@ -17,13 +17,13 @@ export function validateAttachmentRefs(input: unknown): AttachmentRef[] {
       throw new Error('invalid attachment ref');
     }
     if (!ALLOWED_BUCKETS.has(r.bucket)) throw new Error(`attachment bucket not allowed: ${r.bucket}`);
-    // storage-js does not encode path segments and fetch normalizes dot segments —
-    // a '../' path would escape the allowlisted bucket. '%' is rejected as defense
-    // against server-side decoding.
+    // Positive allowlist: storage-js does not encode path segments and the
+    // WHATWG URL parser strips \t \n \r and normalizes dot segments, so any
+    // character outside this set (and any '', '.', '..' segment) could let a
+    // crafted path escape the allowlisted bucket. Generated PDF paths are
+    // always of the form 'contracts/<uuid>.pdf'.
     if (
-      r.path === '' ||
-      r.path.includes('\\') ||
-      r.path.includes('%') ||
+      !/^[A-Za-z0-9._/-]+$/.test(r.path) ||
       r.path.split('/').some((seg) => seg === '' || seg === '.' || seg === '..')
     ) {
       throw new Error(`invalid attachment path: ${r.path}`);
