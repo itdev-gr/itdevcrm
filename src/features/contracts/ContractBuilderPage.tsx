@@ -20,17 +20,20 @@ export function ContractBuilderPage() {
   const [templateId, setTemplateId] = useState('');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [dirty, setDirty] = useState(false);
 
   if (!clientId) return <div className="p-8 text-red-600">{t('builder.missing_client')}</div>;
   if (clientLoading) return <div className="p-8">…</div>;
   if (!client) return <div className="p-8 text-red-600">Not found</div>;
 
   function onPickTemplate(id: string) {
+    if (dirty && body.trim() !== '' && !window.confirm(t('builder.replace_edits'))) return;
     setTemplateId(id);
     const tpl = templates.find((x) => x.id === id);
     if (tpl && client) {
       setTitle(tpl.name);
       setBody(resolvePlaceholders(tpl.body, buildPlaceholderData(client)));
+      setDirty(false);
     }
   }
 
@@ -71,14 +74,24 @@ export function ContractBuilderPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ct-title">{t('builder.contract_title')}</Label>
-          <Input id="ct-title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            id="ct-title"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setDirty(true);
+            }}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ct-body">{t('builder.body')}</Label>
           <textarea
             id="ct-body"
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(e) => {
+              setBody(e.target.value);
+              setDirty(true);
+            }}
             rows={20}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />

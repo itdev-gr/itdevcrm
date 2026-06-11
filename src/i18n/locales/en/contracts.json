@@ -27,7 +27,8 @@
     "pick_template": "Pick a template…",
     "contract_title": "Title",
     "body": "Contract text",
-    "hint": "Client fields were filled in from the client card. Review and edit the text before saving."
+    "hint": "Client fields were filled in from the client card. Review and edit the text before saving.",
+    "replace_edits": "Replace your edits with the selected template?"
   },
   "detail": {
     "confirm_send": "Send this contract as a PDF to {{email}}?",
