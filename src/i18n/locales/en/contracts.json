@@ -42,6 +42,8 @@
     "new": "New template",
     "save": "Save",
     "delete": "Delete",
+    "confirm_delete": "Delete this template?",
+    "discard_changes": "Discard unsaved changes?",
     "empty": "No templates yet.",
     "placeholders_hint": "Available placeholders (filled from the client card):"
   }
