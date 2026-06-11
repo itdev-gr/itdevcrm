@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -62,6 +62,9 @@ export function LoginPage() {
           {login.isPending ? t('login.submitting') : t('login.submit')}
         </Button>
       </form>
+      <Link to="/forgot-password" className="block text-sm underline">
+        {t('login.forgot_password')}
+      </Link>
     </div>
   );
 }

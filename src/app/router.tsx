@@ -19,6 +19,10 @@ function lazyPage<K extends string>(
 const HomePage = lazyPage(() => import('./routes/HomePage'), 'HomePage');
 const NotFoundPage = lazyPage(() => import('./routes/NotFoundPage'), 'NotFoundPage');
 const LoginPage = lazyPage(() => import('@/features/auth/LoginPage'), 'LoginPage');
+const ForgotPasswordPage = lazyPage(
+  () => import('@/features/auth/ForgotPasswordPage'),
+  'ForgotPasswordPage',
+);
 const UsersListPage = lazyPage(() => import('@/features/users/UsersListPage'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/UserDetailPage'), 'UserDetailPage');
 const GroupsListPage = lazyPage(
@@ -198,5 +202,6 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '/login', element: <LoginPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/set-password', element: <SetPasswordLayout /> },
 ]);
