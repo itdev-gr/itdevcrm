@@ -17,6 +17,17 @@ export function validateAttachmentRefs(input: unknown): AttachmentRef[] {
       throw new Error('invalid attachment ref');
     }
     if (!ALLOWED_BUCKETS.has(r.bucket)) throw new Error(`attachment bucket not allowed: ${r.bucket}`);
+    // storage-js does not encode path segments and fetch normalizes dot segments —
+    // a '../' path would escape the allowlisted bucket. '%' is rejected as defense
+    // against server-side decoding.
+    if (
+      r.path === '' ||
+      r.path.includes('\\') ||
+      r.path.includes('%') ||
+      r.path.split('/').some((seg) => seg === '' || seg === '.' || seg === '..')
+    ) {
+      throw new Error(`invalid attachment path: ${r.path}`);
+    }
     return { bucket: r.bucket, path: r.path, filename: r.filename };
   });
 }

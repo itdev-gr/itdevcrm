@@ -22,6 +22,20 @@ describe('validateAttachmentRefs', () => {
     expect(() => validateAttachmentRefs([{ bucket: 'contract-pdfs' }])).toThrow(/invalid attachment/);
     expect(() => validateAttachmentRefs('nope')).toThrow(/invalid attachment/);
   });
+
+  it('rejects traversal, empty, and malformed paths', () => {
+    const bad = ['../avatars/x.png', 'a/../../x', '', 'a//b', './x', 'a/./b', 'a\\b', 'a/%2e%2e/b'];
+    for (const path of bad) {
+      expect(
+        () => validateAttachmentRefs([{ bucket: 'contract-pdfs', path, filename: 'x.pdf' }]),
+        path,
+      ).toThrow(/invalid attachment path/);
+    }
+    // sane nested path still accepted
+    expect(validateAttachmentRefs([
+      { bucket: 'contract-pdfs', path: 'contracts/abc.pdf', filename: 'x.pdf' },
+    ])).toHaveLength(1);
+  });
 });
 
 describe('toBase64', () => {
