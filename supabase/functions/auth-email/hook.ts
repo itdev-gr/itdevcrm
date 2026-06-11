@@ -82,8 +82,10 @@ export function buildRecoveryEmail(
   const redirectTo = payload.email_data?.redirect_to;
   if (action !== 'recovery' || !to || !tokenHash || !redirectTo) return null;
 
+  // GET /auth/v1/verify takes the token hash in `token` (the `token_hash`
+  // param is POST-only and 400s on the hosted endpoint).
   const resetUrl =
-    `${supabaseUrl}/auth/v1/verify?token_hash=${encodeURIComponent(tokenHash)}` +
+    `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(tokenHash)}` +
     `&type=recovery&redirect_to=${encodeURIComponent(redirectTo)}`;
   return {
     to,

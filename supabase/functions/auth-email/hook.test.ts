@@ -139,8 +139,11 @@ describe('buildRecoveryEmail', () => {
     expect(out).not.toBeNull();
     expect(out!.to).toBe('marios@itdev.gr');
     expect(out!.templateKey).toBe('auth_password_reset');
+    // The hosted GET /auth/v1/verify endpoint takes the token hash in the
+    // `token` param (same as Supabase's own ConfirmationURL); `token_hash`
+    // is only accepted by the POST verifyOtp API and returns 400 here.
     expect(out!.data.reset_url).toBe(
-      `${SUPABASE_URL}/auth/v1/verify?token_hash=abc123&type=recovery` +
+      `${SUPABASE_URL}/auth/v1/verify?token=abc123&type=recovery` +
         `&redirect_to=${encodeURIComponent('https://app.itdev.gr/reset-password')}`,
     );
     expect(out!.data.cta_url).toBe(out!.data.reset_url);
