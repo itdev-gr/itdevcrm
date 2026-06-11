@@ -123,8 +123,17 @@ export function renderDbTemplate(
     footer = `<p style="font-size:11px;color:#94a3b8;margin-top:16px">Αν δεν θέλετε να λαμβάνετε ενημερώσεις από εμάς, <a href="${url}" style="color:#94a3b8">πατήστε εδώ</a>.</p>`;
     footerText = `\n\nΑπεγγραφή: ${url}`;
   }
+  // Transactional emails (e.g. password reset) pass cta_url/cta_label to get
+  // a styled action button under the body text. Text version is unchanged —
+  // bodies that need a plain link carry it via a {{variable}}.
+  let cta = '';
+  if (data.cta_url) {
+    const url = escapeHtml(String(data.cta_url));
+    const label = escapeHtml(String(data.cta_label ?? 'Άνοιγμα / Open'));
+    cta = `<p style="margin:24px 0"><a href="${url}" style="background:#0f172a;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block">${label}</a></p>`;
+  }
   const html = shell(
-    `<p>${escapeHtml(bodyText).replace(/\n/g, '<br/>')}</p>${footer}`,
+    `<p>${escapeHtml(bodyText).replace(/\n/g, '<br/>')}</p>${cta}${footer}`,
   );
   return { subject, html, text: bodyText + footerText };
 }
