@@ -3,13 +3,14 @@ import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { eq, update, from, invoke, getSession } = vi.hoisted(() => {
-  const eq = vi.fn();
+const { select, eq, update, from, invoke, getSession } = vi.hoisted(() => {
+  const select = vi.fn();
+  const eq = vi.fn().mockReturnValue({ select });
   const update = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ update });
   const invoke = vi.fn();
   const getSession = vi.fn();
-  return { eq, update, from, invoke, getSession };
+  return { select, eq, update, from, invoke, getSession };
 });
 
 vi.mock('@/lib/supabase', () => ({
@@ -37,7 +38,7 @@ describe('useSendContract', () => {
     getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ url: 'https://signed' }) }));
     invoke.mockResolvedValue({ data: { status: 'sent' }, error: null });
-    eq.mockResolvedValue({ error: null });
+    select.mockResolvedValue({ data: [{ id: 'k1' }], error: null });
   });
 
   it('regenerates the PDF, sends the email with the attachment, marks sent', async () => {
@@ -71,13 +72,26 @@ describe('useSendContract', () => {
     );
   });
 
-  it('throws and does not mark sent when the email fails', async () => {
-    invoke.mockResolvedValue({ data: { status: 'failed', error: 'boom' }, error: null });
+  it('surfaces the real error and does not mark sent when the email fails', async () => {
+    invoke.mockResolvedValue({
+      data: null,
+      error: Object.assign(new Error('Edge Function returned a non-2xx status code'), {
+        context: { json: () => Promise.resolve({ status: 'failed', error: 'boom' }) },
+      }),
+    });
     const { result } = renderHook(() => useSendContract(), {
       wrapper: ({ children }) => wrap(children),
     });
     await expect(result.current.mutateAsync(input)).rejects.toThrow(/boom/);
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it('throws when the status update matches no rows (no silent success)', async () => {
+    select.mockResolvedValue({ data: [], error: null });
+    const { result } = renderHook(() => useSendContract(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+    await expect(result.current.mutateAsync(input)).rejects.toThrow(/status/);
   });
 
   it('throws when PDF generation fails', async () => {

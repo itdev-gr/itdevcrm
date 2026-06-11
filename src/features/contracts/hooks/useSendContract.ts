@@ -47,18 +47,37 @@ export function useSendContract() {
           ],
         },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        let msg = error.message;
+        try {
+          const ctx = error.context as { json?: () => Promise<{ error?: string }> } | undefined;
+          if (ctx?.json) {
+            const j = await ctx.json();
+            if (j?.error) msg = j.error;
+          }
+        } catch {
+          // ignore
+        }
+        throw new Error(msg);
+      }
       const status = (data as { status?: string; error?: string } | null)?.status;
       if (status !== 'sent' && status !== 'skipped') {
         throw new Error((data as { error?: string } | null)?.error ?? 'send failed');
       }
 
-      // 3. Mark the contract as sent.
-      const { error: updErr } = await supabase
+      // 3. Mark the contract as sent — verify a row was actually updated
+      // (RLS can silently match 0 rows for staff without edit permission).
+      const { data: updated, error: updErr } = await supabase
         .from('contracts')
         .update({ status: 'sent', sent_at: new Date().toISOString() })
-        .eq('id', input.contractId);
+        .eq('id', input.contractId)
+        .select('id');
       if (updErr) throw new Error(updErr.message);
+      if (!updated || updated.length === 0) {
+        throw new Error(
+          'Email sent, but updating the contract status failed (no permission?) — check the contract status.',
+        );
+      }
     }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.contracts }),
   });
