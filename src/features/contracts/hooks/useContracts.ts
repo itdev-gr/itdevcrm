@@ -18,7 +18,7 @@ export function useContractsForClient(clientId: string) {
         .select('*')
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       return data ?? [];
     },
   });
@@ -32,7 +32,7 @@ export function useContracts() {
         .from('contracts')
         .select('*, clients(name, email)')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       return (data ?? []) as ContractWithClient[];
     },
   });
@@ -48,7 +48,7 @@ export function useContract(contractId: string) {
         .select('*, clients(name, email)')
         .eq('id', contractId)
         .single();
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       return data as ContractWithClient;
     },
   });

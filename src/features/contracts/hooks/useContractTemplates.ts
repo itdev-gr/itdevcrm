@@ -14,7 +14,7 @@ export function useContractTemplates() {
         .from('contract_templates')
         .select('*')
         .order('name');
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       return data ?? [];
     },
   });
