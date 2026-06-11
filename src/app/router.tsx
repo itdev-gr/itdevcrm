@@ -126,6 +126,10 @@ const ContractTemplatesPage = lazyPage(
   () => import('@/features/contracts/ContractTemplatesPage'),
   'ContractTemplatesPage',
 );
+const ContractBuilderPage = lazyPage(
+  () => import('@/features/contracts/ContractBuilderPage'),
+  'ContractBuilderPage',
+);
 
 export const router = createBrowserRouter([
   {
@@ -206,6 +210,7 @@ export const router = createBrowserRouter([
       { path: 'leads/:leadId', element: <LeadDetailPage /> },
       { path: 'leads/:leadId/offers/new', element: <OfferBuilderPage /> },
       { path: 'offers/:offerId', element: <OfferDetailPage /> },
+      { path: 'contracts/new', element: <ContractBuilderPage /> },
       { path: 'profile', element: <MyProfilePage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
