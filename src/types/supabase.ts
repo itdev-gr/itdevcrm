@@ -463,6 +463,104 @@ export type Database = {
           },
         ]
       }
+      contract_templates: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contracts: {
+        Row: {
+          body: string
+          client_id: string
+          contract_number: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          pdf_path: string | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          client_id: string
+          contract_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pdf_path?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          client_id?: string
+          contract_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pdf_path?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_payments: {
         Row: {
           amount: number
