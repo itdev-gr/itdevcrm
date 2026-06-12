@@ -26,7 +26,7 @@ function useClientOptions() {
 export function ContractsListPage() {
   const { t } = useTranslation('contracts');
   const navigate = useNavigate();
-  const { data: contracts = [], isLoading } = useContracts();
+  const { data: contracts = [], isLoading, error } = useContracts();
   const { data: clientOptions = [] } = useClientOptions();
   const [newClientId, setNewClientId] = useState('');
 
@@ -58,6 +58,8 @@ export function ContractsListPage() {
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">…</p>
+      ) : error ? (
+        <p className="text-sm text-red-600">{error.message}</p>
       ) : contracts.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('list.empty')}</p>
       ) : (

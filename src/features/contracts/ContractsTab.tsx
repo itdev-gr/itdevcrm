@@ -7,7 +7,7 @@ import { ContractStatusBadge } from './ContractStatusBadge';
 
 export function ContractsTab({ clientId }: { clientId: string }) {
   const { t } = useTranslation('contracts');
-  const { data: contracts = [], isLoading } = useContractsForClient(clientId);
+  const { data: contracts = [], isLoading, error } = useContractsForClient(clientId);
 
   return (
     <div className="space-y-3">
@@ -16,6 +16,8 @@ export function ContractsTab({ clientId }: { clientId: string }) {
       </Button>
       {isLoading ? (
         <p className="text-sm text-muted-foreground">…</p>
+      ) : error ? (
+        <p className="text-sm text-red-600">{error.message}</p>
       ) : contracts.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('list.empty')}</p>
       ) : (
