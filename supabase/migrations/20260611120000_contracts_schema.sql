@@ -12,6 +12,7 @@
 --   drop table public.contract_templates;
 --   drop function public.contracts_set_number();
 --   drop sequence if exists contracts_seq;
+--   drop policy storage_contract_pdfs_select on storage.objects;
 --   delete from storage.objects where bucket_id = 'contract-pdfs';
 --   delete from storage.buckets where id = 'contract-pdfs';
 -- =============================================================================

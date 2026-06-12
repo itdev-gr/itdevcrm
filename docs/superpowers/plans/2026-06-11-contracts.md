@@ -20,10 +20,10 @@
 - New Vercel functions `api/contract-pdf.ts`, `api/_contract-pdf-template.ts`
 - New feature folder `src/features/contracts/` (pages, tab, badge, hooks)
 - New lib `src/lib/contracts/placeholders.ts`
-- Modified: `src/lib/queryKeys.ts`, `src/lib/i18n.ts`, `src/app/router.tsx`, `src/app/AdminLayout.tsx`, `src/components/layout/Sidebar.tsx`, `src/features/clients/ClientDetailPage.tsx`, `src/features/deals/DealDetailPage.tsx`, `src/i18n/locales/{en,el}/admin.json`, new `src/i18n/locales/{en,el}/contracts.json`, regenerated `src/types/supabase.ts`
+- Modified: `src/lib/queryKeys.ts`, `src/lib/i18n.ts`, `src/app/router.tsx`, `src/app/AdminLayout.tsx`, `src/components/layout/Sidebar.tsx`, `src/features/clients/ClientDetailPage.tsx`, `src/features/deals/DealDetailPage.tsx`, `src/i18n/locales/{en,el}/admin.json`, new `src/i18n/locales/{en,el}/contracts.json`, regenerated `src/types/supabase.ts`, `vercel.json` (function config for `api/contract-pdf.ts`: maxDuration + chromium includeFiles — required, see commit 84e2923 for the offer-pdf precedent)
 
 **Revert:**
-- `git revert` the commits (each task commits separately, all prefixed `feat(contracts)` / `feat(email)`)
+- Revert the whole range, not by prefix: `git revert f19de42..HEAD` (the feature landed as `feat`/`fix`/`refactor`/`docs` commits, including security hardening fixes — a prefix-filtered revert would miss them)
 - DB rollback SQL is in the migration header (drop tables, delete seed row, delete bucket)
 - Redeploy `send-email` from the reverted tree: `npx supabase functions deploy send-email`
 

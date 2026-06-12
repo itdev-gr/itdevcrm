@@ -6,6 +6,10 @@
     "api/offer-pdf.ts": {
       "maxDuration": 60,
       "includeFiles": "node_modules/@sparticuz/chromium/**"
+    },
+    "api/contract-pdf.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/@sparticuz/chromium/**"
     }
   }
 }
