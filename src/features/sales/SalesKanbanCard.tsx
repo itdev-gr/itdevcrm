@@ -9,6 +9,7 @@ import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners'
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import type { PlannedService } from '@/features/deals/ServicesPlannedField';
+import { CallLink } from '@/components/CallLink';
 
 export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
   const { t, i18n } = useTranslation('leads');
@@ -73,6 +74,11 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
           <div className="text-[10px] text-slate-500">
             👤 {owner ? owner.full_name || owner.email : t('owner.unassigned')}
           </div>
+          {lead.phone && (
+            <div className="text-[10px]">
+              <span onClick={(e) => e.stopPropagation()}><CallLink phone={lead.phone} /></span>
+            </div>
+          )}
           {services.length > 0 && (
             <div className="text-[10px] text-slate-500">
               {services.map((s) => tDeals(`services.types.${s.service_type}`)).join(' · ')}
