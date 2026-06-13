@@ -5,6 +5,7 @@ import { useAccountingClients, type AccountingClientRow } from './hooks/useAccou
 import { CopyableCode } from '@/components/CopyableCode';
 import { formatDate } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
+import { CallLink } from '@/components/CallLink';
 
 function isBlocked(c: AccountingClientRow): boolean {
   return (c.client_blocks ?? []).some((b) => b.unblocked_at == null);
@@ -134,7 +135,7 @@ export function AccountingClientsPage() {
                     </td>
                     <td className="px-3 py-2">{contactName || '—'}</td>
                     <td className="px-3 py-2 text-slate-600">{c.email ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-600">{c.phone ?? '—'}</td>
+                    <td className="px-3 py-2 text-slate-600"><CallLink phone={c.phone} /></td>
                     <td className="px-3 py-2 text-slate-600">{c.vat_number ?? '—'}</td>
                     <td className="px-3 py-2 text-right">{jobs.length}</td>
                     <td className="px-3 py-2 text-right">€{monthlyRevenue(c).toFixed(0)}</td>
