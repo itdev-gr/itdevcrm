@@ -8,6 +8,7 @@ import { useAssignedTaskDetail } from './hooks/useAssignedTaskDetail';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { DepartmentChip } from './DepartmentChip';
 import { industryLabel } from '@/lib/industries';
+import { CallLink } from '@/components/CallLink';
 
 type Props = {
   taskId: string | null;
@@ -86,8 +87,7 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
                   {task.client.phone && (
                     <span>
-                      <span aria-hidden="true">☎ </span>
-                      <span>{task.client.phone}</span>
+                      <CallLink phone={task.client.phone} />
                     </span>
                   )}
                   {task.client.email && (
