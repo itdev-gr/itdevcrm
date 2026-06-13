@@ -28,7 +28,7 @@ describe('toYeastarContact', () => {
     });
   });
 
-  it('points lead rows at the sales route and tolerates null fields', () => {
+  it('points lead rows at the lead route and tolerates null fields', () => {
     const out = toYeastarContact(
       { ...row, source: 'lead', contact_first_name: null, contact_last_name: null, email: null },
       'https://crm.itdev.gr',
@@ -36,7 +36,7 @@ describe('toYeastarContact', () => {
     expect(out.contact.firstname).toBe('');
     expect(out.contact.email).toBe('');
     expect(out.contact.url).toBe(
-      'https://crm.itdev.gr/sales/leads/11111111-2222-3333-4444-555555555555',
+      'https://crm.itdev.gr/leads/11111111-2222-3333-4444-555555555555',
     );
   });
 });

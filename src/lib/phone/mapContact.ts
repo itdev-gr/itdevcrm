@@ -25,7 +25,7 @@ export type YeastarContact = {
 
 export function toYeastarContact(row: ContactRow, appBase: string): YeastarContact {
   const base = appBase.replace(/\/+$/, '');
-  const path = row.source === 'client' ? 'clients' : 'sales/leads';
+  const path = row.source === 'client' ? 'clients' : 'leads';
   return {
     contact: {
       id: row.id,
