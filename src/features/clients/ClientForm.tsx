@@ -5,6 +5,7 @@ import { PermissionAwareInput } from '@/components/permissions/PermissionAwareIn
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { useUpsertClient } from './hooks/useUpsertClient';
 import type { ClientRow } from './hooks/useClients';
+import { CallLink } from '@/components/CallLink';
 
 type Props = {
   initial?: Partial<ClientRow>;
@@ -127,6 +128,11 @@ export function ClientForm({ initial, onDone, onCancel }: Props) {
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
+      {phone ? (
+        <div className="mt-1 text-xs">
+          <CallLink phone={phone} />
+        </div>
+      ) : null}
       <PermissionAwareInput
         table="clients"
         field="website"
