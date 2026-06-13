@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useMyClients } from './hooks/useMyClients';
 import { CreateClientDialog } from './CreateClientDialog';
 import { BlockBadge } from '@/features/client_blocks/BlockBadge';
+import { CallLink } from '@/components/CallLink';
 
 export function ClientsListPage() {
   const { t } = useTranslation('clients');
@@ -50,7 +51,7 @@ export function ClientsListPage() {
                   {[c.contact_first_name, c.contact_last_name].filter(Boolean).join(' ')}
                 </td>
                 <td className="py-2 pr-4">{c.email}</td>
-                <td className="py-2 pr-4">{c.phone}</td>
+                <td className="py-2 pr-4"><CallLink phone={c.phone} /></td>
                 <td className="py-2 pr-4">{c.industry}</td>
                 <td className="py-2 pr-4">{c.country}</td>
                 <td className="py-2">
