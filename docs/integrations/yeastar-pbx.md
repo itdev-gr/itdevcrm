@@ -1,7 +1,7 @@
 # Yeastar PBX Integration — Runbook
 
 ## Inbound caller-ID lookup
-- Endpoint: `GET https://<crm-domain>/api/pbx-lookup?phone={CALLER_NUMBER}&key=<PBX_LOOKUP_SECRET>`
+- Endpoint: `GET https://itdevcrm.vercel.app/api/pbx-lookup?phone={CALLER_NUMBER}&key=<PBX_LOOKUP_SECRET>`
   - The PBX may instead send the secret as header `X-PBX-Secret` (the endpoint accepts either).
 - Response on a hit (HTTP 200): `{ "contact": { id, firstname, lastname, company, email, businessphone, mobilephone, url } }`
 - Miss → HTTP 404; bad/blank number → 400; wrong/missing secret → 401.
@@ -30,7 +30,7 @@
 1. Apply the migration `supabase/migrations/20260614000001_pbx_phone_lookup.sql` to the project.
 2. Set `PBX_LOOKUP_SECRET` (and `PBX_DEEPLINK_BASE` if the domain differs) in Vercel, then deploy.
 3. Smoke test the endpoint:
-   `curl "https://<crm-domain>/api/pbx-lookup?phone=<known-number>&key=<secret>"` → expect the contact JSON.
+   `curl "https://itdevcrm.vercel.app/api/pbx-lookup?phone=<known-number>&key=<secret>"` → expect the contact JSON.
    Wrong secret → 401; unknown number → 404.
 4. Give Yeastar's team the URL template + secret; they configure the PBX 3rd-party lookup.
 5. Place a real inbound call from a number on a client/lead → the call-center app shows the contact.

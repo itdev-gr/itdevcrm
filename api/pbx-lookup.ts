@@ -44,6 +44,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const appBase =
-    process.env.PBX_DEEPLINK_BASE ?? process.env.VITE_PUBLIC_APP_URL ?? 'https://crm.itdev.gr';
+    process.env.PBX_DEEPLINK_BASE ?? process.env.VITE_PUBLIC_APP_URL ?? 'https://itdevcrm.vercel.app';
   res.status(200).json(toYeastarContact(row, appBase));
 }
