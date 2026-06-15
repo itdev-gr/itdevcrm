@@ -14,14 +14,15 @@ moving a lead **into** Unique Lead to a single user (`mkifokeris@itdev.gr`).
 
 - **Name:** `Unique Lead` (en) / `Μοναδικός Πελάτης` (el). Stage code: `unique_lead`.
 - **Placement:** first column — `position = 5` (before New Lead at 10).
-- **Who can move IN:** only `mkifokeris@itdev.gr` (user id `61b53075-398f-43a0-86f6-8bce177b669b`).
-  He is himself an admin, so enforcement is by **specific identity with NO admin bypass**.
-  `info@itdev.gr` (also admin) is intentionally blocked.
-- **Lock scope:** only the *move IN* action is restricted. Moving a lead **out** of Unique Lead,
-  and editing leads already in it, are unrestricted (subject to normal `move_stage`/`edit` perms).
+- **Who can add / move IN:** only `mkifokeris@itdev.gr` (user id `61b53075-398f-43a0-86f6-8bce177b669b`)
+  **and the Zapier/Meta webhook** (service-role context, `auth.uid()` is null). Enforcement is by
+  specific identity with **NO admin bypass**; `info@itdev.gr` (also admin) is intentionally blocked.
+- **Lock scope:** only *adding / moving a lead IN* is restricted. Moving a lead **out** of Unique Lead,
+  changing values, adding documents, commenting, etc. are unrestricted (normal `move_stage`/`edit` perms).
   The column and its leads remain visible to everyone with sales `view`.
-- **Default landing stage is unchanged:** new/Meta leads still arrive in **New Lead**. Unique Lead
-  is the curated first column mkifokeris pulls qualified leads into.
+- **Intake routing:** Meta (Zapier) leads now default to **Unique Lead** (the intake column); manual and
+  other leads still default to **New Lead**. Sales triage by moving leads out of Unique Lead. The welcome
+  email therefore reaches Meta leads on arrival (they enter Unique Lead at insert).
 
 ## Architecture / Components
 
@@ -42,7 +43,11 @@ Modify trigger function `public.leads_email_automations`:
 - Dedupe key `lead_welcome:<lead_id>` ⇒ sent at most once per lead.
 - `scheduled_confirm`, `won_welcome`, `won_next_steps`, and sequence start/stop logic are untouched.
 
-Consequence: leads in **New Lead** (incl. Meta) receive **no** email until moved to Unique Lead.
+Consequence: leads in **New Lead** receive **no** email; Meta leads (which now default to Unique Lead)
+receive it on arrival; any other lead receives it only when moved into Unique Lead.
+
+A companion change to `public.leads_set_default_stage` routes new leads to their starting column:
+`source='meta'` → `unique_lead`, everything else → `new_lead`.
 
 ### 3. Move-in lock (DB, data-driven, source of truth)
 - Add column `public.pipeline_stages.restricted_to_user_id uuid null references auth.users(id)`.
@@ -52,8 +57,9 @@ Consequence: leads in **New Lead** (incl. Meta) receive **no** email until moved
   - Fire only when the lead is **entering** a stage (INSERT with a stage, or UPDATE where
     `new.stage_id is distinct from old.stage_id`).
   - Look up `restricted_to_user_id` for `new.stage_id`. If it is non-null **and**
-    `auth.uid() is distinct from restricted_to_user_id` → `raise exception` with a clear message
-    (SQLSTATE `42501` insufficient_privilege). **No admin bypass.**
+    `auth.uid() is not null` **and** `auth.uid() is distinct from restricted_to_user_id` →
+    `raise exception` (SQLSTATE `42501`). `auth.uid()` null ⇒ service role (the Zapier/Meta webhook) ⇒
+    allowed. **No admin bypass** for authenticated users.
   - Moving OUT (`old` was restricted, `new` is not) is allowed.
 - Trigger ordering: this restriction trigger must see the final `stage_id`. The existing
   `leads_set_default_stage` (sets default when null) and `leads_email_automations` must not conflict —

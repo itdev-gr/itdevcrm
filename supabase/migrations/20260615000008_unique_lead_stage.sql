@@ -17,9 +17,11 @@ values (
 )
 on conflict do nothing;
 
--- 3. Enforce: only the assigned user may move a lead INTO a restricted stage.
---    Fires only when ENTERING a stage. Moving OUT / editing in place is unaffected.
---    No admin bypass — the assigned user is themselves an admin.
+-- 3. Enforce: who may put a lead INTO a restricted stage.
+--    Allowed: the assigned user (mkifokeris) OR a service-role/system context
+--    (auth.uid() is null) — that is the Zapier/Meta webhook. Every other
+--    authenticated user is blocked. Fires only when ENTERING a stage; moving OUT
+--    and editing a lead already in the stage are unaffected. No admin bypass.
 create or replace function public.leads_enforce_stage_restriction()
 returns trigger
 language plpgsql
@@ -40,7 +42,10 @@ begin
     from public.pipeline_stages
    where id = new.stage_id;
 
-  if restricted is not null and auth.uid() is distinct from restricted then
+  -- auth.uid() is null ⇒ service role (Zapier webhook) ⇒ allowed.
+  if restricted is not null
+     and auth.uid() is not null
+     and auth.uid() is distinct from restricted then
     raise exception 'Only the assigned user may move leads into this stage'
       using errcode = '42501';
   end if;
@@ -54,7 +59,25 @@ create trigger leads_enforce_stage_restriction
   before insert or update on public.leads
   for each row execute function public.leads_enforce_stage_restriction();
 
--- 4. Retime the welcome email: send when a lead ENTERS unique_lead (not on insert).
+-- 4. Route incoming leads to their starting column: Meta (Zapier) → Unique Lead
+--    (the intake column), everything else → New Lead, as before.
+create or replace function public.leads_set_default_stage()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.stage_id is null then
+    select id into new.stage_id
+      from public.pipeline_stages
+     where board = 'sales'
+       and code = case when new.source = 'meta' then 'unique_lead' else 'new_lead' end
+     limit 1;
+  end if;
+  return new;
+end;
+$$;
+
+-- 5. Retime the welcome email: send when a lead ENTERS unique_lead (not on insert).
 create or replace function public.leads_email_automations()
 returns trigger
 language plpgsql
@@ -133,6 +156,9 @@ $$;
 -- ROLLBACK:
 --   drop trigger if exists leads_enforce_stage_restriction on public.leads;
 --   drop function if exists public.leads_enforce_stage_restriction();
+--   -- restore the prior public.leads_set_default_stage body (always → new_lead)
+--   --   from migration history / git before this change.
+--   -- (move any leads sitting in unique_lead to new_lead first, then:)
 --   delete from public.pipeline_stages where board='sales' and code='unique_lead';
 --   alter table public.pipeline_stages drop column if exists restricted_to_user_id;
 --   -- then restore the prior public.leads_email_automations body (welcome-on-INSERT)
