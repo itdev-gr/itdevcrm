@@ -45,11 +45,11 @@ here (see "AI SEO cards" below).
 ## AI SEO cards
 
 AI SEO jobs canonically live on the Web SEO board, but also show on this
-board. Their Web SEO stages map onto Local SEO columns for display:
-Onboarding → New project, Audit & Strategy / Active → Optimize, On Hold →
-Suspended, Cancelled → Done. Dragging an AI SEO card to a column with no Web
-SEO equivalent (Renewal, Called/No response, Send form, Rank tracking, New
-GBP, Verification) does nothing.
+board. Their Web SEO stages map onto Local SEO columns for display: New
+Project → New project, No Response → Called/No response, Renewal → Renewal,
+all work stages (GSC & GA4 → Results Review) → Optimize, Stuck → Suspended,
+Done → Done. Dragging an AI SEO card to a Local SEO column with no Web SEO
+equivalent (Send form, Rank tracking, New GBP, Verification) does nothing.
 
 ## Suggested flow
 

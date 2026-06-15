@@ -181,9 +181,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               >
                 {t('clients:my_clients')}
               </NavLink>
-              {g === 'local_seo' && (
+              {['local_seo', 'web_dev', 'web_seo'].includes(g) && (
                 <NavLink
-                  to="/tech/local-seo/docs"
+                  to={`${TECH_ROUTES[g]}/docs`}
                   className={({ isActive }) =>
                     `block rounded px-6 py-1 text-xs ${isActive ? 'bg-slate-200 font-medium text-slate-800' : 'text-slate-600 hover:bg-slate-100'}`
                   }

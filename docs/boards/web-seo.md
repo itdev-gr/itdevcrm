@@ -1,29 +1,62 @@
 # Web SEO board (`/tech/web-seo`)
 
-Cards are **jobs** for organic-search work on client websites. This board
-also hosts **AI SEO** jobs (purple "AI SEO" badge) — they share these
-stages and additionally mirror onto the Local SEO board.
+Cards are **jobs** for organic-search work on client websites. This board also
+hosts **AI SEO** jobs (purple "AI SEO" badge) — they share these stages and
+additionally mirror onto the Local SEO board. Columns mirror the agency's
+ClickUp Web SEO pipeline.
 
 ## How cards arrive
 
-A deal containing a Web SEO (or AI SEO) service reaches **Partial Payment**
-→ the job spawns in **Onboarding**, 🔒 blocked until **Paid In Full**.
-Auto-assigned to the Web SEO team lead when set.
+A deal containing a Web SEO (or AI SEO) service reaches **Partial Payment** →
+the job spawns in **New Project**, 🔒 blocked until **Paid In Full**.
+Auto-assigned to the Web SEO team lead when one is set.
 
 ## Stages
 
-| #   | Stage            | Greek                | Meaning                                                                                                                                   |
-| --- | ---------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Onboarding       | Ενσωμάτωση           | Entry column. Collect access (site, analytics, search console), business context, and goals.                                              |
-| 2   | Audit & Strategy | Έλεγχος & Στρατηγική | Technical audit, keyword research, competitor review; produce the SEO plan the retainer will execute.                                     |
-| 3   | Active           | Ενεργό               | Ongoing monthly execution: content, on-page, technical fixes, link work. Monthly task checklists on the job page track the period's work. |
-| 4   | On Hold          | Σε Αναμονή           | Paused (client request, awaiting site changes, payment issues handled via blocking).                                                      |
-| 5   | Cancelled        | Ακυρωμένο            | Terminal (outcome cancelled). Subscription ended or scrapped.                                                                             |
+| #   | Stage                  | Greek                  | What it means / what the team does                                                                                          |
+| --- | ---------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **New Project**        | Νέο Έργο               | Entry column. A new Web SEO/AI SEO client just landed. Review the deal, goals, and notes from sales, and plan first contact. |
+| 2   | **No Response**        | Χωρίς Απάντηση         | We tried to reach the client (for access/details) and got no answer. Follow up until contact is made.                       |
+| 3   | **Renewal**            | Ανανέωση               | An existing client whose subscription renewed for another period. Restart the cycle here; review last period and plan next. |
+| 4   | **GSC & GA4 Setup**    | Ρύθμιση GSC & GA4      | Mandatory access & setup: Google Search Console + GA4 analytics, plus site/CMS credentials.                                 |
+| 5   | **Sitemap & Schema**   | Sitemap & Schema       | Put sitemap.xml, robots.txt, and schema markup in place.                                                                     |
+| 6   | **Performance Audit**  | Έλεγχος Απόδοσης       | Performance & technical-quality check — speed, Core Web Vitals, technical health.                                            |
+| 7   | **Technical Crawl**    | Τεχνικός Έλεγχος       | Full crawl & technical audit of the site: errors, indexability, structure.                                                  |
+| 8   | **Keyword Research**   | Έρευνα Keywords        | Keyword and competitor research; build the target keyword list and strategy.                                                |
+| 9   | **Metadata**           | Metadata               | Optimize titles, meta descriptions, and headings across target pages.                                                       |
+| 10  | **Content**            | Περιεχόμενο            | Content enrichment and on-page optimization across the target pages.                                                        |
+| 11  | **Internal Links**     | Εσωτ. Σύνδεσμοι        | Build and tidy the internal linking structure.                                                                              |
+| 12  | **Backlink Cleanup**   | Καθαρισμός Backlinks   | Audit the backlink profile and clean it up (disavow toxic links).                                                          |
+| 13  | **Blogs**              | Μπλογκ                 | Blog/article production for topical coverage and freshness.                                                                 |
+| 14  | **Results Review**     | Έλεγχος Αποτελεσμάτων  | Review performance via GSC & Semrush; measure impact and iterate (often loops back to the audit/crawl steps).               |
+| 15  | **Stuck**              | Κολλημένο              | Blocked on something (client input, access, a dependency). Park here, flag the blocker, resume when it clears.              |
+| 16  | **Done** ✅            | Ολοκληρώθηκε           | Terminal (outcome **completed**). One-time project finished or subscription ended cleanly. Dropping a card here stamps it completed (✓); dragging out clears it. |
 
 ## Automations & rules
 
-- Blocked jobs show the 🔒 badge in place (no Blocked column on this board).
-- AI SEO jobs dragged on the Local SEO board write back to these stages via
-  a fixed mapping (see local-seo.md).
-- Monthly recurring amounts feed Accounting → Recurring and the MRR figure
-  on the report.
+- Blocked jobs show the 🔒 badge **in place** (this board has no separate
+  Blocked column).
+- **AI SEO** jobs share these stages and also mirror onto the Local SEO board
+  (see below).
+- Monthly recurring amounts feed Accounting → Recurring and the MRR figure on
+  the report.
+
+## AI SEO cards (Local SEO mirror)
+
+AI SEO jobs live on these Web SEO stages but also display on the **Local SEO**
+board. The two boards no longer share stage codes, so a fixed mapping is used:
+
+| Web SEO stage                                                                 | Shown on Local SEO as |
+| ----------------------------------------------------------------------------- | --------------------- |
+| New Project                                                                   | New project           |
+| No Response                                                                   | Called/No response    |
+| Renewal                                                                       | Renewal               |
+| All work stages (GSC & GA4 → Results Review)                                  | Optimize              |
+| Stuck                                                                         | Suspended             |
+| Done                                                                          | Done                  |
+
+Dragging an AI SEO card on the **Local SEO** board writes back to a Web SEO
+stage: New project → New Project, Renewal → Renewal, Called/No response → No
+Response, Optimize → Content, Suspended → Stuck, Done → Done. Local SEO columns
+with no Web SEO equivalent (Send form, Rank tracking, New GBP, Verification) do
+nothing.
