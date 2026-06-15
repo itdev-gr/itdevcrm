@@ -25,6 +25,7 @@ import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
 import { buildWonDraft } from '@/features/email/buildDraft';
+import { DealServiceInfo } from './DealServiceInfo';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -227,6 +228,7 @@ export function DealDetailPage() {
           <div className="grid grid-cols-1 gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[65%_35%]">
             <div className="min-w-0 lg:h-full lg:overflow-y-auto lg:pr-6">
               <DealForm initial={deal} />
+              <DealServiceInfo dealId={dealId} />
             </div>
             <aside className="min-w-0 lg:flex lg:h-full lg:flex-col lg:border-l lg:pl-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
