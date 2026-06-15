@@ -23,6 +23,7 @@ export type JobRow = JobBase & {
   } | null;
   deal?: { id: string; code: string | null; title: string | null } | null;
   stage?: { id: string; code: string; board: string; display_names: unknown } | null;
+  details?: Record<string, unknown> | null;
 };
 
 // Web SEO and Local SEO kanbans also surface ai_seo jobs (AI SEO has no
