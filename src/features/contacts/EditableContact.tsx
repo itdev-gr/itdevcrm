@@ -9,10 +9,10 @@ export type ContactValue = { full_name: string; email: string; phone: string; in
 type Props = {
   value: ContactValue;
   onChange: (next: ContactValue) => void;
-  onRemove?: () => void;
-  disabled?: boolean;
-  startEditing?: boolean;
-  idPrefix?: string;
+  onRemove?: (() => void) | undefined;
+  disabled?: boolean | undefined;
+  startEditing?: boolean | undefined;
+  idPrefix?: string | undefined;
 };
 
 export function EditableContact({

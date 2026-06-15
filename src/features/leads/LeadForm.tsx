@@ -15,6 +15,7 @@ import type { LeadRow } from './hooks/useLeads';
 import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
 import { INDUSTRIES } from '@/lib/industries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
+import { EditableContact } from '@/features/contacts/EditableContact';
 
 function Section({
   title,
@@ -170,36 +171,18 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
         </Section>
 
         <Section title={t('form.section_primary_contact', { defaultValue: 'Primary contact' })}>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="fn">{t('form.full_name')}</Label>
-              <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="email">{t('form.email')}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">{t('form.phone')}</Label>
-              <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="contact-info">
-                {t('form.contact_info', { defaultValue: 'Info' })}
-              </Label>
-              <Input
-                id="contact-info"
-                value={contactInfo}
-                onChange={(e) => setContactInfo(e.target.value)}
-                placeholder="e.g. CEO · prefers WhatsApp"
-              />
-            </div>
-          </div>
+            <EditableContact
+              value={{ full_name: fullName, email, phone, info: contactInfo }}
+              onChange={(c) => {
+                setFullName(c.full_name);
+                setEmail(c.email);
+                setPhone(c.phone);
+                setContactInfo(c.info);
+              }}
+              disabled={!!lead.converted_at}
+              startEditing={!fullName && !email && !phone && !contactInfo}
+              idPrefix="lead-primary"
+            />
         </Section>
 
         <Section
