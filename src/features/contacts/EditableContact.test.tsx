@@ -8,7 +8,7 @@ const val = { full_name: 'Maria P', email: 'maria@acme.gr', phone: '6912345678',
 describe('EditableContact', () => {
   it('view mode shows phone as tel: and email as mailto:', () => {
     render(<EditableContact value={val} onChange={() => {}} />);
-    expect(screen.getByRole('link', { name: /6912345678/ })).toHaveAttribute('href', 'tel:+306912345678');
+    expect(screen.getByRole('link', { name: /6912345678/ })).toHaveAttribute('href', 'tel:6912345678');
     expect(screen.getByRole('link', { name: 'maria@acme.gr' })).toHaveAttribute('href', 'mailto:maria@acme.gr');
   });
   it('edit button reveals inputs; Done returns to view', async () => {

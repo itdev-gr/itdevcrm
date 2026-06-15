@@ -11,7 +11,7 @@ describe('AdditionalContactsField', () => {
         onChange={() => {}}
       />,
     );
-    expect(screen.getByRole('link', { name: /6912345678/ })).toHaveAttribute('href', 'tel:+306912345678');
+    expect(screen.getByRole('link', { name: /6912345678/ })).toHaveAttribute('href', 'tel:6912345678');
   });
   it('adds a new row that starts in edit mode', async () => {
     const u = userEvent.setup();

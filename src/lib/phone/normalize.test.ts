@@ -18,7 +18,7 @@ describe('normalizePhone', () => {
 
 describe('phoneToTelHref', () => {
   it('builds a tel: URI, assuming +30 for bare 10-digit numbers', () => {
-    expect(phoneToTelHref('691 234 5678')).toBe('tel:+306912345678');
+    expect(phoneToTelHref('691 234 5678')).toBe('tel:6912345678');
     expect(phoneToTelHref('+1 234 567 8900')).toBe('tel:+12345678900');
   });
   it('returns null when there is nothing dialable', () => {

@@ -8,14 +8,13 @@ export function normalizePhone(raw: string | null | undefined): string {
   return digits.slice(-10);
 }
 
-// Build a tel: URI for a clickable call link. Bare 10-digit Greek numbers get a
-// +30 prefix; numbers that already carry a + keep their country code. Returns
-// null when there are too few digits to dial.
+// Build a tel: URI for a clickable call link. Numbers that already carry a +
+// keep their country code; everything else is dialed exactly as stored (digits
+// only — no country code is added). Returns null when there are too few digits.
 export function phoneToTelHref(raw: string | null | undefined): string | null {
   const trimmed = (raw ?? '').trim();
   const onlyDigits = trimmed.replace(/[^0-9]/g, '');
   if (onlyDigits.length < 7) return null;
   if (trimmed.startsWith('+')) return `tel:+${onlyDigits}`;
-  if (onlyDigits.length === 10) return `tel:+30${onlyDigits}`;
   return `tel:${onlyDigits}`;
 }
