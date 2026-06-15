@@ -18,19 +18,32 @@ export function hasBlockedColumn(board: string): boolean {
  * Local SEO board. The boards no longer share stage codes, so map explicitly.
  */
 const AI_SEO_TO_LOCAL_SEO: Record<string, string> = {
-  onboarding: 'new_project',
-  audit_strategy: 'optimize',
-  active: 'optimize',
-  on_hold: 'suspended',
-  cancelled: 'done',
+  new_project: 'new_project',
+  no_response: 'called_no_response',
+  renewal: 'renewal',
+  gsc_ga4_setup: 'optimize',
+  sitemap_schema: 'optimize',
+  performance_audit: 'optimize',
+  technical_crawl: 'optimize',
+  keyword_research: 'optimize',
+  metadata: 'optimize',
+  content: 'optimize',
+  internal_links: 'optimize',
+  backlink_cleanup: 'optimize',
+  blogs: 'optimize',
+  results_review: 'optimize',
+  stuck: 'suspended',
+  done: 'done',
 };
 
 /** Reverse direction for drags; columns without an equivalent return null. */
 const LOCAL_SEO_TO_AI_SEO: Record<string, string> = {
-  new_project: 'onboarding',
-  optimize: 'active',
-  suspended: 'on_hold',
-  done: 'cancelled',
+  new_project: 'new_project',
+  renewal: 'renewal',
+  called_no_response: 'no_response',
+  optimize: 'content',
+  suspended: 'stuck',
+  done: 'done',
 };
 
 export function aiSeoTargetCode(localSeoColumnCode: string): string | null {

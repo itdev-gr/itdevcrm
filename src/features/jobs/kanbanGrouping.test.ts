@@ -10,8 +10,8 @@ const localStages: StageLite[] = [
   { id: 'ls-done', board: 'local_seo', code: 'done', archived: false, position: 80 },
 ];
 const webSeoStages: StageLite[] = [
-  { id: 'ws-onb', board: 'web_seo', code: 'onboarding', archived: false, position: 10 },
-  { id: 'ws-act', board: 'web_seo', code: 'active', archived: false, position: 30 },
+  { id: 'ws-new', board: 'web_seo', code: 'new_project', archived: false, position: 10 },
+  { id: 'ws-content', board: 'web_seo', code: 'content', archived: false, position: 100 },
 ];
 const stageById = new Map<string, StageLite>(
   [...localStages, ...webSeoStages].map((s) => [s.id, s]),
@@ -35,18 +35,18 @@ describe('groupJobsForBoard', () => {
   });
 
   it('keeps blocked jobs in their stage column on boards without a Blocked column', () => {
-    const jobs = [job({ id: 'a', service_type: 'web_seo', stage_id: 'ws-act', is_blocked: true })];
+    const jobs = [job({ id: 'a', service_type: 'web_seo', stage_id: 'ws-content', is_blocked: true })];
     const { byColumn, blocked } = groupJobsForBoard({
       board: 'web_seo', jobs, boardStages: webSeoStages, stageById,
     });
-    expect(byColumn.get('ws-act')?.map((j) => j.id)).toEqual(['a']);
+    expect(byColumn.get('ws-content')?.map((j) => j.id)).toEqual(['a']);
     expect(blocked).toEqual([]);
   });
 
   it('maps ai_seo jobs (web_seo stages) onto local_seo columns', () => {
     const jobs = [
-      job({ id: 'a', service_type: 'ai_seo', stage_id: 'ws-onb' }), // onboarding → new_project
-      job({ id: 'b', service_type: 'ai_seo', stage_id: 'ws-act' }), // active → optimize
+      job({ id: 'a', service_type: 'ai_seo', stage_id: 'ws-new' }), // new_project → new_project
+      job({ id: 'b', service_type: 'ai_seo', stage_id: 'ws-content' }), // content → optimize
     ];
     const { byColumn } = groupJobsForBoard({
       board: 'local_seo', jobs, boardStages: localStages, stageById,
@@ -65,8 +65,8 @@ describe('hasBlockedColumn', () => {
 
 describe('aiSeoTargetCode', () => {
   it('translates local_seo columns back to web_seo stages, null when no equivalent', () => {
-    expect(aiSeoTargetCode('new_project')).toBe('onboarding');
-    expect(aiSeoTargetCode('optimize')).toBe('active');
+    expect(aiSeoTargetCode('new_project')).toBe('new_project');
+    expect(aiSeoTargetCode('optimize')).toBe('content');
     expect(aiSeoTargetCode('rank_tracking')).toBeNull();
   });
 });
