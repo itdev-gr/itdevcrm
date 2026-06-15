@@ -35,11 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const secret = process.env.META_LEAD_SECRET;
   const provided = String(req.headers['x-meta-secret'] ?? data.key ?? '');
   if (!secret || provided.length !== secret.length || provided !== secret) {
-    // TEMP diagnostic in the error string (Zapier surfaces it). Remove once live.
-    const qs = Object.keys((req.query as Record<string, unknown>) ?? {}).join(',');
-    res.status(401).json({
-      error: `unauthorized | keyHeader=${req.headers['key'] != null} len=${provided.length}/${secret ? secret.length : 0} qs=[${qs}]`,
-    });
+    res.status(401).json({ error: 'unauthorized' });
     return;
   }
 
