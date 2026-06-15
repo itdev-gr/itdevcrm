@@ -1,6 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import {
@@ -8,6 +6,7 @@ import {
   parseAdditionalContacts,
   type AdditionalContact,
 } from '@/features/contacts/AdditionalContactsField';
+import { EditableContact } from '@/features/contacts/EditableContact';
 
 type ClientShape = {
   id?: string;
@@ -89,42 +88,17 @@ function ContactsForm({ client, clientId }: { client: ClientShape; clientId: str
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Primary contact
           </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <Label htmlFor="cc-name">Full name</Label>
-              <Input
-                id="cc-name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="cc-email">Email</Label>
-              <Input
-                id="cc-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="cc-phone">Phone</Label>
-              <Input
-                id="cc-phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </div>
-            <div className="col-span-2">
-              <Label htmlFor="cc-info">Info</Label>
-              <Input
-                id="cc-info"
-                value={contactInfo}
-                onChange={(e) => setContactInfo(e.target.value)}
-                placeholder="e.g. CEO · prefers WhatsApp"
-              />
-            </div>
-          </div>
+          <EditableContact
+            value={{ full_name: fullName, email, phone, info: contactInfo }}
+            onChange={(c) => {
+              setFullName(c.full_name);
+              setEmail(c.email);
+              setPhone(c.phone);
+              setContactInfo(c.info);
+            }}
+            startEditing={!fullName && !email && !phone && !contactInfo}
+            idPrefix="cc-primary"
+          />
         </section>
 
         <section className="space-y-3">
