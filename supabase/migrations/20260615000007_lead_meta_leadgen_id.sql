@@ -1,9 +1,10 @@
--- Dedup key for Meta lead-ad ingestion: the Facebook leadgen id. A partial
--- unique index lets the webhook be safely retried without duplicating a lead.
-alter table public.leads add column meta_leadgen_id text;
-create unique index leads_meta_leadgen_id_uniq
-  on public.leads (meta_leadgen_id) where meta_leadgen_id is not null;
+-- OPTIONAL performance index for Meta lead-ad dedup.
+-- The /api/meta-lead webhook already works without this — it dedups on the Meta
+-- lead id stored in source_data->>'leadgen_id'. This index just makes that
+-- lookup fast once lead volume grows. Safe to apply at any time; non-breaking.
+create index if not exists leads_meta_leadgen_idx
+  on public.leads ((source_data ->> 'leadgen_id'))
+  where source = 'meta';
 
 -- ROLLBACK:
---   drop index if exists public.leads_meta_leadgen_id_uniq;
---   alter table public.leads drop column if exists meta_leadgen_id;
+--   drop index if exists public.leads_meta_leadgen_idx;

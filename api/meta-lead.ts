@@ -48,12 +48,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const payload: Record<string, unknown> = { ...data };
   delete payload.key;
 
+  // Dedup on the Meta lead id stored in source_data (no dedicated column needed,
+  // so this works before any migration). Retries return the existing lead.
   const leadgenId = str(payload.leadgen_id);
   if (leadgenId) {
     const { data: existing } = await admin
       .from('leads')
       .select('id')
-      .eq('meta_leadgen_id', leadgenId)
+      .eq('source_data->>leadgen_id', leadgenId)
       .limit(1);
     if (existing && existing.length > 0) {
       res.status(200).json({ ok: true, deduped: true, lead_id: existing[0].id });
@@ -69,7 +71,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     .insert({
       source: 'meta',
       source_data: payload,
-      meta_leadgen_id: leadgenId,
       title,
       contact_first_name: first,
       contact_last_name: last,

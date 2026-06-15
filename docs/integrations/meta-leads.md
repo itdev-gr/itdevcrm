@@ -15,12 +15,12 @@ The secret may instead be sent as header `X-Meta-Secret`. With GET, the lead fie
 - Retries are safe: a repeat `leadgen_id` returns `{ deduped: true }` and creates nothing.
 - Wrong/missing secret → 401; non-GET/POST → 405.
 
-## Go-live order (important)
-1. Apply migration `supabase/migrations/20260615000007_lead_meta_leadgen_id.sql` (adds `meta_leadgen_id`). **The endpoint errors on insert until this is applied.**
-2. Set `META_LEAD_SECRET` in Vercel (Production) and redeploy.
-3. Test the Zap → confirm a lead in New Lead.
+## Go-live order
+1. Set `META_LEAD_SECRET` in Vercel (Production) and redeploy. *(The endpoint needs no migration to work — dedup uses `source_data->>'leadgen_id'`.)*
+2. Test the Zap → confirm a lead in New Lead.
+3. **Optional, anytime:** apply `supabase/migrations/20260615000007_lead_meta_leadgen_id.sql` — a non-breaking index that speeds up dedup at scale.
 
 ## Changes / Revert
 - Code: revert the `feat(leads): … Meta …` commits.
-- DB: run the ROLLBACK in `20260615000007_lead_meta_leadgen_id.sql`.
+- DB: the optional index — run the ROLLBACK in `20260615000007_lead_meta_leadgen_id.sql`.
 - Vercel: remove `META_LEAD_SECRET` and the `api/meta-lead.ts` entry from `vercel.json`.
