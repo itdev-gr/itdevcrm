@@ -93,6 +93,10 @@ const AccountingExpensesPage = lazyPage(
   () => import('@/features/accounting_report/ExpensesPage'),
   'ExpensesPage',
 );
+const AccountingBoardDocsPage = lazyPage(
+  () => import('@/features/accounting/AccountingBoardDocsPage'),
+  'AccountingBoardDocsPage',
+);
 // JobsKanbanPage takes a `serviceType` prop, so we can't go through the
 // unknown-typed lazyPage helper — invoke React.lazy directly to preserve the
 // original component's prop signature. The fast-refresh-only-export-components
@@ -191,6 +195,7 @@ export const router = createBrowserRouter([
           { path: 'onboarding', element: <AccountingOnboardingKanbanPage /> },
           { path: 'clients', element: <AccountingClientsPage /> },
           { path: 'recurring', element: <AccountingRecurringPage /> },
+          { path: 'docs', element: <AccountingBoardDocsPage /> },
           { path: 'report', element: <AdminGuard><AccountingReportPage /></AdminGuard> },
           { path: 'expenses', element: <AdminGuard><AccountingExpensesPage /></AdminGuard> },
         ],
