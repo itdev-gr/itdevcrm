@@ -45,22 +45,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const secret = process.env.META_LEAD_SECRET;
   const provided = String(req.headers['x-meta-secret'] ?? data.key ?? '');
   if (!secret || provided.length !== secret.length || provided !== secret) {
-    // TEMP diagnostic — shows WHERE Zapier put the data; never the secret value.
-    res.status(401).json({
-      error: 'unauthorized',
-      debug: {
-        method: req.method,
-        query_keys: Object.keys((req.query as Record<string, unknown>) ?? {}),
-        body_keys:
-          typeof req.body === 'object' && req.body !== null
-            ? Object.keys(req.body as Record<string, unknown>)
-            : [],
-        key_as_header: req.headers['key'] != null,
-        x_meta_secret_header: req.headers['x-meta-secret'] != null,
-        received_len: provided.length,
-        expected_len: secret ? secret.length : null,
-      },
-    });
+    // TEMP diagnostic packed INTO the error string so Zapier surfaces it to the user.
+    const qs = Object.keys((req.query as Record<string, unknown>) ?? {}).join(',');
+    const bk = Object.keys(bodyObj).join(',');
+    res
+      .status(401)
+      .json({
+        error: `unauthorized | qs=[${qs}] body=[${bk}] keyHeader=${req.headers['key'] != null} len=${provided.length}/${secret ? secret.length : 0}`,
+      });
     return;
   }
 
