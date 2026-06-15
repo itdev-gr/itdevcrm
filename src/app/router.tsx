@@ -69,6 +69,10 @@ const SalesKanbanPage = lazyPage(
   () => import('@/features/sales/SalesKanbanPage'),
   'SalesKanbanPage',
 );
+const SalesBoardDocsPage = lazyPage(
+  () => import('@/features/sales/SalesBoardDocsPage'),
+  'SalesBoardDocsPage',
+);
 const AccountingOnboardingKanbanPage = lazyPage(
   () => import('@/features/accounting/AccountingOnboardingKanbanPage'),
   'AccountingOnboardingKanbanPage',
@@ -173,6 +177,7 @@ export const router = createBrowserRouter([
         children: [
           { path: 'clients', element: <ClientsListPage /> },
           { path: 'kanban', element: <SalesKanbanPage /> },
+          { path: 'docs', element: <SalesBoardDocsPage /> },
         ],
       },
       {

@@ -101,6 +101,14 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             {t('sales:kanban.title')}
           </NavLink>
           <NavLink
+            to="/sales/docs"
+            className={({ isActive }) =>
+              `block rounded px-6 py-1 text-xs ${isActive ? 'bg-slate-200 font-medium text-slate-800' : 'text-slate-600 hover:bg-slate-100'}`
+            }
+          >
+            {t('common:nav.documentation')}
+          </NavLink>
+          <NavLink
             to="/contracts"
             className={({ isActive }) =>
               `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`

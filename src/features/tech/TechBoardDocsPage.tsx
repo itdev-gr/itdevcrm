@@ -15,9 +15,10 @@ function docForSlug(slug: string): string | null {
   return entry?.[1] ?? null;
 }
 
-export function TechBoardDocsPage() {
-  const { serviceType = '' } = useParams<{ serviceType: string }>();
-  const doc = docForSlug(serviceType);
+// Shared renderer. `slug` pins the doc to a fixed file so boards that live
+// outside /tech/:serviceType (e.g. the sales pipeline) can reuse it.
+export function BoardDocView({ slug }: { slug: string }) {
+  const doc = docForSlug(slug);
 
   if (!doc) {
     return <div className="p-8 text-sm text-slate-600">No documentation for this board yet.</div>;
@@ -58,4 +59,9 @@ export function TechBoardDocsPage() {
       </Markdown>
     </div>
   );
+}
+
+export function TechBoardDocsPage() {
+  const { serviceType = '' } = useParams<{ serviceType: string }>();
+  return <BoardDocView slug={serviceType} />;
 }
