@@ -22,6 +22,7 @@ import { SalesKanbanColumn } from './SalesKanbanColumn';
 import { SalesKanbanCard } from './SalesKanbanCard';
 import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
 import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
+import { isStageMoveBlocked } from './stageAccess';
 
 export function SalesKanbanPage() {
   const { t, i18n } = useTranslation('sales');
@@ -117,6 +118,11 @@ export function SalesKanbanPage() {
     const leadId = String(e.active.id);
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
+    const targetStage = salesStages.find((s) => s.id === stageId);
+    if (targetStage && isStageMoveBlocked(targetStage, userId)) {
+      alert(t('kanban.locked_move'));
+      return;
+    }
     if (wonStage && stageId === wonStage.id) {
       try {
         await convert.mutateAsync(leadId);
@@ -217,6 +223,7 @@ export function SalesKanbanPage() {
               stageId={s.id}
               stageLabel={(s.display_names as { en: string; el: string })[lang]}
               leads={leadsByStage.get(s.id) ?? []}
+              locked={isStageMoveBlocked(s, userId)}
             />
           ))}
         </div>

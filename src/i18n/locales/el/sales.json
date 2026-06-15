@@ -2,6 +2,7 @@
   "kanban": {
     "title": "Pipeline Πωλήσεων",
     "empty_column": "Σύρετε συμφωνίες εδώ",
+    "locked_move": "Μόνο ο Μανώλης μπορεί να μετακινεί leads σε αυτή τη στήλη.",
     "card": {
       "value": "Αξία",
       "monthly": "/μήνα"

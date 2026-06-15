@@ -12,6 +12,7 @@ import { useUpdateLead } from './hooks/useUpdateLead';
 import { useMoveLeadStage } from './hooks/useMoveLeadStage';
 import { useAssignableOwners } from './hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
+import { isStageMoveBlocked } from '@/features/sales/stageAccess';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
@@ -28,6 +29,7 @@ const UNASSIGNED = '__unassigned__';
 export function LeadDetailPage() {
   const { leadId = '' } = useParams<{ leadId: string }>();
   const { t } = useTranslation('leads');
+  const { t: tSales } = useTranslation('sales');
   const { data: lead, isLoading, error } = useLead(leadId);
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
@@ -120,6 +122,11 @@ export function LeadDetailPage() {
 
   async function onChangeStage(targetStageId: string) {
     if (!lead || !targetStageId || targetStageId === lead.stage_id) return;
+    const targetStage = salesStages.find((s) => s.id === targetStageId);
+    if (targetStage && isStageMoveBlocked(targetStage, userId)) {
+      alert(tSales('kanban.locked_move'));
+      return;
+    }
     if (wonStage && targetStageId === wonStage.id) {
       try {
         const result = await convert.mutateAsync(leadId);

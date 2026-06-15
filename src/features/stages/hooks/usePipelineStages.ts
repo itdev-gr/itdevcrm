@@ -13,6 +13,7 @@ export type StageRow = {
   terminal_outcome: string | null;
   triggers_action: string | null;
   archived: boolean;
+  restricted_to_user_id: string | null;
 };
 
 export function usePipelineStages() {

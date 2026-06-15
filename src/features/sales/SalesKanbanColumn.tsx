@@ -7,9 +7,10 @@ type Props = {
   stageId: string;
   stageLabel: string;
   leads: LeadRow[];
+  locked?: boolean;
 };
 
-export function SalesKanbanColumn({ stageId, stageLabel, leads }: Props) {
+export function SalesKanbanColumn({ stageId, stageLabel, leads, locked = false }: Props) {
   const { t } = useTranslation('sales');
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
   return (
@@ -20,6 +21,11 @@ export function SalesKanbanColumn({ stageId, stageLabel, leads }: Props) {
       }`}
     >
       <header className="border-b px-3 py-2">
+        {locked && (
+          <span title="locked" aria-label="locked" className="mr-1">
+            🔒
+          </span>
+        )}
         <span className="text-sm font-medium">{stageLabel}</span>
         <span className="ml-1 text-xs text-muted-foreground">({leads.length})</span>
       </header>
