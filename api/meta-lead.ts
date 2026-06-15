@@ -1,7 +1,10 @@
 // api/meta-lead.ts
 // Public Meta lead-ad ingestion. Zapier sends each lead here (GET with query
 // params, or POST with a JSON body — both supported).
-//   GET/POST /api/meta-lead?key=<secret>&full_name=...&email=...&leadgen_id=...
+//   GET/POST /api/meta-lead?key=<secret>&email=...&id=...&<form fields>
+// Meta form field names vary (often Greek custom labels), so each lead field is
+// resolved by exact name first, then a fuzzy fallback. The full raw payload is
+// always stored in source_data so nothing is ever lost.
 // Helpers are inlined so the serverless function bundles standalone on Vercel.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
@@ -29,30 +32,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     typeof req.body === 'object' && req.body !== null ? (req.body as Record<string, unknown>) : {};
   const data: Record<string, unknown> = { ...(req.query as Record<string, unknown>), ...bodyObj };
 
-  // TEMP diagnostic log — shows where Zapier put the data (never the secret value).
-  console.log(
-    'META_LEAD_DEBUG ' +
-      JSON.stringify({
-        method: req.method,
-        query_keys: Object.keys((req.query as Record<string, unknown>) ?? {}),
-        body_keys: Object.keys(bodyObj),
-        key_as_header: req.headers['key'] != null,
-        x_meta_secret_header: req.headers['x-meta-secret'] != null,
-        provided_len: String(req.headers['x-meta-secret'] ?? data.key ?? '').length,
-      }),
-  );
-
   const secret = process.env.META_LEAD_SECRET;
   const provided = String(req.headers['x-meta-secret'] ?? data.key ?? '');
   if (!secret || provided.length !== secret.length || provided !== secret) {
-    // TEMP diagnostic packed INTO the error string so Zapier surfaces it to the user.
+    // TEMP diagnostic in the error string (Zapier surfaces it). Remove once live.
     const qs = Object.keys((req.query as Record<string, unknown>) ?? {}).join(',');
-    const bk = Object.keys(bodyObj).join(',');
-    res
-      .status(401)
-      .json({
-        error: `unauthorized | qs=[${qs}] body=[${bk}] keyHeader=${req.headers['key'] != null} len=${provided.length}/${secret ? secret.length : 0}`,
-      });
+    res.status(401).json({
+      error: `unauthorized | keyHeader=${req.headers['key'] != null} len=${provided.length}/${secret ? secret.length : 0} qs=[${qs}]`,
+    });
     return;
   }
 
@@ -68,9 +55,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const payload: Record<string, unknown> = { ...data };
   delete payload.key;
 
+  // Resolve fields: exact name first, then fuzzy (handles Greek Meta form labels).
+  // raw_* duplicates and already-claimed keys are skipped so notes stay clean.
+  const used = new Set<string>();
+  const pick = (names: string[], regex?: RegExp): string | null => {
+    for (const n of names) {
+      const v = str(data[n]);
+      if (v) {
+        used.add(n);
+        return v;
+      }
+    }
+    if (regex) {
+      for (const k of Object.keys(data)) {
+        if (k.startsWith('raw_') || used.has(k)) continue;
+        if (regex.test(k)) {
+          const v = str(data[k]);
+          if (v) {
+            used.add(k);
+            return v;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const leadgenId = pick(['leadgen_id', 'id']);
+  const fullName = pick(['full_name', 'name'], /ονοματεπ|full.?name/i);
+  const email = pick(['email'], /email/i);
+  const phone = pick(['phone', 'phone_number'], /phone|τηλεφ/i);
+  const company = pick(['company', 'company_name'], /company|εταιρ/i);
+  const website = pick(['website'], /website/i);
+  const formName = pick(['form_name', 'campaign']);
+
+  // Normalize the dedup id so retries match regardless of Meta's field name.
+  if (leadgenId) payload.leadgen_id = leadgenId;
+
+  // Remaining custom answers (e.g. the Greek questionnaire) → notes for sales.
+  const SYSTEM = new Set([
+    'key', 'created_time', 'form_id', 'form_name', 'campaign', 'id', 'leadgen_id',
+    'is_organic', 'page_id', 'platform', 'website', 'ad_id', 'adset_id', 'ad_name',
+    'adset_name', 'campaign_id', 'campaign_name',
+  ]);
+  const noteLines: string[] = [];
+  for (const k of Object.keys(data)) {
+    if (k.startsWith('raw_') || used.has(k) || SYSTEM.has(k)) continue;
+    const v = str(data[k]);
+    if (v) noteLines.push(`${k}: ${v}`);
+  }
+  const notes = pick(['notes']) ?? (noteLines.length > 0 ? noteLines.join('\n') : null);
+
   // Dedup on the Meta lead id stored in source_data (no dedicated column needed,
   // so this works before any migration). Retries return the existing lead.
-  const leadgenId = str(payload.leadgen_id);
   if (leadgenId) {
     const { data: existing } = await admin
       .from('leads')
@@ -83,8 +120,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
   }
 
-  const { first, last } = splitFullName(String(payload.full_name ?? ''));
-  const title = (str(payload.form_name) ?? str(payload.campaign) ?? 'Meta lead').slice(0, 200);
+  const { first, last } = splitFullName(fullName ?? '');
+  const title = (formName ?? 'Meta lead').slice(0, 200);
 
   const { data: inserted, error } = await admin
     .from('leads')
@@ -94,11 +131,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       title,
       contact_first_name: first,
       contact_last_name: last,
-      email: str(payload.email),
-      phone: str(payload.phone),
-      website: str(payload.website),
-      company_name: str(payload.company),
-      contact_info: str(payload.notes),
+      email,
+      phone,
+      website,
+      company_name: company,
+      contact_info: notes,
     })
     .select('id')
     .single();
