@@ -29,6 +29,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     typeof req.body === 'object' && req.body !== null ? (req.body as Record<string, unknown>) : {};
   const data: Record<string, unknown> = { ...(req.query as Record<string, unknown>), ...bodyObj };
 
+  // TEMP diagnostic log — shows where Zapier put the data (never the secret value).
+  console.log(
+    'META_LEAD_DEBUG ' +
+      JSON.stringify({
+        method: req.method,
+        query_keys: Object.keys((req.query as Record<string, unknown>) ?? {}),
+        body_keys: Object.keys(bodyObj),
+        key_as_header: req.headers['key'] != null,
+        x_meta_secret_header: req.headers['x-meta-secret'] != null,
+        provided_len: String(req.headers['x-meta-secret'] ?? data.key ?? '').length,
+      }),
+  );
+
   const secret = process.env.META_LEAD_SECRET;
   const provided = String(req.headers['x-meta-secret'] ?? data.key ?? '');
   if (!secret || provided.length !== secret.length || provided !== secret) {
