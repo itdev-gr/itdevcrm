@@ -13,6 +13,9 @@
     },
     "api/pbx-lookup.ts": {
       "maxDuration": 10
+    },
+    "api/meta-lead.ts": {
+      "maxDuration": 10
     }
   }
 }
