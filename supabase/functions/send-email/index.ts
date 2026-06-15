@@ -111,6 +111,16 @@ async function drain(): Promise<{ processed: number; sent: number; failed: numbe
       await admin.from('email_outbox').update({ status: 'sent', sent_at: new Date().toISOString(), attempts: r.attempts + 1 }).eq('id', r.id);
     }
   }
+  const nowIso = new Date().toISOString();
+  await admin.from('email_drain_heartbeat').upsert({
+    id: true,
+    last_run_at: nowIso,
+    last_ok_at: nowIso,
+    processed: (rows ?? []).length,
+    sent,
+    failed,
+    updated_at: nowIso,
+  });
   return { processed: (rows ?? []).length, sent, failed };
 }
 
