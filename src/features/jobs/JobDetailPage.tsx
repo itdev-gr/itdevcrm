@@ -9,6 +9,8 @@ import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { useJob } from './hooks/useJob';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
+import { JobInfoPanel } from './JobInfoPanel';
+import { infoFieldsFor } from './serviceInfoFields';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { ContactsCard } from './ContactsCard';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
@@ -137,6 +139,9 @@ export function JobDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          {infoFieldsFor(job.service_type).length > 0 && (
+            <TabsTrigger value="info">Info</TabsTrigger>
+          )}
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="attachments">Attachments</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -144,7 +149,7 @@ export function JobDetailPage() {
         <TabsContent value="overview" className="pt-4">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem]">
             <div className="space-y-3">
-              {job.billing_type === 'recurring_monthly' && (
+              {job.billing_type === 'recurring_monthly' && infoFieldsFor(job.service_type).length === 0 && (
                 <MonthlyTasksPanel
                   jobId={job.id}
                   serviceType={job.service_type}
@@ -199,6 +204,15 @@ export function JobDetailPage() {
             </aside>
           </div>
         </TabsContent>
+        {infoFieldsFor(job.service_type).length > 0 && (
+          <TabsContent value="info" className="pt-4">
+            <JobInfoPanel
+              jobId={job.id}
+              serviceType={job.service_type}
+              initialDetails={(job.details ?? {}) as Record<string, unknown>}
+            />
+          </TabsContent>
+        )}
         <TabsContent value="tasks" className="pt-4">
           <AssignedTasksTab source={{ kind: 'job', id: job.id }} />
         </TabsContent>

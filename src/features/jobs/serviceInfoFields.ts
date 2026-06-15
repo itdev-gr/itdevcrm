@@ -33,7 +33,12 @@ const WEB_DEV: InfoField[] = [
 const withSection = (fields: InfoField[], section: string): InfoField[] =>
   fields.map((f) => ({ ...f, section }));
 
-export const SERVICE_INFO_FIELDS: Record<string, InfoField[]> = {
+export const SERVICE_INFO_FIELDS: Record<string, InfoField[] | undefined> & {
+  local_seo: InfoField[];
+  web_seo: InfoField[];
+  ai_seo: InfoField[];
+  web_dev: InfoField[];
+} = {
   local_seo: LOCAL,
   web_seo: WEB_SEO,
   ai_seo: [...withSection(LOCAL, 'Local SEO'), ...withSection(WEB_SEO, 'Web SEO')],
