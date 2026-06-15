@@ -3,10 +3,47 @@
 //   GET /api/pbx-lookup?phone=<callerID>&key=<secret>
 //   GET /api/pbx-lookup?phone=<callerID>           (with header X-PBX-Secret)
 // Returns Yeastar's { "contact": {…} } envelope on a hit, 404 on a miss.
+//
+// NOTE: helpers are inlined (not imported from ../src/lib) so this serverless
+// function bundles standalone on Vercel — importing across the api/→src/
+// boundary made the function fail to invoke (500 FUNCTION_INVOCATION_FAILED).
+// The frontend keeps its own copies in src/lib/phone/*.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { normalizePhone } from '../src/lib/phone/normalize';
-import { toYeastarContact, type ContactRow } from '../src/lib/phone/mapContact';
+
+type ContactRow = {
+  id: string;
+  name: string | null;
+  contact_first_name: string | null;
+  contact_last_name: string | null;
+  email: string | null;
+  phone: string | null;
+  source: 'client' | 'lead';
+};
+
+// Greek "national key": last 10 digits after stripping non-digits (drops +30/0030/30).
+function normalizePhone(raw: string | null | undefined): string {
+  const digits = (raw ?? '').replace(/[^0-9]/g, '');
+  if (digits.length < 10) return '';
+  return digits.slice(-10);
+}
+
+function toYeastarContact(row: ContactRow, appBase: string) {
+  const base = appBase.replace(/\/+$/, '');
+  const path = row.source === 'client' ? 'clients' : 'leads';
+  return {
+    contact: {
+      id: row.id,
+      firstname: row.contact_first_name ?? '',
+      lastname: row.contact_last_name ?? '',
+      company: row.name ?? '',
+      email: row.email ?? '',
+      businessphone: row.phone ?? '',
+      mobilephone: '',
+      url: `${base}/${path}/${row.id}`,
+    },
+  };
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const secret = process.env.PBX_LOOKUP_SECRET;
