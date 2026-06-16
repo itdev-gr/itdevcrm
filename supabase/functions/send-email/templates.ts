@@ -97,6 +97,15 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+// Turn bare http(s) URLs in already-escaped body text into clickable links.
+// Runs before newline→<br/> conversion, so URLs end at whitespace/newline.
+function linkify(escaped: string): string {
+  return escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" style="color:#2563eb;text-decoration:underline">$1</a>',
+  );
+}
+
 function interpolate(tpl: string, data: Record<string, unknown>): string {
   return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => String(data[key] ?? ''));
 }
@@ -133,7 +142,7 @@ export function renderDbTemplate(
     cta = `<p style="margin:24px 0"><a href="${url}" style="background:#0f172a;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block">${label}</a></p>`;
   }
   const html = shell(
-    `<p>${escapeHtml(bodyText).replace(/\n/g, '<br/>')}</p>${cta}${footer}`,
+    `<p>${linkify(escapeHtml(bodyText)).replace(/\n/g, '<br/>')}</p>${cta}${footer}`,
   );
   return { subject, html, text: bodyText + footerText };
 }
