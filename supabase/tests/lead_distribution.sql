@@ -29,10 +29,9 @@ select is(
   (select owner_user_id from public.leads where id = current_setting('pgtap.lead_id2')::uuid),
   current_setting('pgtap.adm')::uuid, 'pre-assigned lead keeps its owner when auto is ON');
 
--- distribute_unassigned_leads with an empty sales pool returns 0 and assigns nothing.
--- (No sales-group members exist in the test transaction.)
-select is( public.distribute_unassigned_leads(), 0,
-  'distribute returns 0 when the sales pool is empty');
+-- With an empty sales pool, the round-robin picker returns NULL (no assignee).
+select is( public.pick_next_sales_assignee(), null,
+  'picker returns NULL when the sales pool is empty' );
 
 select * from finish();
 rollback;
