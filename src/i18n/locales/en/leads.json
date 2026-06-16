@@ -43,6 +43,37 @@
     "sort_value_low": "Value: low to high",
     "sort_recent": "Recently updated"
   },
+  "table": {
+    "code": "Code",
+    "source": "Source",
+    "title": "Lead title",
+    "full_name": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "website": "Website",
+    "category": "Company category",
+    "company": "Company name",
+    "assign": "Assign to",
+    "status": "Status",
+    "open": "Open",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "status_all": "All statuses",
+    "owner_all": "All owners"
+  },
+  "distribute": {
+    "auto_label": "Auto-distribute new leads",
+    "button": "Distribute unassigned ({{count}})",
+    "done": "Distributed {{count}} lead(s)"
+  },
+  "export_csv": "Export CSV",
+  "bulk": {
+    "selected": "{{count}} selected",
+    "reassign": "Reassign to…",
+    "set_status": "Set status…",
+    "archive": "Archive selected",
+    "clear": "Clear"
+  },
   "form": {
     "source": "Source",
     "source_options": {

@@ -43,6 +43,37 @@
     "sort_value_low": "Αξία: χαμηλή προς υψηλή",
     "sort_recent": "Πρόσφατη ενημέρωση"
   },
+  "table": {
+    "code": "Κωδικός",
+    "source": "Πηγή",
+    "title": "Τίτλος",
+    "full_name": "Ονοματεπώνυμο",
+    "email": "Email",
+    "phone": "Τηλέφωνο",
+    "website": "Ιστότοπος",
+    "category": "Κατηγορία εταιρείας",
+    "company": "Επωνυμία εταιρείας",
+    "assign": "Ανάθεση σε",
+    "status": "Κατάσταση",
+    "open": "Άνοιγμα",
+    "saving": "Αποθήκευση…",
+    "saved": "Αποθηκεύτηκε",
+    "status_all": "Όλες οι καταστάσεις",
+    "owner_all": "Όλοι οι υπεύθυνοι"
+  },
+  "distribute": {
+    "auto_label": "Αυτόματη κατανομή νέων leads",
+    "button": "Κατανομή μη ανατεθειμένων ({{count}})",
+    "done": "Κατανεμήθηκαν {{count}} lead"
+  },
+  "export_csv": "Εξαγωγή CSV",
+  "bulk": {
+    "selected": "{{count}} επιλεγμένα",
+    "reassign": "Ανάθεση σε…",
+    "set_status": "Ορισμός κατάστασης…",
+    "archive": "Αρχειοθέτηση επιλεγμένων",
+    "clear": "Καθαρισμός"
+  },
   "form": {
     "source": "Πηγή",
     "source_options": {
