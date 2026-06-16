@@ -57,6 +57,10 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [country, setCountry] = useState(lead.country ?? '');
   const [address, setAddress] = useState(lead.address ?? '');
   const [vatNumber, setVatNumber] = useState(lead.vat_number ?? '');
+  const [instagram, setInstagram] = useState(lead.instagram ?? '');
+  const [facebook, setFacebook] = useState(lead.facebook ?? '');
+  const [tiktok, setTiktok] = useState(lead.tiktok ?? '');
+  const [linkedin, setLinkedin] = useState(lead.linkedin ?? '');
   const [paymentMethod, setPaymentMethod] = useState(lead.payment_method ?? '');
   // datetime-local needs YYYY-MM-DDTHH:mm in *local* time, not ISO/UTC, so the
   // user sees their picked moment unchanged after a round-trip.
@@ -100,6 +104,10 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       country: country.trim() || null,
       address: address.trim() || null,
       vat_number: vatNumber.trim() || null,
+      instagram: instagram.trim() || null,
+      facebook: facebook.trim() || null,
+      tiktok: tiktok.trim() || null,
+      linkedin: linkedin.trim() || null,
       payment_method: paymentMethod || null,
       scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
       notes: notes.trim() || null,
@@ -120,6 +128,10 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       country,
       address,
       vatNumber,
+      instagram,
+      facebook,
+      tiktok,
+      linkedin,
       paymentMethod,
       scheduledFor,
       notes,
@@ -254,6 +266,27 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <div>
               <Label htmlFor="addr">{t('form.address')}</Label>
               <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
+            </div>
+          </div>
+        </Section>
+
+        <Section title={t('form.section_social', { defaultValue: 'Social' })}>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="ig">Instagram</Label>
+              <Input id="ig" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="fb">Facebook</Label>
+              <Input id="fb" value={facebook} onChange={(e) => setFacebook(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="tt">TikTok</Label>
+              <Input id="tt" value={tiktok} onChange={(e) => setTiktok(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="li">LinkedIn</Label>
+              <Input id="li" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
             </div>
           </div>
         </Section>

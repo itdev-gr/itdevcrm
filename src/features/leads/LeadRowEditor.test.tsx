@@ -58,6 +58,11 @@ const baseLead: LeadRow = {
   updated_at: new Date().toISOString(),
   vat_number: null,
   won_by_user_id: null,
+  instagram: null,
+  facebook: null,
+  tiktok: null,
+  linkedin: null,
+  phone_normalized: null,
   stage: null,
 };
 

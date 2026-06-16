@@ -310,6 +310,7 @@ export type Database = {
           lead_source: string | null
           name: string
           phone: string | null
+          phone_normalized: string | null
           postcode: string | null
           region: string | null
           start_date: string | null
@@ -339,6 +340,7 @@ export type Database = {
           lead_source?: string | null
           name: string
           phone?: string | null
+          phone_normalized?: string | null
           postcode?: string | null
           region?: string | null
           start_date?: string | null
@@ -368,6 +370,7 @@ export type Database = {
           lead_source?: string | null
           name?: string
           phone?: string | null
+          phone_normalized?: string | null
           postcode?: string | null
           region?: string | null
           start_date?: string | null
@@ -810,6 +813,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_drain_heartbeat: {
+        Row: {
+          failed: number
+          id: boolean
+          last_ok_at: string | null
+          last_run_at: string | null
+          processed: number
+          sent: number
+          updated_at: string
+        }
+        Insert: {
+          failed?: number
+          id?: boolean
+          last_ok_at?: string | null
+          last_run_at?: string | null
+          processed?: number
+          sent?: number
+          updated_at?: string
+        }
+        Update: {
+          failed?: number
+          id?: boolean
+          last_ok_at?: string | null
+          last_run_at?: string | null
+          processed?: number
+          sent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_log: {
         Row: {
           created_at: string
@@ -1244,6 +1277,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           deal_id: string
+          details: Json
           id: string
           is_blocked: boolean
           monthly_amount: number | null
@@ -1274,6 +1308,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           deal_id: string
+          details?: Json
           id?: string
           is_blocked?: boolean
           monthly_amount?: number | null
@@ -1304,6 +1339,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           deal_id?: string
+          details?: Json
           id?: string
           is_blocked?: boolean
           monthly_amount?: number | null
@@ -1375,6 +1411,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_distribution_state: {
+        Row: {
+          auto_enabled: boolean
+          id: boolean
+          last_assigned_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_enabled?: boolean
+          id?: boolean
+          last_assigned_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_enabled?: boolean
+          id?: boolean
+          last_assigned_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_distribution_state_last_assigned_user_id_fkey"
+            columns: ["last_assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1452,17 +1517,22 @@ export type Database = {
           estimated_monthly_value: number
           estimated_one_time_value: number
           expected_close_date: string | null
+          facebook: string | null
           id: string
           industry: string | null
+          instagram: string | null
+          linkedin: string | null
           notes: string | null
           owner_user_id: string | null
           payment_method: string | null
           phone: string | null
+          phone_normalized: string | null
           scheduled_for: string | null
           services_planned: Json
           source: string
           source_data: Json | null
           stage_id: string | null
+          tiktok: string | null
           title: string
           unsubscribe_token: string
           updated_at: string
@@ -1495,17 +1565,22 @@ export type Database = {
           estimated_monthly_value?: number
           estimated_one_time_value?: number
           expected_close_date?: string | null
+          facebook?: string | null
           id?: string
           industry?: string | null
+          instagram?: string | null
+          linkedin?: string | null
           notes?: string | null
           owner_user_id?: string | null
           payment_method?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           scheduled_for?: string | null
           services_planned?: Json
           source: string
           source_data?: Json | null
           stage_id?: string | null
+          tiktok?: string | null
           title: string
           unsubscribe_token?: string
           updated_at?: string
@@ -1538,17 +1613,22 @@ export type Database = {
           estimated_monthly_value?: number
           estimated_one_time_value?: number
           expected_close_date?: string | null
+          facebook?: string | null
           id?: string
           industry?: string | null
+          instagram?: string | null
+          linkedin?: string | null
           notes?: string | null
           owner_user_id?: string | null
           payment_method?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           scheduled_for?: string | null
           services_planned?: Json
           source?: string
           source_data?: Json | null
           stage_id?: string | null
+          tiktok?: string | null
           title?: string
           unsubscribe_token?: string
           updated_at?: string
@@ -1760,6 +1840,7 @@ export type Database = {
           id: string
           is_terminal: boolean
           position: number
+          restricted_to_user_id: string | null
           terminal_outcome: string | null
           triggers_action: string | null
           updated_at: string
@@ -1774,6 +1855,7 @@ export type Database = {
           id?: string
           is_terminal?: boolean
           position?: number
+          restricted_to_user_id?: string | null
           terminal_outcome?: string | null
           triggers_action?: string | null
           updated_at?: string
@@ -1788,6 +1870,7 @@ export type Database = {
           id?: string
           is_terminal?: boolean
           position?: number
+          restricted_to_user_id?: string | null
           terminal_outcome?: string | null
           triggers_action?: string | null
           updated_at?: string
@@ -2306,10 +2389,12 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      distribute_unassigned_leads: { Args: never; Returns: number }
       email_automation_enabled: {
         Args: { setting_key: string }
         Returns: boolean
       }
+      email_pipeline_health: { Args: never; Returns: Json }
       enqueue_lead_email: {
         Args: { dkey: string; target_lead_id: string; tpl_key: string }
         Returns: boolean
@@ -2321,6 +2406,18 @@ export type Database = {
       }
       ensure_recurring_expenses: { Args: never; Returns: number }
       ensure_recurring_payments: { Args: never; Returns: number }
+      find_contact_by_phone: {
+        Args: { p_key: string }
+        Returns: {
+          contact_first_name: string
+          contact_last_name: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          source: string
+        }[]
+      }
       generate_lead_code: { Args: never; Returns: string }
       global_search: {
         Args: { max_rows?: number; q: string }
@@ -2361,12 +2458,14 @@ export type Database = {
           google_email: string
         }[]
       }
+      pick_next_sales_assignee: { Args: never; Returns: string }
       process_email_sequences: { Args: never; Returns: number }
       release_jobs_for_deal: {
         Args: { partial_payment_mode: boolean; target_deal_id: string }
         Returns: number
       }
       run_monthly_task_reset: { Args: never; Returns: undefined }
+      sales_pool_ids: { Args: never; Returns: string[] }
       seed_deal_payments: {
         Args: { target_deal_id: string }
         Returns: undefined
