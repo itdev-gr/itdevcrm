@@ -46,8 +46,11 @@ export function useMoveJobStage(serviceType: ServiceType) {
     onError: (_err, _vars, ctx) => {
       ctx?.previous?.forEach(([key, value]) => qc.setQueryData(key, value));
     },
-    onSettled: () => {
+    onSettled: (_data, _err, vars) => {
       void qc.invalidateQueries({ queryKey: queryKeys.jobsByService(serviceType) });
+      // Also refresh the single-job query so the job detail page reflects the
+      // move immediately (the board query alone doesn't back that page).
+      void qc.invalidateQueries({ queryKey: queryKeys.job(vars.jobId) });
     },
   });
 }

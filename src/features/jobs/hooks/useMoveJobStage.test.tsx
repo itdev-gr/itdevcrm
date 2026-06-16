@@ -13,6 +13,7 @@ const { update, from } = vi.hoisted(() => {
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
 
 import { useMoveJobStage } from './useMoveJobStage';
+import { queryKeys } from '@/lib/queryKeys';
 
 function wrap(c: ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -49,5 +50,20 @@ describe('useMoveJobStage', () => {
     result.current.mutate({ jobId: 'j1', stageId: 's-x' });
     await waitFor(() => expect(update).toHaveBeenCalled());
     expect(update.mock.calls[0]?.[0]).not.toHaveProperty('completed_at');
+  });
+
+  it('invalidates the single-job query so the detail page reflects the move', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const spy = vi.spyOn(qc, 'invalidateQueries');
+    const { result } = renderHook(() => useMoveJobStage('local_seo'), {
+      wrapper: ({ children }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
+    });
+    result.current.mutate({ jobId: 'j1', stageId: 's-x' });
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: queryKeys.job('j1') }),
+      ),
+    );
   });
 });
