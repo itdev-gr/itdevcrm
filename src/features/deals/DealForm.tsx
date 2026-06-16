@@ -79,6 +79,7 @@ export function DealForm({ initial }: Props) {
   const [industry, setIndustry] = useState(client?.industry ?? '');
   const [address, setAddress] = useState(client?.address ?? '');
   const [paymentMethod, setPaymentMethod] = useState(initial.payment_method ?? '');
+  const [tempDealAmount, setTempDealAmount] = useState(initial.temp_deal_amount ?? '');
   const [services, setServices] = useState<PlannedService[]>(
     Array.isArray(initial.services_planned)
       ? (initial.services_planned as unknown as PlannedService[])
@@ -122,8 +123,9 @@ export function DealForm({ initial }: Props) {
       one_time_value: oneTimeNum,
       recurring_monthly_value: monthlyNum,
       payment_method: paymentMethod || null,
+      temp_deal_amount: tempDealAmount.trim() || null,
     }),
-    [title, services, oneTimeNum, monthlyNum, paymentMethod, initial.title],
+    [title, services, oneTimeNum, monthlyNum, paymentMethod, tempDealAmount, initial.title],
   );
 
   const clientPatch = useMemo(() => {
@@ -166,6 +168,7 @@ export function DealForm({ initial }: Props) {
         one_time_value: next.one_time_value,
         recurring_monthly_value: next.recurring_monthly_value,
         payment_method: next.payment_method,
+        temp_deal_amount: next.temp_deal_amount,
       })
       .eq('id', initial.id);
     if (error) throw new Error(error.message);
@@ -325,6 +328,15 @@ export function DealForm({ initial }: Props) {
               <option value="cash">{tLeads('form.payment_method_options.cash')}</option>
               <option value="online">{tLeads('form.payment_method_options.online')}</option>
             </select>
+          </div>
+          <div>
+            <Label htmlFor="temp-deal-amount">{t('form.temp_deal_amount')}</Label>
+            <Input
+              id="temp-deal-amount"
+              value={tempDealAmount}
+              onChange={(e) => setTempDealAmount(e.target.value)}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">{t('form.temp_deal_amount_hint')}</p>
           </div>
         </div>
         <div>

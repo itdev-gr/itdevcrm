@@ -13,8 +13,19 @@
     "currency": "Currency",
     "one_time_value": "One-time value",
     "recurring_monthly_value": "Monthly recurring value",
+    "temp_deal_amount": "Deal amount",
+    "temp_deal_amount_hint": "Total agreed amount (reference for accounting).",
     "submit": "Save",
     "submitting": "Saving…"
+  },
+  "notes_area": {
+    "title": "Notes area",
+    "sales_note": "Sales Note",
+    "sales_note_hint": "Major info the sales team passes to accounting.",
+    "web_seo_notes": "Web SEO notes",
+    "local_notes": "Local SEO notes",
+    "website_notes": "Website notes",
+    "empty": "—"
   },
   "tabs": {
     "overview": "Overview",

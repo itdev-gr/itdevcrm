@@ -13,8 +13,19 @@
     "currency": "Νόμισμα",
     "one_time_value": "Εφάπαξ ποσό",
     "recurring_monthly_value": "Μηνιαίο επαναλαμβανόμενο",
+    "temp_deal_amount": "Ποσό συμφωνίας",
+    "temp_deal_amount_hint": "Συνολικό συμφωνημένο ποσό (αναφορά για το λογιστήριο).",
     "submit": "Αποθήκευση",
     "submitting": "Αποθήκευση…"
+  },
+  "notes_area": {
+    "title": "Σημειώσεις",
+    "sales_note": "Σημείωση πωλήσεων",
+    "sales_note_hint": "Σημαντικές πληροφορίες που οι πωλήσεις περνούν στο λογιστήριο.",
+    "web_seo_notes": "Σημειώσεις Web SEO",
+    "local_notes": "Σημειώσεις Local SEO",
+    "website_notes": "Σημειώσεις ιστοσελίδας",
+    "empty": "—"
   },
   "tabs": {
     "overview": "Επισκόπηση",

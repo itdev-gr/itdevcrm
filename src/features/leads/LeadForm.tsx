@@ -172,7 +172,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             />
           </div>
           <div>
-            <Label htmlFor="addl-notes">{t('form.notes')}</Label>
+            <Label htmlFor="addl-notes">{t('form.sales_note')}</Label>
             <textarea
               id="addl-notes"
               value={additionalNotes}

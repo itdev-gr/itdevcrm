@@ -660,8 +660,10 @@ export type Database = {
           payment_method: string | null
           probability: number | null
           recurring_monthly_value: number | null
+          sales_note: string | null
           services_planned: Json
           stage_id: string
+          temp_deal_amount: string | null
           title: string
           updated_at: string
           won_by_user_id: string | null
@@ -690,8 +692,10 @@ export type Database = {
           payment_method?: string | null
           probability?: number | null
           recurring_monthly_value?: number | null
+          sales_note?: string | null
           services_planned?: Json
           stage_id: string
+          temp_deal_amount?: string | null
           title: string
           updated_at?: string
           won_by_user_id?: string | null
@@ -720,8 +724,10 @@ export type Database = {
           payment_method?: string | null
           probability?: number | null
           recurring_monthly_value?: number | null
+          sales_note?: string | null
           services_planned?: Json
           stage_id?: string
+          temp_deal_amount?: string | null
           title?: string
           updated_at?: string
           won_by_user_id?: string | null
