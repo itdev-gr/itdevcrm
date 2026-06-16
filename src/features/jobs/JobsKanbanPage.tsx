@@ -19,6 +19,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 import { groupJobsForBoard, hasBlockedColumn, aiSeoTargetCode } from './kanbanGrouping';
+import { stageCompletesJob } from './stageCompletion';
 
 const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   web_seo: { en: 'Web SEO', el: 'Web SEO' },
@@ -107,7 +108,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
         stageId: targetStageId,
         // Terminal "completed" stages (e.g. Local SEO "Done", Web Dev "Live")
         // stamp the ✓; leaving them clears it.
-        completed: !!resolved?.is_terminal && resolved.terminal_outcome === 'completed',
+        completed: stageCompletesJob(resolved),
       });
     } catch (err) {
       alert((err as Error).message);

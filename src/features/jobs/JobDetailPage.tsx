@@ -16,6 +16,7 @@ import { ContactsCard } from './ContactsCard';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
+import { stageCompletesJob } from './stageCompletion';
 import { useBlockJob, useUnblockJob } from './hooks/useBlockJob';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
@@ -48,8 +49,15 @@ export function JobDetailPage() {
 
   async function onChangeStage(stageId: string) {
     if (!job || job.stage_id === stageId) return;
+    const target = boardStages.find((s) => s.id === stageId);
     try {
-      await moveStage.mutateAsync({ jobId: job.id, stageId });
+      await moveStage.mutateAsync({
+        jobId: job.id,
+        stageId,
+        // Stamp/clear completion the same way a board drag does, so finishing a
+        // job from the detail page registers as completed too.
+        completed: stageCompletesJob(target),
+      });
     } catch (err) {
       alert((err as Error).message);
     }
