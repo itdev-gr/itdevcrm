@@ -65,6 +65,7 @@ const ClientDetailPage = lazyPage(
 );
 const DealDetailPage = lazyPage(() => import('@/features/deals/DealDetailPage'), 'DealDetailPage');
 const LeadDetailPage = lazyPage(() => import('@/features/leads/LeadDetailPage'), 'LeadDetailPage');
+const LeadsListPage = lazyPage(() => import('@/features/leads/LeadsListPage'), 'LeadsListPage');
 const SalesKanbanPage = lazyPage(
   () => import('@/features/sales/SalesKanbanPage'),
   'SalesKanbanPage',
@@ -181,6 +182,7 @@ export const router = createBrowserRouter([
         children: [
           { path: 'clients', element: <ClientsListPage /> },
           { path: 'kanban', element: <SalesKanbanPage /> },
+          { path: 'leads', element: <LeadsListPage /> },
           { path: 'docs', element: <SalesBoardDocsPage /> },
         ],
       },
