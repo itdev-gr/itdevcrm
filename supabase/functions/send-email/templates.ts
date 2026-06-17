@@ -3,7 +3,8 @@
 
 export type Rendered = { subject: string; html: string; text: string };
 
-const APP_BASE = 'https://app.itdev.gr'; // deal/offer links; adjust if the prod URL differs.
+// Deal/offer links. Single source of truth = APP_URL secret; falls back to prod.
+const APP_BASE = Deno.env.get('APP_URL') ?? 'https://www.itdevcrm.com';
 
 const SERVICE_LABELS_EL: Record<string, string> = {
   web_seo: 'Web SEO',
