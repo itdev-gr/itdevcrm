@@ -12,6 +12,7 @@ import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners'
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { PaymentsPanel } from './PaymentsPanel';
+import { JobsBillingPanel } from './JobsBillingPanel';
 import type { PlannedService } from './ServicesPlannedField';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
@@ -44,6 +45,8 @@ export function DealDetailPage() {
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const canManageBilling = isAdmin || groupCodes.includes('accounting');
   const wonBy = deal?.won_by_user_id
     ? owners.find((o) => o.user_id === deal.won_by_user_id)
     : null;
@@ -231,6 +234,16 @@ export function DealDetailPage() {
               <DealForm initial={deal} />
               <DealNotesArea deal={deal} />
               <DealServiceInfo dealId={dealId} />
+              <div className="mt-6">
+                <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+                  {t('jobs_billing.overview_heading')}
+                </h2>
+                <JobsBillingPanel
+                  dealId={dealId}
+                  defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+                  readOnly={!canManageBilling}
+                />
+              </div>
             </div>
             <aside className="min-w-0 lg:flex lg:h-full lg:flex-col lg:border-l lg:pl-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -240,7 +253,13 @@ export function DealDetailPage() {
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value="payment" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="payment" className="space-y-6 pt-4 lg:min-h-0 lg:overflow-y-auto">
+          {canManageBilling && (
+            <JobsBillingPanel
+              dealId={dealId}
+              defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+            />
+          )}
           <PaymentsPanel
             dealId={dealId}
             services={dealServices}

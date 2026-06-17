@@ -132,6 +132,81 @@
       "one_time": "One-time"
     }
   },
+  "jobs_billing": {
+    "title": "Jobs & billing",
+    "overview_heading": "Jobs & billing",
+    "add_job": "+ Add job",
+    "empty_jobs": "No jobs yet.",
+    "empty_payments": "No payments yet.",
+    "payments_title": "Payments",
+    "col_title": "Title",
+    "col_department": "Department",
+    "col_price": "Price",
+    "col_status": "Status",
+    "col_group": "Billing",
+    "col_actions": "",
+    "department_billing_only": "Billing-only (no board)",
+    "billing_only": "Billing-only",
+    "cadence": {
+      "one_time": "one-time",
+      "recurring_monthly": "mo",
+      "recurring_yearly": "yr"
+    },
+    "status": {
+      "active": "Active",
+      "ended": "Ended",
+      "completed": "Completed"
+    },
+    "group": {
+      "separate": "Bill separately",
+      "together": "Bill together",
+      "label": "Group {{n}}",
+      "pair_with": "Group with: {{title}}",
+      "future_only": "Affects future billing only"
+    },
+    "untitled": "Untitled job",
+    "summary": {
+      "title": "Pricing summary",
+      "one_time_label": "One-time",
+      "monthly_label": "Monthly",
+      "yearly_label": "Yearly",
+      "subtotal": "Subtotal",
+      "vat": "VAT",
+      "total": "Total"
+    },
+    "end": "End",
+    "end_confirm_title": "End this job?",
+    "end_confirm_body": "Billing stops and the job is marked ended. This can't be undone here.",
+    "form": {
+      "title": "Title",
+      "title_placeholder": "e.g. Extra landing page",
+      "department": "Department",
+      "price_net": "Price (net €)",
+      "vat_rate": "VAT %",
+      "cadence": "Cadence",
+      "description": "Description",
+      "setup_fee": "Setup fee (€)",
+      "submit": "Add job",
+      "submitting": "Adding…"
+    },
+    "cadence_options": {
+      "one_time": "One-time",
+      "recurring_monthly": "Monthly",
+      "recurring_yearly": "Yearly"
+    },
+    "payment": {
+      "due_date": "Due",
+      "no_due_date": "No due date",
+      "gross": "Gross",
+      "status": "Status",
+      "invoice_number": "Invoice #",
+      "status_pending": "Pending",
+      "status_paid": "Paid",
+      "status_overdue": "Overdue",
+      "mark_paid": "Mark paid",
+      "mark_pending": "Mark pending"
+    }
+  },
   "empty": "No deals yet.",
   "welcome_email": {
     "send": "Send welcome email"

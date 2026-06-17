@@ -5,10 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
-import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
+import { COUNTRIES } from '@/lib/countries';
 import { INDUSTRIES } from '@/lib/industries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
-import { ServicesPlannedField, type PlannedService } from './ServicesPlannedField';
 import {
   AdditionalContactsField,
   parseAdditionalContacts,
@@ -80,11 +79,6 @@ export function DealForm({ initial }: Props) {
   const [address, setAddress] = useState(client?.address ?? '');
   const [paymentMethod, setPaymentMethod] = useState(initial.payment_method ?? '');
   const [tempDealAmount, setTempDealAmount] = useState(initial.temp_deal_amount ?? '');
-  const [services, setServices] = useState<PlannedService[]>(
-    Array.isArray(initial.services_planned)
-      ? (initial.services_planned as unknown as PlannedService[])
-      : [],
-  );
 
   // When the full client loads, hydrate the contact-info + additional-contacts
   // fields. Use a one-shot ref-style sentinel so subsequent realtime refreshes
@@ -102,30 +96,13 @@ export function DealForm({ initial }: Props) {
     );
   }
 
-  // Setup fees are one-time charges, so they belong in the one-time bucket.
-  const oneTimeNum = services.reduce(
-    (sum, s) => sum + (Number(s.one_time_amount) || 0) + (Number(s.setup_fee) || 0),
-    0,
-  );
-  const monthlyNum = services.reduce(
-    (sum, s) => sum + (s.billing_type === 'recurring_monthly' ? Number(s.monthly_amount) || 0 : 0),
-    0,
-  );
-  const yearlyNum = services.reduce(
-    (sum, s) => sum + (s.billing_type === 'recurring_yearly' ? Number(s.monthly_amount) || 0 : 0),
-    0,
-  );
-
   const dealPatch = useMemo(
     () => ({
       title: title.trim() || initial.title || '',
-      services_planned: services,
-      one_time_value: oneTimeNum,
-      recurring_monthly_value: monthlyNum,
       payment_method: paymentMethod || null,
       temp_deal_amount: tempDealAmount.trim() || null,
     }),
-    [title, services, oneTimeNum, monthlyNum, paymentMethod, tempDealAmount, initial.title],
+    [title, paymentMethod, tempDealAmount, initial.title],
   );
 
   const clientPatch = useMemo(() => {
@@ -164,9 +141,6 @@ export function DealForm({ initial }: Props) {
       .from('deals')
       .update({
         title: next.title,
-        services_planned: next.services_planned as unknown as DealRow['services_planned'],
-        one_time_value: next.one_time_value,
-        recurring_monthly_value: next.recurring_monthly_value,
         payment_method: next.payment_method,
         temp_deal_amount: next.temp_deal_amount,
       })
@@ -338,59 +312,6 @@ export function DealForm({ initial }: Props) {
             />
             <p className="mt-1 text-[11px] text-slate-500">{t('form.temp_deal_amount_hint')}</p>
           </div>
-        </div>
-        <div>
-          <Label>{tLeads('form.services_planned')}</Label>
-          <ServicesPlannedField value={services} onChange={setServices} />
-        </div>
-        <div className="rounded-md border bg-slate-50 p-3 text-sm">
-          <div className="mb-2 text-xs font-medium uppercase text-slate-500">
-            {tLeads('totals.title')}
-          </div>
-          {(() => {
-            const vatRate = vatRateFor(country);
-            const oneTimeVat = oneTimeNum * vatRate;
-            const monthlyVat = monthlyNum * vatRate;
-            const yearlyVat = yearlyNum * vatRate;
-            const oneTimeTotal = oneTimeNum + oneTimeVat;
-            const monthlyTotal = monthlyNum + monthlyVat;
-            const yearlyTotal = yearlyNum + yearlyVat;
-            const vatPct = Math.round(vatRate * 100);
-            return (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-slate-500">
-                    <th className="text-left font-normal"></th>
-                    <th className="text-right font-normal">{tLeads('totals.subtotal')}</th>
-                    <th className="text-right font-normal">
-                      {tLeads('totals.vat')} ({vatPct}%)
-                    </th>
-                    <th className="text-right font-normal">{tLeads('totals.total')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="py-1 text-slate-600">{tLeads('totals.one_time_label')}</td>
-                    <td className="py-1 text-right">{formatEur(oneTimeNum)}</td>
-                    <td className="py-1 text-right">{formatEur(oneTimeVat)}</td>
-                    <td className="py-1 text-right font-medium">{formatEur(oneTimeTotal)}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 text-slate-600">{tLeads('totals.monthly_label')}</td>
-                    <td className="py-1 text-right">{formatEur(monthlyNum)}</td>
-                    <td className="py-1 text-right">{formatEur(monthlyVat)}</td>
-                    <td className="py-1 text-right font-medium">{formatEur(monthlyTotal)}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 text-slate-600">{tLeads('totals.yearly_label')}</td>
-                    <td className="py-1 text-right">{formatEur(yearlyNum)}</td>
-                    <td className="py-1 text-right">{formatEur(yearlyVat)}</td>
-                    <td className="py-1 text-right font-medium">{formatEur(yearlyTotal)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            );
-          })()}
         </div>
       </Section>
 

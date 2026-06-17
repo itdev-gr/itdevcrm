@@ -132,6 +132,81 @@
       "one_time": "Εφάπαξ"
     }
   },
+  "jobs_billing": {
+    "title": "Εργασίες & χρεώσεις",
+    "overview_heading": "Εργασίες & χρεώσεις",
+    "add_job": "+ Προσθήκη εργασίας",
+    "empty_jobs": "Δεν υπάρχουν ακόμη εργασίες.",
+    "empty_payments": "Δεν υπάρχουν ακόμη πληρωμές.",
+    "payments_title": "Πληρωμές",
+    "col_title": "Τίτλος",
+    "col_department": "Τμήμα",
+    "col_price": "Τιμή",
+    "col_status": "Κατάσταση",
+    "col_group": "Χρέωση",
+    "col_actions": "",
+    "department_billing_only": "Μόνο χρέωση (χωρίς board)",
+    "billing_only": "Μόνο χρέωση",
+    "cadence": {
+      "one_time": "εφάπαξ",
+      "recurring_monthly": "μήνα",
+      "recurring_yearly": "έτος"
+    },
+    "status": {
+      "active": "Ενεργό",
+      "ended": "Έληξε",
+      "completed": "Ολοκληρώθηκε"
+    },
+    "group": {
+      "separate": "Ξεχωριστή χρέωση",
+      "together": "Κοινή χρέωση",
+      "label": "Ομάδα {{n}}",
+      "pair_with": "Κοινή χρέωση με: {{title}}",
+      "future_only": "Επηρεάζει μόνο μελλοντικές χρεώσεις"
+    },
+    "untitled": "Εργασία χωρίς τίτλο",
+    "summary": {
+      "title": "Σύνοψη τιμολόγησης",
+      "one_time_label": "Εφάπαξ",
+      "monthly_label": "Μηνιαίο",
+      "yearly_label": "Ετήσιο",
+      "subtotal": "Υποσύνολο",
+      "vat": "ΦΠΑ",
+      "total": "Σύνολο"
+    },
+    "end": "Λήξη",
+    "end_confirm_title": "Λήξη αυτής της εργασίας;",
+    "end_confirm_body": "Η χρέωση σταματά και η εργασία σημειώνεται ως ληγμένη. Δεν αναιρείται από εδώ.",
+    "form": {
+      "title": "Τίτλος",
+      "title_placeholder": "π.χ. Επιπλέον landing page",
+      "department": "Τμήμα",
+      "price_net": "Τιμή (καθαρή €)",
+      "vat_rate": "ΦΠΑ %",
+      "cadence": "Συχνότητα",
+      "description": "Περιγραφή",
+      "setup_fee": "Κόστος εγκατάστασης (€)",
+      "submit": "Προσθήκη εργασίας",
+      "submitting": "Προσθήκη…"
+    },
+    "cadence_options": {
+      "one_time": "Εφάπαξ",
+      "recurring_monthly": "Μηνιαία",
+      "recurring_yearly": "Ετήσια"
+    },
+    "payment": {
+      "due_date": "Λήξη",
+      "no_due_date": "Χωρίς ημερομηνία",
+      "gross": "Μικτό",
+      "status": "Κατάσταση",
+      "invoice_number": "Αρ. Τιμολογίου",
+      "status_pending": "Εκκρεμεί",
+      "status_paid": "Πληρώθηκε",
+      "status_overdue": "Εκπρόθεσμο",
+      "mark_paid": "Πληρώθηκε",
+      "mark_pending": "Εκκρεμεί"
+    }
+  },
   "empty": "Δεν υπάρχουν συμφωνίες.",
   "welcome_email": {
     "send": "Αποστολή welcome email"
