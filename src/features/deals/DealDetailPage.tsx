@@ -226,7 +226,7 @@ export function DealDetailPage() {
         </TabsList>
 
         <TabsContent value="overview" className="pt-4 lg:min-h-0 lg:overflow-hidden">
-          <div className="grid grid-cols-1 gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[65%_35%]">
+          <div className="grid grid-cols-1 gap-6 lg:h-full lg:min-h-0 lg:grid-rows-1 lg:grid-cols-[65%_35%]">
             <div className="min-w-0 lg:h-full lg:overflow-y-auto lg:pr-6">
               <DealForm initial={deal} />
               <DealNotesArea deal={deal} />
