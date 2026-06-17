@@ -19,6 +19,7 @@
   "full_name": "Maria Papadopoulou",
   "email": "maria@example.gr",
   "phone": "6912345678",
+  "website": "https://acme.gr", // optional
   "company": "Acme",            // optional
   "form_name": "Spring Promo",  // optional → becomes the lead title
   "campaign": "IG Reels",       // optional
@@ -134,6 +135,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       contact_last_name: last,
       email: str(body.email),
       phone: str(body.phone),
+      website: str(body.website),
       company_name: str(body.company),
       contact_info: str(body.notes),
     } as never)
@@ -187,7 +189,7 @@ META_LEAD_SECRET=
 ## Zapier setup
 1. In your existing Facebook/Instagram Lead Ads Zap, add an action **Webhooks by Zapier → POST**.
 2. URL: the endpoint above. Payload type: **JSON**.
-3. Map the Meta lead fields to these keys: `leadgen_id` (the Meta lead/leadgen id — required for dedup), `full_name`, `email`, `phone`, `company` (optional), `form_name` (optional), `campaign` (optional), `notes` (optional, any extra Q&A).
+3. Map the Meta lead fields to these keys: `leadgen_id` (the Meta lead/leadgen id — required for dedup), `full_name`, `email`, `phone`, `website` (optional), `company` (optional), `form_name` (optional), `campaign` (optional), `notes` (optional, any extra Q&A).
 4. Keep the existing ClickUp action — both run from the same Zap.
 
 ## Behaviour
