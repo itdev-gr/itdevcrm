@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useComments, type CommentRow } from './hooks/useComments';
 import { CommentItem } from './CommentItem';
@@ -11,6 +12,18 @@ type Props = {
 export function CommentsPanel({ parentType, parentId }: Props) {
   const { t } = useTranslation('sales');
   const { data: comments = [] } = useComments(parentType, parentId);
+
+  // Open scrolled to the latest message (comments are oldest-first), and follow
+  // new ones as they post.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const id = requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [comments.length]);
 
   // Group replies under their parent (single level — no nested threads).
   const repliesByParent = new Map<string, CommentRow[]>();
@@ -27,7 +40,7 @@ export function CommentsPanel({ parentType, parentId }: Props) {
 
   return (
     <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
-      <div className="space-y-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+      <div ref={scrollRef} className="space-y-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
         {tops.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('comments.empty')}</p>
         ) : (
