@@ -19,10 +19,18 @@ export function CommentsPanel({ parentType, parentId }: Props) {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const id = requestAnimationFrame(() => {
+    const toBottom = () => {
       el.scrollTop = el.scrollHeight;
-    });
-    return () => cancelAnimationFrame(id);
+    };
+    toBottom();
+    // Re-run after the flex/grid layout settles and comment items finish
+    // rendering (the pane isn't scrollable on the first frame).
+    const t1 = setTimeout(toBottom, 60);
+    const t2 = setTimeout(toBottom, 300);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [comments.length]);
 
   // Group replies under their parent (single level — no nested threads).
