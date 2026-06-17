@@ -110,7 +110,13 @@
     "monthly_amount": "Monthly €",
     "yearly_amount": "Yearly €",
     "one_time_amount": "One-time €",
+    "total_amount": "Total amount €",
     "setup_fee": "Setup €",
+    "payment_terms": {
+      "full": "Fully paid",
+      "50_50": "50 / 50",
+      "50_25_25": "50 / 25 / 25"
+    },
     "types": {
       "web_seo": "Web SEO",
       "local_seo": "Local SEO",

@@ -110,7 +110,13 @@
     "monthly_amount": "Μηνιαίο €",
     "yearly_amount": "Ετήσιο €",
     "one_time_amount": "Εφάπαξ €",
+    "total_amount": "Συνολικό ποσό €",
     "setup_fee": "Setup €",
+    "payment_terms": {
+      "full": "Εξοφλήθηκε",
+      "50_50": "50 / 50",
+      "50_25_25": "50 / 25 / 25"
+    },
     "types": {
       "web_seo": "Web SEO",
       "local_seo": "Τοπικό SEO",

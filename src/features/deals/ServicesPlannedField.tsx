@@ -16,12 +16,23 @@ import { useServiceSubpackages } from '@/features/service_packages/hooks/useServ
 export type PlannedService = {
   service_type: 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting' | 'ads';
   billing_type: 'one_time' | 'recurring_monthly' | 'recurring_yearly';
+  // Website (web_dev) only: the one-time total is collected in installments per
+  // this schedule. billing_type stays 'one_time'; this drives the payment split.
+  payment_terms?: 'full' | '50_50' | '50_25_25' | null;
   package_id?: string | null;
   one_time_amount?: number;
   monthly_amount?: number;
   setup_fee?: number;
   subpackage_codes?: string[];
 };
+
+const WEBDEV_TERMS = ['full', '50_50', '50_25_25'] as const;
+/** Split a website total into its installment amounts for the chosen schedule. */
+export function paymentTermSplit(total: number, term: string | null | undefined): number[] {
+  if (term === 'full') return [total]; // fully paid — one installment
+  if (term === '50_25_25') return [total * 0.5, total * 0.25, total * 0.25];
+  return [total * 0.5, total * 0.5]; // 50_50 (default)
+}
 
 type Props = {
   value: PlannedService[];
@@ -108,6 +119,17 @@ function ServiceRowEditor({
             disabled={isDisabled}
             onValueChange={(v) => {
               const next = v as PlannedService['service_type'];
+              if (next === 'web_dev') {
+                // Website is billed one-time, collected in installments (50/50 default).
+                updateRow(idx, {
+                  service_type: next,
+                  billing_type: 'one_time',
+                  payment_terms: '50_50',
+                  package_id: null,
+                  subpackage_codes: [],
+                });
+                return;
+              }
               const options = billingOptionsFor(next);
               const billing = options.includes(row.billing_type)
                 ? row.billing_type
@@ -115,6 +137,7 @@ function ServiceRowEditor({
               updateRow(idx, {
                 service_type: next,
                 billing_type: billing,
+                payment_terms: null,
                 package_id: null,
                 subpackage_codes: [],
               });
@@ -154,26 +177,72 @@ function ServiceRowEditor({
         </div>
         <div className="col-span-2">
           <Label className="whitespace-nowrap text-xs">{t('services.billing_type')}</Label>
-          <Select
-            value={row.billing_type}
-            disabled={isDisabled || row.service_type === 'hosting'}
-            onValueChange={(v) =>
-              updateRow(idx, { billing_type: v as PlannedService['billing_type'] })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {billingOptionsFor(row.service_type).map((b) => (
-                <SelectItem key={b} value={b}>
-                  {t(`services.billing.${b}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {row.service_type === 'web_dev' ? (
+            <Select
+              value={row.payment_terms ?? '50_50'}
+              disabled={isDisabled}
+              onValueChange={(v) =>
+                updateRow(idx, {
+                  payment_terms: v as 'full' | '50_50' | '50_25_25',
+                  billing_type: 'one_time',
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WEBDEV_TERMS.map((term) => (
+                  <SelectItem key={term} value={term}>
+                    {t(`services.payment_terms.${term}`, {
+                      defaultValue:
+                        term === 'full' ? 'Fully paid' : term === '50_25_25' ? '50/25/25' : '50/50',
+                    })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Select
+              value={row.billing_type}
+              disabled={isDisabled || row.service_type === 'hosting'}
+              onValueChange={(v) =>
+                updateRow(idx, { billing_type: v as PlannedService['billing_type'] })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {billingOptionsFor(row.service_type).map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {t(`services.billing.${b}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
-        {row.billing_type !== 'one_time' ? (
+        {row.service_type === 'web_dev' ? (
+          <div className="col-span-4">
+            <Label className="whitespace-nowrap text-xs">
+              {t('services.total_amount', { defaultValue: 'Total amount' })}
+            </Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              disabled={isDisabled}
+              value={row.one_time_amount ?? ''}
+              onChange={(e) => updateRow(idx, numericPatch('one_time_amount', e.target.value))}
+            />
+            <p className="mt-0.5 text-[10px] text-slate-500">
+              {paymentTermSplit(Number(row.one_time_amount) || 0, row.payment_terms)
+                .map((p) => `€${p.toFixed(0)}`)
+                .join(' + ')}
+            </p>
+          </div>
+        ) : row.billing_type !== 'one_time' ? (
           <>
             <div className="col-span-2">
               <Label className="whitespace-nowrap text-xs">
