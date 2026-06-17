@@ -1,6 +1,17 @@
 {
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate"
+        }
+      ]
+    }
+  ],
   "rewrites": [
-    { "source": "/((?!api/|assets/|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|favicon\\.svg|icons\\.svg|robots\\.txt|llms\\.txt).*)", "destination": "/index.html" }
   ],
   "functions": {
     "api/offer-pdf.ts": {
