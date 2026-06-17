@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,6 +95,8 @@ function ServiceRowEditor({
   const { data: subpackages = [] } = useServiceSubpackages(row.package_id ?? '');
 
   const hasPackages = rowPackages.length > 0;
+  const selectedExtras = (row.subpackage_codes ?? []).length;
+  const [extrasOpen, setExtrasOpen] = useState(false);
 
   return (
     <li className="space-y-1">
@@ -232,10 +235,22 @@ function ServiceRowEditor({
         </div>
       </div>
 
-      {/* Extras / sub-products */}
+      {/* Extras / sub-products — collapsible */}
       {row.package_id && subpackages.length > 0 && (
         <div className="col-span-12">
-          <Label className="text-xs">{t('services.extras', { defaultValue: 'Extras' })}</Label>
+          <button
+            type="button"
+            onClick={() => setExtrasOpen((v) => !v)}
+            aria-expanded={extrasOpen}
+            className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900"
+          >
+            <span className="inline-block w-3 text-center text-slate-400">
+              {extrasOpen ? '▾' : '▸'}
+            </span>
+            {t('services.extras', { defaultValue: 'Extras' })}
+            {selectedExtras > 0 && <span className="text-slate-400">({selectedExtras})</span>}
+          </button>
+          {extrasOpen && (
           <div className="mt-1 space-y-1 rounded-md border bg-slate-50 p-2">
             {subpackages.map((sp) => {
               const checked = (row.subpackage_codes ?? []).includes(sp.code);
@@ -283,6 +298,7 @@ function ServiceRowEditor({
               );
             })}
           </div>
+          )}
         </div>
       )}
     </li>
