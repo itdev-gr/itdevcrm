@@ -87,6 +87,29 @@ export async function deleteLeads(ids: string[]): Promise<DeleteLeadsResult> {
   return { ok: true, deletedCount: r.deleted_count ?? 0, skipped: r.skipped ?? [] };
 }
 
+export type DeleteJobsResult =
+  | { ok: true; deletedCount: number }
+  | { ok: false; errors: string[] };
+
+// Admin-only permanent delete via the `delete_jobs` RPC. Mirrors deleteLeads and
+// goes through the loose `rpcCall`. The RPC enforces the admin check server-side.
+export async function deleteJobs(ids: string[]): Promise<DeleteJobsResult> {
+  if (ids.length === 0) return { ok: true, deletedCount: 0 };
+  const { data, error } = await rpcCall('delete_jobs', { p_ids: ids });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; deleted_count?: number; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['delete_failed'] };
+  return { ok: true, deletedCount: r.deleted_count ?? 0 };
+}
+
+// Count of billing lines (invoice + payment) referencing a job, for the
+// delete-confirmation warning. Returns 0 on error or for non-admins.
+export async function jobBillingRefCount(jobId: string): Promise<number> {
+  const { data, error } = await rpcCall('job_billing_ref_count', { p_job_id: jobId });
+  if (error) return 0;
+  return typeof data === 'number' ? data : 0;
+}
+
 export type JobBillingResult = { ok: true; job_id: string } | { ok: false; errors: string[] };
 
 export type BillingType = 'one_time' | 'recurring_monthly' | 'recurring_yearly';
