@@ -5,22 +5,24 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyableCode } from '@/components/CopyableCode';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
-import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import type { PlannedService } from '@/features/deals/ServicesPlannedField';
 import { CallLink } from '@/components/CallLink';
 
-export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
+export function SalesKanbanCard({
+  lead,
+  ownerName,
+  wonByName,
+}: {
+  lead: LeadRow;
+  ownerName?: string;
+  wonByName?: string;
+}) {
   const { t, i18n } = useTranslation('leads');
   const { t: tDeals } = useTranslation('deals');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
-  const { data: owners = [] } = useAssignableOwners();
-  const owner = lead.owner_user_id ? owners.find((o) => o.user_id === lead.owner_user_id) : null;
   const isWon = lead.stage?.code === 'won';
-  const wonBy = lead.won_by_user_id
-    ? owners.find((o) => o.user_id === lead.won_by_user_id)
-    : null;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: { leadId: lead.id, currentStage: lead.stage_id },
@@ -72,7 +74,7 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
             )}
           </div>
           <div className="text-[10px] text-slate-500">
-            👤 {owner ? owner.full_name || owner.email : t('owner.unassigned')}
+            👤 {ownerName || t('owner.unassigned')}
           </div>
           {lead.phone && (
             <div className="text-[10px]">
@@ -84,9 +86,9 @@ export function SalesKanbanCard({ lead }: { lead: LeadRow }) {
               {services.map((s) => tDeals(`services.types.${s.service_type}`)).join(' · ')}
             </div>
           )}
-          {isWon && wonBy && (
+          {isWon && wonByName && (
             <div className="text-[10px] text-emerald-700">
-              {t('sales_person.label')}: {wonBy.full_name || wonBy.email}
+              {t('sales_person.label')}: {wonByName}
             </div>
           )}
           {lead.scheduled_for && (
