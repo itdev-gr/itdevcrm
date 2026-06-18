@@ -5,6 +5,8 @@ import { AdminGuard } from '@/components/auth/AdminGuard';
 import { ShellLayout } from './ShellLayout';
 import { SetPasswordLayout } from './SetPasswordLayout';
 import { AdminLayout } from './AdminLayout';
+import { RouteError } from './RouteError';
+import { importWithRetry } from '@/lib/dynamicImport';
 
 // Lazily load every page so each lands in its own chunk and the initial
 // JS payload stays small. Components are named exports, so map them to
@@ -13,7 +15,7 @@ function lazyPage<K extends string>(
   importer: () => Promise<Record<K, ComponentType<unknown>>>,
   name: K,
 ) {
-  return lazy(() => importer().then((mod) => ({ default: mod[name] })));
+  return lazy(() => importWithRetry(importer).then((mod) => ({ default: mod[name] })));
 }
 
 const HomePage = lazyPage(() => import('./routes/HomePage'), 'HomePage');
@@ -102,9 +104,11 @@ const AccountingBoardDocsPage = lazyPage(
 // unknown-typed lazyPage helper — invoke React.lazy directly to preserve the
 // original component's prop signature. The fast-refresh-only-export-components
 // rule misreads the lazy() pattern; intent is component, not utility.
- 
+
 const JobsKanbanPage = lazy(() =>
-  import('@/features/jobs/JobsKanbanPage').then((m) => ({ default: m.JobsKanbanPage })),
+  importWithRetry(() => import('@/features/jobs/JobsKanbanPage')).then((m) => ({
+    default: m.JobsKanbanPage,
+  })),
 );
 const JobDetailPage = lazyPage(() => import('@/features/jobs/JobDetailPage'), 'JobDetailPage');
 const TechMyClientsPage = lazyPage(
@@ -115,10 +119,7 @@ const TechBoardDocsPage = lazyPage(
   () => import('@/features/tech/TechBoardDocsPage'),
   'TechBoardDocsPage',
 );
-const DashboardPage = lazyPage(
-  () => import('@/features/dashboard/DashboardPage'),
-  'DashboardPage',
-);
+const DashboardPage = lazyPage(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage');
 const EmailAutomationsPage = lazyPage(
   () => import('@/features/email_automations/EmailAutomationsPage'),
   'EmailAutomationsPage',
@@ -150,95 +151,132 @@ const ContractsListPage = lazyPage(
 
 export const router = createBrowserRouter([
   {
-    element: <ShellLayout />,
+    // One error boundary for every route: stale lazy chunks after a deploy
+    // (and any other render/load error) land here instead of React Router's
+    // default developer page.
+    errorElement: <RouteError />,
     children: [
-      { path: '/', element: <HomePage /> },
-      { path: 'dashboard', element: <AdminGuard><DashboardPage /></AdminGuard> },
       {
-        path: 'admin',
-        element: <AdminLayout />,
+        element: <ShellLayout />,
         children: [
-          { index: true, element: <UsersListPage /> },
-          { path: 'users', element: <UsersListPage /> },
-          { path: 'users/:userId', element: <UserDetailPage /> },
-          { path: 'users/:userId/permissions', element: <UserPermissionsPage /> },
-          { path: 'groups', element: <GroupsListPage /> },
-          { path: 'groups/:groupId/permissions', element: <GroupPermissionsPage /> },
-          { path: 'fields', element: <FieldRulesPage /> },
-          { path: 'permissions/test', element: <PermissionsTestPage /> },
-          { path: 'stages', element: <StagesListPage /> },
-          { path: 'service-packages', element: <ServicePackagesPage /> },
-          { path: 'email-automations', element: <EmailAutomationsPage /> },
-          { path: 'contract-templates', element: <ContractTemplatesPage /> },
-        ],
-      },
-      {
-        path: 'sales',
-        element: (
-          <RequireGroup groups={['sales']}>
-            <Outlet />
-          </RequireGroup>
-        ),
-        children: [
-          { path: 'clients', element: <ClientsListPage /> },
-          { path: 'kanban', element: <SalesKanbanPage /> },
-          { path: 'leads', element: <LeadsListPage /> },
-          { path: 'docs', element: <SalesBoardDocsPage /> },
-        ],
-      },
-      {
-        path: 'accounting',
-        element: (
-          <RequireGroup groups={['accounting']}>
-            <Outlet />
-          </RequireGroup>
-        ),
-        children: [
-          { path: 'onboarding', element: <AccountingOnboardingKanbanPage /> },
-          { path: 'clients', element: <AccountingClientsPage /> },
-          { path: 'recurring', element: <AccountingRecurringPage /> },
-          { path: 'docs', element: <AccountingBoardDocsPage /> },
-          { path: 'report', element: <AdminGuard><AccountingReportPage /></AdminGuard> },
-          { path: 'expenses', element: <AdminGuard><AccountingExpensesPage /></AdminGuard> },
-        ],
-      },
-      {
-        path: 'tech',
-        element: (
-          <RequireGroup
-            groups={['web_seo', 'local_seo', 'web_dev', 'social_media', 'ai_seo', 'hosting', 'ads']}
-          >
-            {/* ai_seo stays in the access list so AI-SEO members can reach
+          { path: '/', element: <HomePage /> },
+          {
+            path: 'dashboard',
+            element: (
+              <AdminGuard>
+                <DashboardPage />
+              </AdminGuard>
+            ),
+          },
+          {
+            path: 'admin',
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <UsersListPage /> },
+              { path: 'users', element: <UsersListPage /> },
+              { path: 'users/:userId', element: <UserDetailPage /> },
+              { path: 'users/:userId/permissions', element: <UserPermissionsPage /> },
+              { path: 'groups', element: <GroupsListPage /> },
+              { path: 'groups/:groupId/permissions', element: <GroupPermissionsPage /> },
+              { path: 'fields', element: <FieldRulesPage /> },
+              { path: 'permissions/test', element: <PermissionsTestPage /> },
+              { path: 'stages', element: <StagesListPage /> },
+              { path: 'service-packages', element: <ServicePackagesPage /> },
+              { path: 'email-automations', element: <EmailAutomationsPage /> },
+              { path: 'contract-templates', element: <ContractTemplatesPage /> },
+            ],
+          },
+          {
+            path: 'sales',
+            element: (
+              <RequireGroup groups={['sales']}>
+                <Outlet />
+              </RequireGroup>
+            ),
+            children: [
+              { path: 'clients', element: <ClientsListPage /> },
+              { path: 'kanban', element: <SalesKanbanPage /> },
+              { path: 'leads', element: <LeadsListPage /> },
+              { path: 'docs', element: <SalesBoardDocsPage /> },
+            ],
+          },
+          {
+            path: 'accounting',
+            element: (
+              <RequireGroup groups={['accounting']}>
+                <Outlet />
+              </RequireGroup>
+            ),
+            children: [
+              { path: 'onboarding', element: <AccountingOnboardingKanbanPage /> },
+              { path: 'clients', element: <AccountingClientsPage /> },
+              { path: 'recurring', element: <AccountingRecurringPage /> },
+              { path: 'docs', element: <AccountingBoardDocsPage /> },
+              {
+                path: 'report',
+                element: (
+                  <AdminGuard>
+                    <AccountingReportPage />
+                  </AdminGuard>
+                ),
+              },
+              {
+                path: 'expenses',
+                element: (
+                  <AdminGuard>
+                    <AccountingExpensesPage />
+                  </AdminGuard>
+                ),
+              },
+            ],
+          },
+          {
+            path: 'tech',
+            element: (
+              <RequireGroup
+                groups={[
+                  'web_seo',
+                  'local_seo',
+                  'web_dev',
+                  'social_media',
+                  'ai_seo',
+                  'hosting',
+                  'ads',
+                ]}
+              >
+                {/* ai_seo stays in the access list so AI-SEO members can reach
                 /tech/web-seo and /tech/local-seo, where their jobs live. */}
-            <Outlet />
-          </RequireGroup>
-        ),
-        children: [
-          { path: 'web-seo', element: <JobsKanbanPage serviceType="web_seo" /> },
-          { path: 'local-seo', element: <JobsKanbanPage serviceType="local_seo" /> },
-          { path: 'web-dev', element: <JobsKanbanPage serviceType="web_dev" /> },
-          { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
-          { path: 'hosting', element: <JobsKanbanPage serviceType="hosting" /> },
-          { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
-          { path: ':serviceType/clients', element: <TechMyClientsPage /> },
-          { path: ':serviceType/docs', element: <TechBoardDocsPage /> },
+                <Outlet />
+              </RequireGroup>
+            ),
+            children: [
+              { path: 'web-seo', element: <JobsKanbanPage serviceType="web_seo" /> },
+              { path: 'local-seo', element: <JobsKanbanPage serviceType="local_seo" /> },
+              { path: 'web-dev', element: <JobsKanbanPage serviceType="web_dev" /> },
+              { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
+              { path: 'hosting', element: <JobsKanbanPage serviceType="hosting" /> },
+              { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
+              { path: ':serviceType/clients', element: <TechMyClientsPage /> },
+              { path: ':serviceType/docs', element: <TechBoardDocsPage /> },
+            ],
+          },
+          { path: 'clients/:clientId', element: <ClientDetailPage /> },
+          { path: 'deals/:dealId', element: <DealDetailPage /> },
+          { path: 'jobs/:jobId', element: <JobDetailPage /> },
+          { path: 'leads/:leadId', element: <LeadDetailPage /> },
+          { path: 'leads/:leadId/offers/new', element: <OfferBuilderPage /> },
+          { path: 'offers/:offerId', element: <OfferDetailPage /> },
+          { path: 'contracts', element: <ContractsListPage /> },
+          { path: 'contracts/new', element: <ContractBuilderPage /> },
+          { path: 'contracts/:contractId', element: <ContractDetailPage /> },
+          { path: 'profile', element: <MyProfilePage /> },
+          { path: '*', element: <NotFoundPage /> },
         ],
       },
-      { path: 'clients/:clientId', element: <ClientDetailPage /> },
-      { path: 'deals/:dealId', element: <DealDetailPage /> },
-      { path: 'jobs/:jobId', element: <JobDetailPage /> },
-      { path: 'leads/:leadId', element: <LeadDetailPage /> },
-      { path: 'leads/:leadId/offers/new', element: <OfferBuilderPage /> },
-      { path: 'offers/:offerId', element: <OfferDetailPage /> },
-      { path: 'contracts', element: <ContractsListPage /> },
-      { path: 'contracts/new', element: <ContractBuilderPage /> },
-      { path: 'contracts/:contractId', element: <ContractDetailPage /> },
-      { path: 'profile', element: <MyProfilePage /> },
-      { path: '*', element: <NotFoundPage /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+      { path: '/set-password', element: <SetPasswordLayout /> },
     ],
   },
-  { path: '/login', element: <LoginPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/reset-password', element: <ResetPasswordPage /> },
-  { path: '/set-password', element: <SetPasswordLayout /> },
 ]);
