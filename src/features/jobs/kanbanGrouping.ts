@@ -5,9 +5,10 @@ type StageLite = { id: string; board: string; code: string };
 /**
  * Boards that render a virtual "Blocked" column: blocked jobs are shown there
  * instead of their stage column. stage_id is untouched, so unblocking returns
- * the card to exactly where it was.
+ * the card to exactly where it was. ai_seo jobs have no board of their own —
+ * they surface on web_seo and local_seo, so both carry the column.
  */
-const BLOCKED_COLUMN_BOARDS = new Set(['local_seo']);
+const BLOCKED_COLUMN_BOARDS = new Set(['local_seo', 'web_seo']);
 
 export function hasBlockedColumn(board: string): boolean {
   return BLOCKED_COLUMN_BOARDS.has(board);

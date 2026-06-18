@@ -13,8 +13,11 @@ const webSeoStages: StageLite[] = [
   { id: 'ws-new', board: 'web_seo', code: 'new_project', archived: false, position: 10 },
   { id: 'ws-content', board: 'web_seo', code: 'content', archived: false, position: 100 },
 ];
+const webDevStages: StageLite[] = [
+  { id: 'wd-brief', board: 'web_dev', code: 'awaiting_brief', archived: false, position: 10 },
+];
 const stageById = new Map<string, StageLite>(
-  [...localStages, ...webSeoStages].map((s) => [s.id, s]),
+  [...localStages, ...webSeoStages, ...webDevStages].map((s) => [s.id, s]),
 );
 
 function job(partial: Partial<JobRow>): JobRow {
@@ -34,12 +37,24 @@ describe('groupJobsForBoard', () => {
     expect(blocked.map((j) => j.id)).toEqual(['b']);
   });
 
-  it('keeps blocked jobs in their stage column on boards without a Blocked column', () => {
-    const jobs = [job({ id: 'a', service_type: 'web_seo', stage_id: 'ws-content', is_blocked: true })];
+  it('puts blocked web_seo jobs into the blocked bucket (web_seo has a Blocked column)', () => {
+    const jobs = [
+      job({ id: 'a', service_type: 'web_seo', stage_id: 'ws-content' }),
+      job({ id: 'b', service_type: 'web_seo', stage_id: 'ws-content', is_blocked: true }),
+    ];
     const { byColumn, blocked } = groupJobsForBoard({
       board: 'web_seo', jobs, boardStages: webSeoStages, stageById,
     });
     expect(byColumn.get('ws-content')?.map((j) => j.id)).toEqual(['a']);
+    expect(blocked.map((j) => j.id)).toEqual(['b']);
+  });
+
+  it('keeps blocked jobs in their stage column on boards without a Blocked column', () => {
+    const jobs = [job({ id: 'a', service_type: 'web_dev', stage_id: 'wd-brief', is_blocked: true })];
+    const { byColumn, blocked } = groupJobsForBoard({
+      board: 'web_dev', jobs, boardStages: webDevStages, stageById,
+    });
+    expect(byColumn.get('wd-brief')?.map((j) => j.id)).toEqual(['a']);
     expect(blocked).toEqual([]);
   });
 
@@ -57,9 +72,10 @@ describe('groupJobsForBoard', () => {
 });
 
 describe('hasBlockedColumn', () => {
-  it('is on for local_seo only', () => {
+  it('is on for local_seo and web_seo (the SEO boards), off elsewhere', () => {
     expect(hasBlockedColumn('local_seo')).toBe(true);
-    expect(hasBlockedColumn('web_seo')).toBe(false);
+    expect(hasBlockedColumn('web_seo')).toBe(true);
+    expect(hasBlockedColumn('web_dev')).toBe(false);
   });
 });
 
