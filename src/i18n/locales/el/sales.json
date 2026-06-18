@@ -3,6 +3,8 @@
     "title": "Pipeline Πωλήσεων",
     "empty_column": "Σύρετε leads εδώ",
     "locked_move": "Μόνο ο Μανώλης μπορεί να μετακινεί leads σε αυτή τη στήλη.",
+    "open_in_list": "Άνοιγμα {{count}} στη λίστα →",
+    "more_in_list": "+{{count}} ακόμη — άνοιγμα στη λίστα →",
     "card": {
       "value": "Αξία",
       "monthly": "/μήνα"

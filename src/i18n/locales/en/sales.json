@@ -3,6 +3,8 @@
     "title": "Sales pipeline",
     "empty_column": "Drop leads here",
     "locked_move": "Only Manolis can move leads into this column.",
+    "open_in_list": "Open {{count}} in list →",
+    "more_in_list": "+{{count}} more — open in list →",
     "card": {
       "value": "Value",
       "monthly": "/mo"
