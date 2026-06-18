@@ -27,8 +27,8 @@ function Section({
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h2>
-        <div className="h-px flex-1 bg-slate-200" />
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+        <div className="h-px flex-1 bg-border" />
       </div>
       {children}
     </section>
@@ -318,7 +318,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 disabled={readOnly}
                 className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
-              <p className="mt-1 text-[11px] text-slate-500">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 {t('form.scheduled_for_hint', {
                   defaultValue:
                     'Picking a date moves the lead to Scheduled and adds it to the home calendar.',
@@ -345,8 +345,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               }
             />
           </div>
-          <div className="rounded-md border bg-slate-50 p-3 text-sm">
-            <div className="mb-2 text-xs font-medium uppercase text-slate-500">
+          <div className="rounded-md border bg-muted p-3 text-sm">
+            <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">
               {t('totals.title')}
             </div>
             {(() => {
@@ -361,7 +361,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               return (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-xs text-slate-500">
+                    <tr className="text-xs text-muted-foreground">
                       <th className="text-left font-normal"></th>
                       <th className="text-right font-normal">{t('totals.subtotal')}</th>
                       <th className="text-right font-normal">
@@ -372,19 +372,19 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="py-1 text-slate-600">{t('totals.one_time_label')}</td>
+                      <td className="py-1 text-muted-foreground">{t('totals.one_time_label')}</td>
                       <td className="py-1 text-right">{formatEur(oneTimeNum)}</td>
                       <td className="py-1 text-right">{formatEur(oneTimeVat)}</td>
                       <td className="py-1 text-right font-medium">{formatEur(oneTimeTotal)}</td>
                     </tr>
                     <tr>
-                      <td className="py-1 text-slate-600">{t('totals.monthly_label')}</td>
+                      <td className="py-1 text-muted-foreground">{t('totals.monthly_label')}</td>
                       <td className="py-1 text-right">{formatEur(monthlyNum)}</td>
                       <td className="py-1 text-right">{formatEur(monthlyVat)}</td>
                       <td className="py-1 text-right font-medium">{formatEur(monthlyTotal)}</td>
                     </tr>
                     <tr>
-                      <td className="py-1 text-slate-600">{t('totals.yearly_label')}</td>
+                      <td className="py-1 text-muted-foreground">{t('totals.yearly_label')}</td>
                       <td className="py-1 text-right">{formatEur(yearlyNum)}</td>
                       <td className="py-1 text-right">{formatEur(yearlyVat)}</td>
                       <td className="py-1 text-right font-medium">{formatEur(yearlyTotal)}</td>
@@ -396,7 +396,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
           </div>
         </Section>
 
-        <div className="flex h-5 items-center text-xs text-slate-500">
+        <div className="flex h-5 items-center text-xs text-muted-foreground">
           {autoSaveLabel(saveStatus, lang)}
         </div>
       </fieldset>

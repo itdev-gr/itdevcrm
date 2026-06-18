@@ -172,7 +172,7 @@ export function LeadsListPage() {
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <label className="flex items-center gap-1.5 text-sm text-slate-600">
+            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={distribution.autoEnabled}
@@ -222,7 +222,7 @@ export function LeadsListPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-slate-50 p-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted p-2 text-sm">
           <span>{t('bulk.selected', { count: selected.size })}</span>
           <select
             defaultValue=""

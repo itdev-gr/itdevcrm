@@ -149,13 +149,13 @@ export function LeadDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700">
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
               Lead
             </span>
             {lead.code && <CopyableCode code={lead.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{lead.title}</h1>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             🗓 {formatDate(lead.created_at)} · {relativeFromNow(lead.created_at)}
             {isAdmin && lead.won_by_user_id && (
               <span className="ml-2">
@@ -214,16 +214,18 @@ export function LeadDetailPage() {
               {t('offer_email.send')}
             </Button>
           )}
-          {lead.converted_at && <span className="text-sm text-emerald-700">✓ converted</span>}
+          {lead.converted_at && (
+            <span className="text-sm text-emerald-700 dark:text-emerald-400">✓ converted</span>
+          )}
           {lead.email_opt_out ? (
             <span
-              className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700"
+              className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
               title={t('automations.opted_out_hint')}
             >
               {t('automations.opted_out')}
             </span>
           ) : (
-            <label className="flex items-center gap-1.5 text-sm text-slate-600">
+            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={lead.automations_enabled}
@@ -263,7 +265,7 @@ export function LeadDetailPage() {
               <LeadForm lead={lead} />
             </div>
             <aside className="min-w-0 lg:border-l lg:pl-6">
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 {t('tabs.comments')}
               </h2>
               <CommentsPanel parentType="lead" parentId={leadId} />
