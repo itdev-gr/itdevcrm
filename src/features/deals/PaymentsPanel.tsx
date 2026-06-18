@@ -83,9 +83,9 @@ function PaymentRow({
 
   return (
     <tr className="border-t">
-      <td className="px-2 py-2 text-xs text-slate-700">
+      <td className="px-2 py-2 text-xs text-foreground">
         {row.service_type ? t(`services.types.${row.service_type}`) : '—'}
-        <div className="text-[10px] text-slate-400">
+        <div className="text-[10px] text-muted-foreground">
           {t(`services.billing.${row.billing_type}`)}
         </div>
       </td>
@@ -139,7 +139,7 @@ function PaymentRow({
           value={vatRate}
           onChange={(e) => setVatRate(e.target.value)}
           onBlur={() => commit({ vat_rate: Number(vatRate || 0) })}
-          className={`h-8 w-16 text-xs ${vatMismatch ? 'border-amber-400 bg-amber-50' : ''}`}
+          className={`h-8 w-16 text-xs ${vatMismatch ? 'border-amber-400 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/50' : ''}`}
           title={
             vatMismatch
               ? t('payments.vat_mismatch', {
@@ -150,7 +150,7 @@ function PaymentRow({
           }
         />
       </td>
-      <td className="px-2 py-2 text-xs tabular-nums text-slate-700">
+      <td className="px-2 py-2 text-xs tabular-nums text-foreground">
         €{grossPreview.toFixed(2)}
       </td>
       <td className="px-2 py-2">
@@ -159,10 +159,10 @@ function PaymentRow({
           onClick={toggleStatus}
           className={`rounded px-2 py-1 text-xs font-medium ${
             row.status === 'paid'
-              ? 'bg-emerald-100 text-emerald-700'
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
               : row.status === 'overdue'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-slate-100 text-slate-700'
+                ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+                : 'bg-muted text-muted-foreground'
           }`}
         >
           {row.status === 'paid'
@@ -237,12 +237,12 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
     setNewEnd('');
   }
 
-  if (isLoading) return <p className="text-sm text-slate-500">…</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
           {t('payments.title')}
         </h2>
         <Button type="button" size="sm" variant="outline" onClick={() => setShowAdd((v) => !v)}>
@@ -251,12 +251,12 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
       </div>
 
       {payments.length === 0 ? (
-        <p className="text-sm text-slate-500">{t('payments.empty')}</p>
+        <p className="text-sm text-muted-foreground">{t('payments.empty')}</p>
       ) : (
         <div className="overflow-x-auto rounded-md border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50">
-              <tr className="text-xs text-slate-500">
+            <thead className="bg-muted">
+              <tr className="text-xs text-muted-foreground">
                 <th className="px-2 py-2 font-normal">{t('payments.service')}</th>
                 <th className="px-2 py-2 font-normal">{t('payments.label')}</th>
                 <th className="px-2 py-2 font-normal">{t('payments.start')}</th>
@@ -279,7 +279,7 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
       )}
 
       {showAdd && (
-        <div className="grid grid-cols-2 gap-3 rounded-md border bg-slate-50 p-3 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 rounded-md border bg-muted p-3 sm:grid-cols-6">
           <div>
             <Label className="text-xs">{t('payments.service')}</Label>
             <select
@@ -362,7 +362,7 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
           </div>
           <div>
             <Label className="text-xs">{t('payments.amount_gross')}</Label>
-            <div className="mt-1 rounded-md border bg-white px-2 py-1 text-xs tabular-nums">
+            <div className="mt-1 rounded-md border bg-card px-2 py-1 text-xs tabular-nums">
               €{newGross.toFixed(2)}
             </div>
           </div>

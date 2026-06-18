@@ -236,7 +236,7 @@ function ServiceRowEditor({
               value={row.one_time_amount ?? ''}
               onChange={(e) => updateRow(idx, numericPatch('one_time_amount', e.target.value))}
             />
-            <p className="mt-0.5 text-[10px] text-slate-500">
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
               {paymentTermSplit(Number(row.one_time_amount) || 0, row.payment_terms)
                 .map((p) => `€${p.toFixed(0)}`)
                 .join(' + ')}
@@ -311,16 +311,16 @@ function ServiceRowEditor({
             type="button"
             onClick={() => setExtrasOpen((v) => !v)}
             aria-expanded={extrasOpen}
-            className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900"
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
-            <span className="inline-block w-3 text-center text-slate-400">
+            <span className="inline-block w-3 text-center text-muted-foreground">
               {extrasOpen ? '▾' : '▸'}
             </span>
             {t('services.extras', { defaultValue: 'Extras' })}
-            {selectedExtras > 0 && <span className="text-slate-400">({selectedExtras})</span>}
+            {selectedExtras > 0 && <span className="text-muted-foreground">({selectedExtras})</span>}
           </button>
           {extrasOpen && (
-          <div className="mt-1 space-y-1 rounded-md border bg-slate-50 p-2">
+          <div className="mt-1 space-y-1 rounded-md border bg-muted p-2">
             {subpackages.map((sp) => {
               const checked = (row.subpackage_codes ?? []).includes(sp.code);
               return (
@@ -357,10 +357,10 @@ function ServiceRowEditor({
                   <div className="flex-1">
                     <div className="font-medium">
                       {(sp.display_names as { en?: string; el?: string })[lang] ?? sp.code}
-                      <span className="ml-2 text-slate-500">+€{Number(sp.price).toFixed(0)}</span>
+                      <span className="ml-2 text-muted-foreground">+€{Number(sp.price).toFixed(0)}</span>
                     </div>
                     {sp.description && (
-                      <div className="text-[10px] text-slate-500">{sp.description}</div>
+                      <div className="text-[10px] text-muted-foreground">{sp.description}</div>
                     )}
                   </div>
                 </label>

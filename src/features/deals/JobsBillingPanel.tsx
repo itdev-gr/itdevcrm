@@ -119,24 +119,24 @@ function JobRow({
 
   return (
     <tr className="border-t">
-      <td className="px-2 py-2 text-xs text-slate-700">
+      <td className="px-2 py-2 text-xs text-foreground">
         {job.title || '—'}
         {job.is_custom && (
-          <span className="ml-1 rounded bg-purple-100 px-1 text-[9px] font-medium uppercase text-purple-700">
+          <span className="ml-1 rounded bg-purple-100 px-1 text-[9px] font-medium uppercase text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
             custom
           </span>
         )}
       </td>
-      <td className="px-2 py-2 text-xs text-slate-600">{department}</td>
+      <td className="px-2 py-2 text-xs text-muted-foreground">{department}</td>
       <td className="px-2 py-2">
         {readOnly ? (
-          <span className="text-xs text-slate-700">
+          <span className="text-xs text-foreground">
             €{Number(job.amount_net ?? 0).toFixed(2)}
-            <span className="text-[10px] text-slate-400">{cadenceSuffix(t, job.billing_type)}</span>
+            <span className="text-[10px] text-muted-foreground">{cadenceSuffix(t, job.billing_type)}</span>
           </span>
         ) : (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-slate-400">€</span>
+            <span className="text-xs text-muted-foreground">€</span>
             <Input
               type="number"
               step="0.01"
@@ -147,7 +147,7 @@ function JobRow({
               disabled={ended}
               className="h-8 w-20 text-xs"
             />
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-muted-foreground">
               {cadenceSuffix(t, job.billing_type)}
             </span>
           </div>
@@ -156,7 +156,7 @@ function JobRow({
       <td className="px-2 py-2">
         <span
           className={`rounded px-2 py-0.5 text-[11px] font-medium ${
-            ended ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'
+            ended ? 'bg-muted text-muted-foreground' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
           }`}
         >
           {ended ? t('jobs_billing.status.ended') : t('jobs_billing.status.active')}
@@ -164,7 +164,7 @@ function JobRow({
       </td>
       <td className="px-2 py-2">
         {readOnly ? (
-          <span className="text-xs text-slate-600">
+          <span className="text-xs text-muted-foreground">
             {job.billing_group_id && groupLabels.has(job.billing_group_id)
               ? groupLabels.get(job.billing_group_id)
               : t('jobs_billing.group.separate')}
@@ -204,7 +204,7 @@ function JobRow({
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-0.5 text-[10px] leading-tight text-slate-400">
+            <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
               {t('jobs_billing.group.future_only')}
             </p>
           </>
@@ -277,15 +277,15 @@ function PaymentCard({
 
   return (
     <div className="rounded-md border">
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2">
-        <div className="text-xs text-slate-600">
-          <span className="font-medium text-slate-700">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-muted px-3 py-2">
+        <div className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">
             {payment.due_date ? formatDate(payment.due_date) : t('jobs_billing.payment.no_due_date')}
           </span>
-          {payment.label && <span className="ml-2 text-slate-500">· {payment.label}</span>}
+          {payment.label && <span className="ml-2 text-muted-foreground">· {payment.label}</span>}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs tabular-nums font-medium text-slate-700">
+          <span className="text-xs tabular-nums font-medium text-foreground">
             €{payment.total_gross.toFixed(2)}
           </span>
           {(() => {
@@ -297,10 +297,10 @@ function PaymentCard({
                   : t('jobs_billing.payment.status_pending');
             const statusClass =
               payment.status === 'paid'
-                ? 'bg-emerald-100 text-emerald-700'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
                 : payment.status === 'overdue'
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-slate-100 text-slate-700';
+                  ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+                  : 'bg-muted text-muted-foreground';
             return readOnly ? (
               <span className={`rounded px-2 py-1 text-xs font-medium ${statusClass}`}>
                 {statusLabel}
@@ -322,7 +322,7 @@ function PaymentCard({
           })()}
           {readOnly
             ? payment.invoice_number && (
-                <span className="text-xs text-slate-600">#{payment.invoice_number}</span>
+                <span className="text-xs text-muted-foreground">#{payment.invoice_number}</span>
               )
             : (
                 <Input
@@ -340,7 +340,7 @@ function PaymentCard({
           {payment.lines.map((line) => (
             <li
               key={line.id}
-              className="flex items-center justify-between px-3 py-1.5 text-xs text-slate-600"
+              className="flex items-center justify-between px-3 py-1.5 text-xs text-muted-foreground"
             >
               <span>{line.label || '—'}</span>
               <span className="tabular-nums">€{line.amount_gross.toFixed(2)}</span>
@@ -403,13 +403,13 @@ function PricingSummary({ jobs }: { jobs: JobBillingRow[] }) {
   ];
 
   return (
-    <div className="rounded-md border bg-slate-50 p-3 text-sm">
-      <div className="mb-2 text-xs font-medium uppercase text-slate-500">
+    <div className="rounded-md border bg-muted p-3 text-sm">
+      <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">
         {t('jobs_billing.summary.title')}
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-xs text-slate-500">
+          <tr className="text-xs text-muted-foreground">
             <th className="text-left font-normal"></th>
             <th className="text-right font-normal">{t('jobs_billing.summary.subtotal')}</th>
             <th className="text-right font-normal">{t('jobs_billing.summary.vat')}</th>
@@ -419,7 +419,7 @@ function PricingSummary({ jobs }: { jobs: JobBillingRow[] }) {
         <tbody>
           {rows.map((r) => (
             <tr key={r.label}>
-              <td className="py-1 text-slate-600">{r.label}</td>
+              <td className="py-1 text-muted-foreground">{r.label}</td>
               <td className="py-1 text-right">{formatEur(r.bucket.net)}</td>
               <td className="py-1 text-right">{formatEur(r.bucket.vat)}</td>
               <td className="py-1 text-right font-medium">{formatEur(r.bucket.gross)}</td>
@@ -459,13 +459,13 @@ export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false
     return map;
   }, [jobs, t]);
 
-  if (isLoading) return <p className="text-sm text-slate-500">…</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
 
   return (
     <div className="space-y-6">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
             {t('jobs_billing.title')}
           </h2>
           {!readOnly && (
@@ -484,12 +484,12 @@ export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false
         )}
 
         {jobs.length === 0 ? (
-          <p className="text-sm text-slate-500">{t('jobs_billing.empty_jobs')}</p>
+          <p className="text-sm text-muted-foreground">{t('jobs_billing.empty_jobs')}</p>
         ) : (
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50">
-                <tr className="text-xs text-slate-500">
+              <thead className="bg-muted">
+                <tr className="text-xs text-muted-foreground">
                   <th className="px-2 py-2 font-normal">{t('jobs_billing.col_title')}</th>
                   <th className="px-2 py-2 font-normal">{t('jobs_billing.col_department')}</th>
                   <th className="px-2 py-2 font-normal">{t('jobs_billing.col_price')}</th>
@@ -518,11 +518,11 @@ export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false
       <PricingSummary jobs={jobs} />
 
       <div className="space-y-3">
-        <h3 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+        <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
           {t('jobs_billing.payments_title')}
         </h3>
         {payments.length === 0 ? (
-          <p className="text-sm text-slate-500">{t('jobs_billing.empty_payments')}</p>
+          <p className="text-sm text-muted-foreground">{t('jobs_billing.empty_payments')}</p>
         ) : (
           <div className="space-y-2">
             {payments.map((p) => (

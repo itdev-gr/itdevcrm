@@ -45,16 +45,16 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
 
   const readOnlyNote = (label: string, value: string) => (
     <div>
-      <div className="text-xs font-medium uppercase text-slate-500">{label}</div>
-      <div className="mt-1 min-h-9 whitespace-pre-wrap rounded-md border bg-white px-3 py-2 text-sm text-slate-700">
+      <div className="text-xs font-medium uppercase text-muted-foreground">{label}</div>
+      <div className="mt-1 min-h-9 whitespace-pre-wrap rounded-md border bg-card px-3 py-2 text-sm text-foreground">
         {value || t('notes_area.empty')}
       </div>
     </div>
   );
 
   return (
-    <section className="mt-6 space-y-4 rounded-md border bg-slate-50 p-4">
-      <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+    <section className="mt-6 space-y-4 rounded-md border bg-muted p-4">
+      <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
         {t('notes_area.title')}
       </h2>
       <div>
@@ -65,12 +65,12 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
           onChange={(e) => setSalesNote(e.target.value)}
           className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
-        <p className="mt-1 text-[11px] text-slate-500">{t('notes_area.sales_note_hint')}</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">{t('notes_area.sales_note_hint')}</p>
       </div>
       {webSeo.present && readOnlyNote(t('notes_area.web_seo_notes'), webSeo.value)}
       {local.present && readOnlyNote(t('notes_area.local_notes'), local.value)}
       {website.present && readOnlyNote(t('notes_area.website_notes'), website.value)}
-      <div className="flex h-5 items-center text-xs text-slate-500">
+      <div className="flex h-5 items-center text-xs text-muted-foreground">
         {autoSaveLabel(status, lang)}
       </div>
     </section>

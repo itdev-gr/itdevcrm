@@ -75,7 +75,7 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 rounded-md border bg-slate-50 p-3 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 rounded-md border bg-muted p-3 sm:grid-cols-3">
       <div className="col-span-2 sm:col-span-1">
         <Label htmlFor="cj-title" className="text-xs">
           {t('jobs_billing.form.title')}

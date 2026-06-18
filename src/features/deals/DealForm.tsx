@@ -42,8 +42,8 @@ function Section({
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h2>
-        <div className="h-px flex-1 bg-slate-200" />
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+        <div className="h-px flex-1 bg-border" />
       </div>
       {children}
     </section>
@@ -310,12 +310,12 @@ export function DealForm({ initial }: Props) {
               value={tempDealAmount}
               onChange={(e) => setTempDealAmount(e.target.value)}
             />
-            <p className="mt-1 text-[11px] text-slate-500">{t('form.temp_deal_amount_hint')}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{t('form.temp_deal_amount_hint')}</p>
           </div>
         </div>
       </Section>
 
-      <div className="flex h-5 items-center text-xs text-slate-500">
+      <div className="flex h-5 items-center text-xs text-muted-foreground">
         {autoSaveLabel(combinedStatus, lang)}
       </div>
     </div>

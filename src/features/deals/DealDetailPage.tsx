@@ -54,7 +54,7 @@ export function DealDetailPage() {
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !deal)
-    return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+    return <div className="p-8 text-red-600 dark:text-red-400">{error?.message ?? 'Not found'}</div>;
 
   const wonWelcomeDraft = buildWonDraft(deal.client?.name ?? '');
   const completed = !!deal.accounting_completed_at;
@@ -116,13 +116,13 @@ export function DealDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
-            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700">
+            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
               Deal
             </span>
             {deal.code && <CopyableCode code={deal.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{deal.title}</h1>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             🗓 {formatDate(deal.created_at)} · {relativeFromNow(deal.created_at)}
           </p>
         </div>
@@ -146,7 +146,7 @@ export function DealDetailPage() {
           {wonBy && (
             <div className="flex items-center gap-2">
               <Label className="text-sm">{tLeads('sales_person.label')}:</Label>
-              <span className="rounded-md border border-input bg-slate-50 px-2 py-1 text-sm text-slate-700">
+              <span className="rounded-md border border-input bg-muted px-2 py-1 text-sm text-muted-foreground">
                 {wonBy.full_name || wonBy.email}
               </span>
             </div>
@@ -206,10 +206,10 @@ export function DealDetailPage() {
             </div>
           )}
           {completed && (
-            <span className="text-sm text-emerald-700">✓ {tAccounting('actions.complete')}</span>
+            <span className="text-sm text-emerald-700 dark:text-emerald-400">✓ {tAccounting('actions.complete')}</span>
           )}
           {isAdmin && deal.locked_at && (
-            <span className="text-xs text-slate-500" title={formatDate(deal.locked_at)}>
+            <span className="text-xs text-muted-foreground" title={formatDate(deal.locked_at)}>
               🔒 {relativeFromNow(deal.locked_at)}
             </span>
           )}
@@ -235,7 +235,7 @@ export function DealDetailPage() {
               <DealNotesArea deal={deal} />
               <DealServiceInfo dealId={dealId} />
               <div className="mt-6">
-                <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+                <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                   {t('jobs_billing.overview_heading')}
                 </h2>
                 <JobsBillingPanel
@@ -246,7 +246,7 @@ export function DealDetailPage() {
               </div>
             </div>
             <aside className="min-w-0 lg:flex lg:h-full lg:flex-col lg:border-l lg:pl-6">
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 {tLeads('tabs.comments')}
               </h2>
               <CommentsPanel parentType="deal" parentId={dealId} />
