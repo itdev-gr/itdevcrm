@@ -9,27 +9,27 @@ function StatusBadge({ row }: { row: RecurringClientRow }) {
   const { t } = useTranslation('accounting');
   if (row.is_blocked) {
     return (
-      <span className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700">
+      <span className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300">
         {t('recurring_clients.status.blocked')}
       </span>
     );
   }
   if (row.has_overdue_payment) {
     return (
-      <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+      <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
         {t('recurring_clients.status.overdue')}
       </span>
     );
   }
   if (row.status === 'done') {
     return (
-      <span className="rounded bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+      <span className="rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
         {t('recurring_clients.status.done')}
       </span>
     );
   }
   return (
-    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
       {t('recurring_clients.status.active')}
     </span>
   );
@@ -63,7 +63,7 @@ export function AccountingRecurringPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 border-b bg-white/95 px-6 py-3">
+      <div className="-mx-6 -mt-6 border-b bg-background/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{t('recurring_clients.title')}</h1>
       </div>
 
@@ -85,11 +85,11 @@ export function AccountingRecurringPage() {
       />
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-slate-500">{t('recurring_clients.empty')}</p>
+        <p className="text-sm text-muted-foreground">{t('recurring_clients.empty')}</p>
       ) : (
         <div className="overflow-x-auto rounded-md border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs text-slate-500">
+            <thead className="bg-muted text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 font-normal">{t('recurring_clients.table.client')}</th>
                 <th className="px-3 py-2 font-normal">{t('recurring_clients.table.services')}</th>
@@ -106,33 +106,33 @@ export function AccountingRecurringPage() {
                   .filter(Boolean)
                   .join(' ');
                 return (
-                  <tr key={r.client_id} className="border-t hover:bg-slate-50/60">
+                  <tr key={r.client_id} className="border-t hover:bg-muted/60">
                     <td className="px-3 py-2">
                       <Link
                         to={r.deal_id ? `/deals/${r.deal_id}` : `/clients/${r.client_id}`}
-                        className="font-medium text-blue-700 hover:underline"
+                        className="font-medium text-blue-700 hover:underline dark:text-blue-400"
                       >
                         {r.client_name}
                       </Link>
                       {(contactName || r.email) && (
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[11px] text-muted-foreground">
                           {[contactName, r.email].filter(Boolean).join(' · ')}
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-700">
+                    <td className="px-3 py-2 text-xs text-foreground">
                       {r.active_services.map((s) => tDeals(`services.types.${s}`)).join(' · ')}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {r.monthly_total > 0 && <span>€{r.monthly_total.toFixed(0)}</span>}
                       {r.yearly_total > 0 && (
-                        <span className="block text-xs text-slate-500">
+                        <span className="block text-xs text-muted-foreground">
                           €{r.yearly_total.toFixed(0)}/yr
                         </span>
                       )}
                       {r.monthly_total === 0 && r.yearly_total === 0 && <span>€0</span>}
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-600">
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
                       {r.earliest_due ? formatDate(r.earliest_due, i18n.language) : '—'}
                     </td>
                     <td className="px-3 py-2">
@@ -160,13 +160,13 @@ function Stat({
 }) {
   const toneClass =
     tone === 'amber'
-      ? 'text-amber-700'
+      ? 'text-amber-700 dark:text-amber-400'
       : tone === 'red'
-        ? 'text-red-700'
-        : 'text-slate-900';
+        ? 'text-red-700 dark:text-red-400'
+        : 'text-foreground';
   return (
-    <div className="rounded-md border bg-slate-50 p-3">
-      <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
+    <div className="rounded-md border bg-muted p-3">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`mt-1 text-xl font-semibold ${toneClass}`}>{value}</div>
     </div>
   );

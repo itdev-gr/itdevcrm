@@ -30,7 +30,7 @@ function Row({
         type="button"
         aria-label={task.title}
         onClick={() => onOpen(task.id)}
-        className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-slate-50"
+        className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-muted"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -39,16 +39,16 @@ function Row({
             <Link
               to={sourceHref(task)}
               onClick={(e) => e.stopPropagation()}
-              className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 hover:bg-slate-200"
+              className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:bg-muted"
             >
               {task.source_code ?? '—'}
             </Link>
           </div>
           {task.client && (
-            <p className="truncate text-[11px] text-slate-500">{task.client.name}</p>
+            <p className="truncate text-[11px] text-muted-foreground">{task.client.name}</p>
           )}
           {task.description && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{task.description}</p>
+            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
           )}
         </div>
         {canResolve && (
@@ -86,7 +86,7 @@ export function AssignedTasksColumn() {
   const empty = showAllAdmin ? t('assigned_tasks.empty_admin') : t('assigned_tasks.empty');
 
   return (
-    <section className="flex h-80 min-h-0 flex-col border-t bg-white">
+    <section className="flex h-80 min-h-0 flex-col border-t bg-card">
       <header className="flex shrink-0 items-center justify-between border-b px-6 py-2.5">
         <h2 className="text-sm font-semibold">{title} ({tasks.length})</h2>
         {isAdmin && (
@@ -95,8 +95,8 @@ export function AssignedTasksColumn() {
             onClick={() => setShowAllAdmin((v) => !v)}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               showAllAdmin
-                ? 'border-amber-300 bg-amber-50 text-amber-700'
-                : 'border-slate-300 bg-slate-100 text-slate-700'
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                : 'border-border bg-muted text-muted-foreground'
             }`}
           >
             {showAllAdmin ? t('assigned_tasks.all_team_title') : t('assigned_tasks.title')}
@@ -105,7 +105,7 @@ export function AssignedTasksColumn() {
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {tasks.length === 0 ? (
-          <p className="p-6 text-center text-sm text-slate-500">{empty}</p>
+          <p className="p-6 text-center text-sm text-muted-foreground">{empty}</p>
         ) : (
           <ul>
             {tasks.map((task) => (

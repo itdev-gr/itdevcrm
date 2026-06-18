@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 
 const COLORS: Record<string, string> = {
-  draft: 'bg-slate-100 text-slate-600',
-  sent: 'bg-blue-100 text-blue-700',
-  signed: 'bg-green-100 text-green-700',
-  declined: 'bg-red-100 text-red-700',
+  draft: 'bg-muted text-muted-foreground',
+  sent: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
+  signed: 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300',
+  declined: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
 };
 
 export function ContractStatusBadge({ status }: { status: string }) {

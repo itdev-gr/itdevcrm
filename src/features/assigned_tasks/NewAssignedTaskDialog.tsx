@@ -96,9 +96,9 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
           </div>
           <div className="space-y-1.5">
             <span className="text-sm font-medium">
-              {t('assigned_tasks.department_label')} <span className="text-red-600">*</span>
+              {t('assigned_tasks.department_label')} <span className="text-red-600 dark:text-red-400">*</span>
             </span>
-            <p className="text-[11px] text-slate-500">{t('assigned_tasks.department_hint')}</p>
+            <p className="text-[11px] text-muted-foreground">{t('assigned_tasks.department_hint')}</p>
             <div className="flex flex-wrap gap-1.5" role="radiogroup">
               {groups.map((g) => {
                 const selected = departmentId === g.id;
@@ -111,8 +111,8 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
                     onClick={() => setDepartmentId(selected ? null : g.id)}
                     className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
                       selected
-                        ? 'border-amber-300 bg-amber-100 text-amber-900'
-                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                        ? 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200'
+                        : 'border-border bg-muted text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {g.display_names[locale]}

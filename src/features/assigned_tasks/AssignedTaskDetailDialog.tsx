@@ -42,8 +42,8 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
           <DialogTitle>{t('assigned_tasks.detail_title')}</DialogTitle>
           <DialogDescription className="sr-only">{t('assigned_tasks.detail_description')}</DialogDescription>
         </DialogHeader>
-        {isLoading && <p className="text-sm text-slate-500">{t('assigned_tasks.loading')}</p>}
-        {error && <p className="text-sm text-red-600">{t('assigned_tasks.error_loading')}</p>}
+        {isLoading && <p className="text-sm text-muted-foreground">{t('assigned_tasks.loading')}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{t('assigned_tasks.error_loading')}</p>}
         {task && (
           <div className="space-y-4">
             <div>
@@ -52,8 +52,8 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                 <DepartmentChip department={task.department} />
               </div>
             </div>
-            <div className="text-xs text-slate-500">
-              <span className="font-medium text-slate-700">{task.status}</span>
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{task.status}</span>
               {task.creator && (
                 <>
                   {' · '}
@@ -66,25 +66,25 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
               }).format(new Date(task.created_at))}
             </div>
             {task.description && (
-              <p className="whitespace-pre-wrap text-sm text-slate-700">{task.description}</p>
+              <p className="whitespace-pre-wrap text-sm text-foreground">{task.description}</p>
             )}
             {task.client && (
-              <section className="rounded-md border bg-slate-50 p-3">
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <section className="rounded-md border bg-muted p-3">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t('assigned_tasks.client_section')}
                 </h4>
-                <p className="text-sm font-medium text-slate-800">
+                <p className="text-sm font-medium text-foreground">
                   {task.client.name}
                   {task.client.industry && (
-                    <span className="text-slate-500">
+                    <span className="text-muted-foreground">
                       {' '}· {industryLabel(task.client.industry, i18n.resolvedLanguage === 'el' ? 'el' : 'en')}
                     </span>
                   )}
                 </p>
                 {contactName(task.client) && (
-                  <p className="text-sm text-slate-700">{contactName(task.client)}</p>
+                  <p className="text-sm text-foreground">{contactName(task.client)}</p>
                 )}
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   {task.client.phone && (
                     <span>
                       <CallLink phone={task.client.phone} />

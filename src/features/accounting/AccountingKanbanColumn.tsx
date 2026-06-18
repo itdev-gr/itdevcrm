@@ -17,13 +17,13 @@ export function AccountingKanbanColumn({ stageId, stageLabel, stageSubtitle, dea
     <div
       ref={setNodeRef}
       className={`flex w-80 shrink-0 flex-col rounded-md border ${
-        isOver ? 'bg-slate-100' : 'bg-slate-50'
+        isOver ? 'bg-muted' : 'bg-card'
       }`}
     >
       <header className="border-b px-3 py-2">
         <span className="text-sm font-medium">{stageLabel}</span>
         {stageSubtitle && (
-          <span className="ml-2 text-[11px] font-normal italic text-slate-500">
+          <span className="ml-2 text-[11px] font-normal italic text-muted-foreground">
             {stageSubtitle}
           </span>
         )}

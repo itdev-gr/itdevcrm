@@ -59,13 +59,13 @@ export function ContractsListPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">…</p>
       ) : error ? (
-        <p className="text-sm text-red-600">{error.message}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">{error.message}</p>
       ) : contracts.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('list.empty')}</p>
       ) : (
         <div className="overflow-x-auto rounded-md border">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+            <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-2">{t('list.number')}</th>
                 <th className="px-4 py-2">{t('list.client')}</th>
@@ -76,16 +76,16 @@ export function ContractsListPage() {
             </thead>
             <tbody className="divide-y">
               {contracts.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50">
+                <tr key={c.id} className="hover:bg-muted">
                   <td className="px-4 py-2">
-                    <Link to={`/contracts/${c.id}`} className="font-medium text-blue-600 underline">
+                    <Link to={`/contracts/${c.id}`} className="font-medium text-blue-600 underline dark:text-blue-400">
                       {c.contract_number ?? c.id.slice(0, 8)}
                     </Link>
                   </td>
                   <td className="px-4 py-2">{c.clients?.name}</td>
                   <td className="px-4 py-2">{c.title}</td>
                   <td className="px-4 py-2"><ContractStatusBadge status={c.status} /></td>
-                  <td className="px-4 py-2 text-slate-500">{formatDate(c.created_at)}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{formatDate(c.created_at)}</td>
                 </tr>
               ))}
             </tbody>

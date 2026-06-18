@@ -25,7 +25,7 @@ export function ContractDetailPage() {
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !contract)
-    return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+    return <div className="p-8 text-red-600 dark:text-red-400">{error?.message ?? 'Not found'}</div>;
 
   const curTitle = title ?? contract.title;
   const curBody = body ?? contract.body;
@@ -93,7 +93,7 @@ export function ContractDetailPage() {
             <h1 className="text-2xl font-bold">{contract.contract_number ?? contractId.slice(0, 8)}</h1>
             <ContractStatusBadge status={contract.status} />
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             <Link to={`/clients/${contract.client_id}`} className="underline">
               {contract.clients?.name}
             </Link>
@@ -142,7 +142,7 @@ export function ContractDetailPage() {
             ✉️ {t('actions.send')}
           </Button>
         </div>
-        {!clientEmail && <p className="text-xs text-amber-600">{t('detail.no_email')}</p>}
+        {!clientEmail && <p className="text-xs text-amber-600 dark:text-amber-400">{t('detail.no_email')}</p>}
       </div>
     </div>
   );

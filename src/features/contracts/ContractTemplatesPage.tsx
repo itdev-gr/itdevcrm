@@ -75,7 +75,7 @@ export function ContractTemplatesPage() {
                     type="button"
                     onClick={() => pick(tpl.id)}
                     className={`block w-full px-3 py-2 text-left text-sm ${
-                      tpl.id === selectedId ? 'bg-slate-100 font-medium' : 'hover:bg-slate-50'
+                      tpl.id === selectedId ? 'bg-muted font-medium' : 'hover:bg-muted'
                     }`}
                   >
                     {tpl.name}
@@ -110,10 +110,10 @@ export function ContractTemplatesPage() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
             />
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-muted-foreground">
             {t('templates_admin.placeholders_hint')}{' '}
             {CONTRACT_PLACEHOLDERS.map((p) => (
-              <code key={p} className="mr-1 rounded bg-slate-100 px-1 py-0.5">{`{{${p}}}`}</code>
+              <code key={p} className="mr-1 rounded bg-muted px-1 py-0.5">{`{{${p}}}`}</code>
             ))}
           </div>
           <div className="flex gap-2">

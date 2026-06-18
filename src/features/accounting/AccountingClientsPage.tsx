@@ -58,7 +58,7 @@ export function AccountingClientsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
+      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{t('clients_page.title')}</h1>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -81,12 +81,12 @@ export function AccountingClientsPage() {
 
       <div className="min-h-0 flex-1 overflow-auto rounded-md border">
         {isLoading ? (
-          <div className="p-8 text-sm text-slate-500">…</div>
+          <div className="p-8 text-sm text-muted-foreground">…</div>
         ) : visible.length === 0 ? (
-          <div className="p-8 text-sm text-slate-500">{t('clients_page.empty')}</div>
+          <div className="p-8 text-sm text-muted-foreground">{t('clients_page.empty')}</div>
         ) : (
           <table className="w-full border-collapse text-sm">
-            <thead className="sticky top-0 bg-slate-50">
+            <thead className="sticky top-0 bg-muted">
               <tr className="border-b text-left">
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.code')}</th>
                 <th className="px-3 py-2 font-medium">{t('clients_page.table.start_date')}</th>
@@ -121,11 +121,11 @@ export function AccountingClientsPage() {
                   .filter(Boolean)
                   .join(' ');
                 return (
-                  <tr key={c.id} className="border-b hover:bg-slate-50">
+                  <tr key={c.id} className="border-b hover:bg-muted">
                     <td className="px-3 py-2">
                       {c.code && <CopyableCode code={c.code} className="text-[10px]" />}
                     </td>
-                    <td className="px-3 py-2 text-slate-500">
+                    <td className="px-3 py-2 text-muted-foreground">
                       {c.start_date ? formatDate(c.start_date) : formatDate(c.created_at)}
                     </td>
                     <td className="px-3 py-2 font-medium">
@@ -134,9 +134,9 @@ export function AccountingClientsPage() {
                       </Link>
                     </td>
                     <td className="px-3 py-2">{contactName || '—'}</td>
-                    <td className="px-3 py-2 text-slate-600">{c.email ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-600"><CallLink phone={c.phone} /></td>
-                    <td className="px-3 py-2 text-slate-600">{c.vat_number ?? '—'}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{c.email ?? '—'}</td>
+                    <td className="px-3 py-2 text-muted-foreground"><CallLink phone={c.phone} /></td>
+                    <td className="px-3 py-2 text-muted-foreground">{c.vat_number ?? '—'}</td>
                     <td className="px-3 py-2 text-right">{jobs.length}</td>
                     <td className="px-3 py-2 text-right">€{monthlyRevenue(c).toFixed(0)}</td>
                     <td className="px-3 py-2 text-right">€{yearlyRevenue(c).toFixed(0)}</td>
@@ -144,16 +144,16 @@ export function AccountingClientsPage() {
                       <span
                         className={`rounded px-2 py-0.5 text-xs ${
                           blocked
-                            ? 'bg-red-100 text-red-700'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
                             : jobs.length === 0
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-emerald-100 text-emerald-700'
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
                         }`}
                       >
                         {status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-slate-600">
+                    <td className="px-3 py-2 text-muted-foreground">
                       {c.industry ? industryLabel(c.industry, lang) : '—'}
                     </td>
                   </tr>

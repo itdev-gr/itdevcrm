@@ -22,9 +22,9 @@ export function ContractBuilderPage() {
   const [body, setBody] = useState('');
   const [dirty, setDirty] = useState(false);
 
-  if (!clientId) return <div className="p-8 text-red-600">{t('builder.missing_client')}</div>;
+  if (!clientId) return <div className="p-8 text-red-600 dark:text-red-400">{t('builder.missing_client')}</div>;
   if (clientLoading) return <div className="p-8">…</div>;
-  if (!client) return <div className="p-8 text-red-600">Not found</div>;
+  if (!client) return <div className="p-8 text-red-600 dark:text-red-400">Not found</div>;
 
   function onPickTemplate(id: string) {
     if (dirty && body.trim() !== '' && !window.confirm(t('builder.replace_edits'))) return;
@@ -55,7 +55,7 @@ export function ContractBuilderPage() {
     <div className="flex min-h-full flex-col gap-6 p-8">
       <div>
         <h1 className="text-2xl font-bold">{t('builder.title')}</h1>
-        <p className="text-sm text-slate-500">{client.name}</p>
+        <p className="text-sm text-muted-foreground">{client.name}</p>
       </div>
       <div className="max-w-3xl space-y-4">
         <div className="space-y-1.5">
@@ -95,7 +95,7 @@ export function ContractBuilderPage() {
             rows={20}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
-          <p className="text-xs text-slate-500">{t('builder.hint')}</p>
+          <p className="text-xs text-muted-foreground">{t('builder.hint')}</p>
         </div>
         <Button onClick={onSave} disabled={!title.trim() || create.isPending}>
           {t('actions.create')}

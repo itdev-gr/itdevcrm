@@ -17,7 +17,7 @@ export function ContractsTab({ clientId }: { clientId: string }) {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">…</p>
       ) : error ? (
-        <p className="text-sm text-red-600">{error.message}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">{error.message}</p>
       ) : contracts.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('list.empty')}</p>
       ) : (
@@ -29,11 +29,11 @@ export function ContractsTab({ clientId }: { clientId: string }) {
                   {c.contract_number ?? c.id.slice(0, 8)}
                   <ContractStatusBadge status={c.status} />
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-muted-foreground">
                   {c.title} · {formatDate(c.created_at)}
                 </div>
               </div>
-              <Link to={`/contracts/${c.id}`} className="text-xs text-blue-600 underline">
+              <Link to={`/contracts/${c.id}`} className="text-xs text-blue-600 underline dark:text-blue-400">
                 {t('actions.view')} →
               </Link>
             </li>

@@ -36,10 +36,10 @@ export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
   const { status: payStatus, invoiced, nextDue } = paymentSummary(deal.deal_payments);
   const statusClass =
     payStatus === 'paid'
-      ? 'bg-emerald-100 text-emerald-700'
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
       : payStatus === 'partial'
-        ? 'bg-amber-100 text-amber-700'
-        : 'bg-slate-100 text-slate-700';
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+        : 'bg-muted text-muted-foreground';
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
@@ -73,7 +73,7 @@ export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
                 {fullName}
               </Link>
             </div>
-            {deal.accounting_completed_at && <span className="text-xs text-emerald-600">✓</span>}
+            {deal.accounting_completed_at && <span className="text-xs text-emerald-600 dark:text-emerald-400">✓</span>}
           </div>
           {companyAndCategory && (
             <div className="text-xs text-muted-foreground">{companyAndCategory}</div>
@@ -89,11 +89,11 @@ export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
               </span>
             )}
           </div>
-          <div className="text-[10px] text-slate-500">
+          <div className="text-[10px] text-muted-foreground">
             👤 {owner ? owner.full_name || owner.email : tLeads('owner.unassigned')}
           </div>
           {services.length > 0 && (
-            <div className="text-[10px] text-slate-500">
+            <div className="text-[10px] text-muted-foreground">
               {services.map((s) => tDeals(`services.types.${s.service_type}`)).join(' · ')}
             </div>
           )}
@@ -102,18 +102,18 @@ export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
               {tDeals(`payments.card_status.${payStatus}`)}
             </span>
             {invoiced && (
-              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
                 📄 {tDeals('payments.card_invoiced')}
               </span>
             )}
             {nextDue && payStatus !== 'paid' && (
-              <span className="text-[10px] text-slate-400" title={formatDate(nextDue)}>
+              <span className="text-[10px] text-muted-foreground" title={formatDate(nextDue)}>
                 ⏳ {relativeFromNow(nextDue)}
               </span>
             )}
           </div>
           {startedAt && (
-            <div className="text-[10px] text-slate-400" title={formatDate(startedAt)}>
+            <div className="text-[10px] text-muted-foreground" title={formatDate(startedAt)}>
               🗓 {t('card.lock_date')}: {relativeFromNow(startedAt)}
             </div>
           )}
