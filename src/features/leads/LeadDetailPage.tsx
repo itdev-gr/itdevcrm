@@ -13,6 +13,9 @@ import { useMoveLeadStage } from './hooks/useMoveLeadStage';
 import { useAssignableOwners } from './hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
+import { useDeleteLeads } from './hooks/useDeleteLeads';
+import { isLeadDeletable } from './leadDeletable';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
@@ -41,6 +44,8 @@ export function LeadDetailPage() {
   const { data: stages = [] } = usePipelineStages();
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const userId = useAuthStore((s) => s.user?.id ?? null);
+  const del = useDeleteLeads();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const newLeadStageId = stages.find(
     (s) => s.board === 'sales' && s.code === 'new_lead' && !s.archived,
@@ -248,6 +253,12 @@ export function LeadDetailPage() {
                 ? t('actions.next_new_lead')
                 : t('actions.no_more_new_leads')}
           </Button>
+          {isAdmin &&
+            isLeadDeletable({ converted_at: lead.converted_at, stage: { code: currentStageCode ?? null } }) && (
+              <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+                🗑 {t('delete.button')}
+              </Button>
+            )}
         </div>
       </div>
 
@@ -291,6 +302,24 @@ export function LeadDetailPage() {
         body={offerDraft.body}
         dedupeKey={`offer:${lead.id}`}
         onClose={() => setOfferEmailOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t('delete.title')}
+        description={t('delete.confirm_one')}
+        confirmLabel={t('delete.button')}
+        pending={del.isPending}
+        onConfirm={async () => {
+          try {
+            await del.mutateAsync([lead.id]);
+            setConfirmDelete(false);
+            navigate('/sales/leads');
+          } catch (e) {
+            alert((e as Error).message);
+          }
+        }}
       />
     </div>
   );
