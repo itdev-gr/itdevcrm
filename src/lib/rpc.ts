@@ -57,7 +57,11 @@ export async function convertLeadToClient(leadId: string): Promise<ConvertLeadRe
 // They are not yet in the generated Supabase types, so call through a loose
 // signature (same pattern as useDistributeUnassigned / useEmailHealth).
 
-const rpcCall = supabase.rpc as unknown as (
+// `.bind(supabase)` is required: supabase-js's `rpc()` is a prototype method
+// whose body is `return this.rest.rpc(...)`. Capturing `supabase.rpc` into a
+// bare const detaches `this`, so calls crash with
+// "Cannot read properties of undefined (reading 'rest')".
+const rpcCall = supabase.rpc.bind(supabase) as unknown as (
   fn: string,
   args?: Record<string, unknown>,
 ) => Promise<{ data: unknown; error: { message: string } | null }>;
