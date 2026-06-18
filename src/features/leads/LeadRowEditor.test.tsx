@@ -87,10 +87,7 @@ const stages: StageRow[] = [
   },
 ];
 
-function renderRow(
-  lead: LeadRow = baseLead,
-  extra: { isAdmin?: boolean; onDelete?: (l: LeadRow) => void } = {},
-) {
+function renderRow(lead: LeadRow = baseLead) {
   render(
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>
@@ -104,8 +101,6 @@ function renderRow(
               lang="en"
               selected={false}
               onToggleSelect={() => {}}
-              isAdmin={extra.isAdmin ?? false}
-              onDelete={extra.onDelete ?? (() => {})}
             />
           </tbody>
         </table>
@@ -165,26 +160,11 @@ describe('LeadRowEditor delete button', () => {
     vi.clearAllMocks();
   });
 
-  it('shows the delete button for an admin on a deletable lead and calls onDelete', async () => {
-    const user = userEvent.setup();
-    const onDelete = vi.fn();
-    renderRow(baseLead, { isAdmin: true, onDelete });
-
-    const btn = screen.getByRole('button', { name: i18n.t('leads:delete.row_title') });
-    await user.click(btn);
-    expect(onDelete).toHaveBeenCalledOnce();
-  });
-
-  it('hides the delete button for non-admins', () => {
-    renderRow(baseLead, { isAdmin: false });
-    expect(screen.queryByRole('button', { name: i18n.t('leads:delete.row_title') })).toBeNull();
-  });
-
-  it('hides the delete button on a won lead even for an admin', () => {
-    renderRow(
-      { ...baseLead, stage: { id: 's1', code: 'won', board: 'sales', display_names: {} } },
-      { isAdmin: true },
-    );
-    expect(screen.queryByRole('button', { name: i18n.t('leads:delete.row_title') })).toBeNull();
+  // The per-row delete bucket was removed (it sat directly under the select
+  // checkbox — a dangerous misclick target). Deletion now lives only in the
+  // selection bar. The row must render no buttons at all.
+  it('renders no per-row delete button (deletion moved to the selection bar)', () => {
+    renderRow();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

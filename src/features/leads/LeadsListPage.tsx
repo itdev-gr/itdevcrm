@@ -233,6 +233,9 @@ export function LeadsListPage() {
             <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
             {owners.map((o) => (<option key={o.user_id} value={o.user_id}>{o.full_name || o.email}</option>))}
           </select>
+          {isAdmin && (
+            <Button variant="destructive" size="sm" onClick={requestBulkDelete}>🗑 {t('delete.bulk')}</Button>
+          )}
           <select
             defaultValue=""
             onChange={(e) => { if (e.target.value) void bulkApply({ stage_id: e.target.value }); e.currentTarget.value = ''; }}
@@ -242,9 +245,6 @@ export function LeadsListPage() {
             {salesStages.map((s) => (<option key={s.id} value={s.id}>{s.display_names[lang] ?? s.code}</option>))}
           </select>
           <Button variant="destructive" size="sm" onClick={() => void bulkApply({ archived: true })}>{t('bulk.archive')}</Button>
-          {isAdmin && (
-            <Button variant="destructive" size="sm" onClick={requestBulkDelete}>{t('delete.bulk')}</Button>
-          )}
           <Button variant="outline" size="sm" onClick={() => setSelected(new Set())}>{t('bulk.clear')}</Button>
         </div>
       )}
@@ -286,8 +286,6 @@ export function LeadsListPage() {
                   lang={lang}
                   selected={selected.has(lead.id)}
                   onToggleSelect={toggleSelect}
-                  isAdmin={isAdmin}
-                  onDelete={(l) => setConfirmIds([l.id])}
                 />
               ))}
             </tbody>

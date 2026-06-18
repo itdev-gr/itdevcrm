@@ -140,7 +140,6 @@
     "status": "Page {{page}} of {{total}} · {{count}} leads"
   },
   "delete": {
-    "row_title": "Delete lead permanently",
     "bulk": "Delete selected",
     "title": "Delete permanently?",
     "confirm_one": "Permanently delete this lead? This cannot be undone.",
