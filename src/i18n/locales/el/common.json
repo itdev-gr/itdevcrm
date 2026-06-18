@@ -19,6 +19,12 @@
     "en": "English",
     "el": "Ελληνικά"
   },
+  "theme": {
+    "label": "Θέμα",
+    "light": "Φωτεινό",
+    "dark": "Σκοτεινό",
+    "system": "Σύστημα"
+  },
   "cancel": "Άκυρο",
   "confirm": "Επιβεβαίωση",
   "dashboard": {
