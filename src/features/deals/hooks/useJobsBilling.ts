@@ -60,12 +60,21 @@ export function jobsBillingKey(dealId: string) {
 const sb = supabase as unknown as {
   from: (table: string) => {
     select: (cols: string) => {
-      eq: (col: string, val: unknown) => {
+      eq: (
+        col: string,
+        val: unknown,
+      ) => {
         eq?: (col: string, val: unknown) => unknown;
         order: (col: string, opts?: { ascending?: boolean }) => unknown;
       };
-      in: (col: string, vals: unknown[]) => {
-        order: (col: string, opts?: { ascending?: boolean }) => Promise<{
+      in: (
+        col: string,
+        vals: unknown[],
+      ) => {
+        order: (
+          col: string,
+          opts?: { ascending?: boolean },
+        ) => Promise<{
           data: unknown;
           error: { message: string } | null;
         }>;
@@ -89,32 +98,35 @@ export function useJobsBilling(dealId: string) {
         .order('created_at', { ascending: true });
       if (jobsRes.error) throw new Error(jobsRes.error.message);
 
-      const jobs: JobBillingRow[] = ((jobsRes.data ?? []) as unknown as Record<string, unknown>[]).map(
-        (j) => ({
-          id: j.id as string,
-          title: (j.title as string | null) ?? null,
-          department: (j.service_type as string) ?? 'other',
-          billing_type: (j.billing_type as string) ?? 'one_time',
-          amount_net: j.amount_net == null ? null : Number(j.amount_net),
-          setup_fee: j.setup_fee == null ? null : Number(j.setup_fee),
-          vat_rate: j.vat_rate == null ? null : Number(j.vat_rate),
-          billing_active: (j.billing_active as boolean | null) ?? null,
-          billing_only: (j.billing_only as boolean | null) ?? null,
-          billing_group_id: (j.billing_group_id as string | null) ?? null,
-          status: (j.status as string) ?? 'active',
-          is_custom: (j.is_custom as boolean | null) ?? null,
-          description: (j.description as string | null) ?? null,
-        }),
-      );
+      const jobs: JobBillingRow[] = (
+        (jobsRes.data ?? []) as unknown as Record<string, unknown>[]
+      ).map((j) => ({
+        id: j.id as string,
+        title: (j.title as string | null) ?? null,
+        department: (j.service_type as string) ?? 'other',
+        billing_type: (j.billing_type as string) ?? 'one_time',
+        amount_net: j.amount_net == null ? null : Number(j.amount_net),
+        setup_fee: j.setup_fee == null ? null : Number(j.setup_fee),
+        vat_rate: j.vat_rate == null ? null : Number(j.vat_rate),
+        billing_active: (j.billing_active as boolean | null) ?? null,
+        billing_only: (j.billing_only as boolean | null) ?? null,
+        billing_group_id: (j.billing_group_id as string | null) ?? null,
+        status: (j.status as string) ?? 'active',
+        is_custom: (j.is_custom as boolean | null) ?? null,
+        description: (j.description as string | null) ?? null,
+      }));
 
       // 2. Payment headers (with totals) for the deal.
+      // The payment's "due date" is the `start_date` column (the reminder cron
+      // aliases `start_date as due_date`); there is no `due_date` column on the
+      // view, so selecting/ordering by it 400s and takes the whole panel down.
       const headersRes = await sb
         .from('deal_payments_with_totals')
         .select(
-          'id, label, due_date, status, invoice_number, total_net, total_vat, total_gross, line_count',
+          'id, label, start_date, status, invoice_number, total_net, total_vat, total_gross, line_count',
         )
         .eq('deal_id', dealId)
-        .order('due_date', { ascending: true });
+        .order('start_date', { ascending: true });
       const headers = headersRes as { data: unknown; error: { message: string } | null };
       if (headers.error) throw new Error(headers.error.message);
       const headerRows = (headers.data ?? []) as Record<string, unknown>[];
@@ -152,7 +164,7 @@ export function useJobsBilling(dealId: string) {
       const payments: PaymentWithLines[] = headerRows.map((h) => ({
         id: h.id as string,
         label: (h.label as string | null) ?? null,
-        due_date: (h.due_date as string | null) ?? null,
+        due_date: (h.start_date as string | null) ?? null,
         status: (h.status as string) ?? 'pending',
         invoice_number: (h.invoice_number as string | null) ?? null,
         total_net: Number(h.total_net ?? 0),
