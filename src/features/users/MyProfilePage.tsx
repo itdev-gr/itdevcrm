@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { useGoogleConnection } from '@/features/email/useGoogleConnection';
+import { useChangePassword } from '@/features/auth/hooks/useChangePassword';
 import type { Database } from '@/types/supabase';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -201,7 +203,97 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
           </button>
         )}
       </div>
+      <ChangePasswordCard />
       <div className="text-xs text-muted-foreground">{autoSaveLabel(status, lang)}</div>
     </div>
+  );
+}
+
+function ChangePasswordCard() {
+  const { t } = useTranslation('users');
+  const change = useChangePassword();
+  const [pw, setPw] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [done, setDone] = useState(false);
+
+  const tooShort = pw.length > 0 && pw.length < 8;
+  const mismatch = confirm.length > 0 && pw !== confirm;
+  const canSubmit = pw.length >= 8 && pw === confirm && !change.isPending;
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setDone(false);
+    try {
+      await change.mutateAsync(pw);
+      setPw('');
+      setConfirm('');
+      setDone(true);
+    } catch {
+      // surfaced via change.isError below
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-3 rounded-md border p-4">
+      <h2 className="text-sm font-medium">
+        {t('profile.change_password_title', { defaultValue: 'Change password' })}
+      </h2>
+      <div>
+        <Label htmlFor="np">{t('profile.new_password', { defaultValue: 'New password' })}</Label>
+        <Input
+          id="np"
+          type="password"
+          autoComplete="new-password"
+          value={pw}
+          onChange={(e) => {
+            setPw(e.target.value);
+            setDone(false);
+          }}
+        />
+        {tooShort && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {t('profile.password_too_short', { defaultValue: 'Use at least 8 characters.' })}
+          </p>
+        )}
+      </div>
+      <div>
+        <Label htmlFor="cp">
+          {t('profile.confirm_password', { defaultValue: 'Confirm new password' })}
+        </Label>
+        <Input
+          id="cp"
+          type="password"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => {
+            setConfirm(e.target.value);
+            setDone(false);
+          }}
+        />
+        {mismatch && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {t('profile.password_mismatch', { defaultValue: 'Passwords do not match.' })}
+          </p>
+        )}
+      </div>
+      {change.isError && (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {t('profile.password_error', {
+            defaultValue: 'Could not update the password — please try again.',
+          })}
+        </p>
+      )}
+      {done && (
+        <p className="text-sm text-green-700 dark:text-green-400">
+          {t('profile.password_updated', { defaultValue: 'Password updated.' })}
+        </p>
+      )}
+      <Button type="submit" disabled={!canSubmit}>
+        {change.isPending
+          ? t('profile.password_updating', { defaultValue: 'Updating…' })
+          : t('profile.change_password_title', { defaultValue: 'Change password' })}
+      </Button>
+    </form>
   );
 }
