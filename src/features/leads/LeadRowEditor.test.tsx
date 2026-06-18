@@ -48,6 +48,7 @@ const baseLead: LeadRow = {
   email_opt_out: false,
   estimated_monthly_value: 0,
   estimated_one_time_value: 0,
+  estimated_total_value: 0,
   expected_close_date: null,
   notes: null,
   payment_method: null,

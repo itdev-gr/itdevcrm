@@ -58,11 +58,16 @@ export function useSalesKanbanColumns(stages: KanbanStage[], filter: KanbanColum
       const search = filter.search?.trim() ?? '';
 
       // 1. True totals per stage (RLS-scoped). One round trip.
-      const { data: countRows, error: countErr } = await supabase.rpc('sales_kanban_counts', {
-        p_owner: filter.ownerId ?? undefined,
-        p_source: filter.source ?? undefined,
-        p_search: search || undefined,
-      });
+      // Build args with only defined keys (exactOptionalPropertyTypes forbids
+      // passing explicit `undefined` for optional RPC params).
+      const countArgs: { p_owner?: string; p_source?: string; p_search?: string } = {};
+      if (filter.ownerId) countArgs.p_owner = filter.ownerId;
+      if (filter.source) countArgs.p_source = filter.source;
+      if (search) countArgs.p_search = search;
+      const { data: countRows, error: countErr } = await supabase.rpc(
+        'sales_kanban_counts',
+        countArgs,
+      );
       if (countErr) throw new Error(countErr.message);
       const totals = new Map<string, number>();
       for (const r of (countRows ?? []) as { stage_id: string; total: number }[]) {
