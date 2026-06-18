@@ -87,7 +87,10 @@ const stages: StageRow[] = [
   },
 ];
 
-function renderRow(lead: LeadRow = baseLead) {
+function renderRow(
+  lead: LeadRow = baseLead,
+  extra: { isAdmin?: boolean; onDelete?: (l: LeadRow) => void } = {},
+) {
   render(
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>
@@ -101,6 +104,8 @@ function renderRow(lead: LeadRow = baseLead) {
               lang="en"
               selected={false}
               onToggleSelect={() => {}}
+              isAdmin={extra.isAdmin ?? false}
+              onDelete={extra.onDelete ?? (() => {})}
             />
           </tbody>
         </table>
@@ -152,5 +157,34 @@ describe('LeadRowEditor patch mapping', () => {
     await user.tab(); // blur with empty value → should revert, not commit
 
     expect(mutateAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('LeadRowEditor delete button', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows the delete button for an admin on a deletable lead and calls onDelete', async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+    renderRow(baseLead, { isAdmin: true, onDelete });
+
+    const btn = screen.getByRole('button', { name: i18n.t('leads:delete.row_title') });
+    await user.click(btn);
+    expect(onDelete).toHaveBeenCalledOnce();
+  });
+
+  it('hides the delete button for non-admins', () => {
+    renderRow(baseLead, { isAdmin: false });
+    expect(screen.queryByRole('button', { name: i18n.t('leads:delete.row_title') })).toBeNull();
+  });
+
+  it('hides the delete button on a won lead even for an admin', () => {
+    renderRow(
+      { ...baseLead, stage: { id: 's1', code: 'won', board: 'sales', display_names: {} } },
+      { isAdmin: true },
+    );
+    expect(screen.queryByRole('button', { name: i18n.t('leads:delete.row_title') })).toBeNull();
   });
 });

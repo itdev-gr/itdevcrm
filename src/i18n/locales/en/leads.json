@@ -139,6 +139,17 @@
     "next": "Next",
     "status": "Page {{page}} of {{total}} · {{count}} leads"
   },
+  "delete": {
+    "row_title": "Delete lead permanently",
+    "bulk": "Delete selected",
+    "title": "Delete permanently?",
+    "confirm_one": "Permanently delete this lead? This cannot be undone.",
+    "confirm_other": "Permanently delete {{count}} leads? This cannot be undone.",
+    "button": "Delete",
+    "skipped_one": "{{count}} won/converted lead was skipped.",
+    "skipped_other": "{{count}} won/converted leads were skipped.",
+    "none": "None of the selected leads can be deleted (won or converted)."
+  },
   "empty": "No leads yet. Click \"Add lead\" to create one.",
   "offer_email": {
     "send": "Send offer"

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { INDUSTRIES } from '@/lib/industries';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
 import { useUpdateLead } from './hooks/useUpdateLead';
+import { isLeadDeletable } from './leadDeletable';
 import type { LeadRow } from './hooks/useLeads';
 import type { AssignableOwner } from './hooks/useAssignableOwners';
 import type { StageRow } from '@/features/stages/hooks/usePipelineStages';
@@ -20,9 +21,11 @@ type Props = {
   lang: 'en' | 'el';
   selected: boolean;
   onToggleSelect: (id: string, checked: boolean) => void;
+  isAdmin: boolean;
+  onDelete: (lead: LeadRow) => void;
 };
 
-export function LeadRowEditor({ lead, owners, stages, currentUserId, lang, selected, onToggleSelect }: Props) {
+export function LeadRowEditor({ lead, owners, stages, currentUserId, lang, selected, onToggleSelect, isAdmin, onDelete }: Props) {
   const { t } = useTranslation('leads');
   const update = useUpdateLead();
   const [saved, setSaved] = useState(false);
@@ -51,12 +54,25 @@ export function LeadRowEditor({ lead, owners, stages, currentUserId, lang, selec
   return (
     <tr>
       <td className={td}>
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={(e) => onToggleSelect(lead.id, e.target.checked)}
-          aria-label="select"
-        />
+        <div className="flex flex-col items-center gap-1">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onToggleSelect(lead.id, e.target.checked)}
+            aria-label="select"
+          />
+          {isAdmin && isLeadDeletable(lead) && (
+            <button
+              type="button"
+              onClick={() => onDelete(lead)}
+              title={t('delete.row_title')}
+              aria-label={t('delete.row_title')}
+              className="text-xs text-red-600 hover:text-red-800"
+            >
+              🗑
+            </button>
+          )}
+        </div>
       </td>
       <td className={td}>
         <Link to={`/leads/${lead.id}`} className="font-mono text-xs text-blue-600 underline">
