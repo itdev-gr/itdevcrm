@@ -66,6 +66,27 @@ const rpcCall = supabase.rpc.bind(supabase) as unknown as (
   args?: Record<string, unknown>,
 ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
+export type DeleteLeadsResult =
+  | { ok: true; deletedCount: number; skipped: string[] }
+  | { ok: false; errors: string[] };
+
+// Admin-only permanent delete via the `delete_leads` RPC. Not in the generated
+// types, so it goes through the loose `rpcCall` above. The RPC enforces the admin
+// check + the won/converted guard and returns which ids it skipped.
+export async function deleteLeads(ids: string[]): Promise<DeleteLeadsResult> {
+  if (ids.length === 0) return { ok: true, deletedCount: 0, skipped: [] };
+  const { data, error } = await rpcCall('delete_leads', { p_ids: ids });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as {
+    ok: boolean;
+    deleted_count?: number;
+    skipped?: string[];
+    errors?: string[];
+  };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['delete_failed'] };
+  return { ok: true, deletedCount: r.deleted_count ?? 0, skipped: r.skipped ?? [] };
+}
+
 export type JobBillingResult = { ok: true; job_id: string } | { ok: false; errors: string[] };
 
 export type BillingType = 'one_time' | 'recurring_monthly' | 'recurring_yearly';
