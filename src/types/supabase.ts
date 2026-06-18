@@ -1297,6 +1297,7 @@ export type Database = {
           stage_id: string | null
           started_at: string | null
           status: string
+          title: string | null
           updated_at: string
         }
         Insert: {

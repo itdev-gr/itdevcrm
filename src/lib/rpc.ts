@@ -159,3 +159,20 @@ export async function endJob(jobId: string): Promise<JobBillingResult> {
   if (error) return { ok: false, errors: [error.message] };
   return data as JobBillingResult;
 }
+
+// --- Deal close ---------------------------------------------------------------
+export type CloseDealJob = { job_id: string; target_stage_id: string };
+export type CloseDealResult =
+  | { ok: true; deal_id: string; closed_jobs: number }
+  | { ok: false; errors: string[] };
+
+// Mark the chosen jobs done + move them to a terminal lane, then move the deal to
+// accounting "Closed". Not in the generated types → loose `rpcCall`.
+export async function closeDeal(
+  dealId: string,
+  jobs: CloseDealJob[],
+): Promise<CloseDealResult> {
+  const { data, error } = await rpcCall('close_deal', { p_deal_id: dealId, p_jobs: jobs });
+  if (error) return { ok: false, errors: [error.message] };
+  return data as CloseDealResult;
+}

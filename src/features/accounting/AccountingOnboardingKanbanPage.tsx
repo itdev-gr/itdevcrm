@@ -16,6 +16,7 @@ import { useCompleteAccounting } from './hooks/useCompleteAccounting';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { AccountingKanbanColumn } from './AccountingKanbanColumn';
 import { AccountingKanbanCard } from './AccountingKanbanCard';
+import { CloseDealDialog } from './CloseDealDialog';
 import { useAccountingKanbanRealtime } from './hooks/useAccountingKanbanRealtime';
 
 const STAGE_SUBTITLES: Record<string, { en: string; el: string }> = {
@@ -28,6 +29,7 @@ export function AccountingOnboardingKanbanPage() {
   const { t, i18n } = useTranslation('accounting');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [closingDeal, setClosingDeal] = useState<AccountingDealRow | null>(null);
   const { data: deals = [], isLoading } = useAccountingDeals();
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveAccountingStage();
@@ -43,6 +45,7 @@ export function AccountingOnboardingKanbanPage() {
     .sort((a, b) => a.position - b.position);
 
   const paidStage = accStages.find((s) => s.code === 'paid_in_full');
+  const closedStage = accStages.find((s) => s.code === 'closed');
 
   const dealsByStage = new Map<string, AccountingDealRow[]>();
   for (const s of accStages) dealsByStage.set(s.id, []);
@@ -63,7 +66,14 @@ export function AccountingOnboardingKanbanPage() {
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
     const deal = deals.find((d) => d.id === dealId);
-    if (deal && stageId !== deal.accounting_stage_id && !deal.payment_method) {
+    if (!deal || stageId === deal.accounting_stage_id) return;
+    // Moving to "Closed" → confirm via dialog, which marks the jobs done +
+    // moves them to their boards' close lanes and then closes the deal.
+    if (closedStage && stageId === closedStage.id) {
+      setClosingDeal(deal);
+      return;
+    }
+    if (!deal.payment_method) {
       alert(t('kanban.move_errors.payment_method_required'));
       return;
     }
@@ -104,6 +114,11 @@ export function AccountingOnboardingKanbanPage() {
         </div>
         <DragOverlay>{activeDeal ? <AccountingKanbanCard deal={activeDeal} /> : null}</DragOverlay>
       </DndContext>
+      <CloseDealDialog
+        dealId={closingDeal?.id ?? null}
+        dealLabel={closingDeal?.client?.name ?? ''}
+        onClose={() => setClosingDeal(null)}
+      />
     </div>
   );
 }

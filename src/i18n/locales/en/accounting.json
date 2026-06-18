@@ -1,4 +1,15 @@
 {
+  "close": {
+    "title": "Close deal",
+    "description": "Mark these jobs done and move them to their board's close lane. Uncheck any you want to keep open.",
+    "no_jobs": "This deal has no jobs.",
+    "website_to": "Website to",
+    "webdev_choice": { "closed": "Closed", "live": "Live" },
+    "status": { "active": "Active", "completed": "Completed" },
+    "cancel": "Cancel",
+    "confirm": "Close deal",
+    "closing": "Closing…"
+  },
   "nav": {
     "onboarding": "Accounting onboarding",
     "clients": "Clients",
