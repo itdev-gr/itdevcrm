@@ -98,7 +98,7 @@ export function SalesKanbanPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
+      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
         <div className="flex flex-wrap items-center gap-2">
           {isAdmin && (

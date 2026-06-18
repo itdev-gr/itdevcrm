@@ -59,7 +59,9 @@ export function SalesKanbanCard({
                 {fullName}
               </Link>
             </div>
-            {lead.converted_at && <span className="text-xs text-emerald-600">✓</span>}
+            {lead.converted_at && (
+              <span className="text-xs text-emerald-600 dark:text-emerald-400">✓</span>
+            )}
           </div>
           {companyAndCategory && (
             <div className="text-xs text-muted-foreground">{companyAndCategory}</div>
@@ -75,7 +77,7 @@ export function SalesKanbanCard({
               </span>
             )}
           </div>
-          <div className="text-[10px] text-slate-500">
+          <div className="text-[10px] text-muted-foreground">
             👤 {ownerName || t('owner.unassigned')}
           </div>
           {lead.phone && (
@@ -84,18 +86,18 @@ export function SalesKanbanCard({
             </div>
           )}
           {services.length > 0 && (
-            <div className="text-[10px] text-slate-500">
+            <div className="text-[10px] text-muted-foreground">
               {services.map((s) => tDeals(`services.types.${s.service_type}`)).join(' · ')}
             </div>
           )}
           {isWon && wonByName && (
-            <div className="text-[10px] text-emerald-700">
+            <div className="text-[10px] text-emerald-700 dark:text-emerald-400">
               {t('sales_person.label')}: {wonByName}
             </div>
           )}
           {lead.scheduled_for && (
             <div
-              className="text-[10px] font-medium text-blue-700"
+              className="text-[10px] font-medium text-blue-700 dark:text-blue-400"
               title={new Date(lead.scheduled_for).toLocaleString()}
             >
               📞 {lead.stage?.code === 'offer_sent' ? 'Follow-up' : 'Scheduled'}:{' '}
@@ -106,7 +108,7 @@ export function SalesKanbanCard({
               }).format(new Date(lead.scheduled_for))}
             </div>
           )}
-          <div className="text-[10px] text-slate-400" title={formatDate(lead.created_at)}>
+          <div className="text-[10px] text-muted-foreground" title={formatDate(lead.created_at)}>
             🗓 {relativeFromNow(lead.created_at)}
           </div>
         </CardContent>

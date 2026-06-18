@@ -38,7 +38,7 @@ export function SalesKanbanColumn({
     <div
       ref={setNodeRef}
       className={`flex w-72 shrink-0 flex-col rounded-md border ${
-        isOver ? 'bg-slate-100' : 'bg-slate-50'
+        isOver ? 'bg-muted' : 'bg-card'
       }`}
     >
       <header className="border-b px-3 py-2">
@@ -74,7 +74,7 @@ export function SalesKanbanColumn({
                 data-testid="load-more"
                 onClick={onLoadMore}
                 disabled={isLoadingMore}
-                className="block w-full rounded-md border border-dashed py-2 text-center text-xs text-blue-700 hover:bg-slate-100 disabled:opacity-50"
+                className="block w-full rounded-md border border-dashed py-2 text-center text-xs text-blue-700 hover:bg-muted disabled:opacity-50 dark:text-blue-400"
               >
                 {isLoadingMore ? t('kanban.loading_more') : t('kanban.load_more')}
               </button>
