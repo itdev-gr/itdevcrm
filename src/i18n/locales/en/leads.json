@@ -134,6 +134,11 @@
     "monthly": "/mo",
     "no_company": "(no company yet)"
   },
+  "pager": {
+    "prev": "Prev",
+    "next": "Next",
+    "status": "Page {{page}} of {{total}} · {{count}} leads"
+  },
   "empty": "No leads yet. Click \"Add lead\" to create one.",
   "offer_email": {
     "send": "Send offer"

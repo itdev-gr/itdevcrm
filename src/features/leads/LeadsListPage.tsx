@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -18,6 +19,7 @@ import type { Database } from '@/types/supabase';
 type LeadUpdate = Database['public']['Tables']['leads']['Update'];
 
 const ALL = '__all__';
+const PAGE_SIZE = 50;
 
 export function LeadsListPage() {
   const { t, i18n } = useTranslation('leads');
@@ -45,11 +47,13 @@ export function LeadsListPage() {
     return (id: string | null) => (id ? (m.get(id) ?? '') : '');
   }, [salesStages, lang]);
 
+  const [params] = useSearchParams();
   const [search, setSearch] = useState('');
-  const [statusId, setStatusId] = useState<string>(ALL);
-  const [ownerId, setOwnerId] = useState<string>(ALL);
+  const [statusId, setStatusId] = useState<string>(params.get('stage') || ALL);
+  const [ownerId, setOwnerId] = useState<string>(params.get('owner') || ALL);
   const [sort, setSort] = useState<LeadSort>({ key: 'code', dir: 'asc' });
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
 
   const rows = useMemo(
     () =>
@@ -65,6 +69,15 @@ export function LeadsListPage() {
   );
 
   const unassignedCount = useMemo(() => leads.filter((l) => !l.owner_user_id).length, [leads]);
+
+  // Render one page at a time (the full filtered set still drives CSV export +
+  // select-all + counts). Rendering thousands of editable rows was the crash.
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = rows.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+  useEffect(() => {
+    setPage(0);
+  }, [search, statusId, ownerId, sort]);
 
   function toggleSort(key: LeadSortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
@@ -233,7 +246,7 @@ export function LeadsListPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((lead) => (
+              {pageRows.map((lead) => (
                 <LeadRowEditor
                   key={lead.id}
                   lead={lead}
@@ -247,6 +260,30 @@ export function LeadsListPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {rows.length > PAGE_SIZE && (
+        <div className="flex items-center justify-center gap-3 text-sm">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={safePage === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            ‹ {t('pager.prev')}
+          </Button>
+          <span>
+            {t('pager.status', { page: safePage + 1, total: pageCount, count: rows.length })}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={safePage >= pageCount - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            {t('pager.next')} ›
+          </Button>
         </div>
       )}
     </div>
