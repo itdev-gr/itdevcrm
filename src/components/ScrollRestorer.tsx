@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { domPath, elementAtPath } from '@/lib/scrollRestoration';
 
@@ -34,12 +34,29 @@ export function ScrollRestorer({ rootRef }: { rootRef: RefObject<HTMLElement | n
   const navType = useNavigationType();
   const keyRef = useRef(location.key);
   const restoringRef = useRef(false);
+  const guardUntilRef = useRef(0);
 
   // Keep the current history key available to the (once-attached) scroll
-  // listener without re-binding it on every navigation.
-  useEffect(() => {
+  // listener without re-binding it on every navigation. Must run *before* paint
+  // (layout effect): when navigating away, the outgoing page's teardown can clamp
+  // a container's scroll to 0 and fire a scroll event — that write must land on
+  // the NEW key, not clobber the position we just saved for the page we're leaving.
+  useLayoutEffect(() => {
     keyRef.current = location.key;
   }, [location.key]);
+
+  // A click that navigates (a card, a link, the Back button) fires here in the
+  // capture phase *before* react-router tears the page down. The teardown can
+  // clamp a container's scroll to 0 and fire a scroll event that would clobber
+  // the position we want to keep — so briefly ignore scroll writes after a
+  // click. Touch/wheel scrolling produces no click, so it still saves normally.
+  useEffect(() => {
+    const onClick = () => {
+      guardUntilRef.current = Date.now() + 700;
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, []);
 
   // Save: one capture-phase listener catches scrolls in any nested container.
   useEffect(() => {
@@ -48,6 +65,7 @@ export function ScrollRestorer({ rootRef }: { rootRef: RefObject<HTMLElement | n
     let scheduled = false;
     function onScroll(e: Event) {
       if (restoringRef.current) return;
+      if (Date.now() < guardUntilRef.current) return;
       const target = e.target;
       if (!(target instanceof Element) || !root) return;
       const path = domPath(target, root);
@@ -88,7 +106,10 @@ export function ScrollRestorer({ rootRef }: { rootRef: RefObject<HTMLElement | n
         if (Math.abs(el.scrollTop - pos.top) > 1 && room > el.scrollTop + 1) settled = false;
       }
       frames += 1;
-      if (!settled && frames < 40) requestAnimationFrame(tick);
+      // Keep retrying for ~2.5s: the destination page may still be fetching its
+      // data (kanban cards, table rows), so the target containers — and their
+      // full height — only appear a few hundred ms after the route changes.
+      if (!settled && frames < 150) requestAnimationFrame(tick);
       else restoringRef.current = false;
     };
     requestAnimationFrame(tick);
