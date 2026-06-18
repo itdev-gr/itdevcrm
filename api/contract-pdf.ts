@@ -1,3 +1,4 @@
+import { withSentry, captureApiError } from './_sentry.js';
 // All runtime imports are deferred until inside the handler so a failed
 // dependency surfaces as a 500 with a real stack instead of Vercel's
 // opaque FUNCTION_INVOCATION_FAILED at module-load time.
@@ -5,12 +6,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export const config = { maxDuration: 60 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   try {
     await runHandler(req, res);
   } catch (err) {
     const e = err as Error;
     console.error('contract-pdf handler error:', e);
+    captureApiError('contract-pdf', err);
     if (!res.headersSent) {
       res.status(500).json({
         error: e?.message ?? 'unknown error',
@@ -135,3 +137,5 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
   const { data: signed } = await admin.storage.from('contract-pdfs').createSignedUrl(path, 60 * 5);
   res.status(200).json({ url: signed?.signedUrl ?? null });
 }
+
+export default withSentry('contract-pdf', handler);

@@ -1,3 +1,4 @@
+import { withSentry } from './_sentry.js';
 // api/meta-lead.ts
 // Public Meta lead-ad ingestion. Zapier sends each lead here (GET with query
 // params, or POST with a JSON body — both supported).
@@ -22,7 +23,7 @@ const str = (v: unknown): string | null => {
   return s.length > 0 ? s : null;
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
     return;
@@ -142,3 +143,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
   res.status(200).json({ ok: true, lead_id: inserted.id });
 }
+
+export default withSentry('meta-lead', handler);

@@ -1,3 +1,4 @@
+import { withSentry } from './_sentry.js';
 // Public opt-out endpoint linked from every automated lead email:
 // GET /api/unsubscribe?lead=<uuid>&token=<unsubscribe_token>
 // The token is a per-lead random uuid, so the link only works for the
@@ -20,7 +21,7 @@ function page(res: VercelResponse, status: number, title: string, body: string):
 </div></body></html>`);
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const lead = String(req.query.lead ?? '');
   const token = String(req.query.token ?? '');
   if (!UUID_RE.test(lead) || !UUID_RE.test(token)) {
@@ -55,3 +56,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     'Δεν θα λαμβάνετε πλέον αυτοματοποιημένες ενημερώσεις από εμάς. Αν το μετανιώσετε, απλώς απαντήστε σε οποιοδήποτε email μας.',
   );
 }
+
+export default withSentry('unsubscribe', handler);

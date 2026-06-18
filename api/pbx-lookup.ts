@@ -1,3 +1,4 @@
+import { withSentry } from './_sentry.js';
 // api/pbx-lookup.ts
 // Public caller-ID lookup for the Yeastar PBX.
 //   GET /api/pbx-lookup?phone=<callerID>&key=<secret>
@@ -45,7 +46,7 @@ function toYeastarContact(row: ContactRow, appBase: string) {
   };
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const secret = process.env.PBX_LOOKUP_SECRET;
   const provided = String(req.headers['x-pbx-secret'] ?? req.query.key ?? '');
   if (!secret || provided.length !== secret.length || provided !== secret) {
@@ -84,3 +85,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     process.env.PBX_DEEPLINK_BASE ?? process.env.VITE_PUBLIC_APP_URL ?? 'https://www.itdevcrm.com';
   res.status(200).json(toYeastarContact(row, appBase));
 }
+
+export default withSentry('pbx-lookup', handler);
