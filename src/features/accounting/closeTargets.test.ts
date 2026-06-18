@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { closeTargetCode, closeTargetStageId, buildCloseJobs } from './closeTargets';
 
 const stages = [
-  { id: 'ws-done', board: 'web_seo', code: 'done' },
+  { id: 'ws-closed', board: 'web_seo', code: 'closed' },
   { id: 'ls-closed', board: 'local_seo', code: 'closed' },
   { id: 'wd-live', board: 'web_dev', code: 'live' },
   { id: 'wd-closed', board: 'web_dev', code: 'closed' },
@@ -10,24 +10,21 @@ const stages = [
 ] as const;
 
 describe('closeTargetCode', () => {
-  it('web_seo → done; local_seo → its own closed lane', () => {
-    expect(closeTargetCode('web_seo')).toBe('done');
+  it('every service board → its Closed lane; web_dev honours the per-job choice', () => {
+    expect(closeTargetCode('web_seo')).toBe('closed');
     expect(closeTargetCode('local_seo')).toBe('closed');
-  });
-  it('web_dev → chosen, default closed', () => {
-    expect(closeTargetCode('web_dev')).toBe('closed');
-    expect(closeTargetCode('web_dev', 'live')).toBe('live');
-  });
-  it('social/ads/hosting → closed', () => {
     expect(closeTargetCode('social_media')).toBe('closed');
     expect(closeTargetCode('ads')).toBe('closed');
     expect(closeTargetCode('hosting')).toBe('closed');
+    expect(closeTargetCode('web_dev')).toBe('closed');
+    expect(closeTargetCode('web_dev', 'live')).toBe('live');
   });
 });
 
 describe('closeTargetStageId', () => {
   it('resolves id for board + target', () => {
-    expect(closeTargetStageId([...stages], 'web_seo')).toBe('ws-done');
+    expect(closeTargetStageId([...stages], 'web_seo')).toBe('ws-closed');
+    expect(closeTargetStageId([...stages], 'local_seo')).toBe('ls-closed');
     expect(closeTargetStageId([...stages], 'web_dev', 'live')).toBe('wd-live');
     expect(closeTargetStageId([...stages], 'web_dev', 'closed')).toBe('wd-closed');
   });
@@ -50,7 +47,7 @@ describe('buildCloseJobs', () => {
       [...stages],
     );
     expect(out).toEqual([
-      { job_id: 'j1', target_stage_id: 'ws-done' },
+      { job_id: 'j1', target_stage_id: 'ws-closed' },
       { job_id: 'j2', target_stage_id: 'wd-live' },
     ]);
   });
