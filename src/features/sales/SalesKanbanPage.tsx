@@ -10,7 +10,6 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { useLeads, type LeadRow } from '@/features/leads/hooks/useLeads';
 import { useMoveLeadStage } from '@/features/leads/hooks/useMoveLeadStage';
 import { useConvertLead } from '@/features/leads/hooks/useConvertLead';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
@@ -20,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import { SavedFiltersBar } from '@/features/saved_filters/SavedFiltersBar';
 import { SalesKanbanColumn } from './SalesKanbanColumn';
 import { SalesKanbanCard } from './SalesKanbanCard';
+import { useSalesKanbanColumns } from './hooks/useSalesKanbanColumns';
+import { isCollapsedStage } from './salesKanbanColumns';
 import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
 import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
 import { isStageMoveBlocked } from './stageAccess';
@@ -44,73 +45,36 @@ export function SalesKanbanPage() {
   );
   const { data: owners = [] } = useAssignableOwners();
 
-  const leadsFilter: Parameters<typeof useLeads>[0] = {
-    ...(typeof filter.ownerId === 'string' ? { ownerId: filter.ownerId } : {}),
-    ...(source ? { source } : {}),
-    includeConverted: true,
-  };
-  const { data: leads = [], isLoading } = useLeads(leadsFilter);
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveLeadStage();
   const convert = useConvertLead();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const activeLead = activeId ? (leads.find((l) => l.id === activeId) ?? null) : null;
-
-  if (isLoading) return <div className="p-8">…</div>;
-
   const salesStages = stages
     .filter((s) => s.board === 'sales' && !s.archived)
     .sort((a, b) => a.position - b.position);
-
   const wonStage = salesStages.find((s) => s.code === 'won');
 
-  const searchNorm = search.trim().toLowerCase();
-  const filteredLeads = searchNorm
-    ? leads.filter((l) => {
-        const haystack = [
-          l.title,
-          l.contact_first_name,
-          l.contact_last_name,
-          l.email,
-          l.phone,
-          l.company_name,
-          l.industry,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(searchNorm);
-      })
-    : leads;
+  // Board is scoped & capped: only the top ~50 leads per ACTIVE stage are loaded
+  // (server-side ordered + searched); dead stages collapse to a count + list link.
+  const kanbanStages = salesStages.map((s) => ({ id: s.id, code: s.code }));
+  const { data: columns = [], isLoading } = useSalesKanbanColumns(kanbanStages, {
+    ...(typeof filter.ownerId === 'string' ? { ownerId: filter.ownerId } : {}),
+    ...(source ? { source } : {}),
+    search,
+    sortBy,
+  });
+  const columnsByStage = new Map(columns.map((c) => [c.stageId, c]));
 
-  function valueOf(l: LeadRow): number {
-    return Number(l.estimated_one_time_value ?? 0) + Number(l.estimated_monthly_value ?? 0);
-  }
-  function compare(a: LeadRow, b: LeadRow): number {
-    switch (sortBy) {
-      case 'oldest':
-        return a.created_at.localeCompare(b.created_at);
-      case 'value_high':
-        return valueOf(b) - valueOf(a);
-      case 'value_low':
-        return valueOf(a) - valueOf(b);
-      case 'recent':
-        return b.updated_at.localeCompare(a.updated_at);
-      case 'newest':
-      default:
-        return b.created_at.localeCompare(a.created_at);
-    }
-  }
+  // Resolve owner/won-by names once (was a per-card query + O(n) find).
+  const ownerName = new Map(owners.map((o) => [o.user_id, o.full_name || o.email]));
+  const nameFor = (userId: string | null) => (userId ? (ownerName.get(userId) ?? '') : '');
 
-  const leadsByStage = new Map<string, LeadRow[]>();
-  for (const s of salesStages) leadsByStage.set(s.id, []);
-  for (const lead of filteredLeads) {
-    if (lead.stage?.board !== 'sales') continue;
-    const list = leadsByStage.get(lead.stage_id ?? '');
-    if (list) list.push(lead);
-  }
-  for (const list of leadsByStage.values()) list.sort(compare);
+  const activeLead = activeId
+    ? (columns.flatMap((c) => c.leads).find((l) => l.id === activeId) ?? null)
+    : null;
+
+  if (isLoading) return <div className="p-8">…</div>;
 
   function onDragStart(e: DragStartEvent) {
     setActiveId(String(e.active.id));
@@ -224,17 +188,34 @@ export function SalesKanbanPage() {
         onDragCancel={() => setActiveId(null)}
       >
         <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2">
-          {salesStages.map((s) => (
-            <SalesKanbanColumn
-              key={s.id}
-              stageId={s.id}
-              stageLabel={(s.display_names as { en: string; el: string })[lang]}
-              leads={leadsByStage.get(s.id) ?? []}
-              locked={isStageMoveBlocked(s, userId)}
-            />
-          ))}
+          {salesStages.map((s) => {
+            const col = columnsByStage.get(s.id);
+            return (
+              <SalesKanbanColumn
+                key={s.id}
+                stageId={s.id}
+                stageLabel={(s.display_names as { en: string; el: string })[lang]}
+                leads={col?.leads ?? []}
+                total={col?.total ?? 0}
+                collapsed={isCollapsedStage(s.code)}
+                overflowHref={`/sales/leads?stage=${s.id}${
+                  typeof filter.ownerId === 'string' ? `&owner=${filter.ownerId}` : ''
+                }`}
+                nameFor={nameFor}
+                locked={isStageMoveBlocked(s, userId)}
+              />
+            );
+          })}
         </div>
-        <DragOverlay>{activeLead ? <SalesKanbanCard lead={activeLead} /> : null}</DragOverlay>
+        <DragOverlay>
+          {activeLead ? (
+            <SalesKanbanCard
+              lead={activeLead}
+              ownerName={nameFor(activeLead.owner_user_id)}
+              wonByName={nameFor(activeLead.won_by_user_id)}
+            />
+          ) : null}
+        </DragOverlay>
       </DndContext>
       <CreateLeadDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
