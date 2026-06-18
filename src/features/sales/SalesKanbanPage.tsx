@@ -31,7 +31,10 @@ export function SalesKanbanPage() {
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const [filter, setFilter] = useState<Record<string, unknown>>({});
+  // Non-admins only ever see their own leads (also enforced by RLS).
+  const [filter, setFilter] = useState<Record<string, unknown>>(
+    isAdmin || !userId ? {} : { ownerId: userId },
+  );
   const [createOpen, setCreateOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -140,20 +143,24 @@ export function SalesKanbanPage() {
       <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant={filter.ownerId === userId ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter({ ownerId: userId ?? undefined })}
-          >
-            {t('filters.mine')}
-          </Button>
-          <Button
-            variant={Object.keys(filter).length === 0 ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter({})}
-          >
-            {t('filters.all')}
-          </Button>
+          {isAdmin && (
+            <>
+              <Button
+                variant={filter.ownerId === userId ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter({ ownerId: userId ?? undefined })}
+              >
+                {t('filters.mine')}
+              </Button>
+              <Button
+                variant={Object.keys(filter).length === 0 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter({})}
+              >
+                {t('filters.all')}
+              </Button>
+            </>
+          )}
           {isAdmin && (
             <select
               value={typeof filter.ownerId === 'string' ? filter.ownerId : ''}
