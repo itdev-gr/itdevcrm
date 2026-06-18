@@ -1,7 +1,7 @@
 {
   "kanban": {
     "title": "Sales pipeline",
-    "empty_column": "Drop deals here",
+    "empty_column": "Drop leads here",
     "locked_move": "Only Manolis can move leads into this column.",
     "card": {
       "value": "Value",
@@ -9,8 +9,8 @@
     }
   },
   "filters": {
-    "all": "All deals",
-    "mine": "My deals",
+    "all": "All leads",
+    "mine": "My leads",
     "saved": "Saved filters",
     "save_current": "Save current filter",
     "name_placeholder": "Filter name"

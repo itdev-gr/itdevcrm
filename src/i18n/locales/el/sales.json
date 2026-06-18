@@ -1,7 +1,7 @@
 {
   "kanban": {
     "title": "Pipeline Πωλήσεων",
-    "empty_column": "Σύρετε συμφωνίες εδώ",
+    "empty_column": "Σύρετε leads εδώ",
     "locked_move": "Μόνο ο Μανώλης μπορεί να μετακινεί leads σε αυτή τη στήλη.",
     "card": {
       "value": "Αξία",
@@ -9,8 +9,8 @@
     }
   },
   "filters": {
-    "all": "Όλες",
-    "mine": "Δικές μου",
+    "all": "Όλα τα leads",
+    "mine": "Τα leads μου",
     "saved": "Αποθηκευμένα φίλτρα",
     "save_current": "Αποθήκευση τρέχοντος φίλτρου",
     "name_placeholder": "Όνομα φίλτρου"
