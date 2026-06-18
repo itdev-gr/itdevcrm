@@ -217,7 +217,7 @@ export function DashboardPage() {
         <h3 className="mb-2 text-sm font-semibold">{t('dashboard.revenue_trend')}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={trendData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="month" fontSize={11} />
             <YAxis fontSize={11} tickFormatter={(v: number) => `€${v}`} />
             <Tooltip formatter={(v) => `€${Number(v ?? 0).toFixed(2)}`} />
@@ -234,14 +234,14 @@ export function DashboardPage() {
         <h3 className="mb-2 text-sm font-semibold">{t('dashboard.conversion_by_person')}</h3>
         <ResponsiveContainer width="100%" height={Math.max(160, ownerChartData.length * 44)}>
           <BarChart data={ownerChartData} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 24 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis type="number" allowDecimals={false} fontSize={11} />
             <YAxis type="category" dataKey="name" width={110} fontSize={11} />
             <Tooltip />
             <Legend />
             <Bar dataKey={t('dashboard.won')} stackId="a" fill="#059669" />
             <Bar dataKey={t('dashboard.lost')} stackId="a" fill="#dc2626" />
-            <Bar dataKey={t('dashboard.open')} stackId="a" fill="hsl(var(--muted-foreground))" />
+            <Bar dataKey={t('dashboard.open')} stackId="a" fill="var(--muted-foreground)" />
           </BarChart>
         </ResponsiveContainer>
       </section>
