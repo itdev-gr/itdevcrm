@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -8,6 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  PageHeader,
+  SettingsTableShell,
+  settingsTdClass,
+  settingsThClass,
+  settingsTheadClass,
+  settingsTrClass,
+} from '@/components/layout/page-shell';
 import {
   ALL_ACTIONS,
   ALL_BOARDS,
@@ -30,36 +40,46 @@ export function GroupPermissionsPage() {
   const { data: rows = [], isLoading } = useGroupPermissions(groupId);
   const upsert = useUpsertGroupPermission();
 
-  if (!group) return <div className="p-8">…</div>;
-  if (isLoading) return <div className="p-8">…</div>;
+  if (!group || isLoading) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-xl border border-border/60 bg-card text-sm text-muted-foreground shadow-sm">
+        …
+      </div>
+    );
+  }
 
   const map = new Map<string, { allowed: boolean; scope: Scope }>();
   for (const r of rows) map.set(`${r.board}:${r.action}`, { allowed: r.allowed, scope: r.scope });
 
   return (
-    <div className="space-y-4 p-8">
-      <h1 className="text-2xl font-bold">
-        {t('permissions.title', { group: group.display_names[lang] })}
-      </h1>
+    <div className="space-y-5">
+      <PageHeader title={t('permissions.title', { group: group.display_names[lang] })}>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/admin/groups">
+            <ArrowLeft className="size-3.5" />
+            {t('groups.title')}
+          </Link>
+        </Button>
+      </PageHeader>
 
       <TeamLeadsBadge groupId={groupId} />
 
-      <div className="overflow-x-auto rounded-md border">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b bg-muted text-left">
-              <th className="sticky left-0 z-10 bg-muted py-2 px-3"></th>
+      <SettingsTableShell>
+        <table className="w-full min-w-[900px] border-collapse text-sm">
+          <thead className={settingsTheadClass}>
+            <tr>
+              <th className={`${settingsThClass} sticky left-0 z-20 bg-muted/80`}></th>
               {ALL_ACTIONS.map((a) => (
-                <th key={a} className="py-2 px-2 align-bottom">
-                  <div className="text-xs whitespace-nowrap">{t(`permissions.actions.${a}`)}</div>
+                <th key={a} className={`${settingsThClass} align-bottom`}>
+                  <div className="whitespace-nowrap">{t(`permissions.actions.${a}`)}</div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {ALL_BOARDS.map((b) => (
-              <tr key={b} className="border-b">
-                <th className="sticky left-0 z-10 bg-background py-2 px-3 text-left font-medium">
+              <tr key={b} className={settingsTrClass}>
+                <th className="sticky left-0 z-10 bg-card px-4 py-3 text-left font-medium group-hover:bg-muted/35">
                   {t(`permissions.boards.${b}`)}
                 </th>
                 {ALL_ACTIONS.map((a) => {
@@ -67,8 +87,8 @@ export function GroupPermissionsPage() {
                   const allowed = cell?.allowed ?? false;
                   const scope = cell?.scope ?? 'own';
                   return (
-                    <td key={a} className="py-2 px-2 align-middle">
-                      <div className="flex flex-col items-center gap-1">
+                    <td key={a} className={`${settingsTdClass} align-middle`}>
+                      <div className="flex flex-col items-center gap-1.5">
                         <Checkbox
                           checked={allowed}
                           onCheckedChange={(v) => {
@@ -114,7 +134,7 @@ export function GroupPermissionsPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </SettingsTableShell>
     </div>
   );
 }

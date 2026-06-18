@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PageHeader } from '@/components/layout/page-shell';
 import { rangeForPreset, type RangePreset, type DateRange } from './utils/formatRange';
 import { useLedger, type LedgerRow } from './hooks/useLedger';
 import { usePLSummary } from './hooks/usePLSummary';
@@ -54,12 +55,8 @@ export function ReportPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{t('page_title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('page_subtitle')}</p>
-        </div>
+    <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader title={t('page_title')} description={t('page_subtitle')}>
         {summary.data && (
           <ExportMenu
             rangeLabel={`${range.from} → ${range.to}`}
@@ -70,7 +67,7 @@ export function ReportPage() {
             expenseRows={expenseRows}
           />
         )}
-      </header>
+      </PageHeader>
 
       <ReportHeader
         preset={preset}

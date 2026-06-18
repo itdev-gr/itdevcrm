@@ -2,11 +2,13 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { Calendar, CheckCircle2, Lock, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyableCode } from '@/components/CopyableCode';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
+import { cn } from '@/lib/utils';
 import type { JobRow } from './hooks/useJobs';
 
 export function JobsKanbanCard({
@@ -37,46 +39,75 @@ export function JobsKanbanCard({
   const subtitle = [contactName ? job.client?.name : null, industryLabel(job.client?.industry, lang)]
     .filter(Boolean)
     .join(' · ');
+  const monthly = Number(job.monthly_amount ?? 0);
+  const displayCode = job.code ?? job.deal?.code ?? null;
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Card className={dragDisabled ? '' : 'cursor-grab active:cursor-grabbing'}>
-        <CardContent className="space-y-1 p-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              {job.code && <CopyableCode code={job.code} className="text-[10px]" />}
-              <Link to={`/jobs/${job.id}`} className="truncate text-sm font-medium hover:underline">
+      <Card
+        size="sm"
+        className={cn(
+          'gap-0 py-0 ring-border/60 transition-shadow hover:shadow-md',
+          dragDisabled ? 'opacity-90' : 'cursor-grab active:cursor-grabbing',
+          job.is_blocked && !dragDisabled && 'ring-red-200/80 dark:ring-red-900/50',
+        )}
+      >
+        <CardContent className="space-y-2.5 p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {displayCode && <CopyableCode code={displayCode} className="text-[10px]" />}
+                {job.service_type === 'ai_seo' && (
+                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-semibold text-violet-800 dark:bg-violet-950/50 dark:text-violet-200">
+                    AI SEO
+                  </span>
+                )}
+              </div>
+              <Link
+                to={`/jobs/${job.id}`}
+                className="block truncate text-sm font-semibold hover:text-[#157777] dark:hover:text-[#7ad4d4]"
+              >
                 {headline}
               </Link>
             </div>
-            <div className="flex items-center gap-1">
-              {job.service_type === 'ai_seo' && (
-                <span
-                  className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
-                  title="AI SEO"
-                >
-                  AI SEO
-                </span>
-              )}
+            <div className="flex shrink-0 items-center gap-1">
               {job.is_blocked && (
                 <span
-                  className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
+                  className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200"
                   title={job.blocked_reason ?? undefined}
                 >
-                  🔒 Blocked
+                  <Lock className="size-3" />
+                  Blocked
                 </span>
               )}
-              {job.completed_at && <span className="text-xs text-emerald-600 dark:text-emerald-400">✓</span>}
+              {job.completed_at && (
+                <CheckCircle2 className="size-4 text-emerald-500" aria-hidden />
+              )}
             </div>
           </div>
-          {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
-          {Number(job.monthly_amount ?? 0) > 0 && (
-            <div className="text-xs">€{Number(job.monthly_amount).toFixed(0)}/mo</div>
+
+          {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
+
+          {monthly > 0 && (
+            <span className="inline-flex rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
+              €{monthly.toFixed(0)}/mo
+            </span>
           )}
-          <div className="text-[10px] text-muted-foreground">
-            👤 {owner ? owner.full_name || owner.email : 'Unassigned'}
+
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <User className="size-3.5 shrink-0 opacity-70" />
+            <span className="truncate">
+              {owner ? owner.full_name || owner.email : 'Unassigned'}
+            </span>
           </div>
-          <div className="text-[10px] text-muted-foreground">🗓 {relativeFromNow(job.updated_at)}</div>
+
+          <div
+            className="flex items-center gap-1.5 border-t border-border/50 pt-2 text-[10px] text-muted-foreground"
+            title={job.updated_at}
+          >
+            <Calendar className="size-3 shrink-0 opacity-70" />
+            {relativeFromNow(job.updated_at)}
+          </div>
         </CardContent>
       </Card>
     </div>

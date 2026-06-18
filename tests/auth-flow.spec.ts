@@ -10,17 +10,17 @@ test.describe('auth flow', () => {
     await page.goto('/login');
     await page.getByLabel(/email/i).fill(ADMIN_EMAIL!);
     await page.getByLabel(/password/i).fill(ADMIN_PASSWORD!);
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByRole('button', { name: /log in|σύνδεση/i }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
     // The authenticated app shell renders the brand inside the top-bar <header> (banner).
-    await expect(page.getByRole('banner').getByText(/itdevcrm/i)).toBeVisible();
+    await expect(page.getByRole('banner').getByText(/it dev/i)).toBeVisible();
   });
 
   test('admin sees Settings in the sidebar and can navigate to /admin', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel(/email/i).fill(ADMIN_EMAIL!);
     await page.getByLabel(/password/i).fill(ADMIN_PASSWORD!);
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByRole('button', { name: /log in|σύνδεση/i }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
 
     await page.getByRole('link', { name: /settings|ρυθμίσεις/i }).click();

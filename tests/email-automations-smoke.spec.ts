@@ -7,7 +7,7 @@ async function signIn(page: Page) {
   await page.goto('/login');
   await page.getByLabel(/email/i).fill(ADMIN_EMAIL!);
   await page.getByLabel(/password/i).fill(ADMIN_PASSWORD!);
-  await page.getByRole('button', { name: /sign in|σύνδεση/i }).click();
+  await page.getByRole('button', { name: /log in|σύνδεση/i }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
 }
 

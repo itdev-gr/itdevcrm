@@ -1,7 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { Eye, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  GroupPills,
+  PageHeader,
+  SettingsTableShell,
+  StatusPill,
+  UserAvatar,
+  settingsTdClass,
+  settingsThClass,
+  settingsTheadClass,
+  settingsTrClass,
+} from '@/components/layout/page-shell';
 import { useUsers } from './hooks/useUsers';
 import { CreateUserDialog } from './CreateUserDialog';
 
@@ -11,53 +23,81 @@ export function UsersListPage() {
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
-    <div className="space-y-4 p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <Button onClick={() => setCreateOpen(true)}>{t('create')}</Button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title={t('title')}>
+        <Button onClick={() => setCreateOpen(true)}>
+          <UserPlus className="size-4" />
+          {t('create')}
+        </Button>
+      </PageHeader>
 
-      {isLoading && <p>…</p>}
+      {isLoading && (
+        <div className="flex h-40 items-center justify-center rounded-xl border border-border/60 bg-card text-sm text-muted-foreground shadow-sm">
+          …
+        </div>
+      )}
       {error && (
-        <p role="alert" className="text-red-600 dark:text-red-400">
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
+        >
           {error.message}
-        </p>
+        </div>
       )}
 
       {!isLoading && !error && (
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b text-left">
-              <th className="py-2 pr-4">{t('table.name')}</th>
-              <th className="py-2 pr-4">{t('table.email')}</th>
-              <th className="py-2 pr-4">{t('table.groups')}</th>
-              <th className="py-2 pr-4">{t('table.admin')}</th>
-              <th className="py-2 pr-4">{t('table.active')}</th>
-              <th className="py-2">{t('table.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.user_id} className="border-b">
-                <td className="py-2 pr-4">{u.full_name}</td>
-                <td className="py-2 pr-4">{u.email}</td>
-                <td className="py-2 pr-4">
-                  {(u.user_groups ?? [])
-                    .map((row) => row.groups?.code)
-                    .filter(Boolean)
-                    .join(', ')}
-                </td>
-                <td className="py-2 pr-4">{u.is_admin ? '✓' : ''}</td>
-                <td className="py-2 pr-4">{u.is_active ? '✓' : ''}</td>
-                <td className="py-2">
-                  <Link to={`/admin/users/${u.user_id}`} className="text-blue-600 underline dark:text-blue-400">
-                    {t('actions.view')}
-                  </Link>
-                </td>
+        <SettingsTableShell>
+          <table className="w-full min-w-[760px] border-collapse text-sm">
+            <thead className={settingsTheadClass}>
+              <tr>
+                <th className={settingsThClass}>{t('table.name')}</th>
+                <th className={settingsThClass}>{t('table.groups')}</th>
+                <th className={settingsThClass}>{t('table.admin')}</th>
+                <th className={settingsThClass}>{t('table.active')}</th>
+                <th className={`${settingsThClass} text-right`}>{t('table.actions')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const groupCodes = (u.user_groups ?? [])
+                  .map((row) => row.groups?.code)
+                  .filter((c): c is string => typeof c === 'string');
+                return (
+                  <tr key={u.user_id} className={settingsTrClass}>
+                    <td className={settingsTdClass}>
+                      <UserAvatar name={u.full_name} email={u.email} />
+                    </td>
+                    <td className={settingsTdClass}>
+                      <GroupPills codes={groupCodes} />
+                    </td>
+                    <td className={settingsTdClass}>
+                      <StatusPill
+                        active={u.is_admin}
+                        activeLabel={t('table.admin')}
+                        inactiveLabel="—"
+                      />
+                    </td>
+                    <td className={settingsTdClass}>
+                      <StatusPill
+                        active={u.is_active}
+                        activeLabel={t('table.active')}
+                        inactiveLabel={t('actions.deactivated')}
+                      />
+                    </td>
+                    <td className={`${settingsTdClass} text-right`}>
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/admin/users/${u.user_id}`}>
+                          <Eye className="size-3.5" />
+                          {t('actions.view')}
+                        </Link>
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </SettingsTableShell>
       )}
 
       <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} />

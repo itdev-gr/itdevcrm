@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -9,6 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  PageHeader,
+  SettingsTableShell,
+  UserAvatar,
+  settingsTdClass,
+  settingsThClass,
+  settingsTheadClass,
+  settingsTrClass,
+} from '@/components/layout/page-shell';
 import { useUser } from '@/features/users/hooks/useUser';
 import { useUserOverrides } from './hooks/useUserOverrides';
 import { useUpsertUserOverride } from './hooks/useUpsertUserOverride';
@@ -32,34 +42,48 @@ export function UserPermissionsPage() {
   const upsert = useUpsertUserOverride();
   const del = useDeleteUserOverride();
 
-  if (!user) return <div className="p-8">…</div>;
-  if (isLoading) return <div className="p-8">…</div>;
+  if (!user || isLoading) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-xl border border-border/60 bg-card text-sm text-muted-foreground shadow-sm">
+        …
+      </div>
+    );
+  }
 
   const overrideMap = new Map(overrides.map((o) => [`${o.board}:${o.action}`, o]));
   const effectiveMap = new Map(effective.map((e) => [`${e.board}:${e.action}`, e]));
 
   return (
-    <div className="space-y-4 p-8">
-      <h1 className="text-2xl font-bold">
-        {t('permissions.user_title', { user: user.full_name || user.email })}
-      </h1>
+    <div className="space-y-5">
+      <PageHeader title={t('permissions.user_title', { user: user.full_name || user.email })}>
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/admin/users/${userId}`}>
+            <ArrowLeft className="size-3.5" />
+            {user.full_name || user.email}
+          </Link>
+        </Button>
+      </PageHeader>
 
-      <div className="overflow-x-auto rounded-md border">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b bg-muted text-left">
-              <th className="sticky left-0 z-10 bg-muted py-2 px-3"></th>
+      <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+        <UserAvatar name={user.full_name} email={user.email} />
+      </div>
+
+      <SettingsTableShell>
+        <table className="w-full min-w-[900px] border-collapse text-sm">
+          <thead className={settingsTheadClass}>
+            <tr>
+              <th className={`${settingsThClass} sticky left-0 z-20 bg-muted/80`}></th>
               {ALL_ACTIONS.map((a) => (
-                <th key={a} className="py-2 px-2 align-bottom">
-                  <div className="text-xs whitespace-nowrap">{t(`permissions.actions.${a}`)}</div>
+                <th key={a} className={`${settingsThClass} align-bottom`}>
+                  <div className="whitespace-nowrap">{t(`permissions.actions.${a}`)}</div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {ALL_BOARDS.map((b) => (
-              <tr key={b} className="border-b">
-                <th className="sticky left-0 z-10 bg-background py-2 px-3 text-left font-medium">
+              <tr key={b} className={settingsTrClass}>
+                <th className="sticky left-0 z-10 bg-card px-4 py-3 text-left font-medium group-hover:bg-muted/35">
                   {t(`permissions.boards.${b}`)}
                 </th>
                 {ALL_ACTIONS.map((a) => {
@@ -68,8 +92,8 @@ export function UserPermissionsPage() {
                   const allowed = ov ? ov.allowed : (eff?.allowed ?? false);
                   const scope = ov?.scope ?? eff?.scope ?? 'own';
                   return (
-                    <td key={a} className="py-2 px-2 align-middle">
-                      <div className="flex flex-col items-center gap-1">
+                    <td key={a} className={`${settingsTdClass} align-middle`}>
+                      <div className="flex flex-col items-center gap-1.5">
                         <div className="flex items-center gap-1">
                           <Checkbox
                             checked={allowed}
@@ -132,7 +156,7 @@ export function UserPermissionsPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </SettingsTableShell>
     </div>
   );
 }

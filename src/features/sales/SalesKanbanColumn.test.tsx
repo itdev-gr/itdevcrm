@@ -22,6 +22,7 @@ function renderCol(props: Partial<React.ComponentProps<typeof SalesKanbanColumn>
         <SalesKanbanColumn
           stageId="s1"
           stageLabel="New Lead"
+          stageIndex={0}
           leads={[]}
           total={0}
           hasMore={false}

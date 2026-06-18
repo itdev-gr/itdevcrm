@@ -1,6 +1,7 @@
 {
   "title": "Πελάτες",
   "my_clients": "Οι Πελάτες μου",
+  "search_placeholder": "Αναζήτηση πελατών…",
   "new_client": "Νέος πελάτης",
   "new_client_description": "Προσθήκη νέου πελάτη στον λογαριασμό σας.",
   "table": {

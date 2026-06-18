@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/layout/page-shell';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { cn } from '@/lib/utils';
 import { useScheduledLeads, type ScheduledLead } from './hooks/useScheduledLeads';
 import { useUserTasks, type UserTaskRow } from './hooks/useUserTasks';
 import { useToggleTaskComplete } from './hooks/useDeleteTask';
 import { TaskDialog } from './TaskDialog';
 
 type View = 'day' | 'week';
-
-// ── date helpers (no library) ────────────────────────────────────────────────
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -27,9 +29,8 @@ function addDays(d: Date, n: number): Date {
   return x;
 }
 function startOfWeek(d: Date): Date {
-  // Monday as week start.
   const x = startOfDay(d);
-  const dow = (x.getDay() + 6) % 7; // 0 = Mon … 6 = Sun
+  const dow = (x.getDay() + 6) % 7;
   x.setDate(x.getDate() - dow);
   return x;
 }
@@ -65,8 +66,6 @@ function formatTime(iso: string, locale: string): string {
   }).format(new Date(iso));
 }
 
-// ── unified calendar entry ───────────────────────────────────────────────────
-
 type CalendarEntry =
   | { kind: 'lead'; lead: ScheduledLead; date: string }
   | { kind: 'task'; task: UserTaskRow; date: string };
@@ -78,8 +77,6 @@ function mergeEntries(leads: ScheduledLead[], tasks: UserTaskRow[]): CalendarEnt
   out.sort((a, b) => a.date.localeCompare(b.date));
   return out;
 }
-
-// ── views ────────────────────────────────────────────────────────────────────
 
 type ViewProps = {
   cursor: Date;
@@ -103,8 +100,14 @@ function TaskRow({
   const done = !!task.completed_at;
   const className =
     layout === 'day'
-      ? `flex items-center gap-3 px-4 py-3 hover:bg-muted ${done ? 'opacity-60' : ''}`
-      : `flex items-start gap-1.5 rounded bg-amber-50 px-1.5 py-1 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-200 dark:hover:bg-amber-950/70 ${done ? 'opacity-60' : ''}`;
+      ? cn(
+          'flex items-center gap-3 rounded-lg border border-amber-200/60 bg-amber-50/50 px-3 py-2.5 transition-colors hover:bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20 dark:hover:bg-amber-950/30',
+          done && 'opacity-60',
+        )
+      : cn(
+          'flex items-start gap-1.5 rounded-md border border-amber-200/60 bg-amber-50/70 px-2 py-1.5 text-amber-950 transition-colors hover:bg-amber-100/80 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100 dark:hover:bg-amber-950/50',
+          done && 'opacity-60',
+        );
   return (
     <div className={className}>
       <input
@@ -119,16 +122,18 @@ function TaskRow({
         aria-label="Toggle complete"
       />
       {layout === 'day' && (
-        <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">
+        <span className="w-14 shrink-0 font-mono text-xs text-muted-foreground">
           {formatTime(task.due_at, locale)}
         </span>
       )}
       <button
         type="button"
         onClick={() => onEdit(task)}
-        className={`min-w-0 flex-1 text-left ${
-          layout === 'day' ? 'text-sm font-medium' : 'text-xs'
-        } ${done ? 'line-through' : ''}`}
+        className={cn(
+          'min-w-0 flex-1 text-left',
+          layout === 'day' ? 'text-sm font-medium' : 'text-xs',
+          done && 'line-through',
+        )}
       >
         {layout === 'week' && (
           <span className="mr-1 font-mono text-[10px] opacity-70">
@@ -146,29 +151,34 @@ function DayView({ cursor, entries, locale, onEditTask }: ViewProps) {
   const todayEntries = entries.filter((e) => sameDay(new Date(e.date), cursor));
   if (todayEntries.length === 0) {
     return (
-      <div className="rounded-md border bg-muted p-6 text-center text-sm text-muted-foreground">
-        {t('calendar.empty_day')}
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/20 px-6 py-16 text-center">
+        <p className="text-sm font-medium text-foreground">{t('calendar.empty_day')}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Nothing scheduled for this day.</p>
       </div>
     );
   }
   return (
-    <ul className="divide-y rounded-md border">
+    <ul className="space-y-2">
       {todayEntries.map((e) =>
         e.kind === 'lead' ? (
           <li
             key={`lead-${e.lead.id}`}
-            className="flex items-center gap-3 px-4 py-3 hover:bg-muted"
+            className="flex items-center gap-3 rounded-lg border border-primary/15 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10"
           >
-            <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">
+            <span className="w-14 shrink-0 font-mono text-xs text-muted-foreground">
               {formatTime(e.lead.scheduled_for, locale)}
             </span>
             <Link
               to={`/leads/${e.lead.id}`}
-              className="min-w-0 flex-1 truncate text-sm font-medium text-blue-700 hover:underline dark:text-blue-400"
+              className="min-w-0 flex-1 truncate text-sm font-medium text-primary hover:underline"
             >
               {leadHeadline(e.lead)}
             </Link>
-            {e.lead.code && <span className="text-[10px] text-muted-foreground">{e.lead.code}</span>}
+            {e.lead.code && (
+              <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+                {e.lead.code}
+              </span>
+            )}
           </li>
         ) : (
           <li key={`task-${e.task.id}`}>
@@ -191,37 +201,47 @@ function WeekView({ cursor, entries, locale, onEditTask }: ViewProps) {
   }
   const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric' });
   return (
-    <div className="grid grid-cols-7 gap-2">
+    <div className="grid min-h-[14rem] grid-cols-7 gap-2">
       {days.map((d) => {
         const list = byDay.get(d.toDateString()) ?? [];
         const isToday = sameDay(d, new Date());
         return (
           <div
             key={d.toDateString()}
-            className="flex min-h-[10rem] flex-col rounded-md border bg-card"
+            className={cn(
+              'flex min-h-[12rem] flex-col overflow-hidden rounded-xl border bg-card shadow-sm',
+              isToday ? 'border-primary/30 ring-1 ring-primary/10' : 'border-border/60',
+            )}
           >
             <div
-              className={`border-b px-2 py-1 text-xs font-medium ${
-                isToday ? 'bg-blue-50 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300' : 'bg-muted text-muted-foreground'
-              }`}
+              className={cn(
+                'border-b px-2.5 py-2 text-xs font-semibold',
+                isToday
+                  ? 'border-primary/20 bg-primary/10 text-primary'
+                  : 'border-border/60 bg-muted/30 text-muted-foreground',
+              )}
             >
               {weekdayFmt.format(d)}
             </div>
-            <ul className="flex-1 space-y-1 p-2 text-xs">
+            <ul className="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
               {list.length === 0 ? (
-                <li className="text-muted-foreground">·</li>
+                <li className="flex flex-1 items-center justify-center px-1 py-4 text-[10px] text-muted-foreground/50">
+                  —
+                </li>
               ) : (
                 list.map((e) =>
                   e.kind === 'lead' ? (
                     <li key={`lead-${e.lead.id}`}>
                       <Link
                         to={`/leads/${e.lead.id}`}
-                        className="block rounded bg-blue-50 px-1.5 py-1 text-blue-800 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-950/70"
+                        className="block rounded-md border border-primary/15 bg-primary/5 px-2 py-1.5 text-primary transition-colors hover:bg-primary/10"
                       >
-                        <span className="font-mono text-[10px] opacity-70">
+                        <span className="block font-mono text-[10px] opacity-70">
                           {formatTime(e.lead.scheduled_for, locale)}
-                        </span>{' '}
-                        <span className="truncate">{leadHeadline(e.lead)}</span>
+                        </span>
+                        <span className="line-clamp-2 text-xs font-medium leading-snug">
+                          {leadHeadline(e.lead)}
+                        </span>
                       </Link>
                     </li>
                   ) : (
@@ -238,8 +258,6 @@ function WeekView({ cursor, entries, locale, onEditTask }: ViewProps) {
     </div>
   );
 }
-
-// ── shell ────────────────────────────────────────────────────────────────────
 
 export function CalendarPage() {
   const { t, i18n } = useTranslation('home');
@@ -291,70 +309,50 @@ export function CalendarPage() {
   }, [view, cursor, locale]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-6 py-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{t('calendar.title')}</h1>
+    <div className="flex h-full min-h-0 flex-col gap-4 rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <h1 className="text-xl font-bold tracking-tight">{t('calendar.title')}</h1>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => shift(-1)}
-              className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              onClick={() => setCursor(new Date())}
-              className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-            >
+            <Button type="button" variant="outline" size="icon" className="size-8" onClick={() => shift(-1)}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setCursor(new Date())}>
               {t('calendar.today')}
-            </button>
-            <button
-              type="button"
-              onClick={() => shift(1)}
-              className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
-            >
-              ›
-            </button>
-            <span className="ml-2 text-sm font-medium text-foreground">{periodLabel}</span>
+            </Button>
+            <Button type="button" variant="outline" size="icon" className="size-8" onClick={() => shift(1)}>
+              <ChevronRight className="size-4" />
+            </Button>
+            <span className="ml-1 text-sm font-medium text-muted-foreground">{periodLabel}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={openNewTask}
-            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300 dark:hover:bg-amber-950/70"
-          >
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" size="sm" variant="outline" onClick={openNewTask}>
+            <Plus className="size-3.5" />
             {t('calendar.new_task')}
-          </button>
+          </Button>
           {isAdmin && (
             <button
               type="button"
               onClick={() => setShowAllAdmin((v) => !v)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                 showAllAdmin
-                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
-                  : 'border-border bg-muted text-muted-foreground'
-              }`}
+                  ? 'border-primary/30 bg-primary/10 text-primary'
+                  : 'border-border/70 bg-muted/40 text-muted-foreground hover:text-foreground',
+              )}
             >
               {showAllAdmin ? t('calendar.all_team') : t('calendar.my_calendar')}
             </button>
           )}
-          <div className="flex rounded-md border">
-            {(['day', 'week'] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setView(v)}
-                className={`px-3 py-1 text-xs font-medium ${
-                  view === v ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                {t(`calendar.view.${v}`)}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            value={view}
+            onChange={(v) => setView(v as View)}
+            options={[
+              { value: 'day', label: t('calendar.view.day') },
+              { value: 'week', label: t('calendar.view.week') },
+            ]}
+          />
         </div>
       </div>
 

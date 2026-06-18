@@ -5,11 +5,10 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
+import { cn } from '@/lib/utils';
 import { useDealJobs, type DealJob } from './hooks/useDealJobs';
 import type { DealRow } from './hooks/useDeals';
 
-// A job note is "present" (and therefore shown to accounting) when a job of the
-// matching service type exists for the deal — even if its note is still empty.
 function noteFrom(
   jobs: DealJob[],
   types: string[],
@@ -44,28 +43,29 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
   });
 
   const readOnlyNote = (label: string, value: string) => (
-    <div>
-      <div className="text-xs font-medium uppercase text-muted-foreground">{label}</div>
-      <div className="mt-1 min-h-9 whitespace-pre-wrap rounded-md border bg-card px-3 py-2 text-sm text-foreground">
-        {value || t('notes_area.empty')}
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="mt-1.5 whitespace-pre-wrap text-sm text-foreground">
+        {value || <span className="text-muted-foreground/60">{t('notes_area.empty')}</span>}
       </div>
     </div>
   );
 
   return (
-    <section className="mt-6 space-y-4 rounded-md border bg-muted p-4">
-      <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        {t('notes_area.title')}
-      </h2>
+    <section className="mt-4 space-y-4 rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+      <h2 className="text-sm font-semibold">{t('notes_area.title')}</h2>
       <div>
         <Label htmlFor="sales-note">{t('notes_area.sales_note')}</Label>
         <textarea
           id="sales-note"
           value={salesNote}
           onChange={(e) => setSalesNote(e.target.value)}
-          className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className={cn(
+            'mt-1.5 block min-h-[88px] w-full resize-y rounded-lg border border-input/80 bg-background px-3 py-2 text-sm shadow-sm',
+            'transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20',
+          )}
         />
-        <p className="mt-1 text-[11px] text-muted-foreground">{t('notes_area.sales_note_hint')}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{t('notes_area.sales_note_hint')}</p>
       </div>
       {webSeo.present && readOnlyNote(t('notes_area.web_seo_notes'), webSeo.value)}
       {local.present && readOnlyNote(t('notes_area.local_notes'), local.value)}

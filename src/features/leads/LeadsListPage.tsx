@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { FilterBar, FilterSelect, PageHeader } from '@/components/layout/page-shell';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useLeads } from './hooks/useLeads';
 import { useAssignableOwners } from './hooks/useAssignableOwners';
@@ -75,8 +77,6 @@ export function LeadsListPage() {
 
   const unassignedCount = useMemo(() => leads.filter((l) => !l.owner_user_id).length, [leads]);
 
-  // Render one page at a time (the full filtered set still drives CSV export +
-  // select-all + counts). Rendering thousands of editable rows was the crash.
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = rows.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
@@ -90,7 +90,8 @@ export function LeadsListPage() {
   function toggleSelect(id: string, checked: boolean) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (checked) next.add(id); else next.delete(id);
+      if (checked) next.add(id);
+      else next.delete(id);
       return next;
     });
   }
@@ -149,7 +150,7 @@ export function LeadsListPage() {
     }
   }
 
-  if (isLoading) return <div className="p-8">…</div>;
+  if (isLoading) return <div className="p-8 text-muted-foreground">…</div>;
   if (error) return <div className="p-8 text-red-600">{error.message}</div>;
 
   const cols: { key: LeadSortKey; label: string }[] = [
@@ -167,143 +168,170 @@ export function LeadsListPage() {
   ];
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={distribution.autoEnabled}
-                disabled={distribution.isLoading || distribution.setEnabled.isPending}
-                onChange={(e) => distribution.setEnabled.mutate(e.target.checked)}
-              />
-              {t('distribute.auto_label')}
-            </label>
-          )}
-          {isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={unassignedCount === 0 || distribute.isPending}
-              onClick={async () => {
-                const n = await distribute.mutateAsync();
-                alert(t('distribute.done', { count: n }));
-              }}
-            >
-              {t('distribute.button', { count: unassignedCount })}
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={exportCsv}>{t('export_csv')}</Button>
-        </div>
-      </div>
+    <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader title={t('title')}>
+        {isAdmin && (
+          <label className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+            <input
+              type="checkbox"
+              checked={distribution.autoEnabled}
+              disabled={distribution.isLoading || distribution.setEnabled.isPending}
+              onChange={(e) => distribution.setEnabled.mutate(e.target.checked)}
+            />
+            {t('distribute.auto_label')}
+          </label>
+        )}
+        {isAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={unassignedCount === 0 || distribute.isPending}
+            onClick={async () => {
+              const n = await distribute.mutateAsync();
+              alert(t('distribute.done', { count: n }));
+            }}
+          >
+            {t('distribute.button', { count: unassignedCount })}
+          </Button>
+        )}
+        <Button variant="outline" size="sm" onClick={exportCsv}>
+          <Download className="size-4" />
+          {t('export_csv')}
+        </Button>
+      </PageHeader>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <FilterBar>
         <Input
           placeholder={t('filters.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
+          className="h-9 max-w-xs rounded-lg border-input/80 shadow-sm"
         />
-        <select value={statusId} onChange={(e) => setStatusId(e.target.value)} className="rounded border border-input bg-background px-2 py-1 text-sm">
+        <FilterSelect value={statusId} onChange={(e) => setStatusId(e.target.value)}>
           <option value={ALL}>{t('table.status_all')}</option>
           {salesStages.map((s) => (
-            <option key={s.id} value={s.id}>{s.display_names[lang] ?? s.code}</option>
+            <option key={s.id} value={s.id}>
+              {s.display_names[lang] ?? s.code}
+            </option>
           ))}
-        </select>
-        <select value={ownerId} onChange={(e) => setOwnerId(e.target.value)} className="rounded border border-input bg-background px-2 py-1 text-sm">
+        </FilterSelect>
+        <FilterSelect value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
           <option value={ALL}>{t('table.owner_all')}</option>
           <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
           {owners.map((o) => (
-            <option key={o.user_id} value={o.user_id}>{o.full_name || o.email}</option>
+            <option key={o.user_id} value={o.user_id}>
+              {o.full_name || o.email}
+            </option>
           ))}
-        </select>
-      </div>
+        </FilterSelect>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {rows.length} {t('title').toLowerCase()}
+        </span>
+      </FilterBar>
 
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted p-2 text-sm">
-          <span>{t('bulk.selected', { count: selected.size })}</span>
-          <select
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#1a9696]/20 bg-[#1a9696]/5 p-3 text-sm">
+          <span className="font-medium">{t('bulk.selected', { count: selected.size })}</span>
+          <FilterSelect
             defaultValue=""
-            onChange={(e) => { if (e.target.value) void bulkApply({ owner_user_id: e.target.value === UNASSIGNED ? null : e.target.value }); e.currentTarget.value = ''; }}
-            className="rounded border border-input bg-background px-2 py-1"
+            onChange={(e) => {
+              if (e.target.value)
+                void bulkApply({ owner_user_id: e.target.value === UNASSIGNED ? null : e.target.value });
+              e.currentTarget.value = '';
+            }}
           >
             <option value="">{t('bulk.reassign')}</option>
             <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
-            {owners.map((o) => (<option key={o.user_id} value={o.user_id}>{o.full_name || o.email}</option>))}
-          </select>
+            {owners.map((o) => (
+              <option key={o.user_id} value={o.user_id}>
+                {o.full_name || o.email}
+              </option>
+            ))}
+          </FilterSelect>
           {isAdmin && (
-            <Button variant="destructive" size="sm" onClick={requestBulkDelete}>🗑 {t('delete.bulk')}</Button>
+            <Button variant="destructive" size="sm" onClick={requestBulkDelete}>
+              <Trash2 className="size-4" />
+              {t('delete.bulk')}
+            </Button>
           )}
-          <select
+          <FilterSelect
             defaultValue=""
-            onChange={(e) => { if (e.target.value) void bulkApply({ stage_id: e.target.value }); e.currentTarget.value = ''; }}
-            className="rounded border border-input bg-background px-2 py-1"
+            onChange={(e) => {
+              if (e.target.value) void bulkApply({ stage_id: e.target.value });
+              e.currentTarget.value = '';
+            }}
           >
             <option value="">{t('bulk.set_status')}</option>
-            {salesStages.map((s) => (<option key={s.id} value={s.id}>{s.display_names[lang] ?? s.code}</option>))}
-          </select>
-          <Button variant="destructive" size="sm" onClick={() => void bulkApply({ archived: true })}>{t('bulk.archive')}</Button>
-          <Button variant="outline" size="sm" onClick={() => setSelected(new Set())}>{t('bulk.clear')}</Button>
+            {salesStages.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.display_names[lang] ?? s.code}
+              </option>
+            ))}
+          </FilterSelect>
+          <Button variant="destructive" size="sm" onClick={() => void bulkApply({ archived: true })}>
+            {t('bulk.archive')}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setSelected(new Set())}>
+            {t('bulk.clear')}
+          </Button>
         </div>
       )}
 
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('empty')}</p>
+        <div className="rounded-xl border border-dashed border-border/80 bg-card px-6 py-16 text-center text-sm text-muted-foreground">
+          {t('empty')}
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="px-1 py-2">
-                  <input
-                    type="checkbox"
-                    aria-label="select all"
-                    checked={selected.size > 0 && selected.size === rows.length}
-                    onChange={(e) => selectAll(e.target.checked)}
-                  />
-                </th>
-                {cols.map((c) => (
-                  <th
-                    key={c.key}
-                    className="cursor-pointer px-1 py-2 hover:underline"
-                    onClick={() => toggleSort(c.key)}
-                  >
-                    {c.label}{sort.key === c.key ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : ''}
+        <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-muted/60 backdrop-blur-sm">
+                <tr className="border-b border-border/60 text-left">
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label="select all"
+                      checked={selected.size > 0 && selected.size === rows.length}
+                      onChange={(e) => selectAll(e.target.checked)}
+                    />
                   </th>
+                  {cols.map((c) => (
+                    <th
+                      key={c.key}
+                      className="cursor-pointer whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => toggleSort(c.key)}
+                    >
+                      {c.label}
+                      {sort.key === c.key ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {pageRows.map((lead) => (
+                  <LeadRowEditor
+                    key={lead.id}
+                    lead={lead}
+                    owners={owners}
+                    stages={salesStages}
+                    currentUserId={userId}
+                    lang={lang}
+                    selected={selected.has(lead.id)}
+                    onToggleSelect={toggleSelect}
+                  />
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {pageRows.map((lead) => (
-                <LeadRowEditor
-                  key={lead.id}
-                  lead={lead}
-                  owners={owners}
-                  stages={salesStages}
-                  currentUserId={userId}
-                  lang={lang}
-                  selected={selected.has(lead.id)}
-                  onToggleSelect={toggleSelect}
-                />
-              ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {rows.length > PAGE_SIZE && (
         <div className="flex items-center justify-center gap-3 text-sm">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={safePage === 0}
-            onClick={() => setPage((p) => p - 1)}
-          >
+          <Button variant="outline" size="sm" disabled={safePage === 0} onClick={() => setPage((p) => p - 1)}>
             ‹ {t('pager.prev')}
           </Button>
-          <span>
+          <span className="text-muted-foreground">
             {t('pager.status', { page: safePage + 1, total: pageCount, count: rows.length })}
           </span>
           <Button
@@ -319,7 +347,9 @@ export function LeadsListPage() {
 
       <ConfirmDialog
         open={confirmIds !== null}
-        onOpenChange={(o) => { if (!o) setConfirmIds(null); }}
+        onOpenChange={(o) => {
+          if (!o) setConfirmIds(null);
+        }}
         title={t('delete.title')}
         description={confirmIds ? t('delete.confirm', { count: confirmIds.length }) : ''}
         confirmLabel={t('delete.button')}

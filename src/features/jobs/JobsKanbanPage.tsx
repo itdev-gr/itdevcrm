@@ -16,6 +16,8 @@ import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { useJobsRealtime } from './hooks/useJobsRealtime';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/layout/page-shell';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 import { groupJobsForBoard, hasBlockedColumn, aiSeoTargetCode } from './kanbanGrouping';
@@ -116,28 +118,28 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-6 py-3">
-        <h1 className="text-2xl font-bold">{SERVICE_LABELS[serviceType][lang]}</h1>
+    <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader title={SERVICE_LABELS[serviceType][lang]}>
         {isAdmin ? (
-          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+          <span className="rounded-full border border-amber-300/80 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
             Admin view · {filteredJobs.length}
           </span>
         ) : (
           <button
             type="button"
             onClick={toggleScope}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={cn(
+              'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
               onlyMine
-                ? 'border-border bg-muted text-muted-foreground hover:bg-muted'
-                : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-950/70'
-            }`}
+                ? 'border-border bg-muted text-muted-foreground hover:bg-muted/80'
+                : 'border-blue-300/80 bg-blue-50 text-blue-800 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200',
+            )}
           >
             {onlyMine ? 'Only mine' : "All my group's"} ·{' '}
             <span className="tabular-nums">{filteredJobs.length}</span>
           </button>
         )}
-      </div>
+      </PageHeader>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -145,11 +147,13 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2">
-          {boardStages.map((s) => (
+        <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-3">
+          {boardStages.map((s, index) => (
             <JobsKanbanColumn
               key={s.id}
               stageId={s.id}
+              stageCode={s.code}
+              stageIndex={index}
               stageLabel={(s.display_names as { en: string; el: string })[lang]}
               jobs={jobsByStage.get(s.id) ?? []}
             />
@@ -157,7 +161,9 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
           {hasBlockedColumn(serviceType) && (
             <JobsKanbanColumn
               stageId="__blocked__"
-              stageLabel={`🔒 ${lang === 'el' ? 'Μπλοκαρισμένο' : 'Blocked'}`}
+              stageCode="blocked"
+              stageIndex={boardStages.length}
+              stageLabel={lang === 'el' ? 'Μπλοκαρισμένο' : 'Blocked'}
               jobs={blockedJobs}
               interactive={false}
             />

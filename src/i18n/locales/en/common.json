@@ -1,5 +1,6 @@
 {
-  "app_title": "ITDevCRM",
+  "app_title": "IT DEV",
+  "app_subtitle": "CRM Platform",
   "back": "Back",
   "tagline": "Multi-department CRM",
   "nav": {
@@ -13,6 +14,10 @@
     },
     "documentation": "Documentation",
     "open_menu": "Open menu"
+  },
+  "docs": {
+    "toc_label": "On this page",
+    "toc_jump": "Jump to section…"
   },
   "locale": {
     "label": "Language",

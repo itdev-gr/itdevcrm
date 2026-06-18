@@ -10,6 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  FilterBar,
+  PageHeader,
+  SettingsTableShell,
+  settingsTdClass,
+  settingsThClass,
+  settingsTheadClass,
+  settingsTrClass,
+} from '@/components/layout/page-shell';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { useUsers } from '@/features/users/hooks/useUsers';
 import { useFieldRules } from './hooks/useFieldRules';
@@ -43,7 +52,13 @@ export function FieldRulesPage() {
     mode: 'readonly',
   });
 
-  if (isLoading) return <div className="p-8">…</div>;
+  if (isLoading) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-xl border border-border/60 bg-card text-sm text-muted-foreground shadow-sm">
+        …
+      </div>
+    );
+  }
 
   function labelForScope(scopeType: 'group' | 'user', scopeId: string): string {
     if (scopeType === 'group') {
@@ -55,19 +70,19 @@ export function FieldRulesPage() {
   }
 
   return (
-    <div className="space-y-6 p-8">
-      <h1 className="text-2xl font-bold">{t('fields.title')}</h1>
+    <div className="space-y-5">
+      <PageHeader title={t('fields.title')} />
 
-      <div className="grid grid-cols-6 gap-2 rounded-md border p-4">
+      <FilterBar className="grid gap-4 lg:grid-cols-6">
         <div>
-          <Label>{t('fields.scope_type')}</Label>
+          <Label className="text-xs text-muted-foreground">{t('fields.scope_type')}</Label>
           <Select
             value={draft.scope_type}
             onValueChange={(v) =>
               setDraft({ ...draft, scope_type: v as 'group' | 'user', scope_id: '' })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="mt-1.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -77,9 +92,9 @@ export function FieldRulesPage() {
           </Select>
         </div>
         <div>
-          <Label>{t('fields.scope_value')}</Label>
+          <Label className="text-xs text-muted-foreground">{t('fields.scope_value')}</Label>
           <Select value={draft.scope_id} onValueChange={(v) => setDraft({ ...draft, scope_id: v })}>
-            <SelectTrigger>
+            <SelectTrigger className="mt-1.5">
               <SelectValue placeholder="—" />
             </SelectTrigger>
             <SelectContent>
@@ -98,12 +113,12 @@ export function FieldRulesPage() {
           </Select>
         </div>
         <div>
-          <Label>{t('fields.table')}</Label>
+          <Label className="text-xs text-muted-foreground">{t('fields.table')}</Label>
           <Select
             value={draft.table_name}
             onValueChange={(v) => setDraft({ ...draft, table_name: v })}
           >
-            <SelectTrigger>
+            <SelectTrigger className="mt-1.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -116,19 +131,20 @@ export function FieldRulesPage() {
           </Select>
         </div>
         <div>
-          <Label>{t('fields.field')}</Label>
+          <Label className="text-xs text-muted-foreground">{t('fields.field')}</Label>
           <Input
+            className="mt-1.5"
             value={draft.field_name}
             onChange={(e) => setDraft({ ...draft, field_name: e.target.value })}
           />
         </div>
         <div>
-          <Label>{t('fields.mode')}</Label>
+          <Label className="text-xs text-muted-foreground">{t('fields.mode')}</Label>
           <Select
             value={draft.mode}
             onValueChange={(v) => setDraft({ ...draft, mode: v as 'hidden' | 'readonly' })}
           >
-            <SelectTrigger>
+            <SelectTrigger className="mt-1.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -139,6 +155,7 @@ export function FieldRulesPage() {
         </div>
         <div className="flex items-end">
           <Button
+            className="w-full"
             onClick={() => {
               if (!draft.scope_id || !draft.field_name) return;
               void upsert
@@ -150,36 +167,42 @@ export function FieldRulesPage() {
             {t('fields.add')}
           </Button>
         </div>
-      </div>
+      </FilterBar>
 
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b text-left">
-            <th className="py-2 pr-4">{t('fields.scope_type')}</th>
-            <th className="py-2 pr-4">{t('fields.scope_value')}</th>
-            <th className="py-2 pr-4">{t('fields.table')}</th>
-            <th className="py-2 pr-4">{t('fields.field')}</th>
-            <th className="py-2 pr-4">{t('fields.mode')}</th>
-            <th className="py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rules.map((r) => (
-            <tr key={r.id} className="border-b">
-              <td className="py-2 pr-4">{r.scope_type}</td>
-              <td className="py-2 pr-4">{labelForScope(r.scope_type, r.scope_id)}</td>
-              <td className="py-2 pr-4">{r.table_name}</td>
-              <td className="py-2 pr-4">{r.field_name}</td>
-              <td className="py-2 pr-4">{t(`fields.modes.${r.mode}`)}</td>
-              <td className="py-2">
-                <Button variant="destructive" size="sm" onClick={() => void del.mutateAsync(r.id)}>
-                  {t('fields.delete')}
-                </Button>
-              </td>
+      <SettingsTableShell>
+        <table className="w-full min-w-[720px] border-collapse text-sm">
+          <thead className={settingsTheadClass}>
+            <tr>
+              <th className={settingsThClass}>{t('fields.scope_type')}</th>
+              <th className={settingsThClass}>{t('fields.scope_value')}</th>
+              <th className={settingsThClass}>{t('fields.table')}</th>
+              <th className={settingsThClass}>{t('fields.field')}</th>
+              <th className={settingsThClass}>{t('fields.mode')}</th>
+              <th className={settingsThClass}></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rules.map((r) => (
+              <tr key={r.id} className={settingsTrClass}>
+                <td className={`${settingsTdClass} capitalize`}>{r.scope_type}</td>
+                <td className={settingsTdClass}>{labelForScope(r.scope_type, r.scope_id)}</td>
+                <td className={`${settingsTdClass} font-mono text-xs`}>{r.table_name}</td>
+                <td className={`${settingsTdClass} font-mono text-xs`}>{r.field_name}</td>
+                <td className={settingsTdClass}>
+                  <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
+                    {t(`fields.modes.${r.mode}`)}
+                  </span>
+                </td>
+                <td className={settingsTdClass}>
+                  <Button variant="destructive" size="sm" onClick={() => void del.mutateAsync(r.id)}>
+                    {t('fields.delete')}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SettingsTableShell>
     </div>
   );
 }

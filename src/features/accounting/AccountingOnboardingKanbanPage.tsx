@@ -14,6 +14,7 @@ import { useAccountingDeals, type AccountingDealRow } from './hooks/useAccountin
 import { useMoveAccountingStage } from './hooks/useMoveAccountingStage';
 import { useCompleteAccounting } from './hooks/useCompleteAccounting';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
+import { PageHeader } from '@/components/layout/page-shell';
 import { AccountingKanbanColumn } from './AccountingKanbanColumn';
 import { AccountingKanbanCard } from './AccountingKanbanCard';
 import { CloseDealDialog } from './CloseDealDialog';
@@ -90,10 +91,8 @@ export function AccountingOnboardingKanbanPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 border-b bg-background/95 px-6 py-3">
-        <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
-      </div>
+    <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader title={t('kanban.title')} />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -101,11 +100,13 @@ export function AccountingOnboardingKanbanPage() {
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2">
-          {accStages.map((s) => (
+        <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-3">
+          {accStages.map((s, index) => (
             <AccountingKanbanColumn
               key={s.id}
               stageId={s.id}
+              stageCode={s.code}
+              stageIndex={index}
               stageLabel={(s.display_names as { en: string; el: string })[lang]}
               stageSubtitle={STAGE_SUBTITLES[s.code]?.[lang]}
               deals={dealsByStage.get(s.id) ?? []}

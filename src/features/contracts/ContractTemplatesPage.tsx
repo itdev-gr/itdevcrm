@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FileText, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PageHeader, SettingsCard } from '@/components/layout/page-shell';
+import { cn } from '@/lib/utils';
 import { CONTRACT_PLACEHOLDERS } from '@/lib/contracts/placeholders';
 import {
   useContractTemplates,
@@ -55,78 +58,93 @@ export function ContractTemplatesPage() {
     }
   }
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
+  if (isLoading) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-xl border border-border/60 bg-card text-sm text-muted-foreground shadow-sm">
+        …
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold">{t('templates_admin.title')}</h1>
-      <div className="flex flex-col gap-6 md:flex-row">
-        <div className="w-full space-y-2 md:w-64">
-          <Button size="sm" variant="outline" onClick={() => pick(null)}>
-            + {t('templates_admin.new')}
+    <div className="space-y-5">
+      <PageHeader title={t('templates_admin.title')} />
+
+      <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <SettingsCard className="p-4">
+          <Button size="sm" variant="outline" className="mb-3 w-full" onClick={() => pick(null)}>
+            <Plus className="size-3.5" />
+            {t('templates_admin.new')}
           </Button>
           {templates.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('templates_admin.empty')}</p>
           ) : (
-            <ul className="divide-y rounded-md border">
+            <ul className="space-y-1">
               {templates.map((tpl) => (
                 <li key={tpl.id}>
                   <button
                     type="button"
                     onClick={() => pick(tpl.id)}
-                    className={`block w-full px-3 py-2 text-left text-sm ${
-                      tpl.id === selectedId ? 'bg-muted font-medium' : 'hover:bg-muted'
-                    }`}
+                    className={cn(
+                      'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                      tpl.id === selectedId
+                        ? 'bg-primary/10 font-medium text-primary dark:text-[#7ad4d4]'
+                        : 'hover:bg-muted/50',
+                    )}
                   >
-                    {tpl.name}
+                    <FileText className="size-4 shrink-0 opacity-70" />
+                    <span className="truncate">{tpl.name}</span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
-        </div>
-        <div className="flex-1 space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="tpl-name">{t('templates_admin.name')}</Label>
-            <Input
-              id="tpl-name"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setDirty(true);
-              }}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="tpl-body">{t('templates_admin.body')}</Label>
-            <textarea
-              id="tpl-body"
-              value={body}
-              onChange={(e) => {
-                setBody(e.target.value);
-                setDirty(true);
-              }}
-              rows={18}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
-            />
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {t('templates_admin.placeholders_hint')}{' '}
-            {CONTRACT_PLACEHOLDERS.map((p) => (
-              <code key={p} className="mr-1 rounded bg-muted px-1 py-0.5">{`{{${p}}}`}</code>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={onSave} disabled={!name.trim() || upsert.isPending}>
-              {t('templates_admin.save')}
-            </Button>
-            {selectedId && (
-              <Button variant="destructive" onClick={onDelete} disabled={del.isPending}>
-                {t('templates_admin.delete')}
+        </SettingsCard>
+
+        <SettingsCard className="p-5">
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="tpl-name">{t('templates_admin.name')}</Label>
+              <Input
+                id="tpl-name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setDirty(true);
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tpl-body">{t('templates_admin.body')}</Label>
+              <textarea
+                id="tpl-body"
+                value={body}
+                onChange={(e) => {
+                  setBody(e.target.value);
+                  setDirty(true);
+                }}
+                rows={18}
+                className="w-full rounded-lg border border-input/80 bg-background px-3 py-2 font-mono text-sm shadow-sm focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
+              />
+            </div>
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-xs text-muted-foreground">
+              {t('templates_admin.placeholders_hint')}{' '}
+              {CONTRACT_PLACEHOLDERS.map((p) => (
+                <code key={p} className="mr-1 rounded bg-muted px-1 py-0.5">{`{{${p}}}`}</code>
+              ))}
+            </div>
+            <div className="flex gap-2 border-t border-border/60 pt-4">
+              <Button onClick={onSave} disabled={!name.trim() || upsert.isPending}>
+                {t('templates_admin.save')}
               </Button>
-            )}
+              {selectedId && (
+                <Button variant="destructive" onClick={onDelete} disabled={del.isPending}>
+                  {t('templates_admin.delete')}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        </SettingsCard>
       </div>
     </div>
   );

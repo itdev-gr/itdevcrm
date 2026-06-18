@@ -1,5 +1,6 @@
 {
-  "app_title": "ITDevCRM",
+  "app_title": "IT DEV",
+  "app_subtitle": "CRM Platform",
   "back": "Πίσω",
   "tagline": "CRM πολλαπλών τμημάτων",
   "nav": {
@@ -13,6 +14,10 @@
     },
     "documentation": "Τεκμηρίωση",
     "open_menu": "Άνοιγμα μενού"
+  },
+  "docs": {
+    "toc_label": "Σε αυτή τη σελίδα",
+    "toc_jump": "Μετάβαση σε ενότητα…"
   },
   "locale": {
     "label": "Γλώσσα",

@@ -13,7 +13,7 @@ async function login(page: Page): Promise<void> {
   await page.goto('/login');
   await page.getByLabel(/email/i).fill(EMAIL!);
   await page.getByLabel(/password/i).fill(PASSWORD!);
-  await page.getByRole('button', { name: /sign in|σύνδεση/i }).click();
+  await page.getByRole('button', { name: /log in|σύνδεση/i }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
   await expect(page.getByRole('banner')).toBeVisible();
 }

@@ -103,8 +103,8 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
           </DialogTitle>
           <DialogDescription className="sr-only">{t('task.dialog_description')}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          <div>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
             <Label htmlFor="task-title">{t('task.title', { defaultValue: 'Title' })}</Label>
             <Input
               id="task-title"
@@ -113,7 +113,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
               autoFocus
             />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="task-assignee">
               {t('task.assignee', { defaultValue: 'Assign to' })}
             </Label>
@@ -121,7 +121,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
               id="task-assignee"
               value={assigneeId || userId}
               onChange={(e) => setAssigneeId(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="block h-9 w-full rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
             >
               {!owners.some((o) => o.user_id === (assigneeId || userId)) && (
                 <option value={assigneeId || userId}>
@@ -137,24 +137,24 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
               ))}
             </select>
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="task-due-at">{t('task.due_at', { defaultValue: 'Due' })}</Label>
             <input
               id="task-due-at"
               type="datetime-local"
               value={dueAt}
               onChange={(e) => setDueAt(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="block h-9 w-full rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
             />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="task-notes">{t('task.notes', { defaultValue: 'Notes' })}</Label>
             <textarea
               id="task-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="block w-full rounded-lg border border-input/80 bg-background px-3 py-2 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
             />
           </div>
           {isEdit && (

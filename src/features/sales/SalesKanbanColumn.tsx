@@ -1,13 +1,18 @@
+import { Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDroppable } from '@dnd-kit/core';
 import { SalesKanbanCard } from './SalesKanbanCard';
 import { useColumnLeads, type ColumnLeadsFilter } from './hooks/useColumnLeads';
+import { stageAccent } from '@/lib/stage-colors';
+import { cn } from '@/lib/utils';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
 import type { SortBy } from './salesKanbanColumns';
 
 type ColumnProps = {
   stageId: string;
+  stageCode?: string | null;
   stageLabel: string;
+  stageIndex: number;
   leads: LeadRow[];
   total: number;
   hasMore: boolean;
@@ -18,10 +23,11 @@ type ColumnProps = {
   locked?: boolean;
 };
 
-/** Presentational column: a droppable list of cards + a "Load more" button. */
 export function SalesKanbanColumn({
   stageId,
+  stageCode,
   stageLabel,
+  stageIndex,
   leads,
   total,
   hasMore,
@@ -33,28 +39,40 @@ export function SalesKanbanColumn({
 }: ColumnProps) {
   const { t } = useTranslation('sales');
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
+  const accent = stageAccent(stageCode, stageIndex);
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-72 shrink-0 flex-col rounded-md border ${
-        isOver ? 'bg-muted' : 'bg-card'
-      }`}
+      className={cn(
+        'flex w-80 shrink-0 flex-col overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-border/60',
+        accent.columnBorder,
+        'border-t-[3px]',
+        isOver && 'bg-[#1a9696]/5 ring-[#1a9696]/30',
+      )}
     >
-      <header className="border-b px-3 py-2">
+      <header className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+        <span className={cn('size-2 shrink-0 rounded-full', accent.dot)} />
+        <span className="truncate text-sm font-semibold">{stageLabel}</span>
         {locked && (
-          <span title="locked" aria-label="locked" className="mr-1">
-            🔒
+          <span title="locked" aria-label="locked">
+            <Lock className="size-3.5 shrink-0 text-muted-foreground" />
           </span>
         )}
-        <span className="text-sm font-medium">{stageLabel}</span>
-        <span className="ml-1 text-xs text-muted-foreground">({total})</span>
+        <span
+          className={cn(
+            'ml-auto inline-flex min-w-7 items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold',
+            accent.badge,
+          )}
+        >
+          {total}
+        </span>
       </header>
-      <div className="flex-1 space-y-2 overflow-y-auto p-2">
+      <div className="flex-1 space-y-2.5 overflow-y-auto p-3">
         {isLoading ? (
-          <p className="px-2 py-4 text-center text-xs text-muted-foreground">…</p>
+          <p className="px-2 py-8 text-center text-xs text-muted-foreground">…</p>
         ) : leads.length === 0 ? (
-          <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-border/70 px-3 py-8 text-center text-xs text-muted-foreground">
             {t('kanban.empty_column')}
           </p>
         ) : (
@@ -74,7 +92,7 @@ export function SalesKanbanColumn({
                 data-testid="load-more"
                 onClick={onLoadMore}
                 disabled={isLoadingMore}
-                className="block w-full rounded-md border border-dashed py-2 text-center text-xs text-blue-700 hover:bg-muted disabled:opacity-50 dark:text-blue-400"
+                className="block w-full rounded-lg border border-dashed border-[#1a9696]/30 py-2.5 text-center text-xs font-medium text-[#157777] transition-colors hover:bg-[#1a9696]/5 disabled:opacity-50 dark:text-[#7ad4d4]"
               >
                 {isLoadingMore ? t('kanban.loading_more') : t('kanban.load_more')}
               </button>
@@ -88,7 +106,9 @@ export function SalesKanbanColumn({
 
 type ContainerProps = {
   stageId: string;
+  stageCode?: string | null;
   stageLabel: string;
+  stageIndex: number;
   total: number;
   filter: ColumnLeadsFilter;
   sortBy: SortBy;
@@ -96,10 +116,11 @@ type ContainerProps = {
   locked?: boolean;
 };
 
-/** Wires one column to its paginated query. Kept thin so the column above stays pure. */
 export function SalesKanbanColumnContainer({
   stageId,
+  stageCode,
   stageLabel,
+  stageIndex,
   total,
   filter,
   sortBy,
@@ -115,7 +136,9 @@ export function SalesKanbanColumnContainer({
   return (
     <SalesKanbanColumn
       stageId={stageId}
+      stageCode={stageCode ?? null}
       stageLabel={stageLabel}
+      stageIndex={stageIndex}
       leads={leads}
       total={total}
       hasMore={!!hasNextPage}

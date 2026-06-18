@@ -19,12 +19,12 @@ describe('LoginPage', () => {
     render(wrap(<LoginPage />));
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /log in|σύνδεση/i })).toBeInTheDocument();
   });
 
   it('links to the forgot-password page', () => {
     render(wrap(<LoginPage />));
-    expect(screen.getByRole('link', { name: /forgot password/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /forgot your password|ξεχάσατε τον κωδικό/i })).toHaveAttribute(
       'href',
       '/forgot-password',
     );

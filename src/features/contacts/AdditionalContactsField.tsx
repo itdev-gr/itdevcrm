@@ -46,7 +46,7 @@ export function AdditionalContactsField({ value, onChange, disabled }: Props) {
         </ul>
       )}
       {!disabled && (
-        <Button type="button" size="sm" variant="outline" onClick={addRow}>
+        <Button type="button" size="sm" variant="outline" onClick={addRow} className="rounded-lg">
           + Add contact
         </Button>
       )}

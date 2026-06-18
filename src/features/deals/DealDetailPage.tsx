@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Lock, Mail } from 'lucide-react';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { DetailTabsList, FilterSelect, detailTabTriggerClass } from '@/components/layout/page-shell';
+import { cn } from '@/lib/utils';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
 import { useMoveAccountingStage } from '@/features/accounting/hooks/useMoveAccountingStage';
@@ -31,6 +34,13 @@ import { DealNotesArea } from './DealNotesArea';
 
 const UNASSIGNED = '__unassigned__';
 
+const CLIENT_STATUS_STYLES: Record<string, string> = {
+  new: 'border-border/70 bg-muted/40',
+  active: 'border-emerald-500/30 bg-emerald-500/5',
+  blocked: 'border-red-500/30 bg-red-500/5',
+  done: 'border-border/70 bg-muted/40',
+};
+
 export function DealDetailPage() {
   const { dealId = '' } = useParams<{ dealId: string }>();
   const { t, i18n } = useTranslation('deals');
@@ -52,9 +62,16 @@ export function DealDetailPage() {
     : null;
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
-  if (isLoading) return <div className="p-8">…</div>;
-  if (error || !deal)
-    return <div className="p-8 text-red-600 dark:text-red-400">{error?.message ?? 'Not found'}</div>;
+  if (isLoading) return <div className="px-4 py-6 sm:px-6 lg:px-8">…</div>;
+  if (error || !deal) {
+    return (
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+          {error?.message ?? 'Not found'}
+        </div>
+      </div>
+    );
+  }
 
   const wonWelcomeDraft = buildWonDraft(deal.client?.name ?? '');
   const completed = !!deal.accounting_completed_at;
@@ -62,6 +79,7 @@ export function DealDetailPage() {
   const dealServices: PlannedService[] = Array.isArray(deal.services_planned)
     ? (deal.services_planned as unknown as PlannedService[])
     : [];
+  const clientStatus = deal.client?.status ?? 'new';
 
   const accStages = stages
     .filter((s) => s.board === 'accounting_onboarding' && !s.archived)
@@ -112,69 +130,89 @@ export function DealDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-6 p-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="flex items-baseline gap-3">
-            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
-              Deal
-            </span>
-            {deal.code && <CopyableCode code={deal.code} className="text-xs" />}
-            <h1 className="text-2xl font-bold">{deal.title}</h1>
+    <div className="flex min-h-full flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+      <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                Deal
+              </span>
+              {deal.code && <CopyableCode code={deal.code} className="text-xs" />}
+              {clientStatus === 'blocked' && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300">
+                  <Lock className="size-3" />
+                  {tClients('status.blocked')}
+                </span>
+              )}
+            </div>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight">{deal.title}</h1>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="size-3.5 opacity-70" />
+                {formatDate(deal.created_at)}
+              </span>
+              <span>·</span>
+              <span>{relativeFromNow(deal.created_at)}</span>
+              {wonBy && (
+                <>
+                  <span>·</span>
+                  <span>{wonBy.full_name || wonBy.email}</span>
+                </>
+              )}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            🗓 {formatDate(deal.created_at)} · {relativeFromNow(deal.created_at)}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {deal.won_by_user_id && (
+              <Button variant="outline" size="sm" onClick={() => setWelcomeOpen(true)}>
+                <Mail className="size-3.5" />
+                {t('welcome_email.send')}
+              </Button>
+            )}
+            {completed && (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                ✓ {tAccounting('actions.complete')}
+              </span>
+            )}
+            {isAdmin && deal.locked_at && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-300"
+                title={formatDate(deal.locked_at)}
+              >
+                <Lock className="size-3" />
+                {relativeFromNow(deal.locked_at)}
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-border/50 bg-muted/25 p-3">
           <div className="flex items-center gap-2">
-            <Label htmlFor="client-status" className="text-sm">
-              {tClients('status.label')}:
+            <Label htmlFor="client-status" className="text-xs font-medium text-muted-foreground">
+              {tClients('status.label')}
             </Label>
-            <select
+            <FilterSelect
               id="client-status"
-              value={deal.client?.status ?? 'new'}
+              value={clientStatus}
               onChange={(e) => onChangeClientStatus(e.target.value)}
-              className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+              className={cn('min-w-[140px]', CLIENT_STATUS_STYLES[clientStatus])}
             >
               <option value="new">{tClients('status.new')}</option>
               <option value="active">{tClients('status.active')}</option>
               <option value="blocked">{tClients('status.blocked')}</option>
               <option value="done">{tClients('status.done')}</option>
-            </select>
+            </FilterSelect>
           </div>
-          {wonBy && (
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">{tLeads('sales_person.label')}:</Label>
-              <span className="rounded-md border border-input bg-muted px-2 py-1 text-sm text-muted-foreground">
-                {wonBy.full_name || wonBy.email}
-              </span>
-            </div>
-          )}
-          {deal.won_by_user_id && (
-            <Button variant="outline" size="sm" onClick={() => setWelcomeOpen(true)}>
-              {t('welcome_email.send')}
-            </Button>
-          )}
-          <SendEmailDialog
-            open={welcomeOpen}
-            identity="personal"
-            to={deal.client?.email ?? ''}
-            subject={wonWelcomeDraft.subject}
-            body={wonWelcomeDraft.body}
-            dedupeKey={`won:${deal.id}`}
-            onClose={() => setWelcomeOpen(false)}
-          />
           <div className="flex items-center gap-2">
-            <Label htmlFor="owner" className="text-sm">
-              {tLeads('owner.label')}:
+            <Label htmlFor="owner" className="text-xs font-medium text-muted-foreground">
+              {tLeads('owner.label')}
             </Label>
-            <select
+            <FilterSelect
               id="owner"
               value={deal.owner_user_id ?? UNASSIGNED}
               onChange={(e) => onChangeOwner(e.target.value)}
               disabled={completed}
-              className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+              className="min-w-[180px]"
             >
               <option value={UNASSIGNED}>{tLeads('owner.unassigned')}</option>
               {owners.map((o) => (
@@ -183,106 +221,144 @@ export function DealDetailPage() {
                   {o.is_admin ? ' · admin' : ''}
                 </option>
               ))}
-            </select>
+            </FilterSelect>
           </div>
           {onAccountingKanban && accStages.length > 0 && (
             <div className="flex items-center gap-2">
-              <Label htmlFor="acc-stage" className="text-sm">
-                {tLeads('actions.move_to')}:
+              <Label htmlFor="acc-stage" className="text-xs font-medium text-muted-foreground">
+                {tLeads('actions.move_to')}
               </Label>
-              <select
+              <FilterSelect
                 id="acc-stage"
                 value={deal.accounting_stage_id ?? ''}
                 onChange={(e) => onChangeAccountingStage(e.target.value)}
                 disabled={moveAccounting.isPending || complete.isPending}
-                className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                className="min-w-[180px]"
               >
                 {accStages.map((s) => (
                   <option key={s.id} value={s.id}>
                     {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
                   </option>
                 ))}
-              </select>
+              </FilterSelect>
             </div>
-          )}
-          {completed && (
-            <span className="text-sm text-emerald-700 dark:text-emerald-400">✓ {tAccounting('actions.complete')}</span>
-          )}
-          {isAdmin && deal.locked_at && (
-            <span className="text-xs text-muted-foreground" title={formatDate(deal.locked_at)}>
-              🔒 {relativeFromNow(deal.locked_at)}
-            </span>
           )}
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="lg:min-h-0 lg:flex-1">
-        <TabsList>
-          <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="payment">{t('tabs.payment')}</TabsTrigger>
-          <TabsTrigger value="jobs">{t('tabs.jobs')}</TabsTrigger>
-          <TabsTrigger value="tasks">{t('tabs.tasks')}</TabsTrigger>
-          <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
-          <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
-          <TabsTrigger value="offers">Offers</TabsTrigger>
-          <TabsTrigger value="contracts">{tContracts('tab.title')}</TabsTrigger>
-        </TabsList>
+      <SendEmailDialog
+        open={welcomeOpen}
+        identity="personal"
+        to={deal.client?.email ?? ''}
+        subject={wonWelcomeDraft.subject}
+        body={wonWelcomeDraft.body}
+        dedupeKey={`won:${deal.id}`}
+        onClose={() => setWelcomeOpen(false)}
+      />
 
-        <TabsContent value="overview" className="pt-4 lg:min-h-0 lg:overflow-hidden">
-          <div className="grid grid-cols-1 gap-6 lg:h-full lg:min-h-0 lg:grid-rows-1 lg:grid-cols-[65%_35%]">
-            <div className="min-w-0 lg:h-full lg:overflow-y-auto lg:pr-6">
+      <Tabs defaultValue="overview" className="lg:min-h-0 lg:flex-1 lg:flex lg:flex-col">
+        <DetailTabsList>
+          <TabsTrigger value="overview" className={detailTabTriggerClass}>
+            {t('tabs.overview')}
+          </TabsTrigger>
+          <TabsTrigger value="payment" className={detailTabTriggerClass}>
+            {t('tabs.payment')}
+          </TabsTrigger>
+          <TabsTrigger value="jobs" className={detailTabTriggerClass}>
+            {t('tabs.jobs')}
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className={detailTabTriggerClass}>
+            {t('tabs.tasks')}
+          </TabsTrigger>
+          <TabsTrigger value="attachments" className={detailTabTriggerClass}>
+            {t('tabs.attachments')}
+          </TabsTrigger>
+          <TabsTrigger value="activity" className={detailTabTriggerClass}>
+            {t('tabs.activity')}
+          </TabsTrigger>
+          <TabsTrigger value="offers" className={detailTabTriggerClass}>
+            {t('tabs.offers', { defaultValue: 'Offers' })}
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className={detailTabTriggerClass}>
+            {tContracts('tab.title')}
+          </TabsTrigger>
+        </DetailTabsList>
+
+        <TabsContent value="overview" className="mt-5 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <div className="grid grid-cols-1 gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-1">
               <DealForm initial={deal} />
               <DealNotesArea deal={deal} />
               <DealServiceInfo dealId={dealId} />
-              <div className="mt-6">
-                <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('jobs_billing.overview_heading')}
-                </h2>
+              <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+                <h2 className="mb-4 text-sm font-semibold">{t('jobs_billing.overview_heading')}</h2>
                 <JobsBillingPanel
                   dealId={dealId}
                   defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
                   readOnly={!canManageBilling}
                 />
-              </div>
+              </section>
             </div>
-            <aside className="min-w-0 lg:flex lg:h-full lg:flex-col lg:border-l lg:pl-6">
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                {tLeads('tabs.comments')}
-              </h2>
-              <CommentsPanel parentType="deal" parentId={dealId} />
+            <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+              <div className="flex max-h-[calc(100vh-8rem)] min-h-[320px] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+                <div className="shrink-0 border-b border-border/60 px-4 py-3">
+                  <h2 className="text-sm font-semibold">{tLeads('tabs.comments')}</h2>
+                </div>
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+                  <CommentsPanel parentType="deal" parentId={dealId} />
+                </div>
+              </div>
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value="payment" className="space-y-6 pt-4 lg:min-h-0 lg:overflow-y-auto">
+
+        <TabsContent value="payment" className="mt-5 space-y-4 outline-none lg:min-h-0 lg:overflow-y-auto">
           {canManageBilling && (
-            <JobsBillingPanel
+            <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+              <JobsBillingPanel
+                dealId={dealId}
+                defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+              />
+            </div>
+          )}
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <PaymentsPanel
               dealId={dealId}
+              services={dealServices}
               defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
             />
-          )}
-          <PaymentsPanel
-            dealId={dealId}
-            services={dealServices}
-            defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
-          />
+          </div>
         </TabsContent>
-        <TabsContent value="jobs" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
-          <JobsTab dealId={dealId} accountingCompletedAt={deal.accounting_completed_at} />
+
+        <TabsContent value="jobs" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <JobsTab dealId={dealId} accountingCompletedAt={deal.accounting_completed_at} />
+          </div>
         </TabsContent>
-        <TabsContent value="tasks" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
-          <AssignedTasksTab source={{ kind: 'deal', id: dealId }} />
+        <TabsContent value="tasks" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <AssignedTasksTab source={{ kind: 'deal', id: dealId }} />
+          </div>
         </TabsContent>
-        <TabsContent value="attachments" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
-          <AttachmentsPanel parentType="deal" parentId={dealId} />
+        <TabsContent value="attachments" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <AttachmentsPanel parentType="deal" parentId={dealId} />
+          </div>
         </TabsContent>
-        <TabsContent value="activity" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
-          <ActivityPanel entityType="deals" entityId={dealId} />
+        <TabsContent value="activity" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <ActivityPanel entityType="deals" entityId={dealId} />
+          </div>
         </TabsContent>
-        <TabsContent value="offers" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
-          <OffersTab dealId={dealId} />
+        <TabsContent value="offers" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <OffersTab dealId={dealId} />
+          </div>
         </TabsContent>
-        <TabsContent value="contracts" className="pt-4 lg:min-h-0 lg:overflow-y-auto">
-          {deal.client_id && <ContractsTab clientId={deal.client_id} />}
+        <TabsContent value="contracts" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            {deal.client_id && <ContractsTab clientId={deal.client_id} />}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

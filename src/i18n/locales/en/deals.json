@@ -34,7 +34,8 @@
     "comments": "Comments",
     "attachments": "Attachments",
     "activity": "Activity",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "offers": "Offers"
   },
   "assigned_tasks": {
     "section_open": "Open",

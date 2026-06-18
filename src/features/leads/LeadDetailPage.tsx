@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Trash2, Trophy } from 'lucide-react';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { FilterSelect, DetailTabsList, detailTabTriggerClass } from '@/components/layout/page-shell';
 import { LeadForm } from './LeadForm';
 import { useLead } from './hooks/useLead';
 import { useConvertLead } from './hooks/useConvertLead';
@@ -150,40 +152,102 @@ export function LeadDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="flex items-baseline gap-3">
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
-              Lead
-            </span>
-            {lead.code && <CopyableCode code={lead.code} className="text-xs" />}
-            <h1 className="text-2xl font-bold">{lead.title}</h1>
+    <div className="flex min-h-full flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                Lead
+              </span>
+              {lead.code && <CopyableCode code={lead.code} className="text-xs" />}
+            </div>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight">{lead.title}</h1>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="size-3.5 opacity-70" />
+                {formatDate(lead.created_at)}
+              </span>
+              <span>·</span>
+              <span>{relativeFromNow(lead.created_at)}</span>
+              {isAdmin && lead.won_by_user_id && (
+                <>
+                  <span>·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Trophy className="size-3.5 text-amber-600 dark:text-amber-400" />
+                    {(() => {
+                      const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
+                      return winner ? winner.full_name || winner.email : lead.won_by_user_id;
+                    })()}
+                  </span>
+                </>
+              )}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            🗓 {formatDate(lead.created_at)} · {relativeFromNow(lead.created_at)}
-            {isAdmin && lead.won_by_user_id && (
-              <span className="ml-2">
-                · 🏆{' '}
-                {(() => {
-                  const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
-                  return winner ? winner.full_name || winner.email : lead.won_by_user_id;
-                })()}
+          <div className="flex flex-wrap items-center gap-2">
+            {currentStageCode === 'offer_sent' && (
+              <Button variant="outline" size="sm" onClick={() => setOfferEmailOpen(true)}>
+                {t('offer_email.send')}
+              </Button>
+            )}
+            {lead.converted_at && (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                ✓ converted
               </span>
             )}
-          </p>
+            {lead.email_opt_out ? (
+              <span
+                className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950/50 dark:text-red-300"
+                title={t('automations.opted_out_hint')}
+              >
+                {t('automations.opted_out')}
+              </span>
+            ) : (
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-1.5 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={lead.automations_enabled}
+                  onChange={(e) =>
+                    update.mutate({ id: lead.id, patch: { automations_enabled: e.target.checked } })
+                  }
+                  className="size-3.5 rounded border-input accent-primary"
+                />
+                {t('automations.label')}
+              </label>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
+              disabled={!nextNewLead.data || nextNewLead.isLoading}
+            >
+              {nextNewLead.isLoading
+                ? '…'
+                : nextNewLead.data
+                  ? t('actions.next_new_lead')
+                  : t('actions.no_more_new_leads')}
+            </Button>
+            {isAdmin &&
+              isLeadDeletable({ converted_at: lead.converted_at, stage: { code: currentStageCode ?? null } }) && (
+                <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="size-3.5" />
+                  {t('delete.button')}
+                </Button>
+              )}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-border/50 bg-muted/25 p-3">
           <div className="flex items-center gap-2">
-            <Label htmlFor="owner" className="text-sm">
-              {t('owner.label')}:
+            <Label htmlFor="owner" className="text-xs font-medium text-muted-foreground">
+              {t('owner.label')}
             </Label>
-            <select
+            <FilterSelect
               id="owner"
               value={lead.owner_user_id ?? UNASSIGNED}
               onChange={(e) => onChangeOwner(e.target.value)}
               disabled={readOnly || update.isPending}
-              className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+              className="min-w-[180px]"
             >
               <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
               {owners.map((o) => (
@@ -192,105 +256,78 @@ export function LeadDetailPage() {
                   {o.is_admin ? ' · admin' : ''}
                 </option>
               ))}
-            </select>
+            </FilterSelect>
           </div>
           {!lead.converted_at && (
             <div className="flex items-center gap-2">
-              <Label htmlFor="stage" className="text-sm">
-                {t('actions.move_to')}:
+              <Label htmlFor="stage" className="text-xs font-medium text-muted-foreground">
+                {t('actions.move_to')}
               </Label>
-              <select
+              <FilterSelect
                 id="stage"
                 value={lead.stage_id ?? ''}
                 onChange={(e) => onChangeStage(e.target.value)}
                 disabled={convert.isPending || moveStage.isPending}
-                className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                className="min-w-[180px]"
               >
                 {salesStages.map((s) => (
                   <option key={s.id} value={s.id}>
                     {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
                   </option>
                 ))}
-              </select>
+              </FilterSelect>
             </div>
           )}
-          {currentStageCode === 'offer_sent' && (
-            <Button variant="outline" size="sm" onClick={() => setOfferEmailOpen(true)}>
-              {t('offer_email.send')}
-            </Button>
-          )}
-          {lead.converted_at && (
-            <span className="text-sm text-emerald-700 dark:text-emerald-400">✓ converted</span>
-          )}
-          {lead.email_opt_out ? (
-            <span
-              className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
-              title={t('automations.opted_out_hint')}
-            >
-              {t('automations.opted_out')}
-            </span>
-          ) : (
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={lead.automations_enabled}
-                onChange={(e) =>
-                  update.mutate({ id: lead.id, patch: { automations_enabled: e.target.checked } })
-                }
-              />
-              {t('automations.label')}
-            </label>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
-            disabled={!nextNewLead.data || nextNewLead.isLoading}
-          >
-            {nextNewLead.isLoading
-              ? '…'
-              : nextNewLead.data
-                ? t('actions.next_new_lead')
-                : t('actions.no_more_new_leads')}
-          </Button>
-          {isAdmin &&
-            isLeadDeletable({ converted_at: lead.converted_at, stage: { code: currentStageCode ?? null } }) && (
-              <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
-                🗑 {t('delete.button')}
-              </Button>
-            )}
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
-          <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
-          <TabsTrigger value="offers">Offers</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
+        <DetailTabsList>
+          <TabsTrigger value="overview" className={detailTabTriggerClass}>
+            {t('tabs.overview')}
+          </TabsTrigger>
+          <TabsTrigger value="attachments" className={detailTabTriggerClass}>
+            {t('tabs.attachments')}
+          </TabsTrigger>
+          <TabsTrigger value="activity" className={detailTabTriggerClass}>
+            {t('tabs.activity')}
+          </TabsTrigger>
+          <TabsTrigger value="offers" className={detailTabTriggerClass}>
+            {t('tabs.offers')}
+          </TabsTrigger>
+        </DetailTabsList>
 
-        <TabsContent value="overview" className="pt-4">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[65%_35%]">
-            <div className="min-w-0 lg:pr-6">
+        <TabsContent value="overview" className="mt-5 outline-none">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0">
               <LeadForm lead={lead} />
             </div>
-            <aside className="min-w-0 lg:border-l lg:pl-6">
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                {t('tabs.comments')}
-              </h2>
-              <CommentsPanel parentType="lead" parentId={leadId} />
+            <aside className="min-w-0 xl:sticky xl:top-24 xl:self-start">
+              <div className="flex max-h-[calc(100vh-8rem)] min-h-[320px] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+                <div className="shrink-0 border-b border-border/60 px-4 py-3">
+                  <h2 className="text-sm font-semibold">{t('tabs.comments')}</h2>
+                </div>
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+                  <CommentsPanel parentType="lead" parentId={leadId} />
+                </div>
+              </div>
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value="attachments" className="pt-4">
-          <AttachmentsPanel parentType="lead" parentId={leadId} />
+        <TabsContent value="attachments" className="mt-5 outline-none">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <AttachmentsPanel parentType="lead" parentId={leadId} />
+          </div>
         </TabsContent>
-        <TabsContent value="activity" className="pt-4">
-          <ActivityPanel entityType="leads" entityId={leadId} />
+        <TabsContent value="activity" className="mt-5 outline-none">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <ActivityPanel entityType="leads" entityId={leadId} />
+          </div>
         </TabsContent>
-        <TabsContent value="offers" className="pt-4">
-          <OffersTab leadId={leadId} />
+        <TabsContent value="offers" className="mt-5 outline-none">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <OffersTab leadId={leadId} />
+          </div>
         </TabsContent>
       </Tabs>
 

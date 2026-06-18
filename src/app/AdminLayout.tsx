@@ -1,6 +1,7 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AdminGuard } from '@/components/auth/AdminGuard';
+import { PageHeader, SettingsCard, SettingsNav } from '@/components/layout/page-shell';
 
 const SETTINGS_TABS = [
   { to: '/admin/users', key: 'users' },
@@ -14,27 +15,20 @@ const SETTINGS_TABS = [
 
 export function AdminLayout() {
   const { t } = useTranslation('admin');
+  const tabs = SETTINGS_TABS.map((tab) => ({
+    to: tab.to,
+    label: t(`nav.${tab.key}`),
+  }));
+
   return (
     <AdminGuard>
-      <div className="space-y-4 p-6">
-        <div className="sticky top-0 z-20 -mx-6 -mt-6 border-b bg-background/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <h1 className="mb-2 text-2xl font-bold">{t('settings.title')}</h1>
-          <nav className="flex flex-wrap gap-1">
-            {SETTINGS_TABS.map((tab) => (
-              <NavLink
-                key={tab.to}
-                to={tab.to}
-                className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
-                  }`
-                }
-              >
-                {t(`nav.${tab.key}`)}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+      <div className="flex min-h-full flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+        <SettingsCard className="p-5">
+          <PageHeader title={t('settings.title')} />
+          <div className="mt-4">
+            <SettingsNav tabs={tabs} />
+          </div>
+        </SettingsCard>
         <Outlet />
       </div>
     </AdminGuard>

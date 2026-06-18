@@ -1,6 +1,7 @@
 {
   "title": "Clients",
   "my_clients": "My Clients",
+  "search_placeholder": "Search clients…",
   "new_client": "New client",
   "new_client_description": "Add a new client to your account.",
   "table": {

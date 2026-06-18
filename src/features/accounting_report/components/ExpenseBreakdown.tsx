@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { LedgerRow } from '../hooks/useLedger';
 import { useExpenseCategories } from '../hooks/useExpenseCategories';
 
@@ -17,6 +19,21 @@ type Group = {
   gross: number;
   rows: LedgerRow[];
 };
+
+function PercentCell({ value, total }: { value: number; total: number }) {
+  const pct = total > 0 ? (value / total) * 100 : 0;
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <div className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-muted sm:block">
+        <div
+          className="h-full rounded-full bg-red-400/70 transition-all"
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+      <span className="min-w-[3rem] text-right tabular-nums">{pct.toFixed(1)}%</span>
+    </div>
+  );
+}
 
 export function ExpenseBreakdown({ rows, onSelectGroup, onNewExpense }: ExpenseBreakdownProps) {
   const { t, i18n } = useTranslation('accounting_report');
@@ -50,47 +67,70 @@ export function ExpenseBreakdown({ rows, onSelectGroup, onNewExpense }: ExpenseB
   const totalGross = groups.reduce((s, g) => s + g.gross, 0);
 
   return (
-    <section>
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="font-semibold">{t('expense_breakdown.title')}</h3>
-        <button
-          type="button"
-          onClick={onNewExpense}
-          className="rounded border px-3 py-1.5 text-sm"
-        >
+    <section className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3 sm:px-5">
+        <h3 className="text-sm font-semibold">{t('expense_breakdown.title')}</h3>
+        <Button type="button" size="sm" variant="outline" onClick={onNewExpense}>
+          <Plus className="size-3.5" />
           {t('expense_breakdown.new_expense')}
-        </button>
+        </Button>
       </div>
-      <table className="w-full text-sm">
-        <thead className="bg-muted text-left">
-          <tr>
-            <th className="px-3 py-2">{t('expense_breakdown.category')}</th>
-            <th className="px-3 py-2 text-right">{t('expense_breakdown.count')}</th>
-            <th className="px-3 py-2 text-right">{t('expense_breakdown.net')}</th>
-            <th className="px-3 py-2 text-right">{t('expense_breakdown.vat')}</th>
-            <th className="px-3 py-2 text-right">{t('expense_breakdown.gross')}</th>
-            <th className="px-3 py-2 text-right">{t('expense_breakdown.percent')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {groups.map((g) => (
-            <tr
-              key={g.key ?? 'unspecified'}
-              className="cursor-pointer hover:bg-muted"
-              onClick={() => onSelectGroup(g.key, g.rows, g.key ? (labelByKey.get(g.key) ?? g.key) : t('expense_breakdown.category'))}
-            >
-              <td className="px-3 py-2">{g.key ? (labelByKey.get(g.key) ?? g.key) : '—'}</td>
-              <td className="px-3 py-2 text-right">{g.count}</td>
-              <td className="px-3 py-2 text-right">€{g.net.toFixed(2)}</td>
-              <td className="px-3 py-2 text-right">€{g.vat.toFixed(2)}</td>
-              <td className="px-3 py-2 text-right">€{g.gross.toFixed(2)}</td>
-              <td className="px-3 py-2 text-right">
-                {totalGross > 0 ? ((g.gross / totalGross) * 100).toFixed(1) : '0.0'}%
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead className="bg-muted/40">
+            <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="px-4 py-3 font-medium">{t('expense_breakdown.category')}</th>
+              <th className="px-4 py-3 text-right font-medium">{t('expense_breakdown.count')}</th>
+              <th className="px-4 py-3 text-right font-medium">{t('expense_breakdown.net')}</th>
+              <th className="px-4 py-3 text-right font-medium">{t('expense_breakdown.vat')}</th>
+              <th className="px-4 py-3 text-right font-medium">{t('expense_breakdown.gross')}</th>
+              <th className="px-4 py-3 text-right font-medium">{t('expense_breakdown.percent')}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {groups.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  —
+                </td>
+              </tr>
+            ) : (
+              groups.map((g) => (
+                <tr
+                  key={g.key ?? 'unspecified'}
+                  className="cursor-pointer border-t border-border/40 transition-colors hover:bg-red-500/5"
+                  onClick={() =>
+                    onSelectGroup(
+                      g.key,
+                      g.rows,
+                      g.key ? (labelByKey.get(g.key) ?? g.key) : t('expense_breakdown.category'),
+                    )
+                  }
+                >
+                  <td className="px-4 py-3 font-medium">
+                    {g.key ? (labelByKey.get(g.key) ?? g.key) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    <span className="inline-flex min-w-6 justify-center rounded-full bg-muted px-2 py-0.5 text-xs">
+                      {g.count}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">€{g.net.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    €{g.vat.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium tabular-nums text-red-700 dark:text-red-400">
+                    €{g.gross.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <PercentCell value={g.gross} total={totalGross} />
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

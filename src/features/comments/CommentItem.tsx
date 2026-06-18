@@ -84,11 +84,11 @@ export function CommentItem({ comment, replies = [] }: Props) {
   }
 
   return (
-    <div className="rounded-md border bg-card p-3">
-      <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">{author}</span>
-        <div className="flex items-center gap-2 whitespace-nowrap">
-          <span>
+    <div className="min-w-0 rounded-lg border border-border/60 bg-card p-3.5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        <span className="min-w-0 break-words font-medium text-foreground">{author}</span>
+        <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="whitespace-nowrap">
             {date}
             {isEdited && (
               <span className="ml-1 italic">
@@ -181,7 +181,7 @@ export function CommentItem({ comment, replies = [] }: Props) {
           </div>
         </div>
       ) : (
-        <p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p>
+        <p className="mt-1 break-words whitespace-pre-wrap text-sm">{comment.body}</p>
       )}
 
       {replying && (

@@ -28,7 +28,7 @@ export function BackButton() {
   }
 
   return (
-    <div className="px-6 pt-4 sm:px-8">
+    <div className="px-4 pt-3 sm:px-6 lg:px-8">
       <button
         type="button"
         onClick={handleClick}

@@ -24,14 +24,14 @@ export function TeamLeadsBadge({ groupId }: { groupId: string }) {
   if (isLoading) return null;
   if (leads.length === 0) {
     return (
-      <div className="rounded-md border border-dashed bg-muted px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-border/60 bg-muted/25 px-4 py-3 text-xs text-muted-foreground">
         No team lead set — new jobs for this department will spawn unassigned.
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border bg-emerald-50 px-3 py-2 text-xs dark:bg-emerald-950/50">
+    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-xs">
       <span className="font-medium text-emerald-800 dark:text-emerald-300">Team leads:</span>{' '}
       <span className="text-emerald-700 dark:text-emerald-400">
         {leads

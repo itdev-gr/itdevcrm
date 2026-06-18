@@ -145,7 +145,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
         onKeyDown={onKeyDown}
         placeholder={t('comments.placeholder')}
         rows={2}
-        className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        className="block w-full resize-none rounded-lg border border-input/80 bg-background px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
       />
       {query != null && matches.length > 0 && (
         <ul className="absolute z-30 max-h-56 w-72 overflow-y-auto rounded-md border bg-card text-sm shadow-md">

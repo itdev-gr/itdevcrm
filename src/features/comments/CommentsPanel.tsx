@@ -47,8 +47,11 @@ export function CommentsPanel({ parentType, parentId }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
-      <div ref={scrollRef} className="space-y-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 space-y-2 overflow-x-hidden overflow-y-auto pr-1"
+      >
         {tops.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('comments.empty')}</p>
         ) : (
@@ -57,7 +60,9 @@ export function CommentsPanel({ parentType, parentId }: Props) {
           ))
         )}
       </div>
-      <CommentForm parentType={parentType} parentId={parentId} />
+      <div className="shrink-0">
+        <CommentForm parentType={parentType} parentId={parentId} />
+      </div>
     </div>
   );
 }

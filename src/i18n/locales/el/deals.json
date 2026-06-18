@@ -34,7 +34,8 @@
     "comments": "Σχόλια",
     "attachments": "Συνημμένα",
     "activity": "Δραστηριότητα",
-    "tasks": "Καθήκοντα"
+    "tasks": "Καθήκοντα",
+    "offers": "Προσφορές"
   },
   "assigned_tasks": {
     "section_open": "Ανοιχτές",

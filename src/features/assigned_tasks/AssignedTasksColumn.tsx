@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { CheckCircle2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { cn } from '@/lib/utils';
 import { useAssignedTasksOpen, type AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
@@ -26,30 +28,30 @@ function Row({
   const { t } = useTranslation('home');
   const resolve = useResolveAssignedTask();
   return (
-    <li className="border-t first:border-t-0">
+    <li>
       <button
         type="button"
         aria-label={task.title}
         onClick={() => onOpen(task.id)}
-        className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-muted"
+        className="flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
       >
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium">{task.title}</span>
             <DepartmentChip department={task.department} />
             <Link
               to={sourceHref(task)}
               onClick={(e) => e.stopPropagation()}
-              className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:bg-muted"
+              className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
               {task.source_code ?? '—'}
             </Link>
           </div>
           {task.client && (
-            <p className="truncate text-[11px] text-muted-foreground">{task.client.name}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{task.client.name}</p>
           )}
           {task.description && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
           )}
         </div>
         {canResolve && (
@@ -64,6 +66,7 @@ function Row({
             }}
             disabled={resolve.isPending}
           >
+            <CheckCircle2 className="size-3.5" />
             {t('assigned_tasks.resolve')}
           </Button>
         )}
@@ -88,33 +91,41 @@ export function AssignedTasksColumn() {
   const empty = showAllAdmin ? t('assigned_tasks.empty_admin') : t('assigned_tasks.empty');
 
   return (
-    <section className="flex h-80 min-h-0 flex-col border-t bg-card">
-      <header className="flex shrink-0 items-center justify-between border-b px-6 py-2.5">
-        <h2 className="text-sm font-semibold">{title} ({tasks.length})</h2>
+    <section className="mx-4 mb-4 flex min-h-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm sm:mx-5">
+      <header className="flex shrink-0 items-center justify-between border-b border-border/60 px-4 py-3 sm:px-5">
+        <h2 className="text-sm font-semibold">
+          {title}{' '}
+          <span className="font-normal text-muted-foreground">({tasks.length})</span>
+        </h2>
         <div className="flex items-center gap-2">
           <Button type="button" size="sm" variant="outline" onClick={() => setNewTaskOpen(true)}>
+            <Plus className="size-3.5" />
             {t('calendar.new_task')}
           </Button>
           {isAdmin && (
             <button
               type="button"
               onClick={() => setShowAllAdmin((v) => !v)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                 showAllAdmin
-                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
-                  : 'border-border bg-muted text-muted-foreground'
-              }`}
+                  ? 'border-primary/30 bg-primary/10 text-primary'
+                  : 'border-border/70 bg-muted/40 text-muted-foreground hover:text-foreground',
+              )}
             >
               {showAllAdmin ? t('assigned_tasks.all_team_title') : t('assigned_tasks.title')}
             </button>
           )}
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 max-h-72 flex-1 overflow-y-auto p-3 sm:p-4">
         {tasks.length === 0 ? (
-          <p className="p-6 text-center text-sm text-muted-foreground">{empty}</p>
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-10 text-center">
+            <CheckCircle2 className="mb-2 size-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">{empty}</p>
+          </div>
         ) : (
-          <ul>
+          <ul className="space-y-2">
             {tasks.map((task) => (
               <Row
                 key={task.id}

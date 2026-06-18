@@ -1,11 +1,26 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
+import {
+  BarChart3,
+  Building2,
+  ClipboardList,
+  Columns3,
+  FileText,
+  Globe,
+  Home,
+  Megaphone,
+  Receipt,
+  RefreshCw,
+  Server,
+  Settings,
+  Share2,
+  Target,
+  Users,
+  Code2,
+} from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { sidebarLinkClass, sidebarSectionClass } from './sidebar-nav-styles';
 
-// AI SEO is folded into Web SEO + Local SEO — no separate kanban. The
-// `ai_seo` permission group is still meaningful (members handle AI SEO
-// jobs); they get the Web SEO + Local SEO sidebar links via the bridge
-// in `visibleTechGroups` below.
 const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting', 'ads'] as const;
 
 const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -15,6 +30,15 @@ const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   social_media: 'Social Media',
   hosting: 'Hosting',
   ads: 'Ads',
+};
+
+const TECH_ICONS: Record<(typeof TECH_GROUPS)[number], typeof Globe> = {
+  web_seo: Globe,
+  local_seo: Target,
+  web_dev: Code2,
+  social_media: Share2,
+  hosting: Server,
+  ads: Megaphone,
 };
 
 const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -35,19 +59,12 @@ const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   ads: '/tech/ads/clients',
 };
 
-/**
- * The nav links themselves — rendered inside the desktop <aside> and inside
- * the mobile drawer. onNavigate fires when any link is clicked (the drawer
- * uses it to close itself).
- */
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation();
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const isSales = groupCodes.includes('sales');
   const isAccounting = groupCodes.includes('accounting');
-  // AI SEO members work AI SEO jobs which now live on the Web SEO + Local SEO
-  // boards, so grant them visibility into both kanbans.
   const isAiSeo = groupCodes.includes('ai_seo');
   const visibleTechGroups = isAdmin
     ? [...TECH_GROUPS]
@@ -57,177 +74,148 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <nav
-      className="flex min-h-full flex-col gap-2"
+      className="flex min-h-full flex-col gap-0.5"
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('a')) onNavigate?.();
       }}
     >
-      <NavLink
-        to="/"
-        end
-        className={({ isActive }) =>
-          `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-        }
-      >
+      <NavLink to="/" end className={({ isActive }) => sidebarLinkClass(isActive)}>
+        <Home className="size-4 shrink-0 opacity-80" />
         {t('nav.home')}
       </NavLink>
+
       {isAdmin && (
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-          }
-        >
-          📊 {t('dashboard.title')}
+        <NavLink to="/dashboard" className={({ isActive }) => sidebarLinkClass(isActive)}>
+          <BarChart3 className="size-4 shrink-0 opacity-80" />
+          {t('dashboard.title')}
         </NavLink>
       )}
+
       {(isAdmin || isSales) && (
-        <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-muted-foreground">{t('common:nav.section.sales')}</p>
-          <NavLink
-            to="/sales/clients"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            {t('clients:my_clients')}
-          </NavLink>
-          <NavLink
-            to="/sales/leads"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            {t('leads:title')}
-          </NavLink>
-          <NavLink
-            to="/sales/kanban"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            {t('sales:kanban.title')}
-          </NavLink>
-          <NavLink
-            to="/sales/docs"
-            className={({ isActive }) =>
-              `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
-            }
-          >
-            {t('common:nav.documentation')}
-          </NavLink>
-          <NavLink
-            to="/contracts"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            {t('contracts:nav.title')}
-          </NavLink>
+        <div>
+          <p className={sidebarSectionClass()}>{t('common:nav.section.sales')}</p>
+          <div className="space-y-0.5">
+            <NavLink to="/sales/clients" className={({ isActive }) => sidebarLinkClass(isActive)}>
+              <Users className="size-4 shrink-0 opacity-80" />
+              {t('clients:my_clients')}
+            </NavLink>
+            <NavLink to="/sales/leads" className={({ isActive }) => sidebarLinkClass(isActive)}>
+              <Target className="size-4 shrink-0 opacity-80" />
+              {t('leads:title')}
+            </NavLink>
+            <NavLink to="/sales/kanban" className={({ isActive }) => sidebarLinkClass(isActive)}>
+              <Columns3 className="size-4 shrink-0 opacity-80" />
+              {t('sales:kanban.title')}
+            </NavLink>
+            <NavLink
+              to="/sales/docs"
+              className={({ isActive }) => sidebarLinkClass(isActive, true)}
+            >
+              {t('common:nav.documentation')}
+            </NavLink>
+            <NavLink to="/contracts" className={({ isActive }) => sidebarLinkClass(isActive)}>
+              <FileText className="size-4 shrink-0 opacity-80" />
+              {t('contracts:nav.title')}
+            </NavLink>
+          </div>
         </div>
       )}
+
       {(isAdmin || isAccounting) && (
-        <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-muted-foreground">{t('common:nav.section.accounting')}</p>
-          <NavLink
-            to="/accounting/clients"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            {t('accounting:nav.clients')}
-          </NavLink>
-          <NavLink
-            to="/accounting/onboarding"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            {t('accounting:nav.onboarding')}
-          </NavLink>
-          <NavLink
-            to="/accounting/recurring"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            {t('accounting:nav.recurring')}
-          </NavLink>
-          <NavLink
-            to="/accounting/docs"
-            className={({ isActive }) =>
-              `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
-            }
-          >
-            {t('common:nav.documentation')}
-          </NavLink>
-          {isAdmin && (
-            <>
-              <NavLink
-                to="/accounting/report"
-                className={({ isActive }) =>
-                  `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-                }
-              >
-                {t('accounting_report:nav.report')}
-              </NavLink>
-              <NavLink
-                to="/accounting/expenses"
-                className={({ isActive }) =>
-                  `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-                }
-              >
-                {t('accounting_report:nav.expenses')}
-              </NavLink>
-            </>
-          )}
-        </div>
-      )}
-      {visibleTechGroups.length > 0 && (
-        <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-muted-foreground">{t('common:nav.section.technical')}</p>
-          {visibleTechGroups.map((g) => (
-            <div key={g} className="space-y-0.5">
-              <NavLink
-                to={TECH_ROUTES[g]}
-                end
-                className={({ isActive }) =>
-                  `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-                }
-              >
-                {TECH_LABELS[g]}
-              </NavLink>
-              <NavLink
-                to={TECH_CLIENTS_ROUTES[g]}
-                className={({ isActive }) =>
-                  `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
-                }
-              >
-                {t('clients:my_clients')}
-              </NavLink>
-              {['local_seo', 'web_dev', 'web_seo'].includes(g) && (
+        <div>
+          <p className={sidebarSectionClass()}>{t('common:nav.section.accounting')}</p>
+          <div className="space-y-0.5">
+            <NavLink
+              to="/accounting/clients"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <Building2 className="size-4 shrink-0 opacity-80" />
+              {t('accounting:nav.clients')}
+            </NavLink>
+            <NavLink
+              to="/accounting/onboarding"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <ClipboardList className="size-4 shrink-0 opacity-80" />
+              {t('accounting:nav.onboarding')}
+            </NavLink>
+            <NavLink
+              to="/accounting/recurring"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <RefreshCw className="size-4 shrink-0 opacity-80" />
+              {t('accounting:nav.recurring')}
+            </NavLink>
+            <NavLink
+              to="/accounting/docs"
+              className={({ isActive }) => sidebarLinkClass(isActive, true)}
+            >
+              {t('common:nav.documentation')}
+            </NavLink>
+            {isAdmin && (
+              <>
                 <NavLink
-                  to={`${TECH_ROUTES[g]}/docs`}
-                  className={({ isActive }) =>
-                    `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
-                  }
+                  to="/accounting/report"
+                  className={({ isActive }) => sidebarLinkClass(isActive)}
                 >
-                  {t('common:nav.documentation')}
+                  <BarChart3 className="size-4 shrink-0 opacity-80" />
+                  {t('accounting_report:nav.report')}
                 </NavLink>
-              )}
-            </div>
-          ))}
+                <NavLink
+                  to="/accounting/expenses"
+                  className={({ isActive }) => sidebarLinkClass(isActive)}
+                >
+                  <Receipt className="size-4 shrink-0 opacity-80" />
+                  {t('accounting_report:nav.expenses')}
+                </NavLink>
+              </>
+            )}
+          </div>
         </div>
       )}
+
+      {visibleTechGroups.length > 0 && (
+        <div>
+          <p className={sidebarSectionClass()}>{t('common:nav.section.technical')}</p>
+          <div className="space-y-0.5">
+            {visibleTechGroups.map((g) => {
+              const TechIcon = TECH_ICONS[g];
+              return (
+                <div key={g} className="space-y-0.5">
+                  <NavLink
+                    to={TECH_ROUTES[g]}
+                    end
+                    className={({ isActive }) => sidebarLinkClass(isActive)}
+                  >
+                    <TechIcon className="size-4 shrink-0 opacity-80" />
+                    {TECH_LABELS[g]}
+                  </NavLink>
+                  <NavLink
+                    to={TECH_CLIENTS_ROUTES[g]}
+                    className={({ isActive }) => sidebarLinkClass(isActive, true)}
+                  >
+                    {t('clients:my_clients')}
+                  </NavLink>
+                  {['local_seo', 'web_dev', 'web_seo'].includes(g) && (
+                    <NavLink
+                      to={`${TECH_ROUTES[g]}/docs`}
+                      className={({ isActive }) => sidebarLinkClass(isActive, true)}
+                    >
+                      {t('common:nav.documentation')}
+                    </NavLink>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {isAdmin && (
-        <div className="mt-auto border-t pt-3">
-          <NavLink
-            to="/admin"
-            className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
-            }
-          >
-            ⚙️ {t('admin:nav.settings')}
+        <div className="mt-auto border-t border-sidebar-border pt-3">
+          <NavLink to="/admin" className={({ isActive }) => sidebarLinkClass(isActive)}>
+            <Settings className="size-4 shrink-0 opacity-80" />
+            {t('admin:nav.settings')}
           </NavLink>
         </div>
       )}
@@ -235,10 +223,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-/** Desktop sidebar — hidden below md; mobile uses the drawer in AppShell. */
 export function Sidebar() {
   return (
-    <aside className="hidden w-56 shrink-0 self-stretch overflow-y-auto border-r bg-muted p-4 md:block">
+    <aside className="hidden w-64 shrink-0 self-stretch overflow-y-auto border-r border-sidebar-border bg-sidebar px-3 py-4 md:block">
       <SidebarNav />
     </aside>
   );

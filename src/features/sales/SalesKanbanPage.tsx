@@ -16,6 +16,8 @@ import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners'
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FilterBar, FilterSelect, PageHeader, SegmentedControl } from '@/components/layout/page-shell';
 import { SavedFiltersBar } from '@/features/saved_filters/SavedFiltersBar';
 import { SalesKanbanColumnContainer } from './SalesKanbanColumn';
 import { SalesKanbanCard } from './SalesKanbanCard';
@@ -96,84 +98,80 @@ export function SalesKanbanPage() {
     }
   }
 
+  const ownerFilter =
+    isAdmin && typeof filter.ownerId === 'string' ? filter.ownerId : isAdmin ? 'all' : userId ?? 'all';
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-6 py-3">
-        <h1 className="text-2xl font-bold">{t('kanban.title')}</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          {isAdmin && (
-            <>
-              <Button
-                variant={filter.ownerId === userId ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter({ ownerId: userId ?? undefined })}
-              >
-                {t('filters.mine')}
-              </Button>
-              <Button
-                variant={Object.keys(filter).length === 0 ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter({})}
-              >
-                {t('filters.all')}
-              </Button>
-            </>
-          )}
-          {isAdmin && (
-            <select
-              value={typeof filter.ownerId === 'string' ? filter.ownerId : ''}
-              onChange={(e) => setFilter(e.target.value ? { ownerId: e.target.value } : {})}
-              className="rounded-md border border-input bg-background px-2 py-1 text-sm"
-              title={tLeads('owner.label')}
-            >
-              <option value="">
-                {tLeads('owner.label')}: {t('filters.all')}
-              </option>
-              {owners.map((o) => (
-                <option key={o.user_id} value={o.user_id}>
-                  {o.full_name || o.email}
-                  {o.is_admin ? ' · admin' : ''}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            value={source}
-            onChange={(e) => setSource(e.target.value as '' | 'manual' | 'meta' | 'import')}
-            className="rounded-md border border-input bg-background px-2 py-1 text-sm"
-          >
-            <option value="">{tLeads('filters.source_all')}</option>
-            <option value="manual">{tLeads('form.source_options.manual')}</option>
-            <option value="meta">{tLeads('form.source_options.meta')}</option>
-            <option value="import">{tLeads('form.source_options.import')}</option>
-          </select>
-          <select
-            value={sortBy}
-            onChange={(e) =>
-              setSortBy(
-                e.target.value as 'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent',
-              )
-            }
-            className="rounded-md border border-input bg-background px-2 py-1 text-sm"
-            title={tLeads('filters.sort_label')}
-          >
-            <option value="newest">{tLeads('filters.sort_newest')}</option>
-            <option value="oldest">{tLeads('filters.sort_oldest')}</option>
-            <option value="value_high">{tLeads('filters.sort_value_high')}</option>
-            <option value="value_low">{tLeads('filters.sort_value_low')}</option>
-            <option value="recent">{tLeads('filters.sort_recent')}</option>
-          </select>
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={tLeads('filters.search')}
-            className="w-40 rounded-md border border-input bg-background px-2 py-1 text-sm"
+    <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader title={t('kanban.title')}>
+        <Button onClick={() => setCreateOpen(true)}>{tLeads('actions.create')}</Button>
+      </PageHeader>
+
+      <FilterBar>
+        {isAdmin && (
+          <SegmentedControl
+            value={ownerFilter}
+            onChange={(v) => {
+              if (v === 'all') setFilter({});
+              else setFilter({ ownerId: v });
+            }}
+            options={[
+              { value: userId ?? 'mine', label: t('filters.mine') },
+              { value: 'all', label: t('filters.all') },
+            ]}
           />
-          <SavedFiltersBar board="sales:kanban" currentFilter={filter} onApply={setFilter} />
-          <Button onClick={() => setCreateOpen(true)}>{tLeads('actions.create')}</Button>
-        </div>
-      </div>
+        )}
+        {isAdmin && (
+          <FilterSelect
+            value={typeof filter.ownerId === 'string' ? filter.ownerId : ''}
+            onChange={(e) => setFilter(e.target.value ? { ownerId: e.target.value } : {})}
+            title={tLeads('owner.label')}
+          >
+            <option value="">
+              {tLeads('owner.label')}: {t('filters.all')}
+            </option>
+            {owners.map((o) => (
+              <option key={o.user_id} value={o.user_id}>
+                {o.full_name || o.email}
+                {o.is_admin ? ' · admin' : ''}
+              </option>
+            ))}
+          </FilterSelect>
+        )}
+        <FilterSelect
+          value={source}
+          onChange={(e) => setSource(e.target.value as '' | 'manual' | 'meta' | 'import')}
+        >
+          <option value="">{tLeads('filters.source_all')}</option>
+          <option value="manual">{tLeads('form.source_options.manual')}</option>
+          <option value="meta">{tLeads('form.source_options.meta')}</option>
+          <option value="import">{tLeads('form.source_options.import')}</option>
+        </FilterSelect>
+        <FilterSelect
+          value={sortBy}
+          onChange={(e) =>
+            setSortBy(
+              e.target.value as 'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent',
+            )
+          }
+          title={tLeads('filters.sort_label')}
+        >
+          <option value="newest">{tLeads('filters.sort_newest')}</option>
+          <option value="oldest">{tLeads('filters.sort_oldest')}</option>
+          <option value="value_high">{tLeads('filters.sort_value_high')}</option>
+          <option value="value_low">{tLeads('filters.sort_value_low')}</option>
+          <option value="recent">{tLeads('filters.sort_recent')}</option>
+        </FilterSelect>
+        <Input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={tLeads('filters.search')}
+          className="h-9 w-44 rounded-lg border-input/80 shadow-sm sm:w-56"
+        />
+        <SavedFiltersBar board="sales:kanban" currentFilter={filter} onApply={setFilter} />
+      </FilterBar>
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -181,11 +179,13 @@ export function SalesKanbanPage() {
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveLead(null)}
       >
-        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2">
-          {salesStages.map((s) => (
+        <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-3">
+          {salesStages.map((s, index) => (
             <SalesKanbanColumnContainer
               key={s.id}
               stageId={s.id}
+              stageCode={s.code}
+              stageIndex={index}
               stageLabel={(s.display_names as { en: string; el: string })[lang]}
               total={counts?.get(s.id) ?? 0}
               filter={columnFilter}

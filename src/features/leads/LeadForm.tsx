@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { FilterSelect } from '@/components/layout/page-shell';
 import { ServicesPlannedField, type PlannedService } from '@/features/deals/ServicesPlannedField';
 import {
   AdditionalContactsField,
@@ -16,20 +17,23 @@ import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
 import { INDUSTRIES } from '@/lib/industries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { EditableContact } from '@/features/contacts/EditableContact';
+import { cn } from '@/lib/utils';
+
+const fieldClass =
+  'mt-1.5 block w-full rounded-lg border border-input/80 bg-background px-3 py-2 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20';
 
 function Section({
   title,
   children,
+  className,
 }: {
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
-        <div className="h-px flex-1 bg-border" />
-      </div>
+    <section className={cn('rounded-xl border border-border/60 bg-card p-5 shadow-sm', className)}>
+      <h2 className="mb-4 text-sm font-semibold tracking-tight text-foreground">{title}</h2>
       {children}
     </section>
   );
@@ -62,8 +66,6 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [tiktok, setTiktok] = useState(lead.tiktok ?? '');
   const [linkedin, setLinkedin] = useState(lead.linkedin ?? '');
   const [paymentMethod, setPaymentMethod] = useState(lead.payment_method ?? '');
-  // datetime-local needs YYYY-MM-DDTHH:mm in *local* time, not ISO/UTC, so the
-  // user sees their picked moment unchanged after a round-trip.
   const [scheduledFor, setScheduledFor] = useState<string>(() => {
     if (!lead.scheduled_for) return '';
     const d = new Date(lead.scheduled_for);
@@ -76,7 +78,6 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
     Array.isArray(lead.services_planned) ? (lead.services_planned as PlannedService[]) : [],
   );
 
-  // Setup fees are one-time charges, so they belong in the one-time bucket.
   const oneTimeNum = services.reduce(
     (sum, s) => sum + (Number(s.one_time_amount) || 0) + (Number(s.setup_fee) || 0),
     0,
@@ -159,42 +160,46 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   );
 
   return (
-    <div className="space-y-6">
-      <fieldset disabled={readOnly} className="space-y-6">
+    <div className="space-y-4">
+      <fieldset disabled={readOnly} className="space-y-4">
         <Section title={t('form.section_lead_info', { defaultValue: 'Lead info' })}>
-          <div>
-            <Label htmlFor="notes">{t('form.lead_info')}</Label>
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="addl-notes">{t('form.sales_note')}</Label>
-            <textarea
-              id="addl-notes"
-              value={additionalNotes}
-              onChange={(e) => setAdditionalNotes(e.target.value)}
-              className="mt-1 block min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="notes">{t('form.lead_info')}</Label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t('form.lead_info')}
+                className={cn(fieldClass, 'min-h-[88px] resize-y')}
+              />
+            </div>
+            <div>
+              <Label htmlFor="addl-notes">{t('form.sales_note')}</Label>
+              <textarea
+                id="addl-notes"
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+                placeholder={t('form.sales_note')}
+                className={cn(fieldClass, 'min-h-[88px] resize-y')}
+              />
+            </div>
           </div>
         </Section>
 
         <Section title={t('form.section_primary_contact', { defaultValue: 'Primary contact' })}>
-            <EditableContact
-              value={{ full_name: fullName, email, phone, info: contactInfo }}
-              onChange={(c) => {
-                setFullName(c.full_name);
-                setEmail(c.email);
-                setPhone(c.phone);
-                setContactInfo(c.info);
-              }}
-              disabled={!!lead.converted_at}
-              startEditing={!fullName && !email && !phone && !contactInfo}
-              idPrefix="lead-primary"
-            />
+          <EditableContact
+            value={{ full_name: fullName, email, phone, info: contactInfo }}
+            onChange={(c) => {
+              setFullName(c.full_name);
+              setEmail(c.email);
+              setPhone(c.phone);
+              setContactInfo(c.info);
+            }}
+            disabled={!!lead.converted_at}
+            startEditing={!fullName && !email && !phone && !contactInfo}
+            idPrefix="lead-primary"
+          />
         </Section>
 
         <Section
@@ -208,14 +213,14 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
         </Section>
 
         <Section title={t('form.section_company', { defaultValue: 'Company' })}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="co">{t('form.company_name')}</Label>
-              <Input id="co" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+              <Input id="co" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="vat">{t('form.vat_number')}</Label>
-              <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+              <Input id="vat" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="ws">{t('form.website')}</Label>
@@ -225,16 +230,17 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 placeholder="https://"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
+                className="mt-1.5"
               />
             </div>
             <div>
               <Label htmlFor="ind">{t('form.industry')}</Label>
-              <select
+              <FilterSelect
                 id="ind"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
                 disabled={readOnly}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mt-1.5 w-full"
               >
                 <option value="">—</option>
                 {INDUSTRIES.map((ind) => (
@@ -245,15 +251,15 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 {industry && !INDUSTRIES.some((i) => i.code === industry) && (
                   <option value={industry}>{industry} (legacy)</option>
                 )}
-              </select>
+              </FilterSelect>
             </div>
             <div>
               <Label htmlFor="cnt">{t('form.country')}</Label>
-              <select
+              <FilterSelect
                 id="cnt"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mt-1.5 w-full"
               >
                 <option value="">—</option>
                 {COUNTRIES.map((c) => (
@@ -261,50 +267,50 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                     {c.storedValue} ({Math.round(c.vatRate * 100)}% VAT)
                   </option>
                 ))}
-              </select>
+              </FilterSelect>
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <Label htmlFor="addr">{t('form.address')}</Label>
-              <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} />
+              <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} className="mt-1.5" />
             </div>
           </div>
         </Section>
 
         <Section title={t('form.section_social', { defaultValue: 'Social' })}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="ig">Instagram</Label>
-              <Input id="ig" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
+              <Input id="ig" value={instagram} onChange={(e) => setInstagram(e.target.value)} className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="fb">Facebook</Label>
-              <Input id="fb" value={facebook} onChange={(e) => setFacebook(e.target.value)} />
+              <Input id="fb" value={facebook} onChange={(e) => setFacebook(e.target.value)} className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="tt">TikTok</Label>
-              <Input id="tt" value={tiktok} onChange={(e) => setTiktok(e.target.value)} />
+              <Input id="tt" value={tiktok} onChange={(e) => setTiktok(e.target.value)} className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="li">LinkedIn</Label>
-              <Input id="li" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
+              <Input id="li" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} className="mt-1.5" />
             </div>
           </div>
         </Section>
 
         <Section title={t('form.section_sales', { defaultValue: 'Sales' })}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="pm">{t('form.payment_method')}</Label>
-              <select
+              <FilterSelect
                 id="pm"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mt-1.5 w-full"
               >
                 <option value="">—</option>
                 <option value="cash">{t('form.payment_method_options.cash')}</option>
                 <option value="online">{t('form.payment_method_options.online')}</option>
-              </select>
+              </FilterSelect>
             </div>
             <div>
               <Label htmlFor="scheduled-for">
@@ -316,9 +322,9 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 value={scheduledFor}
                 onChange={(e) => setScheduledFor(e.target.value)}
                 disabled={readOnly}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={fieldClass}
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1.5 text-xs text-muted-foreground">
                 {t('form.scheduled_for_hint', {
                   defaultValue:
                     'Picking a date moves the lead to Scheduled and adds it to the home calendar.',
@@ -326,77 +332,82 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
               </p>
             </div>
           </div>
-          <div>
-            <Label>{t('form.services_planned')}</Label>
-            <ServicesPlannedField
-              value={services}
-              onChange={setServices}
-              disabled={readOnly}
-              headerLeft={
-                !readOnly && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => navigate(`/leads/${lead.id}/offers/new`)}
-                  >
-                    Create offer
-                  </Button>
-                )
-              }
-            />
-          </div>
-          <div className="rounded-md border bg-muted p-3 text-sm">
-            <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-              {t('totals.title')}
+          <div className="mt-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <Label>{t('form.services_planned')}</Label>
+              {!readOnly && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/leads/${lead.id}/offers/new`)}
+                >
+                  Create offer
+                </Button>
+              )}
             </div>
-            {(() => {
-              const vatRate = vatRateFor(country);
-              const oneTimeVat = oneTimeNum * vatRate;
-              const monthlyVat = monthlyNum * vatRate;
-              const yearlyVat = yearlyNum * vatRate;
-              const oneTimeTotal = oneTimeNum + oneTimeVat;
-              const monthlyTotal = monthlyNum + monthlyVat;
-              const yearlyTotal = yearlyNum + yearlyVat;
-              const vatPct = Math.round(vatRate * 100);
-              return (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-muted-foreground">
-                      <th className="text-left font-normal"></th>
-                      <th className="text-right font-normal">{t('totals.subtotal')}</th>
-                      <th className="text-right font-normal">
-                        {t('totals.vat')} ({vatPct}%)
-                      </th>
-                      <th className="text-right font-normal">{t('totals.total')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="py-1 text-muted-foreground">{t('totals.one_time_label')}</td>
-                      <td className="py-1 text-right">{formatEur(oneTimeNum)}</td>
-                      <td className="py-1 text-right">{formatEur(oneTimeVat)}</td>
-                      <td className="py-1 text-right font-medium">{formatEur(oneTimeTotal)}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-1 text-muted-foreground">{t('totals.monthly_label')}</td>
-                      <td className="py-1 text-right">{formatEur(monthlyNum)}</td>
-                      <td className="py-1 text-right">{formatEur(monthlyVat)}</td>
-                      <td className="py-1 text-right font-medium">{formatEur(monthlyTotal)}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-1 text-muted-foreground">{t('totals.yearly_label')}</td>
-                      <td className="py-1 text-right">{formatEur(yearlyNum)}</td>
-                      <td className="py-1 text-right">{formatEur(yearlyVat)}</td>
-                      <td className="py-1 text-right font-medium">{formatEur(yearlyTotal)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              );
-            })()}
+            <ServicesPlannedField value={services} onChange={setServices} disabled={readOnly} />
+          </div>
+          <div className="mt-4 overflow-hidden rounded-lg border border-border/60 bg-muted/30">
+            <div className="border-b border-border/60 bg-muted/40 px-4 py-2.5">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('totals.title')}
+              </div>
+            </div>
+            <div className="p-4">
+              {(() => {
+                const vatRate = vatRateFor(country);
+                const oneTimeVat = oneTimeNum * vatRate;
+                const monthlyVat = monthlyNum * vatRate;
+                const yearlyVat = yearlyNum * vatRate;
+                const oneTimeTotal = oneTimeNum + oneTimeVat;
+                const monthlyTotal = monthlyNum + monthlyVat;
+                const yearlyTotal = yearlyNum + yearlyVat;
+                const vatPct = Math.round(vatRate * 100);
+                return (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground">
+                        <th className="pb-2 text-left font-normal"></th>
+                        <th className="pb-2 text-right font-normal">{t('totals.subtotal')}</th>
+                        <th className="pb-2 text-right font-normal">
+                          {t('totals.vat')} ({vatPct}%)
+                        </th>
+                        <th className="pb-2 text-right font-normal">{t('totals.total')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t border-border/40">
+                        <td className="py-2 text-muted-foreground">{t('totals.one_time_label')}</td>
+                        <td className="py-2 text-right tabular-nums">{formatEur(oneTimeNum)}</td>
+                        <td className="py-2 text-right tabular-nums">{formatEur(oneTimeVat)}</td>
+                        <td className="py-2 text-right font-medium tabular-nums">{formatEur(oneTimeTotal)}</td>
+                      </tr>
+                      <tr className="border-t border-border/40">
+                        <td className="py-2 text-muted-foreground">{t('totals.monthly_label')}</td>
+                        <td className="py-2 text-right tabular-nums">{formatEur(monthlyNum)}</td>
+                        <td className="py-2 text-right tabular-nums">{formatEur(monthlyVat)}</td>
+                        <td className="py-2 text-right font-medium tabular-nums text-emerald-700 dark:text-emerald-400">
+                          {formatEur(monthlyTotal)}
+                        </td>
+                      </tr>
+                      <tr className="border-t border-border/40">
+                        <td className="py-2 text-muted-foreground">{t('totals.yearly_label')}</td>
+                        <td className="py-2 text-right tabular-nums">{formatEur(yearlyNum)}</td>
+                        <td className="py-2 text-right tabular-nums">{formatEur(yearlyVat)}</td>
+                        <td className="py-2 text-right font-medium tabular-nums text-emerald-700 dark:text-emerald-400">
+                          {formatEur(yearlyTotal)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                );
+              })()}
+            </div>
           </div>
         </Section>
 
-        <div className="flex h-5 items-center text-xs text-muted-foreground">
+        <div className="flex h-5 items-center px-1 text-xs text-muted-foreground">
           {autoSaveLabel(saveStatus, lang)}
         </div>
       </fieldset>
