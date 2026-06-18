@@ -8,6 +8,7 @@ import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
+import { TaskDialog } from '@/features/home/TaskDialog';
 
 function sourceHref(task: AssignedTaskRow): string {
   if (task.deal_id) return `/deals/${task.deal_id}`;
@@ -77,6 +78,7 @@ export function AssignedTasksColumn() {
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const [showAllAdmin, setShowAllAdmin] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
   useAssignedTasksRealtime();
 
   const assigneeUserId = isAdmin && showAllAdmin ? null : userId || null;
@@ -89,19 +91,24 @@ export function AssignedTasksColumn() {
     <section className="flex h-80 min-h-0 flex-col border-t bg-card">
       <header className="flex shrink-0 items-center justify-between border-b px-6 py-2.5">
         <h2 className="text-sm font-semibold">{title} ({tasks.length})</h2>
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={() => setShowAllAdmin((v) => !v)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              showAllAdmin
-                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
-                : 'border-border bg-muted text-muted-foreground'
-            }`}
-          >
-            {showAllAdmin ? t('assigned_tasks.all_team_title') : t('assigned_tasks.title')}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <Button type="button" size="sm" variant="outline" onClick={() => setNewTaskOpen(true)}>
+            {t('calendar.new_task')}
+          </Button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowAllAdmin((v) => !v)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                showAllAdmin
+                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                  : 'border-border bg-muted text-muted-foreground'
+              }`}
+            >
+              {showAllAdmin ? t('assigned_tasks.all_team_title') : t('assigned_tasks.title')}
+            </button>
+          )}
+        </div>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {tasks.length === 0 ? (
@@ -123,6 +130,7 @@ export function AssignedTasksColumn() {
         taskId={openTaskId}
         onOpenChange={(open) => !open && setOpenTaskId(null)}
       />
+      <TaskDialog open={newTaskOpen} onOpenChange={setNewTaskOpen} />
     </section>
   );
 }
