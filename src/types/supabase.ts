@@ -1522,6 +1522,7 @@ export type Database = {
           email_opt_out: boolean
           estimated_monthly_value: number
           estimated_one_time_value: number
+          estimated_total_value: number | null
           expected_close_date: string | null
           facebook: string | null
           id: string
@@ -2376,6 +2377,13 @@ export type Database = {
       block_client: {
         Args: { reason_text: string; target_client_id: string }
         Returns: Json
+      }
+      sales_kanban_counts: {
+        Args: { p_owner?: string; p_source?: string; p_search?: string }
+        Returns: {
+          stage_id: string
+          total: number
+        }[]
       }
       block_job: {
         Args: { reason?: string; target_job_id: string }
