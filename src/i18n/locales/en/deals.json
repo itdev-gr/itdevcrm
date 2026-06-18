@@ -144,6 +144,7 @@
     "col_price": "Price",
     "col_status": "Status",
     "col_group": "Billing",
+    "col_term": "Term",
     "col_actions": "",
     "department_billing_only": "Billing-only (no board)",
     "billing_only": "Billing-only",

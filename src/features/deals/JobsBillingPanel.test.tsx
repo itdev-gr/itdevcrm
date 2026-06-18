@@ -165,6 +165,60 @@ describe('JobsBillingPanel grouping', () => {
   });
 });
 
+function termSelect(rowTitle: string) {
+  const cell = screen.getByText(rowTitle).closest('tr') as HTMLElement;
+  return within(cell).getByRole('combobox', { name: /term/i });
+}
+
+describe('JobsBillingPanel term', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('changes a job billing term via the Term dropdown', async () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Hosting', billing_type: 'recurring_monthly' })],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    await user.click(termSelect('Hosting'));
+    await user.click(await screen.findByRole('option', { name: /yearly/i }));
+
+    await waitFor(() => expect(updateMutate).toHaveBeenCalledTimes(1));
+    expect(updateMutate).toHaveBeenCalledWith({ jobId: 'a', billingType: 'recurring_yearly' });
+  });
+
+  it('clears grouping when switching a grouped job to One-time', async () => {
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'a', title: 'Hosting', billing_type: 'recurring_monthly', billing_group_id: 'grp-1' }),
+        makeJob({ id: 'b', title: 'Maintenance', billing_type: 'recurring_monthly', billing_group_id: 'grp-1' }),
+      ],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    await user.click(termSelect('Hosting'));
+    await user.click(await screen.findByRole('option', { name: /one-time/i }));
+
+    await waitFor(() => expect(updateMutate).toHaveBeenCalledTimes(1));
+    expect(updateMutate).toHaveBeenCalledWith({
+      jobId: 'a',
+      billingType: 'one_time',
+      clearGroup: true,
+    });
+  });
+
+  it('hides the Term dropdown in read-only mode', () => {
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    render(wrap(<JobsBillingPanel dealId="d1" readOnly />));
+    expect(screen.queryByRole('combobox', { name: /term/i })).not.toBeInTheDocument();
+  });
+});
+
 describe('JobsBillingPanel readOnly', () => {
   beforeEach(() => {
     vi.clearAllMocks();

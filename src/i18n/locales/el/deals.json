@@ -144,6 +144,7 @@
     "col_price": "Τιμή",
     "col_status": "Κατάσταση",
     "col_group": "Χρέωση",
+    "col_term": "Περίοδος χρέωσης",
     "col_actions": "",
     "department_billing_only": "Μόνο χρέωση (χωρίς board)",
     "billing_only": "Μόνο χρέωση",

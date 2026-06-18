@@ -20,6 +20,10 @@ import { useEndJob, useUpdateJobBilling } from './hooks/useCustomJobMutations';
 import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
+import type { BillingType } from '@/lib/rpc';
+
+/** Billing-term options offered per job, in display order. */
+const TERMS: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];
 
 const SEPARATE = '__separate__';
 /** Prefix for "pair with job X" options whose value encodes the target job id. */
@@ -98,6 +102,21 @@ function JobRow({
     update.mutateAsync({ jobId: job.id, amountNet: next }).catch(reportError);
   }
 
+  async function onTermChange(value: string) {
+    if (value === job.billing_type) return;
+    try {
+      // A one-time job can't be bundled into a (recurring) billing group, so
+      // clear any grouping when switching to one-time.
+      await update.mutateAsync({
+        jobId: job.id,
+        billingType: value as BillingType,
+        ...(value === 'one_time' && job.billing_group_id ? { clearGroup: true } : {}),
+      });
+    } catch (err) {
+      reportError(err);
+    }
+  }
+
   async function onGroupChange(value: string) {
     try {
       if (value === SEPARATE) {
@@ -170,7 +189,22 @@ function JobRow({
               : t('jobs_billing.group.separate')}
           </span>
         ) : (
-          <>
+          <div className="flex flex-col gap-1">
+            <Select value={job.billing_type} onValueChange={onTermChange} disabled={ended}>
+              <SelectTrigger
+                className="h-8 w-full text-xs"
+                aria-label={t('jobs_billing.col_term')}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TERMS.map((term) => (
+                  <SelectItem key={term} value={term}>
+                    {t(`jobs_billing.cadence_options.${term}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select
               value={job.billing_group_id ?? SEPARATE}
               onValueChange={onGroupChange}
@@ -207,7 +241,7 @@ function JobRow({
             <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
               {t('jobs_billing.group.future_only')}
             </p>
-          </>
+          </div>
         )}
       </td>
       <td className="px-2 py-2 text-right">
