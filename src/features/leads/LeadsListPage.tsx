@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useLeads } from './hooks/useLeads';
 import { useAssignableOwners } from './hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useBulkUpdateLeads } from './hooks/useBulkUpdateLeads';
+import { useDeleteLeads } from './hooks/useDeleteLeads';
 import { useLeadDistribution } from './hooks/useLeadDistribution';
 import { useDistributeUnassigned } from './hooks/useDistributeUnassigned';
+import { isLeadDeletable } from './leadDeletable';
 import { LeadRowEditor } from './LeadRowEditor';
 import { filterAndSortLeads, UNASSIGNED, type LeadSort, type LeadSortKey } from './leadsTableFilter';
 import { leadsToCsv, type CsvColumn } from './leadsCsv';
@@ -31,6 +34,7 @@ export function LeadsListPage() {
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const bulk = useBulkUpdateLeads();
+  const del = useDeleteLeads();
   const distribution = useLeadDistribution();
   const distribute = useDistributeUnassigned();
 
@@ -54,6 +58,7 @@ export function LeadsListPage() {
   const [sort, setSort] = useState<LeadSort>({ key: 'code', dir: 'asc' });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
+  const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
 
   const rows = useMemo(
     () =>
@@ -120,6 +125,28 @@ export function LeadsListPage() {
   async function bulkApply(patch: LeadUpdate) {
     await bulk.mutateAsync({ ids: [...selected], patch });
     setSelected(new Set());
+  }
+
+  function requestBulkDelete() {
+    const ids = rows.filter((l) => selected.has(l.id) && isLeadDeletable(l)).map((l) => l.id);
+    if (ids.length === 0) {
+      alert(t('delete.none'));
+      return;
+    }
+    setConfirmIds(ids);
+  }
+
+  async function onConfirmDelete() {
+    if (!confirmIds) return;
+    try {
+      const r = await del.mutateAsync(confirmIds);
+      if (r.skipped.length > 0) alert(t('delete.skipped', { count: r.skipped.length }));
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setConfirmIds(null);
+      setSelected(new Set());
+    }
   }
 
   if (isLoading) return <div className="p-8">…</div>;
@@ -215,6 +242,9 @@ export function LeadsListPage() {
             {salesStages.map((s) => (<option key={s.id} value={s.id}>{s.display_names[lang] ?? s.code}</option>))}
           </select>
           <Button variant="destructive" size="sm" onClick={() => void bulkApply({ archived: true })}>{t('bulk.archive')}</Button>
+          {isAdmin && (
+            <Button variant="destructive" size="sm" onClick={requestBulkDelete}>{t('delete.bulk')}</Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setSelected(new Set())}>{t('bulk.clear')}</Button>
         </div>
       )}
@@ -256,6 +286,8 @@ export function LeadsListPage() {
                   lang={lang}
                   selected={selected.has(lead.id)}
                   onToggleSelect={toggleSelect}
+                  isAdmin={isAdmin}
+                  onDelete={(l) => setConfirmIds([l.id])}
                 />
               ))}
             </tbody>
@@ -286,6 +318,16 @@ export function LeadsListPage() {
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmIds !== null}
+        onOpenChange={(o) => { if (!o) setConfirmIds(null); }}
+        title={t('delete.title')}
+        description={confirmIds ? t('delete.confirm', { count: confirmIds.length }) : ''}
+        confirmLabel={t('delete.button')}
+        onConfirm={onConfirmDelete}
+        pending={del.isPending}
+      />
     </div>
   );
 }
