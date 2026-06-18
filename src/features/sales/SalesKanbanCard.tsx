@@ -25,7 +25,9 @@ export function SalesKanbanCard({
   const isWon = lead.stage?.code === 'won';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
-    data: { leadId: lead.id, currentStage: lead.stage_id },
+    // Carry the full lead so the page's DragOverlay can render it without
+    // holding every column's leads in one place.
+    data: { lead, leadId: lead.id, currentStage: lead.stage_id },
   });
   const style = transform
     ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }

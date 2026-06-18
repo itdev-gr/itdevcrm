@@ -1,12 +1,9 @@
-export const KANBAN_COLUMN_LIMIT = 50;
-
-export const COLLAPSED_STAGE_CODES = ['not_interested', 'dead_end'] as const;
+export const KANBAN_PAGE_SIZE = 50;
 
 export type SortBy = 'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent';
 
-export function isCollapsedStage(code: string): boolean {
-  return (COLLAPSED_STAGE_CODES as readonly string[]).includes(code);
-}
+// Lead row + its stage — the shape both kanban queries select.
+export const LEAD_SELECT = '*, stage:pipeline_stages(id, code, board, display_names)';
 
 export function orderForSort(sortBy: SortBy): { column: string; ascending: boolean } {
   switch (sortBy) {
@@ -24,6 +21,18 @@ export function orderForSort(sortBy: SortBy): { column: string; ascending: boole
   }
 }
 
-export function overflowCount(total: number, shown: number): number {
-  return Math.max(0, total - shown);
+// PostgREST `or=` clause for the kanban search box; null when the term is empty.
+// Strips characters that would break the filter grammar (`%` `,` `(` `)`).
+export function searchOrClause(search: string): string | null {
+  const v = search.replace(/[%,()]/g, ' ').trim();
+  if (!v) return null;
+  const like = `%${v}%`;
+  return [
+    `title.ilike.${like}`,
+    `company_name.ilike.${like}`,
+    `contact_first_name.ilike.${like}`,
+    `contact_last_name.ilike.${like}`,
+    `email.ilike.${like}`,
+    `phone.ilike.${like}`,
+  ].join(',');
 }

@@ -34,8 +34,10 @@ export const queryKeys = {
   clientBlock: (clientId: string) => ['client-block', clientId] as const,
   leads: (filters?: Record<string, string | undefined>) =>
     filters ? (['leads', filters] as const) : (['leads'] as const),
-  salesKanban: (filters: Record<string, string | undefined>) =>
-    ['leads', 'kanban', filters] as const,
+  salesKanbanCounts: (filters: Record<string, string | undefined>) =>
+    ['leads', 'kanban', 'counts', filters] as const,
+  salesKanbanColumn: (stageId: string, filters: Record<string, string | undefined>) =>
+    ['leads', 'kanban', 'col', stageId, filters] as const,
   lead: (id: string) => ['lead', id] as const,
   scheduledLeads: (start: string, end: string, ownerId: string | null) =>
     ['scheduled-leads', start, end, ownerId ?? 'all'] as const,

@@ -17,13 +17,13 @@ import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { SavedFiltersBar } from '@/features/saved_filters/SavedFiltersBar';
-import { SalesKanbanColumn } from './SalesKanbanColumn';
+import { SalesKanbanColumnContainer } from './SalesKanbanColumn';
 import { SalesKanbanCard } from './SalesKanbanCard';
-import { useSalesKanbanColumns } from './hooks/useSalesKanbanColumns';
-import { isCollapsedStage } from './salesKanbanColumns';
+import { useSalesKanbanCounts } from './hooks/useSalesKanbanCounts';
 import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
 import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
 import { isStageMoveBlocked } from './stageAccess';
+import type { LeadRow } from '@/features/leads/hooks/useLeads';
 
 export function SalesKanbanPage() {
   const { t, i18n } = useTranslation('sales');
@@ -37,7 +37,7 @@ export function SalesKanbanPage() {
     isAdmin || !userId ? {} : { ownerId: userId },
   );
   const [createOpen, setCreateOpen] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeLead, setActiveLead] = useState<LeadRow | null>(null);
   const [search, setSearch] = useState('');
   const [source, setSource] = useState<'' | 'manual' | 'meta' | 'import'>('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent'>(
@@ -45,7 +45,7 @@ export function SalesKanbanPage() {
   );
   const { data: owners = [] } = useAssignableOwners();
 
-  const { data: stages = [] } = usePipelineStages();
+  const { data: stages = [], isLoading } = usePipelineStages();
   const moveStage = useMoveLeadStage();
   const convert = useConvertLead();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -55,33 +55,27 @@ export function SalesKanbanPage() {
     .sort((a, b) => a.position - b.position);
   const wonStage = salesStages.find((s) => s.code === 'won');
 
-  // Board is scoped & capped: only the top ~50 leads per ACTIVE stage are loaded
-  // (server-side ordered + searched); dead stages collapse to a count + list link.
-  const kanbanStages = salesStages.map((s) => ({ id: s.id, code: s.code }));
-  const { data: columns = [], isLoading } = useSalesKanbanColumns(kanbanStages, {
+  // Each column is an independent paginated list ("Load more"); only the true
+  // per-stage counts are fetched up front so headers show the full totals.
+  const columnFilter = {
     ...(typeof filter.ownerId === 'string' ? { ownerId: filter.ownerId } : {}),
     ...(source ? { source } : {}),
     search,
-    sortBy,
-  });
-  const columnsByStage = new Map(columns.map((c) => [c.stageId, c]));
+  };
+  const { data: counts } = useSalesKanbanCounts(columnFilter);
 
   // Resolve owner/won-by names once (was a per-card query + O(n) find).
   const ownerName = new Map(owners.map((o) => [o.user_id, o.full_name || o.email]));
   const nameFor = (userId: string | null) => (userId ? (ownerName.get(userId) ?? '') : '');
 
-  const activeLead = activeId
-    ? (columns.flatMap((c) => c.leads).find((l) => l.id === activeId) ?? null)
-    : null;
-
   if (isLoading) return <div className="p-8">…</div>;
 
   function onDragStart(e: DragStartEvent) {
-    setActiveId(String(e.active.id));
+    setActiveLead((e.active.data.current as { lead?: LeadRow } | undefined)?.lead ?? null);
   }
 
   async function onDragEnd(e: DragEndEvent) {
-    setActiveId(null);
+    setActiveLead(null);
     const leadId = String(e.active.id);
     const stageId = e.over ? String(e.over.id) : null;
     if (!stageId) return;
@@ -185,27 +179,21 @@ export function SalesKanbanPage() {
         collisionDetection={closestCorners}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
-        onDragCancel={() => setActiveId(null)}
+        onDragCancel={() => setActiveLead(null)}
       >
         <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2">
-          {salesStages.map((s) => {
-            const col = columnsByStage.get(s.id);
-            return (
-              <SalesKanbanColumn
-                key={s.id}
-                stageId={s.id}
-                stageLabel={(s.display_names as { en: string; el: string })[lang]}
-                leads={col?.leads ?? []}
-                total={col?.total ?? 0}
-                collapsed={isCollapsedStage(s.code)}
-                overflowHref={`/sales/leads?stage=${s.id}${
-                  typeof filter.ownerId === 'string' ? `&owner=${filter.ownerId}` : ''
-                }`}
-                nameFor={nameFor}
-                locked={isStageMoveBlocked(s, userId)}
-              />
-            );
-          })}
+          {salesStages.map((s) => (
+            <SalesKanbanColumnContainer
+              key={s.id}
+              stageId={s.id}
+              stageLabel={(s.display_names as { en: string; el: string })[lang]}
+              total={counts?.get(s.id) ?? 0}
+              filter={columnFilter}
+              sortBy={sortBy}
+              nameFor={nameFor}
+              locked={isStageMoveBlocked(s, userId)}
+            />
+          ))}
         </div>
         <DragOverlay>
           {activeLead ? (

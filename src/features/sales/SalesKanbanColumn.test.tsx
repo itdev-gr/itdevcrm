@@ -1,12 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DndContext } from '@dnd-kit/core';
 import { SalesKanbanColumn } from './SalesKanbanColumn';
 
-// i18next falls back to keys in tests, so we assert on structure (hrefs, card
-// count, the lock glyph) rather than translated/interpolated copy.
-const HREF = '/sales/leads?stage=s1';
+const onLoadMore = vi.fn();
 
 function makeLeads(n: number) {
   return Array.from({ length: n }, (_, i) => ({
@@ -25,7 +24,10 @@ function renderCol(props: Partial<React.ComponentProps<typeof SalesKanbanColumn>
           stageLabel="New Lead"
           leads={[]}
           total={0}
-          overflowHref={HREF}
+          hasMore={false}
+          onLoadMore={onLoadMore}
+          isLoadingMore={false}
+          isLoading={false}
           nameFor={() => ''}
           {...props}
         />
@@ -35,25 +37,28 @@ function renderCol(props: Partial<React.ComponentProps<typeof SalesKanbanColumn>
 }
 
 describe('SalesKanbanColumn', () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it('shows a lock when locked', () => {
     renderCol({ locked: true });
     expect(screen.getByTitle('locked')).toBeInTheDocument();
   });
 
-  it('renders zero cards when collapsed, with a link to the list', () => {
-    const { container } = renderCol({ collapsed: true, leads: makeLeads(2), total: 1744 });
-    expect(container.querySelectorAll('[data-testid="kanban-card"]').length).toBe(0);
-    expect(container.querySelector(`a[href="${HREF}"]`)).toBeTruthy();
-  });
-
-  it('mounts the shown cards plus an overflow link when total exceeds shown', () => {
-    const { container } = renderCol({ leads: makeLeads(50), total: 533 });
+  it('renders the loaded cards plus a Load more button when there are more', () => {
+    const { container } = renderCol({ leads: makeLeads(50), total: 533, hasMore: true });
     expect(container.querySelectorAll('[data-testid="kanban-card"]').length).toBe(50);
-    expect(container.querySelector(`a[href="${HREF}"]`)).toBeTruthy();
+    expect(screen.getByTestId('load-more')).toBeInTheDocument();
   });
 
-  it('shows no overflow link when everything is shown', () => {
-    const { container } = renderCol({ leads: makeLeads(3), total: 3 });
-    expect(container.querySelector(`a[href="${HREF}"]`)).toBeNull();
+  it('clicking Load more calls onLoadMore', async () => {
+    const user = userEvent.setup();
+    renderCol({ leads: makeLeads(50), total: 533, hasMore: true });
+    await user.click(screen.getByTestId('load-more'));
+    expect(onLoadMore).toHaveBeenCalledOnce();
+  });
+
+  it('shows no Load more button when everything is loaded', () => {
+    renderCol({ leads: makeLeads(20), total: 20, hasMore: false });
+    expect(screen.queryByTestId('load-more')).toBeNull();
   });
 });

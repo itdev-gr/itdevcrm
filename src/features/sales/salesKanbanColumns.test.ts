@@ -1,20 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  KANBAN_COLUMN_LIMIT,
-  COLLAPSED_STAGE_CODES,
-  isCollapsedStage,
-  orderForSort,
-  overflowCount,
-} from './salesKanbanColumns';
+import { KANBAN_PAGE_SIZE, orderForSort, searchOrClause } from './salesKanbanColumns';
 
 describe('salesKanbanColumns', () => {
-  it('marks dead stages as collapsed', () => {
-    expect(isCollapsedStage('not_interested')).toBe(true);
-    expect(isCollapsedStage('dead_end')).toBe(true);
-    expect(isCollapsedStage('new_lead')).toBe(false);
-    expect(isCollapsedStage('won')).toBe(false);
-  });
-
   it('maps every sort option to a server order clause', () => {
     expect(orderForSort('newest')).toEqual({ column: 'created_at', ascending: false });
     expect(orderForSort('oldest')).toEqual({ column: 'created_at', ascending: true });
@@ -23,14 +10,19 @@ describe('salesKanbanColumns', () => {
     expect(orderForSort('value_low')).toEqual({ column: 'estimated_total_value', ascending: true });
   });
 
-  it('computes overflow = total minus shown (never negative)', () => {
-    expect(overflowCount(533, 50)).toBe(483);
-    expect(overflowCount(10, 50)).toBe(0);
-    expect(overflowCount(50, 50)).toBe(0);
+  it('builds an ilike OR clause across the searchable fields', () => {
+    expect(searchOrClause('   ')).toBeNull();
+    const c = searchOrClause('acme');
+    expect(c).toContain('title.ilike.%acme%');
+    expect(c).toContain('phone.ilike.%acme%');
   });
 
-  it('exposes a sane cap and the collapsed set', () => {
-    expect(KANBAN_COLUMN_LIMIT).toBe(50);
-    expect(COLLAPSED_STAGE_CODES).toEqual(['not_interested', 'dead_end']);
+  it('strips PostgREST-breaking characters from the search term', () => {
+    const c = searchOrClause('a,b(c)%');
+    expect(c).toContain('title.ilike.%a b c%');
+  });
+
+  it('uses a 50-lead page size', () => {
+    expect(KANBAN_PAGE_SIZE).toBe(50);
   });
 });
