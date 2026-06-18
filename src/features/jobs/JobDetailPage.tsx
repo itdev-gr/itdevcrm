@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
@@ -19,12 +20,15 @@ import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { stageCompletesJob } from './stageCompletion';
 import { useBlockJob, useUnblockJob } from './hooks/useBlockJob';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useDeleteJobs } from './hooks/useDeleteJobs';
+import { useJobBillingRefCount } from './hooks/useJobBillingRefCount';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import type { ServiceType } from './hooks/useJobs';
 
 export function JobDetailPage() {
   const { jobId = '' } = useParams<{ jobId: string }>();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('jobs');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: job, isLoading, error } = useJob(jobId);
   const { data: owners = [] } = useAssignableOwners();
@@ -37,6 +41,10 @@ export function JobDetailPage() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canBlockJob = isAdmin || groupCodes.includes('accounting');
+  const navigate = useNavigate();
+  const del = useDeleteJobs();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const billingRefs = useJobBillingRefCount(jobId, confirmDelete);
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !job)
@@ -141,6 +149,11 @@ export function JobDetailPage() {
               </span>
             </div>
           )}
+          {isAdmin && (
+            <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+              🗑 {t('delete.button')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -231,6 +244,28 @@ export function JobDetailPage() {
           <ActivityPanel entityType="jobs" entityId={job.id} />
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t('delete.title')}
+        description={
+          (billingRefs.data ?? 0) > 0
+            ? `${t('delete.confirm')} ${t('delete.billing_warning', { count: billingRefs.data })}`
+            : t('delete.confirm')
+        }
+        confirmLabel={t('delete.button')}
+        pending={del.isPending}
+        onConfirm={async () => {
+          try {
+            await del.mutateAsync([job.id]);
+            setConfirmDelete(false);
+            navigate(-1);
+          } catch (e) {
+            alert((e as Error).message);
+          }
+        }}
+      />
     </div>
   );
 }
