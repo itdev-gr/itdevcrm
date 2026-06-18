@@ -44,7 +44,7 @@ export function JobsKanbanCard({
         <CardContent className="space-y-1 p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              {job.deal?.code && <CopyableCode code={job.deal.code} className="text-[10px]" />}
+              {job.code && <CopyableCode code={job.code} className="text-[10px]" />}
               <Link to={`/jobs/${job.id}`} className="truncate text-sm font-medium hover:underline">
                 {headline}
               </Link>
