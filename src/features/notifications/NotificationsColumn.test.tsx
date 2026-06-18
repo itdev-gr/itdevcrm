@@ -29,8 +29,11 @@ vi.mock('./hooks/useNotifications', () => ({
 vi.mock('./hooks/useMarkNotificationRead', () => ({
   useMarkNotificationRead: () => ({ mutate: () => {}, isPending: false }),
 }));
-vi.mock('./hooks/useMarkAllNotificationsRead', () => ({
-  useMarkAllNotificationsRead: () => ({ mutate: () => {}, isPending: false }),
+vi.mock('./hooks/useDeleteNotification', () => ({
+  useDeleteNotification: () => ({ mutate: () => {}, isPending: false }),
+}));
+vi.mock('./hooks/useClearAllNotifications', () => ({
+  useClearAllNotifications: () => ({ mutate: () => {}, isPending: false }),
 }));
 vi.mock('./hooks/useNotificationsRealtime', () => ({
   useNotificationsRealtime: () => undefined,
@@ -39,13 +42,13 @@ vi.mock('./hooks/useNotificationsRealtime', () => ({
 import { NotificationsColumn } from './NotificationsColumn';
 
 describe('NotificationsColumn', () => {
-  it('shows unread notifications but hides ones that are already read', () => {
+  it('keeps both read and unread notifications visible (they persist until removed)', () => {
     render(
       <MemoryRouter>
         <NotificationsColumn />
       </MemoryRouter>,
     );
     expect(screen.getByText('UnreadCo')).toBeInTheDocument();
-    expect(screen.queryByText('ReadCo')).not.toBeInTheDocument();
+    expect(screen.getByText('ReadCo')).toBeInTheDocument();
   });
 });

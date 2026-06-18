@@ -6,7 +6,8 @@ import { relativeFromNow } from '@/lib/datetime';
 import { useNotifications } from './hooks/useNotifications';
 import { useNotificationsRealtime } from './hooks/useNotificationsRealtime';
 import { useMarkNotificationRead } from './hooks/useMarkNotificationRead';
-import { useMarkAllNotificationsRead } from './hooks/useMarkAllNotificationsRead';
+import { useDeleteNotification } from './hooks/useDeleteNotification';
+import { useClearAllNotifications } from './hooks/useClearAllNotifications';
 
 type NotifPayload = Record<string, unknown> | null;
 
@@ -36,14 +37,15 @@ export function NotificationsColumn() {
   const { t } = useTranslation('sales');
   const { data: all = [] } = useNotifications();
   const mark = useMarkNotificationRead();
-  const markAll = useMarkAllNotificationsRead();
+  const del = useDeleteNotification();
+  const clearAll = useClearAllNotifications();
   useNotificationsRealtime();
 
-  // Show only unread items: clicking X (or "Clear all") marks a notification
-  // read, which removes it from this panel. Read items are kept in the DB but
-  // not shown — the panel acts as an unread inbox, consistent with the bell.
-  const list = all.filter((n) => !n.read_at);
-  const unread = list.length;
+  // Persistent feed: notifications stay here until the user removes them (the X
+  // button) or "Clear all". Opening one — here or from the bell — only marks it
+  // read; it does NOT disappear. read_at drives the styling + the bell badge.
+  const list = all;
+  const unread = all.filter((n) => !n.read_at).length;
 
   return (
     <aside className="flex h-full w-80 shrink-0 flex-col border-l bg-card">
@@ -54,13 +56,13 @@ export function NotificationsColumn() {
             <p className="text-[11px] text-muted-foreground">{unread} unread</p>
           )}
         </div>
-        {unread > 0 && (
+        {list.length > 0 && (
           <Button
             type="button"
             size="sm"
             variant="ghost"
-            onClick={() => markAll.mutate()}
-            disabled={markAll.isPending}
+            onClick={() => clearAll.mutate()}
+            disabled={clearAll.isPending}
             className="text-xs"
           >
             {t('notifications.clear_all')}
@@ -174,23 +176,27 @@ export function NotificationsColumn() {
                   }`}
                 >
                   {path ? (
-                    <Link to={path} className="block flex-1 min-w-0">
+                    <Link
+                      to={path}
+                      onClick={() => {
+                        if (!isRead) mark.mutate(n.id);
+                      }}
+                      className="block flex-1 min-w-0"
+                    >
                       {body}
                     </Link>
                   ) : (
                     <div className="flex-1 min-w-0">{body}</div>
                   )}
-                  {!isRead && (
-                    <button
-                      type="button"
-                      onClick={() => mark.mutate(n.id)}
-                      title={t('notifications.clear')}
-                      aria-label={t('notifications.clear')}
-                      className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => del.mutate(n.id)}
+                    title={t('notifications.clear')}
+                    aria-label={t('notifications.clear')}
+                    className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </li>
               );
             })}
