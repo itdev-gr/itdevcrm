@@ -48,6 +48,7 @@ export const queryKeys = {
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
   jobsForDeal: (dealId: string) => ['jobs', 'deal', dealId] as const,
   job: (id: string) => ['job', id] as const,
+  jobBillingRefCount: (id: string) => ['job-billing-ref-count', id] as const,
   jobMonthlyTasks: (id: string) => ['job-monthly-tasks', id] as const,
   monthlyTaskTemplate: (serviceType: string) =>
     ['monthly-task-template', serviceType] as const,
