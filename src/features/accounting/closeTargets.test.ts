@@ -3,16 +3,16 @@ import { closeTargetCode, closeTargetStageId, buildCloseJobs } from './closeTarg
 
 const stages = [
   { id: 'ws-done', board: 'web_seo', code: 'done' },
-  { id: 'ls-done', board: 'local_seo', code: 'done' },
+  { id: 'ls-closed', board: 'local_seo', code: 'closed' },
   { id: 'wd-live', board: 'web_dev', code: 'live' },
   { id: 'wd-closed', board: 'web_dev', code: 'closed' },
   { id: 'sm-closed', board: 'social_media', code: 'closed' },
 ] as const;
 
 describe('closeTargetCode', () => {
-  it('web_seo / local_seo → done', () => {
+  it('web_seo → done; local_seo → its own closed lane', () => {
     expect(closeTargetCode('web_seo')).toBe('done');
-    expect(closeTargetCode('local_seo')).toBe('done');
+    expect(closeTargetCode('local_seo')).toBe('closed');
   });
   it('web_dev → chosen, default closed', () => {
     expect(closeTargetCode('web_dev')).toBe('closed');

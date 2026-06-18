@@ -10,8 +10,9 @@ type StageLite = Pick<StageRow, 'id' | 'board' | 'code'>;
  * "closed"); social_media/ads/hosting → "closed".
  */
 export function closeTargetCode(board: string, webDevChoice: WebDevChoice = 'closed'): string {
-  if (board === 'web_seo' || board === 'local_seo') return 'done';
+  if (board === 'web_seo') return 'done';
   if (board === 'web_dev') return webDevChoice;
+  // local_seo, social_media, ads, hosting → their dedicated "Closed" lane.
   return 'closed';
 }
 
