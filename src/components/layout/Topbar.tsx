@@ -22,7 +22,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             type="button"
             onClick={onMenuClick}
             aria-label={t('nav.open_menu', { defaultValue: 'Open menu' })}
-            className="rounded p-1 hover:bg-slate-100 md:hidden"
+            className="rounded p-1 hover:bg-muted md:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -34,7 +34,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         {session && (
           <Link
             to="/profile"
-            className="text-sm text-muted-foreground hover:text-slate-900 hover:underline"
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
             title={userEmail}
           >
             {userEmail}

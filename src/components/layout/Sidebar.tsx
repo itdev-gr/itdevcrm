@@ -66,7 +66,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         to="/"
         end
         className={({ isActive }) =>
-          `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+          `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
         }
       >
         {t('nav.home')}
@@ -75,7 +75,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         <NavLink
           to="/dashboard"
           className={({ isActive }) =>
-            `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+            `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
           }
         >
           📊 {t('dashboard.title')}
@@ -83,11 +83,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       )}
       {(isAdmin || isSales) && (
         <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-slate-500">{t('common:nav.section.sales')}</p>
+          <p className="px-3 text-xs font-medium uppercase text-muted-foreground">{t('common:nav.section.sales')}</p>
           <NavLink
             to="/sales/clients"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             {t('clients:my_clients')}
@@ -95,7 +95,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/sales/leads"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             {t('leads:title')}
@@ -103,7 +103,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/sales/kanban"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             {t('sales:kanban.title')}
@@ -111,7 +111,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/sales/docs"
             className={({ isActive }) =>
-              `block rounded px-6 py-1 text-xs ${isActive ? 'bg-slate-200 font-medium text-slate-800' : 'text-slate-600 hover:bg-slate-100'}`
+              `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
             }
           >
             {t('common:nav.documentation')}
@@ -119,7 +119,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/contracts"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             {t('contracts:nav.title')}
@@ -128,11 +128,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       )}
       {(isAdmin || isAccounting) && (
         <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-slate-500">{t('common:nav.section.accounting')}</p>
+          <p className="px-3 text-xs font-medium uppercase text-muted-foreground">{t('common:nav.section.accounting')}</p>
           <NavLink
             to="/accounting/clients"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             {t('accounting:nav.clients')}
@@ -140,7 +140,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/accounting/onboarding"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             {t('accounting:nav.onboarding')}
@@ -148,7 +148,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/accounting/recurring"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             {t('accounting:nav.recurring')}
@@ -156,7 +156,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/accounting/docs"
             className={({ isActive }) =>
-              `block rounded px-6 py-1 text-xs ${isActive ? 'bg-slate-200 font-medium text-slate-800' : 'text-slate-600 hover:bg-slate-100'}`
+              `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
             }
           >
             {t('common:nav.documentation')}
@@ -166,7 +166,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <NavLink
                 to="/accounting/report"
                 className={({ isActive }) =>
-                  `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+                  `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
                 }
               >
                 {t('accounting_report:nav.report')}
@@ -174,7 +174,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <NavLink
                 to="/accounting/expenses"
                 className={({ isActive }) =>
-                  `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+                  `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
                 }
               >
                 {t('accounting_report:nav.expenses')}
@@ -185,14 +185,14 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       )}
       {visibleTechGroups.length > 0 && (
         <div className="space-y-1 pt-2">
-          <p className="px-3 text-xs font-medium uppercase text-slate-500">{t('common:nav.section.technical')}</p>
+          <p className="px-3 text-xs font-medium uppercase text-muted-foreground">{t('common:nav.section.technical')}</p>
           {visibleTechGroups.map((g) => (
             <div key={g} className="space-y-0.5">
               <NavLink
                 to={TECH_ROUTES[g]}
                 end
                 className={({ isActive }) =>
-                  `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+                  `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
                 }
               >
                 {TECH_LABELS[g]}
@@ -200,7 +200,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <NavLink
                 to={TECH_CLIENTS_ROUTES[g]}
                 className={({ isActive }) =>
-                  `block rounded px-6 py-1 text-xs ${isActive ? 'bg-slate-200 font-medium text-slate-800' : 'text-slate-600 hover:bg-slate-100'}`
+                  `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
                 }
               >
                 {t('clients:my_clients')}
@@ -209,7 +209,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 <NavLink
                   to={`${TECH_ROUTES[g]}/docs`}
                   className={({ isActive }) =>
-                    `block rounded px-6 py-1 text-xs ${isActive ? 'bg-slate-200 font-medium text-slate-800' : 'text-slate-600 hover:bg-slate-100'}`
+                    `block rounded px-6 py-1 text-xs ${isActive ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted'}`
                   }
                 >
                   {t('common:nav.documentation')}
@@ -224,7 +224,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavLink
             to="/admin"
             className={({ isActive }) =>
-              `block rounded px-3 py-2 ${isActive ? 'bg-slate-200 font-medium' : 'hover:bg-slate-100'}`
+              `block rounded px-3 py-2 ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted'}`
             }
           >
             ⚙️ {t('admin:nav.settings')}
@@ -238,7 +238,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 /** Desktop sidebar — hidden below md; mobile uses the drawer in AppShell. */
 export function Sidebar() {
   return (
-    <aside className="hidden w-56 shrink-0 self-stretch overflow-y-auto border-r bg-slate-50 p-4 md:block">
+    <aside className="hidden w-56 shrink-0 self-stretch overflow-y-auto border-r bg-muted p-4 md:block">
       <SidebarNav />
     </aside>
   );

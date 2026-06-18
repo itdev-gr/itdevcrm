@@ -39,8 +39,8 @@ export function CopyableCode({ code, className = '' }: Props) {
       onClick={onClick}
       onPointerDown={(e) => e.stopPropagation()}
       title={copied ? 'Copied!' : 'Click to copy'}
-      className={`rounded bg-slate-100 px-1.5 py-0.5 font-mono hover:bg-slate-200 ${
-        copied ? 'text-emerald-700' : 'text-slate-600'
+      className={`rounded bg-muted px-1.5 py-0.5 font-mono hover:bg-muted ${
+        copied ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'
       } ${className}`}
     >
       {copied ? '✓ ' : ''}

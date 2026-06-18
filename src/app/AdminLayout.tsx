@@ -17,7 +17,7 @@ export function AdminLayout() {
   return (
     <AdminGuard>
       <div className="space-y-4 p-6">
-        <div className="sticky top-0 z-20 -mx-6 -mt-6 border-b bg-white/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="sticky top-0 z-20 -mx-6 -mt-6 border-b bg-background/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <h1 className="mb-2 text-2xl font-bold">{t('settings.title')}</h1>
           <nav className="flex flex-wrap gap-1">
             {SETTINGS_TABS.map((tab) => (
@@ -26,7 +26,7 @@ export function AdminLayout() {
                 to={tab.to}
                 className={({ isActive }) =>
                   `rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
+                    isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
                   }`
                 }
               >

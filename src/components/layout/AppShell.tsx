@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             onClick={() => setMobileNavOpen(false)}
             aria-hidden
           />
-          <div className="absolute inset-y-0 left-0 w-64 overflow-y-auto bg-slate-50 p-4 shadow-xl">
+          <div className="absolute inset-y-0 left-0 w-64 overflow-y-auto bg-muted p-4 shadow-xl">
             <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
           </div>
         </div>
