@@ -34,12 +34,16 @@ function readString(p: NotifPayload, key: string): string | null {
 
 export function NotificationsColumn() {
   const { t } = useTranslation('sales');
-  const { data: list = [] } = useNotifications();
+  const { data: all = [] } = useNotifications();
   const mark = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
   useNotificationsRealtime();
 
-  const unread = list.filter((n) => !n.read_at).length;
+  // Show only unread items: clicking X (or "Clear all") marks a notification
+  // read, which removes it from this panel. Read items are kept in the DB but
+  // not shown — the panel acts as an unread inbox, consistent with the bell.
+  const list = all.filter((n) => !n.read_at);
+  const unread = list.length;
 
   return (
     <aside className="flex h-full w-80 shrink-0 flex-col border-l bg-card">
