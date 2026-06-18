@@ -34,7 +34,7 @@ export function TechMyClientsPage() {
   const { data: rows = [], isLoading } = useTechMyClients(serviceType);
 
   if (isLoading) return <div className="p-8">…</div>;
-  if (!serviceType) return <div className="p-8 text-red-600">Unknown service.</div>;
+  if (!serviceType) return <div className="p-8 text-red-600 dark:text-red-400">Unknown service.</div>;
 
   const filtered = rows.filter((r: TechMyClientRow) => {
     if (!query.trim()) return true;
@@ -49,9 +49,9 @@ export function TechMyClientsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 border-b bg-white/95 px-6 py-3">
+      <div className="-mx-6 -mt-6 border-b bg-background/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{label} — My Clients</h1>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Clients with activity in the last 90 days.
         </p>
       </div>
@@ -64,11 +64,11 @@ export function TechMyClientsPage() {
       />
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-slate-500">No clients match.</p>
+        <p className="text-sm text-muted-foreground">No clients match.</p>
       ) : (
         <div className="overflow-x-auto rounded-md border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs text-slate-500">
+            <thead className="bg-muted text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 font-normal">Client</th>
                 <th className="px-3 py-2 font-normal">Industry</th>
@@ -83,34 +83,34 @@ export function TechMyClientsPage() {
                   .filter(Boolean)
                   .join(' ');
                 return (
-                  <tr key={r.client_id} className="border-t hover:bg-slate-50/60">
+                  <tr key={r.client_id} className="border-t hover:bg-muted/60">
                     <td className="px-3 py-2">
                       <Link
                         to={`/clients/${r.client_id}`}
-                        className="font-medium text-blue-700 hover:underline"
+                        className="font-medium text-blue-700 hover:underline dark:text-blue-400"
                       >
                         {r.client_name}
                       </Link>
                       {(contactName || r.email) && (
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[11px] text-muted-foreground">
                           {[contactName, r.email].filter(Boolean).join(' · ')}
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-600">
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
                       {r.industry ? industryLabel(r.industry, lang) : '—'}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{r.active_jobs}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
                       {relativeFromNow(r.last_activity)}
                     </td>
                     <td className="px-3 py-2">
                       {r.any_blocked ? (
-                        <span className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700">
+                        <span className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300">
                           🔒 Blocked
                         </span>
                       ) : (
-                        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                           {r.client_status ?? 'active'}
                         </span>
                       )}

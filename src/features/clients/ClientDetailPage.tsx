@@ -34,7 +34,7 @@ export function ClientDetailPage() {
 
   if (isLoading || dealsLoading) return <div className="p-8">…</div>;
   if (error || !client)
-    return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+    return <div className="p-8 text-red-600 dark:text-red-400">{error?.message ?? 'Not found'}</div>;
 
   // 1 client = 1 live deal in this CRM. Whenever one exists, the deal is the
   // canonical working record — redirect there so users always land on the
@@ -61,7 +61,7 @@ export function ClientDetailPage() {
             <h1 className="text-2xl font-bold">{client.name}</h1>
             <BlockBadge clientId={clientId} />
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             🗓 {formatDate(client.created_at)} · {relativeFromNow(client.created_at)}
           </p>
         </div>

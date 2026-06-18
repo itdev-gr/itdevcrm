@@ -92,7 +92,7 @@ export function CreateUserDialog({ open, onOpenChange }: Props) {
             <Label htmlFor="is_admin">{t('create_dialog.is_admin')}</Label>
           </div>
           {create.isError && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
               {create.error?.message ?? t('create_dialog.error_generic')}
             </p>
           )}

@@ -207,7 +207,7 @@ export function ClientForm({ initial, onDone, onCancel }: Props) {
       />
 
       {isEdit ? (
-        <div className="md:col-span-2 flex h-5 items-center text-xs text-slate-500">
+        <div className="md:col-span-2 flex h-5 items-center text-xs text-muted-foreground">
           {autoSaveLabel(saveStatus, lang)}
         </div>
       ) : (

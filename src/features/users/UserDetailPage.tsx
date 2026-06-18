@@ -42,7 +42,7 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
     <div className="space-y-6 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{user.full_name || user.email}</h1>
-        <Link to="/admin/users" className="text-sm text-blue-600 underline">
+        <Link to="/admin/users" className="text-sm text-blue-600 underline dark:text-blue-400">
           ←
         </Link>
       </div>
@@ -124,7 +124,7 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
           )}
           <Link
             to={`/admin/users/${userId}/permissions`}
-            className="text-sm text-blue-600 underline"
+            className="text-sm text-blue-600 underline dark:text-blue-400"
           >
             Permissions
           </Link>
@@ -139,7 +139,7 @@ export function UserDetailPage() {
   const { data: user, isLoading, error } = useUser(userId);
 
   if (isLoading) return <div className="p-8">…</div>;
-  if (error || !user) return <div className="p-8 text-red-600">{error?.message}</div>;
+  if (error || !user) return <div className="p-8 text-red-600 dark:text-red-400">{error?.message}</div>;
 
   return <UserDetailForm key={userId} user={user} userId={userId} />;
 }

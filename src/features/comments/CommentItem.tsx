@@ -84,9 +84,9 @@ export function CommentItem({ comment, replies = [] }: Props) {
   }
 
   return (
-    <div className="rounded-md border bg-white p-3">
+    <div className="rounded-md border bg-card p-3">
       <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-        <span className="font-medium text-slate-700">{author}</span>
+        <span className="font-medium text-foreground">{author}</span>
         <div className="flex items-center gap-2 whitespace-nowrap">
           <span>
             {date}
@@ -99,7 +99,7 @@ export function CommentItem({ comment, replies = [] }: Props) {
           {!editing && (
             <button
               type="button"
-              className="text-[11px] text-slate-500 hover:text-slate-900"
+              className="text-[11px] text-muted-foreground hover:text-foreground"
               onClick={() => setReplying((v) => !v)}
             >
               {replying
@@ -112,17 +112,17 @@ export function CommentItem({ comment, replies = [] }: Props) {
               <button
                 type="button"
                 aria-label="More"
-                className="rounded px-1 leading-none hover:bg-slate-100"
+                className="rounded px-1 leading-none hover:bg-muted"
                 onClick={() => setMenuOpen((v) => !v)}
               >
                 ⋯
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-5 z-10 min-w-[8rem] rounded-md border bg-white shadow-md">
+                <div className="absolute right-0 top-5 z-10 min-w-[8rem] rounded-md border bg-card shadow-md">
                   {canEdit && (
                     <button
                       type="button"
-                      className="block w-full px-3 py-2 text-left text-xs hover:bg-slate-50"
+                      className="block w-full px-3 py-2 text-left text-xs hover:bg-muted"
                       onClick={() => {
                         setMenuOpen(false);
                         setEditing(true);
@@ -134,7 +134,7 @@ export function CommentItem({ comment, replies = [] }: Props) {
                   {canDelete && (
                     <button
                       type="button"
-                      className="block w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-slate-50"
+                      className="block w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-muted dark:text-red-400"
                       onClick={() => {
                         setMenuOpen(false);
                         void onDelete();
@@ -185,7 +185,7 @@ export function CommentItem({ comment, replies = [] }: Props) {
       )}
 
       {replying && (
-        <div className="mt-2 border-l-2 border-slate-200 pl-3">
+        <div className="mt-2 border-l-2 border-border pl-3">
           <CommentForm
             parentType={comment.parent_type}
             parentId={comment.parent_id}
@@ -196,7 +196,7 @@ export function CommentItem({ comment, replies = [] }: Props) {
       )}
 
       {replies.length > 0 && (
-        <div className="mt-3 space-y-2 border-l-2 border-slate-200 pl-3">
+        <div className="mt-3 space-y-2 border-l-2 border-border pl-3">
           {replies.map((r) => (
             <CommentItem key={r.id} comment={r} />
           ))}

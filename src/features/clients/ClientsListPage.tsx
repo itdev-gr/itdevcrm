@@ -14,7 +14,7 @@ export function ClientsListPage() {
   const { data: clients = [], isLoading, error } = useMyClients();
 
   if (isLoading) return <div className="p-8">…</div>;
-  if (error) return <div className="p-8 text-red-600">{error.message}</div>;
+  if (error) return <div className="p-8 text-red-600 dark:text-red-400">{error.message}</div>;
 
   return (
     <div className="space-y-4 p-8">
@@ -55,7 +55,7 @@ export function ClientsListPage() {
                 <td className="py-2 pr-4">{c.industry}</td>
                 <td className="py-2 pr-4">{c.country}</td>
                 <td className="py-2">
-                  <Link to={`/clients/${c.id}`} className="text-blue-600 underline">
+                  <Link to={`/clients/${c.id}`} className="text-blue-600 underline dark:text-blue-400">
                     {t('actions.view')}
                   </Link>
                 </td>

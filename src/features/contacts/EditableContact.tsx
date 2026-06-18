@@ -23,16 +23,16 @@ export function EditableContact({
 
   if (!editing) {
     return (
-      <div className="flex items-start justify-between gap-3 rounded-md border bg-slate-50 p-3">
+      <div className="flex items-start justify-between gap-3 rounded-md border bg-muted p-3">
         <div className="min-w-0 space-y-0.5 text-sm">
           <div className="font-medium">{value.full_name || '—'}</div>
           {value.email && (
             <div>
-              <a href={`mailto:${value.email}`} className="text-blue-700 hover:underline">{value.email}</a>
+              <a href={`mailto:${value.email}`} className="text-blue-700 hover:underline dark:text-blue-400">{value.email}</a>
             </div>
           )}
           {value.phone && <div><CallLink phone={value.phone} /></div>}
-          {value.info && <div className="text-slate-500">{value.info}</div>}
+          {value.info && <div className="text-muted-foreground">{value.info}</div>}
         </div>
         {!disabled && (
           <div className="flex shrink-0 gap-1">
@@ -49,7 +49,7 @@ export function EditableContact({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 rounded-md border bg-slate-50 p-3">
+    <div className="grid grid-cols-2 gap-3 rounded-md border bg-muted p-3">
       <div className="col-span-2">
         <Label htmlFor={`${idPrefix}-name`} className="text-xs">Full name</Label>
         <Input id={`${idPrefix}-name`} value={value.full_name} disabled={disabled}

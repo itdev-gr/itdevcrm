@@ -30,7 +30,7 @@ export function MyProfilePage() {
   });
 
   if (profile.isLoading || !userId) return <div className="p-8">…</div>;
-  if (!profile.data) return <div className="p-8 text-red-600">Profile not found.</div>;
+  if (!profile.data) return <div className="p-8 text-red-600 dark:text-red-400">Profile not found.</div>;
 
   // Mount the form fresh per profile row so initial-state hydration is via
   // useState initializers (no setState-in-effect).
@@ -97,7 +97,7 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
     <div className="mx-auto max-w-2xl space-y-6 p-8">
       <div>
         <h1 className="text-2xl font-bold">{t('profile.title')}</h1>
-        <p className="text-sm text-slate-500">{t('profile.subtitle')}</p>
+        <p className="text-sm text-muted-foreground">{t('profile.subtitle')}</p>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
@@ -162,7 +162,7 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
             value={offerFollowupDays}
             onChange={(e) => setOfferFollowupDays(Number(e.target.value))}
           />
-          <p className="mt-1 text-[11px] text-slate-500">
+          <p className="mt-1 text-[11px] text-muted-foreground">
             {t('profile.offer_followup_days_hint', {
               defaultValue:
                 'When you create an offer, the lead moves to Offer Sent and a calendar follow-up is scheduled this many days later. 0 disables it.',
@@ -173,14 +173,14 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
       <div className="rounded-md border p-4">
         <h2 className="text-sm font-medium">{tEmail('connect.title')}</h2>
         {googleResult === 'connected' && (
-          <p className="mt-1 text-sm text-green-700">{tEmail('connect.success')}</p>
+          <p className="mt-1 text-sm text-green-700 dark:text-green-400">{tEmail('connect.success')}</p>
         )}
         {googleResult === 'error' && (
-          <p className="mt-1 text-sm text-red-600">{tEmail('connect.error')}</p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{tEmail('connect.error')}</p>
         )}
         {google.connected ? (
           <div className="mt-2 flex items-center justify-between gap-3">
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-muted-foreground">
               {tEmail('connect.connected_as', { email: google.email })}
             </span>
             <button
@@ -194,14 +194,14 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
         ) : (
           <button
             type="button"
-            className="mt-2 rounded bg-neutral-900 px-3 py-1.5 text-sm text-white"
+            className="mt-2 rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
             onClick={() => google.connect()}
           >
             {tEmail('connect.connect')}
           </button>
         )}
       </div>
-      <div className="text-xs text-slate-500">{autoSaveLabel(status, lang)}</div>
+      <div className="text-xs text-muted-foreground">{autoSaveLabel(status, lang)}</div>
     </div>
   );
 }

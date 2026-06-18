@@ -54,6 +54,7 @@ export function NotificationsBell() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
+            // theme: intentionally fixed — solid red unread-count badge reads on both themes
             <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1 text-[10px] text-white">
               {unreadCount}
             </span>
@@ -82,7 +83,7 @@ export function NotificationsBell() {
                 const body = (
                   <div
                     className={`rounded-md p-2 text-xs ${
-                      n.read_at ? 'bg-slate-50' : 'bg-blue-50 font-medium'
+                      n.read_at ? 'bg-muted' : 'bg-blue-50 font-medium dark:bg-blue-950/40'
                     }`}
                   >
                     {n.type === 'mention' ? (
@@ -99,13 +100,13 @@ export function NotificationsBell() {
                           )}
                         </div>
                         {preview && (
-                          <div className="text-slate-700 font-normal italic">"{preview}"</div>
+                          <div className="text-muted-foreground font-normal italic">"{preview}"</div>
                         )}
                       </div>
                     ) : n.type === 'payment_overdue' ? (
                       <div className="space-y-0.5">
                         <div>
-                          <span className="font-semibold text-red-700">⚠ Payment overdue</span>
+                          <span className="font-semibold text-red-700 dark:text-red-300">⚠ Payment overdue</span>
                           {parentLabel && (
                             <>
                               {' '}<span className="font-normal">—</span>{' '}
@@ -113,7 +114,7 @@ export function NotificationsBell() {
                             </>
                           )}
                         </div>
-                        <div className="font-normal text-slate-700">
+                        <div className="font-normal text-muted-foreground">
                           {readString(payload, 'service_type')}
                           {payload?.amount_gross != null && (
                             <> · €{Number(payload.amount_gross).toFixed(2)}</>

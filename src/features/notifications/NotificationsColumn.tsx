@@ -42,12 +42,12 @@ export function NotificationsColumn() {
   const unread = list.filter((n) => !n.read_at).length;
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col border-l bg-white">
+    <aside className="flex h-full w-80 shrink-0 flex-col border-l bg-card">
       <header className="flex items-center justify-between border-b px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold">{t('notifications.title')}</h2>
           {unread > 0 && (
-            <p className="text-[11px] text-slate-500">{unread} unread</p>
+            <p className="text-[11px] text-muted-foreground">{unread} unread</p>
           )}
         </div>
         {unread > 0 && (
@@ -81,7 +81,7 @@ export function NotificationsColumn() {
 
               const body = (
                 <div
-                  className={`flex-1 space-y-0.5 text-xs ${isRead ? 'text-slate-500' : 'text-slate-900'}`}
+                  className={`flex-1 space-y-0.5 text-xs ${isRead ? 'text-muted-foreground' : 'text-foreground'}`}
                 >
                   {n.type === 'mention' ? (
                     <>
@@ -95,7 +95,7 @@ export function NotificationsColumn() {
                         )}
                       </div>
                       {preview && (
-                        <div className="italic text-slate-600">&ldquo;{preview}&rdquo;</div>
+                        <div className="italic text-muted-foreground">&ldquo;{preview}&rdquo;</div>
                       )}
                     </>
                   ) : n.type === 'task_assigned' ? (
@@ -105,14 +105,14 @@ export function NotificationsColumn() {
                         {readString(payload, 'source_code') && (
                           <>
                             {' '}on{' '}
-                            <span className="rounded bg-slate-100 px-1 font-mono text-[10px] text-slate-600">
+                            <span className="rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground">
                               {readString(payload, 'source_code')}
                             </span>
                           </>
                         )}
                       </div>
                       {readString(payload, 'title') && (
-                        <div className="italic text-slate-700">&ldquo;{readString(payload, 'title')}&rdquo;</div>
+                        <div className="italic text-foreground">&ldquo;{readString(payload, 'title')}&rdquo;</div>
                       )}
                     </>
                   ) : n.type === 'task_resolved' ? (
@@ -122,27 +122,27 @@ export function NotificationsColumn() {
                         {readString(payload, 'source_code') && (
                           <>
                             {' '}on{' '}
-                            <span className="rounded bg-slate-100 px-1 font-mono text-[10px] text-slate-600">
+                            <span className="rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground">
                               {readString(payload, 'source_code')}
                             </span>
                           </>
                         )}
                       </div>
                       {readString(payload, 'title') && (
-                        <div className="italic text-slate-700">&ldquo;{readString(payload, 'title')}&rdquo;</div>
+                        <div className="italic text-foreground">&ldquo;{readString(payload, 'title')}&rdquo;</div>
                       )}
                     </>
                   ) : n.type === 'payment_overdue' ? (
                     <>
                       <div className={isRead ? '' : 'font-medium'}>
-                        <span className="font-semibold text-red-700">⚠ Payment overdue</span>
+                        <span className="font-semibold text-red-700 dark:text-red-300">⚠ Payment overdue</span>
                         {parentLabel && (
                           <>
                             {' '}— <span className="font-semibold">{parentLabel}</span>
                           </>
                         )}
                       </div>
-                      <div className="text-slate-600">
+                      <div className="text-muted-foreground">
                         {readString(payload, 'service_type')}
                         {payload?.amount_gross != null && (
                           <> · €{Number(payload.amount_gross).toFixed(2)}</>
@@ -158,7 +158,7 @@ export function NotificationsColumn() {
                       {parentLabel && <> · {parentLabel}</>}
                     </div>
                   )}
-                  <div className="text-[10px] text-slate-400">{relativeFromNow(n.created_at)}</div>
+                  <div className="text-[10px] text-muted-foreground">{relativeFromNow(n.created_at)}</div>
                 </div>
               );
 
@@ -166,7 +166,7 @@ export function NotificationsColumn() {
                 <li
                   key={n.id}
                   className={`flex items-start gap-2 px-4 py-3 ${
-                    isRead ? 'bg-white' : 'bg-blue-50/40'
+                    isRead ? 'bg-card' : 'bg-blue-50/40 dark:bg-blue-950/20'
                   }`}
                 >
                   {path ? (
@@ -182,7 +182,7 @@ export function NotificationsColumn() {
                       onClick={() => mark.mutate(n.id)}
                       title={t('notifications.clear')}
                       aria-label={t('notifications.clear')}
-                      className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>

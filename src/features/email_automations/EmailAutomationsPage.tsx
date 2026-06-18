@@ -41,26 +41,26 @@ function TemplateEditor({ tpl }: { tpl: EmailTemplateRow }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-slate-50"
+        className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-muted"
       >
         <div>
           <div className="text-sm font-medium">{tpl.subject}</div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-muted-foreground">
             {tpl.description} · <code className="text-[10px]">{tpl.key}</code>
           </div>
         </div>
-        <span className="text-xs text-slate-400">{open ? '▲' : '▼'}</span>
+        <span className="text-xs text-muted-foreground">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
         <div className="space-y-2 border-t p-3">
           <div>
-            <label className="text-xs font-medium text-slate-600">
+            <label className="text-xs font-medium text-muted-foreground">
               {t('email_automations.subject')}
             </label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-600">
+            <label className="text-xs font-medium text-muted-foreground">
               {t('email_automations.body')}
             </label>
             <textarea
@@ -71,10 +71,10 @@ function TemplateEditor({ tpl }: { tpl: EmailTemplateRow }) {
             />
           </div>
           {tpl.variables && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {t('email_automations.variables')}:{' '}
               {tpl.variables.split(',').map((v) => (
-                <code key={v} className="mr-1 rounded bg-slate-100 px-1">
+                <code key={v} className="mr-1 rounded bg-muted px-1">
                   {`{{${v.trim()}}}`}
                 </code>
               ))}
@@ -129,7 +129,7 @@ export function EmailAutomationsPage() {
               checked={globalRow.enabled}
               onChange={(v) => updateSetting.mutate({ key: 'global', enabled: v })}
             />
-            <span className={globalRow.enabled ? 'font-medium' : 'font-medium text-red-600'}>
+            <span className={globalRow.enabled ? 'font-medium' : 'font-medium text-red-600 dark:text-red-400'}>
               {t('email_automations.global_switch')}
             </span>
           </label>
@@ -137,7 +137,7 @@ export function EmailAutomationsPage() {
       </div>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase text-slate-500">
+        <h2 className="text-sm font-semibold uppercase text-muted-foreground">
           {t('email_automations.one_shots')}
         </h2>
         <div className="divide-y rounded border">
@@ -154,15 +154,15 @@ export function EmailAutomationsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase text-slate-500">
+        <h2 className="text-sm font-semibold uppercase text-muted-foreground">
           {t('email_automations.sequences')}
         </h2>
         {sequences.map((seq) => (
           <div key={seq.id} className="rounded border">
-            <div className="flex items-center justify-between border-b bg-slate-50 px-3 py-2">
+            <div className="flex items-center justify-between border-b bg-muted px-3 py-2">
               <div>
                 <div className="text-sm font-medium">{seq.display_name}</div>
-                <div className="text-xs text-slate-500">{seq.description}</div>
+                <div className="text-xs text-muted-foreground">{seq.description}</div>
               </div>
               <Toggle
                 checked={seq.enabled}
@@ -171,7 +171,7 @@ export function EmailAutomationsPage() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-500">
+                <tr className="text-left text-xs text-muted-foreground">
                   <th className="px-3 py-1.5 font-medium">{t('email_automations.step_day')}</th>
                   <th className="px-3 py-1.5 font-medium">{t('email_automations.step_email')}</th>
                   <th className="px-3 py-1.5 text-right font-medium">
@@ -198,7 +198,7 @@ export function EmailAutomationsPage() {
                     </td>
                     <td className="px-3 py-1.5 text-xs">
                       {templateByKey.get(step.template_key)?.subject ?? step.template_key}
-                      <code className="ml-2 text-[10px] text-slate-400">{step.template_key}</code>
+                      <code className="ml-2 text-[10px] text-muted-foreground">{step.template_key}</code>
                     </td>
                     <td className="px-3 py-1.5 text-right">
                       <Toggle
@@ -215,7 +215,7 @@ export function EmailAutomationsPage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase text-slate-500">
+        <h2 className="text-sm font-semibold uppercase text-muted-foreground">
           {t('email_automations.templates')}
         </h2>
         <div className="space-y-2">

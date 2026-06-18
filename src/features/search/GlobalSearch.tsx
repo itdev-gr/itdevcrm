@@ -105,7 +105,7 @@ export function GlobalSearch() {
   return (
     <div ref={containerRef} className="relative w-72">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           ref={inputRef}
           type="search"
@@ -117,19 +117,19 @@ export function GlobalSearch() {
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder={t('global_search.placeholder')}
-          className="w-full rounded-md border border-input bg-white py-1.5 pl-8 pr-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+          className="w-full rounded-md border border-input bg-background py-1.5 pl-8 pr-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
       {open && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-96 overflow-y-auto rounded-md border bg-white shadow-md">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-96 overflow-y-auto rounded-md border bg-card shadow-md">
           {!enabled ? (
-            <div className="px-3 py-2 text-xs text-slate-500">
+            <div className="px-3 py-2 text-xs text-muted-foreground">
               {t('global_search.type_to_search')}
             </div>
           ) : search.isLoading ? (
-            <div className="px-3 py-2 text-xs text-slate-500">…</div>
+            <div className="px-3 py-2 text-xs text-muted-foreground">…</div>
           ) : hits.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-slate-500">{t('global_search.no_results')}</div>
+            <div className="px-3 py-2 text-xs text-muted-foreground">{t('global_search.no_results')}</div>
           ) : (
             <ul>
               {hits.map((h, idx) => (
@@ -139,22 +139,22 @@ export function GlobalSearch() {
                     onMouseEnter={() => setActiveIdx(idx)}
                     onClick={dismiss}
                     className={`flex items-center gap-2 px-3 py-2 text-sm ${
-                      idx === activeBounded ? 'bg-slate-100' : 'hover:bg-slate-50'
+                      idx === activeBounded ? 'bg-muted' : 'hover:bg-muted'
                     }`}
                   >
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">
+                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                       {h.code ?? '—'}
                     </span>
                     <span className="flex-1 truncate">
                       <span className="font-medium">{h.label || '—'}</span>
                       {h.sublabel && (
-                        <span className="ml-1 text-slate-500">
+                        <span className="ml-1 text-muted-foreground">
                           {/* Client sublabels carry the industry code; map to its label. */}
                           · {h.entity_type === 'client' ? industryLabel(h.sublabel, lang) : h.sublabel}
                         </span>
                       )}
                     </span>
-                    <span className="rounded bg-slate-50 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
                       {TYPE_LABEL[h.entity_type]}
                     </span>
                   </Link>

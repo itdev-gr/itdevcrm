@@ -39,9 +39,9 @@ function rangeFor(preset: Preset): { from: string; to: string } {
 function Tile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded border p-3">
-      <p className="text-xs uppercase text-neutral-500">{label}</p>
+      <p className="text-xs uppercase text-muted-foreground">{label}</p>
       <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
-      {hint && <p className="text-xs text-neutral-500">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -50,10 +50,10 @@ function CohortTable({ title, rows }: { title: string; rows: CohortRow[] }) {
   const { t } = useTranslation();
   return (
     <div className="rounded border">
-      <h3 className="border-b bg-slate-50 px-3 py-2 text-sm font-semibold">{title}</h3>
+      <h3 className="border-b bg-muted px-3 py-2 text-sm font-semibold">{title}</h3>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs text-slate-500">
+          <tr className="text-left text-xs text-muted-foreground">
             <th className="px-3 py-2 font-medium">{title}</th>
             <th className="px-3 py-2 text-right font-medium">{t('dashboard.leads')}</th>
             <th className="px-3 py-2 text-right font-medium">{t('dashboard.won')}</th>
@@ -66,7 +66,7 @@ function CohortTable({ title, rows }: { title: string; rows: CohortRow[] }) {
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-3 py-4 text-center text-xs text-slate-500">
+              <td colSpan={7} className="px-3 py-4 text-center text-xs text-muted-foreground">
                 {t('dashboard.no_leads')}
               </td>
             </tr>
@@ -75,16 +75,16 @@ function CohortTable({ title, rows }: { title: string; rows: CohortRow[] }) {
             <tr key={r.key} className="border-t tabular-nums">
               <td className="px-3 py-2">{r.key}</td>
               <td className="px-3 py-2 text-right">{r.total}</td>
-              <td className="px-3 py-2 text-right text-emerald-700">{r.won}</td>
-              <td className="px-3 py-2 text-right text-red-700">{r.lost}</td>
-              <td className="px-3 py-2 text-right text-slate-500">{r.open}</td>
+              <td className="px-3 py-2 text-right text-emerald-700 dark:text-emerald-400">{r.won}</td>
+              <td className="px-3 py-2 text-right text-red-700 dark:text-red-400">{r.lost}</td>
+              <td className="px-3 py-2 text-right text-muted-foreground">{r.open}</td>
               <td className="px-3 py-2 text-right">
                 {r.winRate === null ? '—' : `${Math.round(r.winRate * 100)}%`}
               </td>
               <td className="px-3 py-2 text-right">
                 €{r.wonOneTime.toFixed(0)}
                 {r.wonMonthly > 0 && (
-                  <span className="text-xs text-slate-500"> +€{r.wonMonthly.toFixed(0)}/mo</span>
+                  <span className="text-xs text-muted-foreground"> +€{r.wonMonthly.toFixed(0)}/mo</span>
                 )}
               </td>
             </tr>
@@ -176,7 +176,7 @@ export function DashboardPage() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('dashboard.title')}</h1>
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-muted-foreground">
             {range.from} → {range.to}
           </p>
         </div>
@@ -186,7 +186,7 @@ export function DashboardPage() {
               key={p}
               type="button"
               onClick={() => setPreset(p)}
-              className={`rounded border px-3 py-1.5 text-sm ${preset === p ? 'bg-neutral-900 text-white' : ''}`}
+              className={`rounded border px-3 py-1.5 text-sm ${preset === p ? 'bg-primary text-primary-foreground' : ''}`}
             >
               {t(`dashboard.range.${p}`)}
             </button>
@@ -217,7 +217,7 @@ export function DashboardPage() {
         <h3 className="mb-2 text-sm font-semibold">{t('dashboard.revenue_trend')}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={trendData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="month" fontSize={11} />
             <YAxis fontSize={11} tickFormatter={(v: number) => `€${v}`} />
             <Tooltip formatter={(v) => `€${Number(v ?? 0).toFixed(2)}`} />
@@ -234,14 +234,14 @@ export function DashboardPage() {
         <h3 className="mb-2 text-sm font-semibold">{t('dashboard.conversion_by_person')}</h3>
         <ResponsiveContainer width="100%" height={Math.max(160, ownerChartData.length * 44)}>
           <BarChart data={ownerChartData} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 24 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis type="number" allowDecimals={false} fontSize={11} />
             <YAxis type="category" dataKey="name" width={110} fontSize={11} />
             <Tooltip />
             <Legend />
             <Bar dataKey={t('dashboard.won')} stackId="a" fill="#059669" />
             <Bar dataKey={t('dashboard.lost')} stackId="a" fill="#dc2626" />
-            <Bar dataKey={t('dashboard.open')} stackId="a" fill="#94a3b8" />
+            <Bar dataKey={t('dashboard.open')} stackId="a" fill="hsl(var(--muted-foreground))" />
           </BarChart>
         </ResponsiveContainer>
       </section>

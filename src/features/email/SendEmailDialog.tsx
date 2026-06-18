@@ -39,10 +39,10 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded bg-white p-6 shadow">
+      <div className="w-full max-w-lg rounded bg-card p-6 shadow">
         <h2 className="mb-4 text-lg font-semibold">{t('dialog.title')}</h2>
         {done ? (
-          <p className="text-sm text-green-700">{t('dialog.sent')}</p>
+          <p className="text-sm text-green-700 dark:text-green-400">{t('dialog.sent')}</p>
         ) : (
           <>
             <label className="block text-sm">{t('dialog.to')}
@@ -57,18 +57,18 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
               <textarea aria-label={t('dialog.body')} value={text} onChange={(e) => setText(e.target.value)}
                 rows={8} className="mt-1 block w-full rounded border px-2 py-1" />
             </label>
-            {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-            {needsConnect && <p className="mt-3 text-sm text-amber-700">{t('connect.needed')}</p>}
+            {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {needsConnect && <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">{t('connect.needed')}</p>}
           </>
         )}
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={onClose}>{t('dialog.cancel')}</button>
           {!done && (needsConnect ? (
-            <button type="button" className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white" onClick={() => google.connect()}>
+            <button type="button" className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground" onClick={() => google.connect()}>
               {t('connect.connect')}
             </button>
           ) : (
-            <button type="button" className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white"
+            <button type="button" className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
               onClick={submit} disabled={send.isPending}>{t('dialog.send')}</button>
           ))}
         </div>

@@ -148,7 +148,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
         className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
       {query != null && matches.length > 0 && (
-        <ul className="absolute z-30 max-h-56 w-72 overflow-y-auto rounded-md border bg-white text-sm shadow-md">
+        <ul className="absolute z-30 max-h-56 w-72 overflow-y-auto rounded-md border bg-card text-sm shadow-md">
           {matches.map((u, idx) => (
             <li
               key={u.user_id}
@@ -159,11 +159,11 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
               }}
               onMouseEnter={() => setActiveIndex(idx)}
               className={`cursor-pointer px-3 py-2 ${
-                idx === activeIndex ? 'bg-slate-100' : 'hover:bg-slate-50'
+                idx === activeIndex ? 'bg-muted' : 'hover:bg-muted'
               }`}
             >
               <div className="font-medium">{u.full_name || u.email}</div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-muted-foreground">
                 {u.email}
                 {u.is_admin && ' · admin'}
                 {u.group_codes.length > 0 && ' · ' + u.group_codes.join(', ')}

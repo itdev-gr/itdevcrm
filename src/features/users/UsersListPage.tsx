@@ -19,7 +19,7 @@ export function UsersListPage() {
 
       {isLoading && <p>…</p>}
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="text-red-600 dark:text-red-400">
           {error.message}
         </p>
       )}
@@ -50,7 +50,7 @@ export function UsersListPage() {
                 <td className="py-2 pr-4">{u.is_admin ? '✓' : ''}</td>
                 <td className="py-2 pr-4">{u.is_active ? '✓' : ''}</td>
                 <td className="py-2">
-                  <Link to={`/admin/users/${u.user_id}`} className="text-blue-600 underline">
+                  <Link to={`/admin/users/${u.user_id}`} className="text-blue-600 underline dark:text-blue-400">
                     {t('actions.view')}
                   </Link>
                 </td>

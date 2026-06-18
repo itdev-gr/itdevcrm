@@ -103,8 +103,8 @@ function TaskRow({
   const done = !!task.completed_at;
   const className =
     layout === 'day'
-      ? `flex items-center gap-3 px-4 py-3 hover:bg-slate-50 ${done ? 'opacity-60' : ''}`
-      : `flex items-start gap-1.5 rounded bg-amber-50 px-1.5 py-1 text-amber-900 hover:bg-amber-100 ${done ? 'opacity-60' : ''}`;
+      ? `flex items-center gap-3 px-4 py-3 hover:bg-muted ${done ? 'opacity-60' : ''}`
+      : `flex items-start gap-1.5 rounded bg-amber-50 px-1.5 py-1 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-200 dark:hover:bg-amber-950/70 ${done ? 'opacity-60' : ''}`;
   return (
     <div className={className}>
       <input
@@ -119,7 +119,7 @@ function TaskRow({
         aria-label="Toggle complete"
       />
       {layout === 'day' && (
-        <span className="w-16 shrink-0 font-mono text-xs text-slate-600">
+        <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">
           {formatTime(task.due_at, locale)}
         </span>
       )}
@@ -146,7 +146,7 @@ function DayView({ cursor, entries, locale, onEditTask }: ViewProps) {
   const todayEntries = entries.filter((e) => sameDay(new Date(e.date), cursor));
   if (todayEntries.length === 0) {
     return (
-      <div className="rounded-md border bg-slate-50 p-6 text-center text-sm text-slate-500">
+      <div className="rounded-md border bg-muted p-6 text-center text-sm text-muted-foreground">
         {t('calendar.empty_day')}
       </div>
     );
@@ -157,18 +157,18 @@ function DayView({ cursor, entries, locale, onEditTask }: ViewProps) {
         e.kind === 'lead' ? (
           <li
             key={`lead-${e.lead.id}`}
-            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50"
+            className="flex items-center gap-3 px-4 py-3 hover:bg-muted"
           >
-            <span className="w-16 shrink-0 font-mono text-xs text-slate-600">
+            <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">
               {formatTime(e.lead.scheduled_for, locale)}
             </span>
             <Link
               to={`/leads/${e.lead.id}`}
-              className="min-w-0 flex-1 truncate text-sm font-medium text-blue-700 hover:underline"
+              className="min-w-0 flex-1 truncate text-sm font-medium text-blue-700 hover:underline dark:text-blue-400"
             >
               {leadHeadline(e.lead)}
             </Link>
-            {e.lead.code && <span className="text-[10px] text-slate-400">{e.lead.code}</span>}
+            {e.lead.code && <span className="text-[10px] text-muted-foreground">{e.lead.code}</span>}
           </li>
         ) : (
           <li key={`task-${e.task.id}`}>
@@ -198,25 +198,25 @@ function WeekView({ cursor, entries, locale, onEditTask }: ViewProps) {
         return (
           <div
             key={d.toDateString()}
-            className="flex min-h-[10rem] flex-col rounded-md border bg-white"
+            className="flex min-h-[10rem] flex-col rounded-md border bg-card"
           >
             <div
               className={`border-b px-2 py-1 text-xs font-medium ${
-                isToday ? 'bg-blue-50 text-blue-800' : 'bg-slate-50 text-slate-600'
+                isToday ? 'bg-blue-50 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300' : 'bg-muted text-muted-foreground'
               }`}
             >
               {weekdayFmt.format(d)}
             </div>
             <ul className="flex-1 space-y-1 p-2 text-xs">
               {list.length === 0 ? (
-                <li className="text-slate-300">·</li>
+                <li className="text-muted-foreground">·</li>
               ) : (
                 list.map((e) =>
                   e.kind === 'lead' ? (
                     <li key={`lead-${e.lead.id}`}>
                       <Link
                         to={`/leads/${e.lead.id}`}
-                        className="block rounded bg-blue-50 px-1.5 py-1 text-blue-800 hover:bg-blue-100"
+                        className="block rounded bg-blue-50 px-1.5 py-1 text-blue-800 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-950/70"
                       >
                         <span className="font-mono text-[10px] opacity-70">
                           {formatTime(e.lead.scheduled_for, locale)}
@@ -292,39 +292,39 @@ export function CalendarPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
+      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-6 py-3">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{t('calendar.title')}</h1>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => shift(-1)}
-              className="rounded-md border px-2 py-1 text-xs hover:bg-slate-50"
+              className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
             >
               ‹
             </button>
             <button
               type="button"
               onClick={() => setCursor(new Date())}
-              className="rounded-md border px-2 py-1 text-xs hover:bg-slate-50"
+              className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
             >
               {t('calendar.today')}
             </button>
             <button
               type="button"
               onClick={() => shift(1)}
-              className="rounded-md border px-2 py-1 text-xs hover:bg-slate-50"
+              className="rounded-md border px-2 py-1 text-xs hover:bg-muted"
             >
               ›
             </button>
-            <span className="ml-2 text-sm font-medium text-slate-700">{periodLabel}</span>
+            <span className="ml-2 text-sm font-medium text-foreground">{periodLabel}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={openNewTask}
-            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300 dark:hover:bg-amber-950/70"
           >
             {t('calendar.new_task')}
           </button>
@@ -334,8 +334,8 @@ export function CalendarPage() {
               onClick={() => setShowAllAdmin((v) => !v)}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 showAllAdmin
-                  ? 'border-amber-300 bg-amber-50 text-amber-700'
-                  : 'border-slate-300 bg-slate-100 text-slate-700'
+                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                  : 'border-border bg-muted text-muted-foreground'
               }`}
             >
               {showAllAdmin ? t('calendar.all_team') : t('calendar.my_calendar')}
@@ -348,7 +348,7 @@ export function CalendarPage() {
                 type="button"
                 onClick={() => setView(v)}
                 className={`px-3 py-1 text-xs font-medium ${
-                  view === v ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'
+                  view === v ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-muted'
                 }`}
               >
                 {t(`calendar.view.${v}`)}

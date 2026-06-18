@@ -159,7 +159,7 @@ export function ActivityPanel({ entityType, entityId }: Props) {
           const fields = snapshotFields(r.changes).slice(0, 6);
           if (fields.length > 0) {
             body = (
-              <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
+              <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
                 {fields.map((f) => (
                   <li key={f.field}>
                     <span className="font-medium">{FIELD_LABELS[f.field] ?? f.field}:</span>{' '}
@@ -179,26 +179,26 @@ export function ActivityPanel({ entityType, entityId }: Props) {
             const d = diffs[0]!;
             summary = `changed ${FIELD_LABELS[d.field] ?? d.field}`;
             body = (
-              <div className="mt-1 text-xs text-slate-600">
-                <span className="text-slate-400">{pretty(d.before, d.field, resolver)}</span>{' '}
-                <span className="text-slate-400">→</span>{' '}
-                <span className="text-slate-900">{pretty(d.after, d.field, resolver)}</span>
+              <div className="mt-1 text-xs text-muted-foreground">
+                <span className="text-muted-foreground">{pretty(d.before, d.field, resolver)}</span>{' '}
+                <span className="text-muted-foreground">→</span>{' '}
+                <span className="text-foreground">{pretty(d.after, d.field, resolver)}</span>
               </div>
             );
           } else {
             summary = `changed ${diffs.length} fields`;
             body = (
-              <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
+              <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
                 {diffs.slice(0, 8).map((d) => (
                   <li key={d.field}>
                     <span className="font-medium">{FIELD_LABELS[d.field] ?? d.field}:</span>{' '}
-                    <span className="text-slate-400">{pretty(d.before, d.field, resolver)}</span>{' '}
-                    <span className="text-slate-400">→</span>{' '}
-                    <span className="text-slate-900">{pretty(d.after, d.field, resolver)}</span>
+                    <span className="text-muted-foreground">{pretty(d.before, d.field, resolver)}</span>{' '}
+                    <span className="text-muted-foreground">→</span>{' '}
+                    <span className="text-foreground">{pretty(d.after, d.field, resolver)}</span>
                   </li>
                 ))}
                 {diffs.length > 8 && (
-                  <li className="italic text-slate-400">…and {diffs.length - 8} more</li>
+                  <li className="italic text-muted-foreground">…and {diffs.length - 8} more</li>
                 )}
               </ul>
             );
@@ -206,13 +206,13 @@ export function ActivityPanel({ entityType, entityId }: Props) {
         }
 
         return (
-          <li key={r.id} className="rounded-md border bg-white p-3 text-sm">
+          <li key={r.id} className="rounded-md border bg-card p-3 text-sm">
             <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-              <span className="font-medium text-slate-700">{who}</span>
+              <span className="font-medium text-foreground">{who}</span>
               <span>{when}</span>
             </div>
             <div className="mt-1">
-              <span className="text-slate-700">{summary}</span>
+              <span className="text-foreground">{summary}</span>
             </div>
             {body}
           </li>
