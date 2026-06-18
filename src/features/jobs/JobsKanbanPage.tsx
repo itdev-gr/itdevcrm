@@ -117,10 +117,10 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-6 py-3">
+      <div className="-mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-6 py-3">
         <h1 className="text-2xl font-bold">{SERVICE_LABELS[serviceType][lang]}</h1>
         {isAdmin ? (
-          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
             Admin view · {filteredJobs.length}
           </span>
         ) : (
@@ -129,8 +129,8 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
             onClick={toggleScope}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               onlyMine
-                ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200'
-                : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                ? 'border-border bg-muted text-muted-foreground hover:bg-muted'
+                : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-950/70'
             }`}
           >
             {onlyMine ? 'Only mine' : "All my group's"} ·{' '}

@@ -37,7 +37,7 @@ function StageBadge({ job, lang }: { job: JobRow; lang: 'en' | 'el' }) {
     ? (job.stage.display_names as { en?: string; el?: string })?.[lang] ?? job.stage.code
     : '—';
   return (
-    <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+    <span className="rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
       {label}
     </span>
   );
@@ -47,7 +47,7 @@ function BlockedBadge({ reason }: { reason: string | null }) {
   const label = reason?.replace(/_/g, ' ') ?? 'blocked';
   return (
     <span
-      className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700"
+      className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
       title={reason ?? undefined}
     >
       🔒 {label}
@@ -68,9 +68,9 @@ export function JobsTab(props: Scope) {
   const clientQuery = useJobsForClient(isDeal ? '' : props.clientId);
   const { data: jobs = [], isLoading, error } = isDeal ? dealQuery : clientQuery;
 
-  if (isLoading) return <div className="text-sm text-slate-500">…</div>;
+  if (isLoading) return <div className="text-sm text-muted-foreground">…</div>;
   if (error)
-    return <div className="text-sm text-red-600">{(error as Error).message}</div>;
+    return <div className="text-sm text-red-600 dark:text-red-400">{(error as Error).message}</div>;
 
   if (jobs.length === 0) {
     const message = isDeal
@@ -90,7 +90,7 @@ export function JobsTab(props: Scope) {
   return (
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full text-left text-sm">
-        <thead className="bg-slate-50 text-xs text-slate-500">
+        <thead className="bg-muted text-xs text-muted-foreground">
           <tr>
             <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Υπηρεσία' : 'Service'}</th>
             <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Χρέωση' : 'Billing'}</th>
@@ -117,16 +117,16 @@ export function JobsTab(props: Scope) {
                   ? `€${Number(j.one_time_amount).toFixed(0)}`
                   : '—';
             return (
-              <tr key={j.id} className="border-t hover:bg-slate-50/60">
+              <tr key={j.id} className="border-t hover:bg-muted/60">
                 <td className="px-3 py-2">
                   <Link
                     to={`/jobs/${j.id}`}
-                    className="font-medium text-blue-700 hover:underline"
+                    className="font-medium text-blue-700 hover:underline dark:text-blue-400"
                   >
                     {svcLabel}
                   </Link>
                 </td>
-                <td className="px-3 py-2 text-xs text-slate-600">{billingLabel}</td>
+                <td className="px-3 py-2 text-xs text-muted-foreground">{billingLabel}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{amount}</td>
                 <td className="px-3 py-2">
                   <StageBadge job={j} lang={lang} />
@@ -135,7 +135,7 @@ export function JobsTab(props: Scope) {
                   {j.is_blocked ? (
                     <BlockedBadge reason={j.blocked_reason} />
                   ) : (
-                    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                       {lang === 'el' ? 'Ενεργό' : 'Active'}
                     </span>
                   )}
@@ -145,22 +145,22 @@ export function JobsTab(props: Scope) {
                     {j.deal ? (
                       <Link
                         to={`/deals/${j.deal.id}`}
-                        className="text-blue-700 hover:underline"
+                        className="text-blue-700 hover:underline dark:text-blue-400"
                       >
                         {j.deal.code ?? j.deal.title ?? '—'}
                       </Link>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </td>
                 )}
-                <td className="px-3 py-2 text-xs text-slate-500">
+                <td className="px-3 py-2 text-xs text-muted-foreground">
                   {relativeFromNow(j.updated_at)}
                 </td>
                 <td className="px-3 py-2 text-right">
                   <Link
                     to={SERVICE_TO_KANBAN[svc] ?? '/'}
-                    className="text-[11px] text-blue-600 hover:underline"
+                    className="text-[11px] text-blue-600 hover:underline dark:text-blue-400"
                   >
                     {lang === 'el' ? 'Άνοιγμα kanban →' : 'Open kanban →'}
                   </Link>

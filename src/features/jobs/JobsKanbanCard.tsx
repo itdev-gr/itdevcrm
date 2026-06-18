@@ -52,7 +52,7 @@ export function JobsKanbanCard({
             <div className="flex items-center gap-1">
               {job.service_type === 'ai_seo' && (
                 <span
-                  className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700"
+                  className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
                   title="AI SEO"
                 >
                   AI SEO
@@ -60,23 +60,23 @@ export function JobsKanbanCard({
               )}
               {job.is_blocked && (
                 <span
-                  className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700"
+                  className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
                   title={job.blocked_reason ?? undefined}
                 >
                   🔒 Blocked
                 </span>
               )}
-              {job.completed_at && <span className="text-xs text-emerald-600">✓</span>}
+              {job.completed_at && <span className="text-xs text-emerald-600 dark:text-emerald-400">✓</span>}
             </div>
           </div>
           {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
           {Number(job.monthly_amount ?? 0) > 0 && (
             <div className="text-xs">€{Number(job.monthly_amount).toFixed(0)}/mo</div>
           )}
-          <div className="text-[10px] text-slate-500">
+          <div className="text-[10px] text-muted-foreground">
             👤 {owner ? owner.full_name || owner.email : 'Unassigned'}
           </div>
-          <div className="text-[10px] text-slate-400">🗓 {relativeFromNow(job.updated_at)}</div>
+          <div className="text-[10px] text-muted-foreground">🗓 {relativeFromNow(job.updated_at)}</div>
         </CardContent>
       </Card>
     </div>

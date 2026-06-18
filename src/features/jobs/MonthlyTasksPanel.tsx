@@ -38,7 +38,7 @@ export function MonthlyTasksPanel({ jobId, serviceType, isBlocked }: Props) {
 
   if (isLoading || !data) {
     return (
-      <div className="rounded-md border bg-white p-4 text-sm text-slate-500">
+      <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
         {t('monthly_tasks.title')}…
       </div>
     );
@@ -66,19 +66,19 @@ export function MonthlyTasksPanel({ jobId, serviceType, isBlocked }: Props) {
   const disabled = isBlocked || toggle.isPending;
 
   return (
-    <div className="rounded-md border bg-white">
-      <div className="flex items-center justify-between border-b bg-slate-50 px-4 py-2">
+    <div className="rounded-md border bg-card">
+      <div className="flex items-center justify-between border-b bg-muted px-4 py-2">
         <div>
           <div className="text-sm font-medium">
             {t('monthly_tasks.for_period', { period: formatPeriod(data.period, lang) })}
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-muted-foreground">
             {t('monthly_tasks.progress', { done, total })}
           </div>
         </div>
       </div>
       {ordered.length === 0 ? (
-        <div className="px-4 py-3 text-sm text-slate-500">{t('monthly_tasks.empty')}</div>
+        <div className="px-4 py-3 text-sm text-muted-foreground">{t('monthly_tasks.empty')}</div>
       ) : (
         <ul className="divide-y">
           {ordered.map(({ task, label }) => {
@@ -104,9 +104,9 @@ export function MonthlyTasksPanel({ jobId, serviceType, isBlocked }: Props) {
                   className="mt-1"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className={task.completed ? 'text-slate-500 line-through' : ''}>{text}</div>
+                  <div className={task.completed ? 'text-muted-foreground line-through' : ''}>{text}</div>
                   {task.completed && task.completed_at && (
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-[11px] text-muted-foreground">
                       {t('monthly_tasks.completed_by', {
                         name: owner?.full_name || owner?.email || '—',
                         when: relativeFromNow(task.completed_at),
@@ -120,7 +120,7 @@ export function MonthlyTasksPanel({ jobId, serviceType, isBlocked }: Props) {
         </ul>
       )}
       {isBlocked && (
-        <div className="border-t bg-amber-50 px-4 py-2 text-xs text-amber-800">
+        <div className="border-t bg-amber-50 px-4 py-2 text-xs text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
           {t('monthly_tasks.blocked_hint')}
         </div>
       )}

@@ -16,7 +16,7 @@ export function JobsKanbanColumn({ stageId, stageLabel, jobs, interactive = true
     <div
       ref={setNodeRef}
       className={`flex w-80 shrink-0 flex-col rounded-md border ${
-        isOver ? 'bg-slate-100' : interactive ? 'bg-slate-50' : 'bg-red-50/50'
+        isOver ? 'bg-muted' : interactive ? 'bg-card' : 'bg-red-50/50 dark:bg-red-950/30'
       }`}
     >
       <header className="border-b px-3 py-2">

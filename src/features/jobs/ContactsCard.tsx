@@ -38,7 +38,7 @@ function splitName(full: string): { first: string | null; last: string | null } 
 export function ContactsCard({ client }: Props) {
   if (!client?.id) {
     return (
-      <div className="rounded-md border bg-slate-50 px-4 py-3 text-sm text-slate-500">
+      <div className="rounded-md border bg-muted px-4 py-3 text-sm text-muted-foreground">
         No client linked.
       </div>
     );
@@ -75,17 +75,17 @@ function ContactsForm({ client, clientId }: { client: ClientShape; clientId: str
   });
 
   return (
-    <div className="rounded-md border bg-white">
-      <header className="flex items-center justify-between border-b bg-slate-50 px-4 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+    <div className="rounded-md border bg-card">
+      <header className="flex items-center justify-between border-b bg-muted px-4 py-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Contacts
         </span>
-        <span className="text-[11px] text-slate-500">{autoSaveLabel(status)}</span>
+        <span className="text-[11px] text-muted-foreground">{autoSaveLabel(status)}</span>
       </header>
 
       <div className="space-y-4 p-4">
         <section className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Primary contact
           </h3>
           <EditableContact
@@ -102,7 +102,7 @@ function ContactsForm({ client, clientId }: { client: ClientShape; clientId: str
         </section>
 
         <section className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Additional contacts
           </h3>
           <AdditionalContactsField value={additional} onChange={setAdditional} />

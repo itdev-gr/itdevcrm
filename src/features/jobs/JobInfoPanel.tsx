@@ -18,7 +18,7 @@ function FieldInput({
       <div className="flex items-center gap-2">
         <input type={reveal ? 'text' : 'password'} className="w-full rounded border px-2 py-1 text-sm"
           value={value} onChange={(e) => onChange(e.target.value)} />
-        <button type="button" className="text-xs text-slate-500"
+        <button type="button" className="text-xs text-muted-foreground"
           onClick={() => setReveal((r) => !r)} aria-label={reveal ? 'Hide' : 'Reveal'}>
           {reveal ? '🙈' : '👁'}
         </button>
@@ -48,17 +48,17 @@ export function JobInfoPanel({
     <div className="max-w-2xl space-y-6">
       {sections.map((section) => (
         <div key={section} className="space-y-3">
-          {section && <h3 className="text-sm font-semibold text-slate-700">{section}</h3>}
+          {section && <h3 className="text-sm font-semibold text-muted-foreground">{section}</h3>}
           {fields.filter((f) => (f.section ?? '') === section).map((f) => (
             <div key={f.key}>
-              <label className="mb-1 block text-xs text-slate-500">{f.labelEn}</label>
+              <label className="mb-1 block text-xs text-muted-foreground">{f.labelEn}</label>
               <FieldInput field={f} value={values[f.key] ?? ''}
                 onChange={(val) => setValues((p) => ({ ...p, [f.key]: val }))} />
             </div>
           ))}
         </div>
       ))}
-      <p className="h-4 text-xs text-slate-400">
+      <p className="h-4 text-xs text-muted-foreground">
         {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : status === 'error' ? 'Save failed' : ''}
       </p>
     </div>

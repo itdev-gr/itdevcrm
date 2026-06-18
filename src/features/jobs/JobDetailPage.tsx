@@ -40,7 +40,7 @@ export function JobDetailPage() {
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !job)
-    return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+    return <div className="p-8 text-red-600 dark:text-red-400">{error?.message ?? 'Not found'}</div>;
 
   const owner = job.owner_user_id ? owners.find((o) => o.user_id === job.owner_user_id) : null;
   const boardStages = stages
@@ -73,14 +73,14 @@ export function JobDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-3">
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
               Job
             </span>
             {job.deal?.code && <CopyableCode code={job.deal.code} className="text-xs" />}
             <h1 className="text-2xl font-bold">{fullName}</h1>
             {job.is_blocked && (
               <span
-                className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
                 title={job.blocked_reason ?? undefined}
               >
                 🔒 Blocked
@@ -88,7 +88,7 @@ export function JobDetailPage() {
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             {job.service_type} · 🗓 {formatDate(job.created_at)} ·{' '}
             {relativeFromNow(job.created_at)}
           </p>
@@ -136,7 +136,7 @@ export function JobDetailPage() {
           {owner && (
             <div className="flex items-center gap-2">
               <Label className="text-sm">Owner:</Label>
-              <span className="rounded-md border border-input bg-slate-50 px-2 py-1 text-sm text-slate-700">
+              <span className="rounded-md border border-input bg-muted px-2 py-1 text-sm text-muted-foreground">
                 {owner.full_name || owner.email}
               </span>
             </div>
@@ -165,27 +165,27 @@ export function JobDetailPage() {
                 />
               )}
               <ContactsCard client={job.client ?? null} />
-              <div className="grid grid-cols-2 gap-4 rounded-md border bg-slate-50 p-4 text-sm">
+              <div className="grid grid-cols-2 gap-4 rounded-md border bg-muted p-4 text-sm">
                 <div>
-                  <div className="text-xs text-slate-500">Service</div>
+                  <div className="text-xs text-muted-foreground">Service</div>
                   <div className="font-medium">{job.service_type}</div>
                 </div>
                 {Number(job.one_time_amount ?? 0) > 0 && (
                   <div>
-                    <div className="text-xs text-slate-500">One-time</div>
+                    <div className="text-xs text-muted-foreground">One-time</div>
                     <div className="font-medium">€{Number(job.one_time_amount).toFixed(2)}</div>
                   </div>
                 )}
                 <div>
-                  <div className="text-xs text-slate-500">Status</div>
+                  <div className="text-xs text-muted-foreground">Status</div>
                   <div className="font-medium">{job.status}</div>
                 </div>
                 {job.client && (
                   <div>
-                    <div className="text-xs text-slate-500">Client</div>
+                    <div className="text-xs text-muted-foreground">Client</div>
                     <Link
                       to={`/clients/${job.client.id}`}
-                      className="font-medium text-blue-700 hover:underline"
+                      className="font-medium text-blue-700 hover:underline dark:text-blue-400"
                     >
                       {job.client.name}
                     </Link>
@@ -193,10 +193,10 @@ export function JobDetailPage() {
                 )}
                 {job.deal && (
                   <div>
-                    <div className="text-xs text-slate-500">Deal</div>
+                    <div className="text-xs text-muted-foreground">Deal</div>
                     <Link
                       to={`/deals/${job.deal.id}`}
-                      className="font-medium text-blue-700 hover:underline"
+                      className="font-medium text-blue-700 hover:underline dark:text-blue-400"
                     >
                       {job.deal.code ?? job.deal.title}
                     </Link>
@@ -205,7 +205,7 @@ export function JobDetailPage() {
               </div>
             </div>
             <aside className="min-w-0 lg:border-l lg:pl-6">
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 Comments
               </h2>
               <CommentsPanel parentType="job" parentId={job.id} />
