@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -67,17 +67,18 @@ export function DealForm({ initial }: Props) {
   const [paymentMethod, setPaymentMethod] = useState(initial.payment_method ?? '');
   const [tempDealAmount, setTempDealAmount] = useState(initial.temp_deal_amount ?? '');
 
-  const seededRef = useState<{ done: boolean }>({ done: false })[0];
+  const seededRef = useRef(false);
 
-  if (fullClient && !seededRef.done) {
-    seededRef.done = true;
+  useEffect(() => {
+    if (seededRef.current || !fullClient) return;
+    seededRef.current = true;
     setContactInfo((fullClient as unknown as { contact_info?: string | null }).contact_info ?? '');
     setAdditionalContacts(
       parseAdditionalContacts(
         (fullClient as unknown as { additional_contacts?: unknown }).additional_contacts,
       ),
     );
-  }
+  }, [fullClient]);
 
   const dealPatch = useMemo(
     () => ({

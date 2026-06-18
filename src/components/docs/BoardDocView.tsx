@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
-import { extractToc, type TocItem } from '@/lib/markdown-toc';
+import { extractToc, splitDocIntoBlocks, type TocItem } from '@/lib/markdown-toc';
 
 const DOCS = import.meta.glob('../../../docs/boards/*.md', {
   query: '?raw',
@@ -125,17 +125,54 @@ function DocsMobileToc({ items, onSelect }: { items: TocItem[]; onSelect: (id: s
   );
 }
 
+const markdownComponents = {
+  h1: (p: React.ComponentProps<'h1'>) => (
+    <h1 className="mb-4 text-3xl font-bold tracking-tight" {...p} />
+  ),
+  p: (p: React.ComponentProps<'p'>) => (
+    <p className="my-3 text-sm leading-7 text-foreground" {...p} />
+  ),
+  ul: (p: React.ComponentProps<'ul'>) => (
+    <ul className="my-3 list-disc space-y-1.5 pl-6 text-sm text-foreground" {...p} />
+  ),
+  ol: (p: React.ComponentProps<'ol'>) => (
+    <ol className="my-3 list-decimal space-y-1.5 pl-6 text-sm text-foreground" {...p} />
+  ),
+  li: (p: React.ComponentProps<'li'>) => <li className="leading-7" {...p} />,
+  a: (p: React.ComponentProps<'a'>) => (
+    <a
+      className="font-medium text-[#157777] underline-offset-2 hover:underline dark:text-[#7ad4d4]"
+      {...p}
+    />
+  ),
+  table: (p: React.ComponentProps<'table'>) => (
+    <div className="my-4 overflow-x-auto rounded-lg border border-border/60">
+      <table className="w-full border-collapse text-sm" {...p} />
+    </div>
+  ),
+  thead: (p: React.ComponentProps<'thead'>) => <thead className="bg-muted/60 text-left" {...p} />,
+  th: (p: React.ComponentProps<'th'>) => (
+    <th className="border-b border-border/60 px-3 py-2.5 font-semibold text-muted-foreground" {...p} />
+  ),
+  td: (p: React.ComponentProps<'td'>) => (
+    <td className="border-b border-border/50 px-3 py-2.5 align-top text-foreground" {...p} />
+  ),
+  code: (p: React.ComponentProps<'code'>) => (
+    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]" {...p} />
+  ),
+  pre: (p: React.ComponentProps<'pre'>) => (
+    <pre
+      className="my-4 overflow-x-auto rounded-lg border border-border/60 bg-muted/50 p-4 text-xs leading-6"
+      {...p}
+    />
+  ),
+};
+
 export function BoardDocView({ slug }: { slug: string }) {
   const doc = docForSlug(slug);
   const toc = useMemo(() => (doc ? extractToc(doc) : []), [doc]);
-  const headingIndexRef = useRef(0);
+  const blocks = useMemo(() => (doc ? splitDocIntoBlocks(doc, toc) : []), [doc, toc]);
   const [activeId, setActiveId] = useState<string | null>(null);
-
-  function takeHeadingId() {
-    const id = toc[headingIndexRef.current]?.id;
-    headingIndexRef.current += 1;
-    return id ?? `section-${headingIndexRef.current}`;
-  }
 
   useEffect(() => {
     if (!doc || toc.length === 0) return;
@@ -189,8 +226,6 @@ export function BoardDocView({ slug }: { slug: string }) {
     return <div className="p-8 text-sm text-muted-foreground">No documentation for this board yet.</div>;
   }
 
-  headingIndexRef.current = 0;
-
   function handleSelect(id: string) {
     scrollToDocSection(id);
     setActiveId(id);
@@ -203,67 +238,27 @@ export function BoardDocView({ slug }: { slug: string }) {
         <div className="min-w-0 flex-1">
           <DocsMobileToc items={toc} onSelect={handleSelect} />
           <article className="rounded-xl border border-border/60 bg-card p-6 shadow-sm sm:p-8">
-            <Markdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                h1: (p) => <h1 className="mb-4 text-3xl font-bold tracking-tight" {...p} />,
-                h2: ({ children, ...p }) => {
-                  const id = takeHeadingId();
-                  return (
-                    <h2
-                      id={id}
-                      className="scroll-mt-24 border-b border-border/60 pb-2 pt-2 text-xl font-semibold first:pt-0"
-                      {...p}
-                    >
-                      {children}
-                    </h2>
-                  );
-                },
-                h3: ({ children, ...p }) => {
-                  const id = takeHeadingId();
-                  return (
-                    <h3 id={id} className="scroll-mt-24 pt-4 text-base font-semibold" {...p}>
-                      {children}
-                    </h3>
-                  );
-                },
-                p: (p) => <p className="my-3 text-sm leading-7 text-foreground" {...p} />,
-                ul: (p) => (
-                  <ul className="my-3 list-disc space-y-1.5 pl-6 text-sm text-foreground" {...p} />
-                ),
-                ol: (p) => (
-                  <ol className="my-3 list-decimal space-y-1.5 pl-6 text-sm text-foreground" {...p} />
-                ),
-                li: (p) => <li className="leading-7" {...p} />,
-                a: (p) => (
-                  <a
-                    className="font-medium text-[#157777] underline-offset-2 hover:underline dark:text-[#7ad4d4]"
-                    {...p}
-                  />
-                ),
-                table: (p) => (
-                  <div className="my-4 overflow-x-auto rounded-lg border border-border/60">
-                    <table className="w-full border-collapse text-sm" {...p} />
-                  </div>
-                ),
-                thead: (p) => <thead className="bg-muted/60 text-left" {...p} />,
-                th: (p) => (
-                  <th className="border-b border-border/60 px-3 py-2.5 font-semibold text-muted-foreground" {...p} />
-                ),
-                td: (p) => <td className="border-b border-border/50 px-3 py-2.5 align-top text-foreground" {...p} />,
-                code: (p) => (
-                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]" {...p} />
-                ),
-                pre: (p) => (
-                  <pre
-                    className="my-4 overflow-x-auto rounded-lg border border-border/60 bg-muted/50 p-4 text-xs leading-6"
-                    {...p}
-                  />
-                ),
-              }}
-            >
-              {doc}
-            </Markdown>
+            {blocks.map((block, index) =>
+              block.type === 'heading' ? (
+                block.level === 2 ? (
+                  <h2
+                    key={block.id}
+                    id={block.id}
+                    className="scroll-mt-24 border-b border-border/60 pb-2 pt-2 text-xl font-semibold first:pt-0"
+                  >
+                    {block.text}
+                  </h2>
+                ) : (
+                  <h3 key={block.id} id={block.id} className="scroll-mt-24 pt-4 text-base font-semibold">
+                    {block.text}
+                  </h3>
+                )
+              ) : (
+                <Markdown key={`md-${index}`} remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {block.content}
+                </Markdown>
+              ),
+            )}
           </article>
         </div>
       </div>

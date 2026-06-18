@@ -20,6 +20,41 @@ export function headingIdsFromMarkdown(markdown: string): string[] {
   return extractToc(markdown).map((item) => item.id);
 }
 
+export type DocBlock =
+  | { type: 'markdown'; content: string }
+  | { type: 'heading'; level: 2 | 3; text: string; id: string };
+
+/** Split markdown into prose blocks and headings with ids aligned to extractToc order. */
+export function splitDocIntoBlocks(markdown: string, toc: TocItem[]): DocBlock[] {
+  const blocks: DocBlock[] = [];
+  let tocIndex = 0;
+  let buffer: string[] = [];
+
+  const flush = () => {
+    const content = buffer.join('\n').trim();
+    if (content) blocks.push({ type: 'markdown', content });
+    buffer = [];
+  };
+
+  for (const line of markdown.split('\n')) {
+    const match = line.match(/^(#{2,3})\s+(.+)$/);
+    if (match && tocIndex < toc.length) {
+      const level = match[1]!.length as 2 | 3;
+      const item = toc[tocIndex];
+      if (item && item.level === level) {
+        flush();
+        blocks.push({ type: 'heading', level: item.level, text: item.text, id: item.id });
+        tocIndex += 1;
+        continue;
+      }
+    }
+    buffer.push(line);
+  }
+
+  flush();
+  return blocks;
+}
+
 /** Pull `##` / `###` headings out of raw markdown for the docs sidebar. */
 export function extractToc(markdown: string): TocItem[] {
   const seen = new Map<string, number>();
