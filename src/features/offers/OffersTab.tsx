@@ -21,15 +21,15 @@ export function OffersTab({ leadId, dealId }: Props) {
             <div>
               <div className="font-medium">
                 {o.offer_number ?? o.id.slice(0, 8)}{' '}
-                <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-normal text-slate-600">
+                <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
                   {o.status}
                 </span>
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-muted-foreground">
                 {formatDate(o.created_at)} · {formatEur(Number(total))}
               </div>
             </div>
-            <Link to={`/offers/${o.id}`} className="text-blue-600 underline text-xs">View →</Link>
+            <Link to={`/offers/${o.id}`} className="text-blue-600 underline text-xs dark:text-blue-400">View →</Link>
           </li>
         );
       })}

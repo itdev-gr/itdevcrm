@@ -24,16 +24,16 @@ export function TeamLeadsBadge({ groupId }: { groupId: string }) {
   if (isLoading) return null;
   if (leads.length === 0) {
     return (
-      <div className="rounded-md border border-dashed bg-slate-50 px-3 py-2 text-xs text-slate-500">
+      <div className="rounded-md border border-dashed bg-muted px-3 py-2 text-xs text-muted-foreground">
         No team lead set — new jobs for this department will spawn unassigned.
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border bg-emerald-50 px-3 py-2 text-xs">
-      <span className="font-medium text-emerald-800">Team leads:</span>{' '}
-      <span className="text-emerald-700">
+    <div className="rounded-md border bg-emerald-50 px-3 py-2 text-xs dark:bg-emerald-950/50">
+      <span className="font-medium text-emerald-800 dark:text-emerald-300">Team leads:</span>{' '}
+      <span className="text-emerald-700 dark:text-emerald-400">
         {leads
           .map((l) => l.profiles?.full_name?.trim() || l.profiles?.email || l.user_id)
           .join(', ')}

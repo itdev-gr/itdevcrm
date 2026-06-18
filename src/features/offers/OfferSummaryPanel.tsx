@@ -17,7 +17,7 @@ export function OfferSummaryPanel({ items, discountAmount, vatPercent, onRemove 
   return (
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full text-left text-sm">
-        <thead className="bg-slate-50 text-xs text-slate-500">
+        <thead className="bg-muted text-xs text-muted-foreground">
           <tr>
             <th className="px-3 py-2 font-normal">Service</th>
             <th className="px-3 py-2 font-normal">Description</th>
@@ -31,7 +31,7 @@ export function OfferSummaryPanel({ items, discountAmount, vatPercent, onRemove 
           {items.map((it) => (
             <tr key={`${it.category}-${it.itemId}`} className="border-t">
               <td className="px-3 py-2">{it.label}</td>
-              <td className="px-3 py-2 text-xs text-slate-500">{it.description}</td>
+              <td className="px-3 py-2 text-xs text-muted-foreground">{it.description}</td>
               <td className="px-3 py-2 text-right">{it.qty}</td>
               <td className="px-3 py-2 text-right">{formatEur(it.unitPrice)}</td>
               <td className="px-3 py-2 text-right tabular-nums">{formatEur(it.lineTotal)}</td>
@@ -43,7 +43,7 @@ export function OfferSummaryPanel({ items, discountAmount, vatPercent, onRemove 
             </tr>
           ))}
         </tbody>
-        <tfoot className="bg-slate-50 text-xs">
+        <tfoot className="bg-muted text-xs">
           <tr>
             <td colSpan={4} className="px-3 py-2 text-right font-medium">Subtotal</td>
             <td className="px-3 py-2 text-right tabular-nums">{formatEur(totals.subtotal)}</td>

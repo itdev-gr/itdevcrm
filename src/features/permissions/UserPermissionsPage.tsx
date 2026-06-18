@@ -47,8 +47,8 @@ export function UserPermissionsPage() {
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b bg-slate-50 text-left">
-              <th className="sticky left-0 z-10 bg-slate-50 py-2 px-3"></th>
+            <tr className="border-b bg-muted text-left">
+              <th className="sticky left-0 z-10 bg-muted py-2 px-3"></th>
               {ALL_ACTIONS.map((a) => (
                 <th key={a} className="py-2 px-2 align-bottom">
                   <div className="text-xs whitespace-nowrap">{t(`permissions.actions.${a}`)}</div>
@@ -59,7 +59,7 @@ export function UserPermissionsPage() {
           <tbody>
             {ALL_BOARDS.map((b) => (
               <tr key={b} className="border-b">
-                <th className="sticky left-0 z-10 bg-white py-2 px-3 text-left font-medium">
+                <th className="sticky left-0 z-10 bg-background py-2 px-3 text-left font-medium">
                   {t(`permissions.boards.${b}`)}
                 </th>
                 {ALL_ACTIONS.map((a) => {

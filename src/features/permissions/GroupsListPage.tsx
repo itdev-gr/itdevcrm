@@ -9,7 +9,7 @@ export function GroupsListPage() {
   const { data: groups = [], isLoading, error } = useGroupsWithCounts();
 
   if (isLoading) return <div className="p-8">…</div>;
-  if (error) return <div className="p-8 text-red-600">{error.message}</div>;
+  if (error) return <div className="p-8 text-red-600 dark:text-red-400">{error.message}</div>;
 
   return (
     <div className="space-y-4 p-8">

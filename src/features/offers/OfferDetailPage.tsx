@@ -13,11 +13,11 @@ const STATUSES = ['draft', 'sent', 'accepted', 'rejected', 'expired'] as const;
 type Status = typeof STATUSES[number];
 
 const STATUS_CLASS: Record<Status, string> = {
-  draft: 'bg-slate-100 text-slate-700',
-  sent: 'bg-blue-100 text-blue-700',
-  accepted: 'bg-emerald-100 text-emerald-700',
-  rejected: 'bg-red-100 text-red-700',
-  expired: 'bg-amber-100 text-amber-700',
+  draft: 'bg-muted text-muted-foreground',
+  sent: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
+  accepted: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+  rejected: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
+  expired: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
 };
 
 export function OfferDetailPage() {
@@ -28,7 +28,7 @@ export function OfferDetailPage() {
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !offer)
-    return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+    return <div className="p-8 text-red-600 dark:text-red-400">{error?.message ?? 'Not found'}</div>;
 
   const items = (offer.items as unknown as OfferItem[]) ?? [];
   const totals = (offer.totals as unknown as OfferTotals) ?? {
@@ -58,7 +58,7 @@ export function OfferDetailPage() {
               {offer.status}
             </span>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             🗓 {formatDate(offer.created_at)} · {relativeFromNow(offer.created_at)} · valid until{' '}
             {formatDate(validUntil.toISOString())}
           </p>
@@ -106,37 +106,37 @@ export function OfferDetailPage() {
         </div>
       </div>
 
-      <section className="grid grid-cols-2 gap-4 rounded-md border bg-slate-50 p-4 text-sm">
+      <section className="grid grid-cols-2 gap-4 rounded-md border bg-muted p-4 text-sm">
         <div>
-          <div className="text-xs text-slate-500">Currency</div>
+          <div className="text-xs text-muted-foreground">Currency</div>
           <div className="font-medium">{offer.currency}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-500">Validity</div>
+          <div className="text-xs text-muted-foreground">Validity</div>
           <div className="font-medium">{offer.validity_days} days</div>
         </div>
         {offer.lead_id && (
           <div>
-            <div className="text-xs text-slate-500">Lead</div>
-            <Link to={`/leads/${offer.lead_id}`} className="font-medium text-blue-700 hover:underline">
+            <div className="text-xs text-muted-foreground">Lead</div>
+            <Link to={`/leads/${offer.lead_id}`} className="font-medium text-blue-700 hover:underline dark:text-blue-400">
               View lead →
             </Link>
           </div>
         )}
         {offer.deal_id && (
           <div>
-            <div className="text-xs text-slate-500">Deal</div>
-            <Link to={`/deals/${offer.deal_id}`} className="font-medium text-blue-700 hover:underline">
+            <div className="text-xs text-muted-foreground">Deal</div>
+            <Link to={`/deals/${offer.deal_id}`} className="font-medium text-blue-700 hover:underline dark:text-blue-400">
               View deal →
             </Link>
           </div>
         )}
         {offer.client_id && (
           <div>
-            <div className="text-xs text-slate-500">Client</div>
+            <div className="text-xs text-muted-foreground">Client</div>
             <Link
               to={`/clients/${offer.client_id}`}
-              className="font-medium text-blue-700 hover:underline"
+              className="font-medium text-blue-700 hover:underline dark:text-blue-400"
             >
               View client →
             </Link>
@@ -144,7 +144,7 @@ export function OfferDetailPage() {
         )}
         {offer.notes && (
           <div className="col-span-2">
-            <div className="text-xs text-slate-500">Notes</div>
+            <div className="text-xs text-muted-foreground">Notes</div>
             <div className="whitespace-pre-wrap">{offer.notes}</div>
           </div>
         )}
@@ -152,7 +152,7 @@ export function OfferDetailPage() {
 
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs text-slate-500">
+          <thead className="bg-muted text-xs text-muted-foreground">
             <tr>
               <th className="px-3 py-2 font-normal">Service</th>
               <th className="px-3 py-2 font-normal">Description</th>
@@ -165,14 +165,14 @@ export function OfferDetailPage() {
             {items.map((it) => (
               <tr key={`${it.category}-${it.itemId}`} className="border-t">
                 <td className="px-3 py-2">{it.label}</td>
-                <td className="px-3 py-2 text-xs text-slate-500">{it.description}</td>
+                <td className="px-3 py-2 text-xs text-muted-foreground">{it.description}</td>
                 <td className="px-3 py-2 text-right">{it.qty}</td>
                 <td className="px-3 py-2 text-right">{formatEur(it.unitPrice)}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{formatEur(it.lineTotal)}</td>
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-slate-50 text-xs">
+          <tfoot className="bg-muted text-xs">
             <tr>
               <td colSpan={4} className="px-3 py-2 text-right font-medium">Subtotal</td>
               <td className="px-3 py-2 text-right tabular-nums">{formatEur(totals.subtotal)}</td>
