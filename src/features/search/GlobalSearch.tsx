@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { industryLabel } from '@/lib/industries';
 
 type Hit = {
-  entity_type: 'lead' | 'client' | 'deal';
+  entity_type: 'lead' | 'client' | 'deal' | 'job';
   entity_id: string;
   code: string | null;
   label: string | null;
@@ -19,12 +19,14 @@ const PATH_BY_TYPE: Record<Hit['entity_type'], (id: string) => string> = {
   lead: (id) => `/leads/${id}`,
   client: (id) => `/clients/${id}`,
   deal: (id) => `/deals/${id}`,
+  job: (id) => `/jobs/${id}`,
 };
 
 const TYPE_LABEL: Record<Hit['entity_type'], string> = {
   lead: 'Lead',
   client: 'Client',
   deal: 'Deal',
+  job: 'Job',
 };
 
 export function GlobalSearch() {
