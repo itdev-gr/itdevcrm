@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LocaleSwitcher } from './LocaleSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { signOut } from '@/lib/auth';
 import { NotificationsBell } from '@/features/notifications/NotificationsBell';
@@ -40,6 +41,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           </Link>
         )}
         {session && <NotificationsBell />}
+        <ThemeToggle />
         <LocaleSwitcher />
         {session && (
           <Button
