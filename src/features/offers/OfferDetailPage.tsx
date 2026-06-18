@@ -85,10 +85,17 @@ export function OfferDetailPage() {
           <Button
             type="button"
             onClick={async () => {
+              // Open the tab synchronously, inside the click gesture, so the
+              // browser's popup blocker doesn't kill it after the (multi-second)
+              // PDF render. Then point the already-open tab at the signed URL.
+              const tab = window.open('', '_blank');
+              if (tab) tab.document.write('Generating PDF…');
               try {
                 const url = await download.mutateAsync(offer.id);
-                window.open(url, '_blank', 'noopener');
+                if (tab) tab.location.href = url;
+                else window.location.href = url; // popup blocked anyway → use current tab
               } catch (err) {
+                tab?.close();
                 alert((err as Error).message);
               }
             }}
