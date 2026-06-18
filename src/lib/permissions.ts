@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export const ALL_ACTIONS = [
   'view',
+  'view_all',
   'create',
   'edit',
   'delete',
