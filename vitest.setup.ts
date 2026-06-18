@@ -27,6 +27,21 @@ if (typeof Element !== 'undefined') {
   }
 }
 
+// jsdom does not implement matchMedia (used by the theme store / initTheme)
+if (typeof window !== 'undefined' && !window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList;
+}
+
 if (!import.meta.env.VITE_SUPABASE_URL) {
   Object.assign(import.meta.env, {
     VITE_SUPABASE_URL: 'https://test.supabase.co',
