@@ -87,7 +87,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded bg-white p-6 shadow">
+      <div className="w-full max-w-lg rounded bg-card p-6 shadow">
         <h2 className="mb-4 text-lg font-semibold">{t('expense_form.create_title')}</h2>
 
         <label className="block text-sm">
@@ -116,14 +116,14 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
         </label>
 
         <div className="mt-3 text-sm">
-          <p className="mb-1 text-neutral-700">{t('expense_form.billing_type')}</p>
+          <p className="mb-1 text-muted-foreground">{t('expense_form.billing_type')}</p>
           <div className="flex gap-2">
             {(['one_time','recurring_monthly','recurring_yearly'] as BillingType[]).map((bt) => (
               <button
                 key={bt}
                 type="button"
                 onClick={() => onBillingChange(bt)}
-                className={`rounded border px-2 py-1 ${billingType === bt ? 'bg-neutral-900 text-white' : ''}`}
+                className={`rounded border px-2 py-1 ${billingType === bt ? 'bg-primary text-primary-foreground' : ''}`}
               >
                 {t(`expense_form.${bt}`)}
               </button>
@@ -154,7 +154,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
           </label>
           <div>
             {t('expense_form.amount_gross')}
-            <div data-testid="amount-gross-display" className="mt-1 rounded border bg-neutral-50 px-2 py-1">
+            <div data-testid="amount-gross-display" className="mt-1 rounded border bg-muted px-2 py-1">
               €{grossNum.toFixed(2)}
             </div>
           </div>
@@ -204,7 +204,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
           />
         </label>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={onClose}>
@@ -220,7 +220,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
           </button>
           <button
             type="button"
-            className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white"
+            className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
             onClick={() => submit(false)}
             disabled={create.isPending}
           >

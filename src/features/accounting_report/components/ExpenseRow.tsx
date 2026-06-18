@@ -12,7 +12,7 @@ export function ExpenseRow({ row, onClick }: ExpenseRowProps) {
   const categoryName = isEl ? row.category?.name_el : row.category?.name_en;
   return (
     <tr
-      className="cursor-pointer hover:bg-neutral-50"
+      className="cursor-pointer hover:bg-muted"
       onClick={() => onClick(row.id)}
       data-testid={`expense-row-${row.id}`}
     >

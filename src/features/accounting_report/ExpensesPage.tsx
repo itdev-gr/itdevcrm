@@ -32,7 +32,7 @@ export function ExpensesPage() {
         <button
           type="button"
           onClick={() => setShowNew(true)}
-          className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white"
+          className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
         >
           {t('expense_breakdown.new_expense')}
         </button>
@@ -44,7 +44,7 @@ export function ExpensesPage() {
             key={s}
             type="button"
             onClick={() => setStatus(s)}
-            className={`rounded border px-3 py-1.5 ${status === s ? 'bg-neutral-900 text-white' : ''}`}
+            className={`rounded border px-3 py-1.5 ${status === s ? 'bg-primary text-primary-foreground' : ''}`}
           >
             {t(`expenses_list.status_${s}`)}
           </button>
@@ -70,12 +70,12 @@ export function ExpensesPage() {
       </div>
 
       {expenses.data && expenses.data.length === 0 && (
-        <p className="text-sm text-neutral-600">{t('expenses_list.empty')}</p>
+        <p className="text-sm text-muted-foreground">{t('expenses_list.empty')}</p>
       )}
 
       {expenses.data && expenses.data.length > 0 && (
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left">
+          <thead className="bg-muted text-left">
             <tr>
               <th className="px-3 py-2">{t('expense_form.start_date')}</th>
               <th className="px-3 py-2">{t('expense_form.category')}</th>
@@ -92,7 +92,7 @@ export function ExpensesPage() {
               return (
                 <tr
                   key={r.id}
-                  className="cursor-pointer hover:bg-neutral-50"
+                  className="cursor-pointer hover:bg-muted"
                   onClick={() => setDetailId(r.id)}
                 >
                   <td className="px-3 py-2">{r.start_date}</td>

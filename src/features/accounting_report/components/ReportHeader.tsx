@@ -21,10 +21,10 @@ function Tile({
 }: { label: string; gross: number; net?: number | undefined; suffix: string }) {
   return (
     <div className="rounded border p-3">
-      <p className="text-xs uppercase text-neutral-500">{label}</p>
+      <p className="text-xs uppercase text-muted-foreground">{label}</p>
       <p className="mt-1 text-xl font-semibold">€{gross.toFixed(2)}</p>
       {net !== undefined && (
-        <p className="text-xs text-neutral-500">€{net.toFixed(2)} {suffix}</p>
+        <p className="text-xs text-muted-foreground">€{net.toFixed(2)} {suffix}</p>
       )}
     </div>
   );
@@ -45,7 +45,7 @@ export function ReportHeader({
             key={p}
             type="button"
             onClick={() => onPreset(p)}
-            className={`rounded border px-3 py-1.5 text-sm ${preset === p ? 'bg-neutral-900 text-white' : ''}`}
+            className={`rounded border px-3 py-1.5 text-sm ${preset === p ? 'bg-primary text-primary-foreground' : ''}`}
           >
             {t(`range.${p}`)}
           </button>
@@ -102,7 +102,7 @@ export function ReportHeader({
       </div>
 
       {ytdSummary && (
-        <div className="rounded border bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+        <div className="rounded border bg-muted px-3 py-2 text-xs text-muted-foreground">
           {t('kpi.ytd')}: {t('kpi.income')} €{ytdSummary.totalIncomeGross.toFixed(2)} ·{' '}
           {t('kpi.expense')} €{ytdSummary.totalExpenseGross.toFixed(2)} ·{' '}
           {t('kpi.net_profit')} €{ytdSummary.netProfitGross.toFixed(2)}

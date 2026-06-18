@@ -62,7 +62,7 @@ export function ExpenseBreakdown({ rows, onSelectGroup, onNewExpense }: ExpenseB
         </button>
       </div>
       <table className="w-full text-sm">
-        <thead className="bg-neutral-50 text-left">
+        <thead className="bg-muted text-left">
           <tr>
             <th className="px-3 py-2">{t('expense_breakdown.category')}</th>
             <th className="px-3 py-2 text-right">{t('expense_breakdown.count')}</th>
@@ -76,7 +76,7 @@ export function ExpenseBreakdown({ rows, onSelectGroup, onNewExpense }: ExpenseB
           {groups.map((g) => (
             <tr
               key={g.key ?? 'unspecified'}
-              className="cursor-pointer hover:bg-neutral-50"
+              className="cursor-pointer hover:bg-muted"
               onClick={() => onSelectGroup(g.key, g.rows, g.key ? (labelByKey.get(g.key) ?? g.key) : t('expense_breakdown.category'))}
             >
               <td className="px-3 py-2">{g.key ? (labelByKey.get(g.key) ?? g.key) : '—'}</td>

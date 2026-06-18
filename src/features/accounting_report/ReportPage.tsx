@@ -58,7 +58,7 @@ export function ReportPage() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{t('page_title')}</h1>
-          <p className="text-sm text-neutral-600">{t('page_subtitle')}</p>
+          <p className="text-sm text-muted-foreground">{t('page_subtitle')}</p>
         </div>
         {summary.data && (
           <ExportMenu

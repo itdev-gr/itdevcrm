@@ -45,7 +45,7 @@ export function IncomeBreakdown({ rows, onSelectGroup }: IncomeBreakdownProps) {
     <section>
       <h3 className="mb-2 font-semibold">{t('accounting_report:income_breakdown.title')}</h3>
       <table className="w-full text-sm">
-        <thead className="bg-neutral-50 text-left">
+        <thead className="bg-muted text-left">
           <tr>
             <th className="px-3 py-2">{t('accounting_report:income_breakdown.service')}</th>
             <th className="px-3 py-2 text-right">{t('accounting_report:income_breakdown.count')}</th>
@@ -59,7 +59,7 @@ export function IncomeBreakdown({ rows, onSelectGroup }: IncomeBreakdownProps) {
           {groups.map((g) => (
             <tr
               key={g.key ?? 'unspecified'}
-              className="cursor-pointer hover:bg-neutral-50"
+              className="cursor-pointer hover:bg-muted"
               onClick={() => onSelectGroup(g.key, g.rows, labelFor(g.key))}
             >
               <td className="px-3 py-2">{labelFor(g.key)}</td>

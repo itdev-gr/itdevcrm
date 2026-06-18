@@ -33,7 +33,7 @@ export function TransactionDrawer({
         aria-hidden="true"
       />
       <div
-        className="fixed inset-y-0 right-0 z-40 w-full max-w-xl overflow-auto bg-white shadow-2xl"
+        className="fixed inset-y-0 right-0 z-40 w-full max-w-xl overflow-auto bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label={title}
@@ -45,10 +45,10 @@ export function TransactionDrawer({
           </button>
         </div>
         {rows.length === 0 ? (
-          <p className="p-6 text-sm text-neutral-600">{t('transaction_drawer.empty')}</p>
+          <p className="p-6 text-sm text-muted-foreground">{t('transaction_drawer.empty')}</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-neutral-50 text-left">
+            <thead className="bg-muted text-left">
               <tr>
                 <th className="px-3 py-2">{t('transaction_drawer.date')}</th>
                 <th className="px-3 py-2">{t('transaction_drawer.counterparty')}</th>
@@ -63,7 +63,7 @@ export function TransactionDrawer({
               {rows.map((r) => (
                 <tr
                   key={`${r.source_table}-${r.source_id}`}
-                  className={r.source_table === 'expenses' ? 'cursor-pointer hover:bg-neutral-50' : ''}
+                  className={r.source_table === 'expenses' ? 'cursor-pointer hover:bg-muted' : ''}
                   onClick={() => {
                     if (r.source_table === 'expenses' && onSelectExpense) onSelectExpense(r.source_id);
                   }}

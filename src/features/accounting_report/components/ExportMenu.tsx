@@ -48,17 +48,17 @@ export function ExportMenu({ rangeLabel, from, to, summary, incomeRows, expenseR
         {t('export.menu')}
       </button>
       {open && (
-        <div className="absolute right-0 z-10 mt-1 w-48 rounded border bg-white shadow">
+        <div className="absolute right-0 z-10 mt-1 w-48 rounded border bg-card shadow">
           <button
             type="button"
-            className="block w-full px-3 py-2 text-left text-sm hover:bg-neutral-100"
+            className="block w-full px-3 py-2 text-left text-sm hover:bg-muted"
             onClick={csv}
           >
             {t('export.csv')}
           </button>
           <button
             type="button"
-            className="block w-full px-3 py-2 text-left text-sm hover:bg-neutral-100"
+            className="block w-full px-3 py-2 text-left text-sm hover:bg-muted"
             onClick={pdf}
           >
             {t('export.pdf')}

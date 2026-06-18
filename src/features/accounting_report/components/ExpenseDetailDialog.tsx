@@ -60,13 +60,13 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded bg-white p-6 shadow">
+      <div className="w-full max-w-lg rounded bg-card p-6 shadow">
         <h2 className="mb-2 text-lg font-semibold">{t('expense_detail.title')}</h2>
         {detail.isLoading || !e ? (
           <p>…</p>
         ) : (
           <>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-muted-foreground">
               {(isEl ? e.category?.name_el : e.category?.name_en) ?? e.category_id} · {e.vendor ?? '—'}
             </p>
             <p className="mt-3 text-sm">
@@ -126,7 +126,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
                     <button
                       type="button"
                       onClick={onMarkPaid}
-                      className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white"
+                      className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
                     >
                       {t('expense_form.submit')}
                     </button>
@@ -136,7 +136,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
             )}
 
             <div className="mt-6 flex justify-between">
-              <button type="button" onClick={onDelete} className="rounded border px-3 py-1.5 text-sm text-red-600">
+              <button type="button" onClick={onDelete} className="rounded border px-3 py-1.5 text-sm text-red-600 dark:text-red-400">
                 {t('expense_detail.delete')}
               </button>
               <button type="button" onClick={onClose} className="rounded border px-3 py-1.5 text-sm">
