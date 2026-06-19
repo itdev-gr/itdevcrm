@@ -43,6 +43,8 @@ describe('LeadIntakePage', () => {
               display_name: 'Old Lead',
               context: 'Won',
               matched_field: 'email',
+              matched_email: 'old@kara.gr',
+              matched_phone: '6900000099',
             },
           ],
         },
@@ -52,6 +54,8 @@ describe('LeadIntakePage', () => {
     render(<LeadIntakePage />);
     expect(screen.getByText('x@kara.gr')).toBeInTheDocument();
     expect(screen.getByText('Old Lead')).toBeInTheDocument();
+    // the matched duplicate's own contact details are shown
+    expect(screen.getByText(/old@kara.gr/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
     expect(release).toHaveBeenCalledWith('i1');
   });

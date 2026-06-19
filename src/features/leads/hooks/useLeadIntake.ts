@@ -8,6 +8,8 @@ export type LeadIntakeMatch = {
   display_name: string;
   context: string | null;
   matched_field: 'email' | 'phone';
+  matched_email: string | null;
+  matched_phone: string | null;
 };
 
 export type LeadIntakeRow = Database['public']['Tables']['lead_intake']['Row'];
