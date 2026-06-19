@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { ImportedLeadRow } from '@/features/leads/leadImport';
 
 export type LockDealResult = { ok: true; deal_id: string } | { ok: false; errors: string[] };
 
@@ -229,4 +230,22 @@ export async function discardLeadIntake(id: string): Promise<LeadIntakeActionRes
   const r = data as { ok: boolean; errors?: string[] };
   if (!r.ok) return { ok: false, errors: r.errors ?? ['discard_failed'] };
   return { ok: true };
+}
+
+export type ImportLeadsResult =
+  | { ok: true; imported: number; flagged: number }
+  | { ok: false; errors: string[] };
+
+// Admin-only bulk import of parsed CSV/Excel rows into the intake queue. Each row is
+// duplicate-checked server-side. Goes through the loose `rpcCall` (not in generated
+// types). `rows` is the output of features/leads/leadImport.
+export async function importLeadsToIntake(
+  rows: ImportedLeadRow[],
+): Promise<ImportLeadsResult> {
+  if (rows.length === 0) return { ok: true, imported: 0, flagged: 0 };
+  const { data, error } = await rpcCall('import_leads_to_intake', { p_rows: rows });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; imported?: number; flagged?: number; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['import_failed'] };
+  return { ok: true, imported: r.imported ?? 0, flagged: r.flagged ?? 0 };
 }
