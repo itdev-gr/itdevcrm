@@ -5,7 +5,7 @@ import { Calendar, Lock, Mail } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { DetailTabsList, FilterSelect, detailTabTriggerClass } from '@/components/layout/page-shell';
+import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
@@ -285,7 +285,7 @@ export function DealDetailPage() {
         </DetailTabsList>
 
         <TabsContent value="overview" className="mt-5 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
-          <div className="grid grid-cols-1 gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-1">
               <DealForm initial={deal} />
               <DealNotesArea deal={deal} />
@@ -300,11 +300,11 @@ export function DealDetailPage() {
               </section>
             </div>
             <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-              <div className="flex max-h-[calc(100vh-8rem)] min-h-[320px] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-                <div className="shrink-0 border-b border-border/60 px-4 py-3">
+              <div className={commentsPanelShellClass}>
+                <div className={commentsPanelHeaderClass}>
                   <h2 className="text-sm font-semibold">{tLeads('tabs.comments')}</h2>
                 </div>
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+                <div className={commentsPanelBodyClass}>
                   <CommentsPanel parentType="deal" parentId={dealId} />
                 </div>
               </div>

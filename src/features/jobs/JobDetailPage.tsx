@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CopyableCode } from '@/components/CopyableCode';
+import { detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelBodyClass } from '@/components/layout/page-shell';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
@@ -168,7 +169,7 @@ export function JobDetailPage() {
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem]">
+          <div className={detailOverviewWithCommentsGridClass}>
             <div className="space-y-3">
               {job.billing_type === 'recurring_monthly' && infoFieldsFor(job.service_type).length === 0 && (
                 <MonthlyTasksPanel
@@ -217,11 +218,17 @@ export function JobDetailPage() {
                 )}
               </div>
             </div>
-            <aside className="min-w-0 lg:border-l lg:pl-6">
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                Comments
-              </h2>
-              <CommentsPanel parentType="job" parentId={job.id} />
+            <aside className="min-w-0 lg:border-l lg:border-border/60 lg:pl-6">
+              <div className={`${commentsPanelShellClass} border-0 shadow-none lg:max-h-[calc(100vh-6.5rem)]`}>
+                <div className="shrink-0 px-1 pb-4">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Comments
+                  </h2>
+                </div>
+                <div className={`${commentsPanelBodyClass} !p-0`}>
+                  <CommentsPanel parentType="job" parentId={job.id} />
+                </div>
+              </div>
             </aside>
           </div>
         </TabsContent>

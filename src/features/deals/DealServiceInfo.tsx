@@ -1,4 +1,5 @@
 import { useDealJobs } from './hooks/useDealJobs';
+import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
 import { sharedDealFields } from '@/features/jobs/serviceInfoFields';
 
 export function DealServiceInfo({ dealId }: { dealId: string }) {
@@ -13,9 +14,7 @@ export function DealServiceInfo({ dealId }: { dealId: string }) {
       <div className="space-y-4">
         {rows.map((r) => (
           <div key={r.serviceType} className="rounded-lg border border-border/60 bg-muted/20 p-3">
-            <div className="mb-2 inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-              {r.serviceType}
-            </div>
+            <ServiceTypeBadge serviceType={r.serviceType} className="mb-2" />
             <dl className="space-y-1.5 text-sm">
               {r.fields.map((f) => (
                 <div key={f.key} className="flex gap-2">

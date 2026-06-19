@@ -18,9 +18,11 @@
     "name_placeholder": "Filter name"
   },
   "comments": {
-    "placeholder": "Write a comment… mention with @",
+    "placeholder": "Write a comment… use @ to mention a teammate",
     "submit": "Post",
-    "empty": "No comments yet."
+    "empty": "No comments yet. Start the conversation.",
+    "new_comment": "New comment",
+    "mention_hint": "Type @ to mention someone"
   },
   "attachments": {
     "upload": "Upload file",

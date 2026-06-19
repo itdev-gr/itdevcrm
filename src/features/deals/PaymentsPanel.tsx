@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -84,7 +85,7 @@ function PaymentRow({
   return (
     <tr className="border-t">
       <td className="px-2 py-2 text-xs text-foreground">
-        {row.service_type ? t(`services.types.${row.service_type}`) : '—'}
+        {row.service_type ? <ServiceTypeBadge serviceType={row.service_type} /> : '—'}
         <div className="text-[10px] text-muted-foreground">
           {t(`services.billing.${row.billing_type}`)}
         </div>

@@ -1,21 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ArrowUpRight } from 'lucide-react';
+import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
 import { useJobsForDeal } from './hooks/useJobsForDeal';
 import { useJobsForClient } from './hooks/useJobsForClient';
 import { relativeFromNow } from '@/lib/datetime';
 import type { JobRow, ServiceType } from './hooks/useJobs';
 
-const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
-  web_seo:      { en: 'Web SEO',         el: 'Web SEO' },
-  local_seo:    { en: 'Local SEO',       el: 'Local SEO' },
-  web_dev:      { en: 'Web Development', el: 'Ανάπτυξη Ιστοσελίδων' },
-  social_media: { en: 'Social Media',    el: 'Social Media' },
-  ai_seo:       { en: 'AI SEO',          el: 'AI SEO' },
-  hosting:      { en: 'Hosting',         el: 'Hosting' },
-  ads:          { en: 'Ads',             el: 'Διαφημίσεις' },
-};
-
-// ai_seo lives on the web_seo kanban (no separate route).
 const SERVICE_TO_KANBAN: Record<ServiceType, string> = {
   web_seo:      '/tech/web-seo',
   local_seo:    '/tech/local-seo',
@@ -37,7 +28,7 @@ function StageBadge({ job, lang }: { job: JobRow; lang: 'en' | 'el' }) {
     ? (job.stage.display_names as { en?: string; el?: string })?.[lang] ?? job.stage.code
     : '—';
   return (
-    <span className="rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+    <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
       {label}
     </span>
   );
@@ -88,26 +79,25 @@ export function JobsTab(props: Scope) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border">
+    <div className="overflow-x-auto rounded-xl border border-border/60 bg-card shadow-sm">
       <table className="w-full text-left text-sm">
-        <thead className="bg-muted text-xs text-muted-foreground">
+        <thead className="border-b border-border/60 bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
-            <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Υπηρεσία' : 'Service'}</th>
-            <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Χρέωση' : 'Billing'}</th>
-            <th className="px-3 py-2 font-normal text-right">{lang === 'el' ? 'Ποσό' : 'Amount'}</th>
-            <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Στάδιο' : 'Stage'}</th>
-            <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Κατάσταση' : 'Status'}</th>
+            <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Υπηρεσία' : 'Service'}</th>
+            <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Χρέωση' : 'Billing'}</th>
+            <th className="px-4 py-3 text-right font-medium">{lang === 'el' ? 'Ποσό' : 'Amount'}</th>
+            <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Στάδιο' : 'Stage'}</th>
+            <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Κατάσταση' : 'Status'}</th>
             {!isDeal && (
-              <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Deal' : 'Deal'}</th>
+              <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Deal' : 'Deal'}</th>
             )}
-            <th className="px-3 py-2 font-normal">{lang === 'el' ? 'Ενημέρωση' : 'Updated'}</th>
-            <th className="px-3 py-2 font-normal"></th>
+            <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Ενημέρωση' : 'Updated'}</th>
+            <th className="px-4 py-3 font-medium"></th>
           </tr>
         </thead>
         <tbody>
           {jobs.map((j) => {
             const svc = j.service_type as ServiceType;
-            const svcLabel = SERVICE_LABELS[svc]?.[lang] ?? svc;
             const billingLabel =
               BILLING_LABEL[j.billing_type]?.[lang] ?? j.billing_type;
             const amount =
@@ -117,35 +107,36 @@ export function JobsTab(props: Scope) {
                   ? `€${Number(j.one_time_amount).toFixed(0)}`
                   : '—';
             return (
-              <tr key={j.id} className="border-t hover:bg-muted/60">
-                <td className="px-3 py-2">
+              <tr key={j.id} className="border-t border-border/40 transition-colors hover:bg-muted/35">
+                <td className="px-4 py-3">
                   <Link
                     to={`/jobs/${j.id}`}
-                    className="font-medium text-blue-700 hover:underline dark:text-blue-400"
+                    className="group inline-flex items-center gap-1.5 no-underline transition-opacity hover:opacity-85"
                   >
-                    {svcLabel}
+                    <ServiceTypeBadge serviceType={svc} />
+                    <ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                   </Link>
                 </td>
-                <td className="px-3 py-2 text-xs text-muted-foreground">{billingLabel}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{amount}</td>
-                <td className="px-3 py-2">
+                <td className="px-4 py-3 text-xs text-muted-foreground">{billingLabel}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{amount}</td>
+                <td className="px-4 py-3">
                   <StageBadge job={j} lang={lang} />
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-4 py-3">
                   {j.is_blocked ? (
                     <BlockedBadge reason={j.blocked_reason} />
                   ) : (
-                    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                       {lang === 'el' ? 'Ενεργό' : 'Active'}
                     </span>
                   )}
                 </td>
                 {!isDeal && (
-                  <td className="px-3 py-2 text-xs">
+                  <td className="px-4 py-3 text-xs">
                     {j.deal ? (
                       <Link
                         to={`/deals/${j.deal.id}`}
-                        className="text-blue-700 hover:underline dark:text-blue-400"
+                        className="font-medium text-primary no-underline transition-colors hover:text-[#157777] dark:hover:text-[#7ad4d4]"
                       >
                         {j.deal.code ?? j.deal.title ?? '—'}
                       </Link>
@@ -154,15 +145,16 @@ export function JobsTab(props: Scope) {
                     )}
                   </td>
                 )}
-                <td className="px-3 py-2 text-xs text-muted-foreground">
+                <td className="px-4 py-3 text-xs text-muted-foreground">
                   {relativeFromNow(j.updated_at)}
                 </td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-4 py-3 text-right">
                   <Link
                     to={SERVICE_TO_KANBAN[svc] ?? '/'}
-                    className="text-[11px] text-blue-600 hover:underline dark:text-blue-400"
+                    className="inline-flex items-center gap-1 rounded-lg border border-border/60 px-2 py-1 text-[11px] font-medium text-muted-foreground no-underline transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
                   >
-                    {lang === 'el' ? 'Άνοιγμα kanban →' : 'Open kanban →'}
+                    {lang === 'el' ? 'Kanban' : 'Kanban'}
+                    <ArrowUpRight className="size-3" />
                   </Link>
                 </td>
               </tr>

@@ -9,6 +9,7 @@ import { useClient } from './hooks/useClient';
 import { useDeals } from '@/features/deals/hooks/useDeals';
 import { useJobsForClient } from '@/features/jobs/hooks/useJobsForClient';
 import { JobsTab } from '@/features/jobs/JobsTab';
+import { commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass } from '@/components/layout/page-shell';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ContractsTab } from '@/features/contracts/ContractsTab';
@@ -120,7 +121,14 @@ export function ClientDetailPage() {
         </TabsContent>
 
         <TabsContent value="comments" className="pt-4">
-          <CommentsPanel parentType="client" parentId={clientId} />
+          <div className={`${commentsPanelShellClass} max-w-5xl`}>
+            <div className={commentsPanelHeaderClass}>
+              <h2 className="text-sm font-semibold">{t('tabs.comments')}</h2>
+            </div>
+            <div className={commentsPanelBodyClass}>
+              <CommentsPanel parentType="client" parentId={clientId} />
+            </div>
+          </div>
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="client" parentId={clientId} />

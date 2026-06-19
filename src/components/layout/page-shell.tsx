@@ -182,6 +182,19 @@ export function SettingsNav({
 export const detailTabTriggerClass =
   'relative z-[1] rounded-lg border-0 bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground shadow-none transition-[color,font-weight] duration-200 ease-out after:hidden hover:text-foreground data-active:bg-transparent data-active:font-semibold data-active:text-primary data-active:shadow-none dark:data-active:bg-transparent dark:data-active:text-[#7ad4d4]';
 
+/** Side-by-side overview + comments column on detail pages. */
+export const detailOverviewWithCommentsGridClass =
+  'grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)] xl:grid-cols-[minmax(0,1fr)_minmax(28rem,34rem)]';
+
+export const commentsPanelShellClass =
+  'flex max-h-[calc(100vh-6rem)] min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm';
+
+export const commentsPanelHeaderClass =
+  'shrink-0 border-b border-border/60 px-5 py-3.5';
+
+export const commentsPanelBodyClass =
+  'flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-5 pt-4';
+
 export function DetailTabsList({
   children,
   className,
