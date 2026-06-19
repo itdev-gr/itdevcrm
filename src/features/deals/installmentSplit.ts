@@ -27,7 +27,8 @@ export function splitInstallments(amountNet: number, plan: InstallmentPlan): num
   const parts: number[] = [];
   let allocated = 0;
   for (let i = 0; i < ratios.length; i += 1) {
-    const cents = i === ratios.length - 1 ? totalCents - allocated : Math.round(totalCents * ratios[i]);
+    const cents =
+      i === ratios.length - 1 ? totalCents - allocated : Math.round(totalCents * (ratios[i] ?? 0));
     allocated += cents;
     parts.push(cents / 100);
   }
