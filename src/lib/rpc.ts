@@ -199,3 +199,26 @@ export async function closeDeal(
   if (error) return { ok: false, errors: [error.message] };
   return data as CloseDealResult;
 }
+
+// --- Lead intake (duplicate review) ------------------------------------------
+export type LeadIntakeActionResult =
+  | { ok: true; lead_id?: string }
+  | { ok: false; errors: string[] };
+
+// Admin-only. Release moves a held duplicate into `leads`; discard marks it
+// discarded. Both go through the loose `rpcCall` (not in generated types).
+export async function releaseLeadIntake(id: string): Promise<LeadIntakeActionResult> {
+  const { data, error } = await rpcCall('release_lead_intake', { p_id: id });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; lead_id?: string; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['release_failed'] };
+  return r.lead_id ? { ok: true, lead_id: r.lead_id } : { ok: true };
+}
+
+export async function discardLeadIntake(id: string): Promise<LeadIntakeActionResult> {
+  const { data, error } = await rpcCall('discard_lead_intake', { p_id: id });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['discard_failed'] };
+  return { ok: true };
+}
