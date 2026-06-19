@@ -1,7 +1,7 @@
 # Meta Lead Ingestion (Zapier) — Runbook
 
 ## Endpoint
-`GET` (or `POST`) `https://itdevcrm.vercel.app/api/meta-lead?key=<META_LEAD_SECRET>`
+`GET` (or `POST`) `https://www.itdevcrm.com/api/meta-lead?key=<META_LEAD_SECRET>`
 The secret may instead be sent as header `X-Meta-Secret`. With GET, the lead fields are query-string params; with POST, a JSON body.
 
 ## Zapier setup (GET, "Webhooks by Zapier")
