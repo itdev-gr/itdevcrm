@@ -1,5 +1,18 @@
 {
   "title": "Leads",
+  "intake": {
+    "nav": "Lead Intake",
+    "title": "Lead Intake — Duplicate Review",
+    "subtitle": "New Meta leads that match an existing lead or customer wait here. Release the ones you want on the board, or discard duplicates.",
+    "empty": "No leads waiting for review.",
+    "release": "Release",
+    "discard": "Discard",
+    "confirm_discard": "Discard this lead? It will not appear on the sales board.",
+    "match_email": "same email as",
+    "match_phone": "phone matches",
+    "match_lead": "lead",
+    "match_deal_client": "customer"
+  },
   "new_lead": "New lead",
   "new_lead_description": "Add a new lead to the sales pipeline.",
   "actions": {
