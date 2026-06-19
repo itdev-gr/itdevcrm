@@ -14,12 +14,24 @@ import {
   Server,
   Settings,
   Share2,
+  ShieldAlert,
   Target,
   Users,
   Code2,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { useLeadIntakeCount } from '@/features/leads/hooks/useLeadIntake';
 import { sidebarLinkClass, sidebarSectionClass } from './sidebar-nav-styles';
+
+function LeadIntakeBadge() {
+  const { data } = useLeadIntakeCount();
+  if (!data) return null;
+  return (
+    <span className="ml-auto rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
+      {data}
+    </span>
+  );
+}
 
 const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting', 'ads'] as const;
 
@@ -103,6 +115,16 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <Target className="size-4 shrink-0 opacity-80" />
               {t('leads:title')}
             </NavLink>
+            {isAdmin && (
+              <NavLink
+                to="/sales/lead-intake"
+                className={({ isActive }) => sidebarLinkClass(isActive)}
+              >
+                <ShieldAlert className="size-4 shrink-0 opacity-80" />
+                {t('leads:intake.nav')}
+                <LeadIntakeBadge />
+              </NavLink>
+            )}
             <NavLink to="/sales/kanban" className={({ isActive }) => sidebarLinkClass(isActive)}>
               <Columns3 className="size-4 shrink-0 opacity-80" />
               {t('sales:kanban.title')}
