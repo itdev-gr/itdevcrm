@@ -130,26 +130,26 @@ export function DealDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+      <div className="rounded-xl border border-border/60 bg-card p-3.5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2.5">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
                 Deal
               </span>
-              {deal.code && <CopyableCode code={deal.code} className="text-xs" />}
+              {deal.code && <CopyableCode code={deal.code} className="text-[11px]" />}
               {clientStatus === 'blocked' && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300">
-                  <Lock className="size-3" />
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300">
+                  <Lock className="size-2.5" />
                   {tClients('status.blocked')}
                 </span>
               )}
             </div>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight">{deal.title}</h1>
-            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <h1 className="mt-1 text-lg font-bold tracking-tight sm:text-xl">{deal.title}</h1>
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
-                <Calendar className="size-3.5 opacity-70" />
+                <Calendar className="size-3 opacity-70" />
                 {formatDate(deal.created_at)}
               </span>
               <span>·</span>
@@ -162,40 +162,40 @@ export function DealDetailPage() {
               )}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {deal.won_by_user_id && (
-              <Button variant="outline" size="sm" onClick={() => setWelcomeOpen(true)}>
-                <Mail className="size-3.5" />
+              <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setWelcomeOpen(true)}>
+                <Mail className="size-3" />
                 {t('welcome_email.send')}
               </Button>
             )}
             {completed && (
-              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
                 ✓ {tAccounting('actions.complete')}
               </span>
             )}
             {isAdmin && deal.locked_at && (
               <span
-                className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-300"
+                className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300"
                 title={formatDate(deal.locked_at)}
               >
-                <Lock className="size-3" />
+                <Lock className="size-2.5" />
                 {relativeFromNow(deal.locked_at)}
               </span>
             )}
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-border/50 bg-muted/25 p-3">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="client-status" className="text-xs font-medium text-muted-foreground">
+        <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-muted/25 p-2">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="client-status" className="text-[11px] font-medium text-muted-foreground">
               {tClients('status.label')}
             </Label>
             <FilterSelect
               id="client-status"
               value={clientStatus}
               onChange={(e) => onChangeClientStatus(e.target.value)}
-              className={cn('min-w-[140px]', CLIENT_STATUS_STYLES[clientStatus])}
+              className={cn('h-8 min-w-[120px] px-2 text-xs', CLIENT_STATUS_STYLES[clientStatus])}
             >
               <option value="new">{tClients('status.new')}</option>
               <option value="active">{tClients('status.active')}</option>
@@ -203,8 +203,8 @@ export function DealDetailPage() {
               <option value="done">{tClients('status.done')}</option>
             </FilterSelect>
           </div>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="owner" className="text-xs font-medium text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="owner" className="text-[11px] font-medium text-muted-foreground">
               {tLeads('owner.label')}
             </Label>
             <FilterSelect
@@ -212,7 +212,7 @@ export function DealDetailPage() {
               value={deal.owner_user_id ?? UNASSIGNED}
               onChange={(e) => onChangeOwner(e.target.value)}
               disabled={completed}
-              className="min-w-[180px]"
+              className="h-8 min-w-[150px] px-2 text-xs"
             >
               <option value={UNASSIGNED}>{tLeads('owner.unassigned')}</option>
               {owners.map((o) => (
@@ -224,8 +224,8 @@ export function DealDetailPage() {
             </FilterSelect>
           </div>
           {onAccountingKanban && accStages.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Label htmlFor="acc-stage" className="text-xs font-medium text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="acc-stage" className="text-[11px] font-medium text-muted-foreground">
                 {tLeads('actions.move_to')}
               </Label>
               <FilterSelect
@@ -233,7 +233,7 @@ export function DealDetailPage() {
                 value={deal.accounting_stage_id ?? ''}
                 onChange={(e) => onChangeAccountingStage(e.target.value)}
                 disabled={moveAccounting.isPending || complete.isPending}
-                className="min-w-[180px]"
+                className="h-8 min-w-[150px] px-2 text-xs"
               >
                 {accStages.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -284,14 +284,16 @@ export function DealDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-5 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent value="overview" className="mt-3 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
-            <div className="min-w-0 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-1">
+            <div className="min-w-0 space-y-3 lg:h-full lg:overflow-auto lg:pr-1">
               <DealForm initial={deal} />
               <DealNotesArea deal={deal} />
               <DealServiceInfo dealId={dealId} />
-              <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-sm font-semibold">{t('jobs_billing.overview_heading')}</h2>
+              <section className="min-w-0 rounded-xl border border-border/60 bg-card p-3 shadow-sm">
+                <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('jobs_billing.overview_heading')}
+                </h2>
                 <JobsBillingPanel
                   dealId={dealId}
                   defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}

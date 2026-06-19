@@ -180,7 +180,7 @@ export function SettingsNav({
 }
 
 export const detailTabTriggerClass =
-  'relative z-[1] rounded-lg border-0 bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground shadow-none transition-[color,font-weight] duration-200 ease-out after:hidden hover:text-foreground data-active:bg-transparent data-active:font-semibold data-active:text-primary data-active:shadow-none dark:data-active:bg-transparent dark:data-active:text-[#7ad4d4]';
+  'relative z-[1] shrink-0 rounded-lg border-0 bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-none transition-[color,font-weight] duration-200 ease-out after:hidden hover:text-foreground data-active:bg-transparent data-active:font-semibold data-active:text-primary data-active:shadow-none dark:data-active:bg-transparent dark:data-active:text-[#7ad4d4] sm:px-3.5 sm:text-sm';
 
 /** Side-by-side overview + comments column on detail pages. */
 export const detailOverviewWithCommentsGridClass =
@@ -232,7 +232,7 @@ export function DetailTabsList({
   }, []);
 
   return (
-    <div ref={wrapRef} className={cn('relative border-b border-border/40', className)}>
+    <div ref={wrapRef} className={cn('relative border-b border-border/40 overflow-x-auto', className)}>
       <span
         aria-hidden
         className={cn(
@@ -243,7 +243,7 @@ export function DetailTabsList({
       />
       <TabsList
         variant="line"
-        className="relative z-[1] h-auto w-full justify-start gap-0.5 rounded-none border-0 bg-transparent p-0"
+        className="relative z-[1] h-auto w-max min-w-full flex-nowrap justify-start gap-0.5 rounded-none border-0 bg-transparent p-0"
       >
         {children}
       </TabsList>

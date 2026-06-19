@@ -41,11 +41,11 @@ export function NotificationsBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-[22rem] p-0" align="end">
         <div className="border-b border-border/60 px-3 py-2">
           <h3 className="text-xs font-semibold">{t('notifications.title')}</h3>
         </div>
-        <div className="max-h-[min(24rem,70vh)] overflow-y-auto p-2">
+        <div className="max-h-[min(22rem,70vh)] overflow-y-auto p-2">
           {list.length === 0 ? (
             <p className="px-1 py-3 text-center text-[11px] text-muted-foreground">
               {t('notifications.empty_unread', { defaultValue: 'All caught up.' })}

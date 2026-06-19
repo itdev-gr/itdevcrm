@@ -138,7 +138,7 @@ function JobRow({
 
   return (
     <tr className="border-t">
-      <td className="px-2 py-2 text-xs text-foreground">
+      <td className="px-1.5 py-1.5 text-[11px] text-foreground">
         {job.title || '—'}
         {job.is_custom && (
           <span className="ml-1 rounded bg-purple-100 px-1 text-[9px] font-medium uppercase text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
@@ -146,16 +146,16 @@ function JobRow({
           </span>
         )}
       </td>
-      <td className="px-2 py-2 text-xs text-muted-foreground">{department}</td>
-      <td className="px-2 py-2">
+      <td className="px-1.5 py-1.5 text-[11px] text-muted-foreground">{department}</td>
+      <td className="px-1.5 py-1.5">
         {readOnly ? (
-          <span className="text-xs text-foreground">
+          <span className="text-[11px] text-foreground">
             €{Number(job.amount_net ?? 0).toFixed(2)}
             <span className="text-[10px] text-muted-foreground">{cadenceSuffix(t, job.billing_type)}</span>
           </span>
         ) : (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground">€</span>
+            <span className="text-[11px] text-muted-foreground">€</span>
             <Input
               type="number"
               step="0.01"
@@ -164,7 +164,7 @@ function JobRow({
               onChange={(e) => setPrice(e.target.value)}
               onBlur={commitPrice}
               disabled={ended}
-              className="h-8 w-20 text-xs"
+              className="h-7 w-16 text-[11px]"
             />
             <span className="text-[10px] text-muted-foreground">
               {cadenceSuffix(t, job.billing_type)}
@@ -172,27 +172,27 @@ function JobRow({
           </div>
         )}
       </td>
-      <td className="px-2 py-2">
+      <td className="px-1.5 py-1.5">
         <span
-          className={`rounded px-2 py-0.5 text-[11px] font-medium ${
+          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
             ended ? 'bg-muted text-muted-foreground' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
           }`}
         >
           {ended ? t('jobs_billing.status.ended') : t('jobs_billing.status.active')}
         </span>
       </td>
-      <td className="px-2 py-2">
+      <td className="px-1.5 py-1.5">
         {readOnly ? (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             {job.billing_group_id && groupLabels.has(job.billing_group_id)
               ? groupLabels.get(job.billing_group_id)
               : t('jobs_billing.group.separate')}
           </span>
         ) : (
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-[12.5rem] flex-wrap gap-1">
             <Select value={job.billing_type} onValueChange={onTermChange} disabled={ended}>
               <SelectTrigger
-                className="h-8 w-full text-xs"
+                className="h-7 w-[6.25rem] text-[11px]"
                 aria-label={t('jobs_billing.col_term')}
               >
                 <SelectValue />
@@ -211,8 +211,9 @@ function JobRow({
               disabled={ended || !canGroup}
             >
               <SelectTrigger
-                className="h-8 w-full text-xs"
+                className="h-7 w-[6.75rem] text-[11px]"
                 aria-label={t('jobs_billing.col_group')}
+                title={t('jobs_billing.group.future_only')}
               >
                 <SelectValue />
               </SelectTrigger>
@@ -238,18 +239,16 @@ function JobRow({
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
-              {t('jobs_billing.group.future_only')}
-            </p>
           </div>
         )}
       </td>
-      <td className="px-2 py-2 text-right">
+      <td className="px-1.5 py-1.5 text-right">
         {!readOnly && !ended && (
           <Button
             type="button"
             size="sm"
             variant="outline"
+            className="h-7 px-2 text-[11px]"
             onClick={() => setConfirmEnd(true)}
             disabled={end.isPending}
           >
@@ -310,16 +309,16 @@ function PaymentCard({
   }
 
   return (
-    <div className="rounded-md border">
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-muted px-3 py-2">
-        <div className="text-xs text-muted-foreground">
+    <div className="rounded-md border overflow-hidden">
+      <div className="flex flex-col gap-2 bg-muted px-2.5 py-1.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 text-[11px] text-muted-foreground">
           <span className="font-medium text-foreground">
             {payment.due_date ? formatDate(payment.due_date) : t('jobs_billing.payment.no_due_date')}
           </span>
-          {payment.label && <span className="ml-2 text-muted-foreground">· {payment.label}</span>}
+          {payment.label && <span className="ml-1.5 text-muted-foreground">· {payment.label}</span>}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs tabular-nums font-medium text-foreground">
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          <span className="text-[11px] tabular-nums font-medium text-foreground">
             €{payment.total_gross.toFixed(2)}
           </span>
           {(() => {
@@ -336,14 +335,14 @@ function PaymentCard({
                   ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
                   : 'bg-muted text-muted-foreground';
             return readOnly ? (
-              <span className={`rounded px-2 py-1 text-xs font-medium ${statusClass}`}>
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${statusClass}`}>
                 {statusLabel}
               </span>
             ) : (
               <button
                 type="button"
                 onClick={toggleStatus}
-                className={`rounded px-2 py-1 text-xs font-medium ${statusClass}`}
+                className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${statusClass}`}
                 title={
                   payment.status === 'paid'
                     ? t('jobs_billing.payment.mark_pending')
@@ -356,7 +355,7 @@ function PaymentCard({
           })()}
           {readOnly
             ? payment.invoice_number && (
-                <span className="text-xs text-muted-foreground">#{payment.invoice_number}</span>
+                <span className="text-[11px] text-muted-foreground">#{payment.invoice_number}</span>
               )
             : (
                 <Input
@@ -364,7 +363,7 @@ function PaymentCard({
                   onChange={(e) => setInvoice(e.target.value)}
                   onBlur={commitInvoice}
                   placeholder={t('jobs_billing.payment.invoice_number')}
-                  className="h-7 w-28 text-xs"
+                  className="h-7 w-24 text-[11px]"
                 />
               )}
         </div>
@@ -437,11 +436,11 @@ function PricingSummary({ jobs }: { jobs: JobBillingRow[] }) {
   ];
 
   return (
-    <div className="rounded-md border bg-muted p-3 text-sm">
-      <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+    <div className="rounded-md border bg-muted p-2 text-xs">
+      <div className="mb-1.5 text-[10px] font-medium uppercase text-muted-foreground">
         {t('jobs_billing.summary.title')}
       </div>
-      <table className="w-full text-sm">
+      <table className="w-full text-xs">
         <thead>
           <tr className="text-xs text-muted-foreground">
             <th className="text-left font-normal"></th>
@@ -496,14 +495,14 @@ export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="min-w-0 space-y-4">
+      <div className="min-w-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {t('jobs_billing.title')}
           </h2>
           {!readOnly && (
-            <Button type="button" size="sm" variant="outline" onClick={() => setShowAdd((v) => !v)}>
+            <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => setShowAdd((v) => !v)}>
               {t('jobs_billing.add_job')}
             </Button>
           )}
@@ -520,16 +519,16 @@ export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false
         {jobs.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('jobs_billing.empty_jobs')}</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full text-left text-sm">
+          <div className="min-w-0 overflow-x-auto rounded-md border">
+            <table className="w-full min-w-[36rem] text-left text-xs">
               <thead className="bg-muted">
-                <tr className="text-xs text-muted-foreground">
-                  <th className="px-2 py-2 font-normal">{t('jobs_billing.col_title')}</th>
-                  <th className="px-2 py-2 font-normal">{t('jobs_billing.col_department')}</th>
-                  <th className="px-2 py-2 font-normal">{t('jobs_billing.col_price')}</th>
-                  <th className="px-2 py-2 font-normal">{t('jobs_billing.col_status')}</th>
-                  <th className="px-2 py-2 font-normal">{t('jobs_billing.col_group')}</th>
-                  <th className="px-2 py-2 font-normal text-right" />
+                <tr className="text-[10px] text-muted-foreground">
+                  <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_title')}</th>
+                  <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_department')}</th>
+                  <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_price')}</th>
+                  <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_status')}</th>
+                  <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_group')}</th>
+                  <th className="px-1.5 py-1.5 font-normal text-right" />
                 </tr>
               </thead>
               <tbody>
@@ -551,8 +550,8 @@ export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false
 
       <PricingSummary jobs={jobs} />
 
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="min-w-0 space-y-2">
+        <h3 className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {t('jobs_billing.payments_title')}
         </h3>
         {payments.length === 0 ? (
