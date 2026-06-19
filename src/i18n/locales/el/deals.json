@@ -187,6 +187,7 @@
       "price_net": "Τιμή (καθαρή €)",
       "vat_rate": "ΦΠΑ %",
       "cadence": "Συχνότητα",
+      "plan": "Πλάνο πληρωμής",
       "description": "Περιγραφή",
       "setup_fee": "Κόστος εγκατάστασης (€)",
       "submit": "Προσθήκη εργασίας",
@@ -196,6 +197,17 @@
       "one_time": "Εφάπαξ",
       "recurring_monthly": "Μηνιαία",
       "recurring_yearly": "Ετήσια"
+    },
+    "plan_label": "Πλάνο πληρωμής",
+    "plan_options": {
+      "none": "Πλήρης (1 πληρωμή)",
+      "50_50": "50 / 50 (2 πληρωμές)",
+      "50_25_25": "50 / 25 / 25 (3 πληρωμές)"
+    },
+    "plan_preview": "Διαχωρισμός σε {{parts}}",
+    "billing_errors": {
+      "cannot_replan_paid_installment": "Αδύνατη η αλλαγή πλάνου — μια δόση έχει ήδη πληρωθεί ή τιμολογηθεί.",
+      "installment_plan_web_dev_one_time_only": "Τα πλάνα δόσεων ισχύουν μόνο για εφάπαξ εργασίες Web Dev."
     },
     "payment": {
       "due_date": "Λήξη",

@@ -57,6 +57,38 @@ describe('AddCustomJobForm', () => {
       vatRate: 24,
       setupFee: 0,
       billingOnly: false,
+      installmentPlan: 'none', // default = no split
     });
+  });
+
+  it('offers the payment plan selector for the default web_dev one-time job', () => {
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+    expect(screen.getByRole('combobox', { name: /payment plan/i })).toBeInTheDocument();
+  });
+
+  it('submits the chosen installment plan', async () => {
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" defaultVatRate={24} />));
+
+    await user.type(screen.getByLabelText(/^title$/i), 'Website');
+    await user.type(screen.getByLabelText(/price \(net/i), '1000');
+    await user.click(screen.getByRole('combobox', { name: /payment plan/i }));
+    await user.click(await screen.findByRole('option', { name: /50 . 50 \(2/i }));
+    await user.click(screen.getByRole('button', { name: /add job/i }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ installmentPlan: '50_50', amountNet: 1000 }),
+    );
+  });
+
+  it('hides the plan selector when the cadence is recurring', async () => {
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+
+    expect(screen.getByRole('combobox', { name: /payment plan/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: /cadence/i }));
+    await user.click(await screen.findByRole('option', { name: /monthly/i }));
+    expect(screen.queryByRole('combobox', { name: /payment plan/i })).not.toBeInTheDocument();
   });
 });

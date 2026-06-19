@@ -11,7 +11,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateCustomJob } from './hooks/useCustomJobMutations';
+import { splitInstallments, type InstallmentPlan } from './installmentSplit';
+import { formatEur } from '@/lib/countries';
 import type { BillingType, JobDepartment } from '@/lib/rpc';
+
+const PLANS: InstallmentPlan[] = ['none', '50_50', '50_25_25'];
 
 const DEPARTMENTS: JobDepartment[] = [
   'web_seo',
@@ -42,8 +46,13 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   const [priceNet, setPriceNet] = useState('');
   const [vatRate, setVatRate] = useState(String(defaultVatRate));
   const [cadence, setCadence] = useState<BillingType>('one_time');
+  const [plan, setPlan] = useState<InstallmentPlan>('none');
   const [description, setDescription] = useState('');
   const [setupFee, setSetupFee] = useState('');
+
+  // Installment plans apply only to one-time Web Dev jobs.
+  const planEligible = department === 'web_dev' && cadence === 'one_time';
+  const effectivePlan: InstallmentPlan = planEligible ? plan : 'none';
 
   const canSubmit = title.trim().length > 0 && priceNet.trim().length > 0;
 
@@ -60,11 +69,13 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
         vatRate: Number(vatRate || 0),
         setupFee: setupFee ? Number(setupFee) : 0,
         billingOnly,
+        installmentPlan: effectivePlan,
       });
       setTitle('');
       setPriceNet('');
       setVatRate(String(defaultVatRate));
       setCadence('one_time');
+      setPlan('none');
       setDescription('');
       setSetupFee('');
       onDone?.();
@@ -124,6 +135,32 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
           </SelectContent>
         </Select>
       </div>
+      {planEligible && (
+        <div>
+          <Label className="text-xs">{t('jobs_billing.form.plan')}</Label>
+          <Select value={plan} onValueChange={(v) => setPlan(v as InstallmentPlan)}>
+            <SelectTrigger className="mt-1 h-8 w-full text-xs" aria-label={t('jobs_billing.form.plan')}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PLANS.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {t(`jobs_billing.plan_options.${p}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {effectivePlan !== 'none' && priceNet.trim() !== '' && (
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {t('jobs_billing.plan_preview', {
+                parts: splitInstallments(Number(priceNet || 0), effectivePlan)
+                  .map((n) => formatEur(n))
+                  .join(' + '),
+              })}
+            </p>
+          )}
+        </div>
+      )}
       <div>
         <Label htmlFor="cj-price" className="text-xs">
           {t('jobs_billing.form.price_net')}

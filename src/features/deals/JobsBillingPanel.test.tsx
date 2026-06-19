@@ -37,6 +37,7 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     title: `Job ${over.id}`,
     department: 'web_dev',
     billing_type: 'recurring_monthly',
+    installment_plan: 'none',
     amount_net: 100,
     setup_fee: null,
     vat_rate: 24,
@@ -216,6 +217,70 @@ describe('JobsBillingPanel term', () => {
     billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
     render(wrap(<JobsBillingPanel dealId="d1" readOnly />));
     expect(screen.queryByRole('combobox', { name: /term/i })).not.toBeInTheDocument();
+  });
+});
+
+function planSelect(rowTitle: string) {
+  const cell = screen.getByText(rowTitle).closest('tr') as HTMLElement;
+  return within(cell).getByRole('combobox', { name: /payment plan/i });
+}
+
+describe('JobsBillingPanel installment plan', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('offers the plan dropdown for a one-time web_dev job', () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Website', department: 'web_dev', billing_type: 'one_time' })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    expect(planSelect('Website')).toBeInTheDocument();
+  });
+
+  it('does not offer the plan dropdown for non-web_dev or recurring jobs', () => {
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'a', title: 'SEO', department: 'web_seo', billing_type: 'one_time' }),
+        makeJob({ id: 'b', title: 'Hosting', department: 'web_dev', billing_type: 'recurring_monthly' }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    expect(screen.queryByRole('combobox', { name: /payment plan/i })).not.toBeInTheDocument();
+  });
+
+  it('saves the chosen plan via updateJobBilling', async () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Website', department: 'web_dev', billing_type: 'one_time' })],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    await user.click(planSelect('Website'));
+    await user.click(await screen.findByRole('option', { name: /50 . 25 . 25/i }));
+
+    await waitFor(() => expect(updateMutate).toHaveBeenCalledTimes(1));
+    expect(updateMutate).toHaveBeenCalledWith({ jobId: 'a', installmentPlan: '50_25_25' });
+  });
+
+  it('previews the split for a job that already has a plan', () => {
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'a',
+          title: 'Website',
+          department: 'web_dev',
+          billing_type: 'one_time',
+          installment_plan: '50_50',
+          amount_net: 1000,
+        }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const cell = screen.getByText('Website').closest('tr') as HTMLElement;
+    expect(within(cell).getByText(/Splits to/i)).toBeInTheDocument();
   });
 });
 

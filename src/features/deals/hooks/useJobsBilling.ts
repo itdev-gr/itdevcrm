@@ -9,6 +9,8 @@ export type JobBillingRow = {
   /** The board / department the job lives on (jobs.service_type). */
   department: JobDepartment | 'other' | string;
   billing_type: BillingType | string;
+  /** Installment split for one-time web_dev jobs ('none' | '50_50' | '50_25_25'). */
+  installment_plan: string;
   amount_net: number | null;
   setup_fee: number | null;
   vat_rate: number | null;
@@ -91,7 +93,7 @@ export function useJobsBilling(dealId: string) {
       const jobsRes = await supabase
         .from('jobs')
         .select(
-          'id, title, service_type, billing_type, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description',
+          'id, title, service_type, billing_type, installment_plan, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description',
         )
         .eq('deal_id', dealId)
         .eq('archived', false)
@@ -105,6 +107,7 @@ export function useJobsBilling(dealId: string) {
         title: (j.title as string | null) ?? null,
         department: (j.service_type as string) ?? 'other',
         billing_type: (j.billing_type as string) ?? 'one_time',
+        installment_plan: (j.installment_plan as string) ?? 'none',
         amount_net: j.amount_net == null ? null : Number(j.amount_net),
         setup_fee: j.setup_fee == null ? null : Number(j.setup_fee),
         vat_rate: j.vat_rate == null ? null : Number(j.vat_rate),

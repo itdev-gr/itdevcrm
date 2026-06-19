@@ -113,6 +113,8 @@ export async function jobBillingRefCount(jobId: string): Promise<number> {
 export type JobBillingResult = { ok: true; job_id: string } | { ok: false; errors: string[] };
 
 export type BillingType = 'one_time' | 'recurring_monthly' | 'recurring_yearly';
+/** Installment plan for one-time web_dev jobs (see features/deals/installmentSplit). */
+export type InstallmentPlan = 'none' | '50_50' | '50_25_25';
 export type JobDepartment =
   | 'web_seo'
   | 'local_seo'
@@ -133,6 +135,8 @@ export type CreateCustomJobInput = {
   vatRate: number;
   setupFee?: number;
   billingOnly?: boolean;
+  /** Only honored for web_dev one-time jobs; defaults to 'none'. */
+  installmentPlan?: InstallmentPlan;
 };
 
 export async function createCustomJob(input: CreateCustomJobInput): Promise<JobBillingResult> {
@@ -146,6 +150,7 @@ export async function createCustomJob(input: CreateCustomJobInput): Promise<JobB
     p_vat_rate: input.vatRate,
     p_setup_fee: input.setupFee ?? 0,
     p_billing_only: input.billingOnly ?? false,
+    p_installment_plan: input.installmentPlan ?? 'none',
   });
   if (error) return { ok: false, errors: [error.message] };
   return data as JobBillingResult;
@@ -160,6 +165,8 @@ export type UpdateJobBillingInput = {
   billingType?: BillingType | null;
   billingGroupId?: string | null;
   clearGroup?: boolean;
+  /** Only honored for web_dev one-time jobs; null leaves it unchanged. */
+  installmentPlan?: InstallmentPlan | null;
 };
 
 export async function updateJobBilling(input: UpdateJobBillingInput): Promise<JobBillingResult> {
@@ -172,6 +179,7 @@ export async function updateJobBilling(input: UpdateJobBillingInput): Promise<Jo
     p_billing_type: input.billingType ?? null,
     p_billing_group_id: input.billingGroupId ?? null,
     p_clear_group: input.clearGroup ?? false,
+    p_installment_plan: input.installmentPlan ?? null,
   });
   if (error) return { ok: false, errors: [error.message] };
   return data as JobBillingResult;

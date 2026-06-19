@@ -187,6 +187,7 @@
       "price_net": "Price (net €)",
       "vat_rate": "VAT %",
       "cadence": "Cadence",
+      "plan": "Payment plan",
       "description": "Description",
       "setup_fee": "Setup fee (€)",
       "submit": "Add job",
@@ -196,6 +197,17 @@
       "one_time": "One-time",
       "recurring_monthly": "Monthly",
       "recurring_yearly": "Yearly"
+    },
+    "plan_label": "Payment plan",
+    "plan_options": {
+      "none": "Full (1 payment)",
+      "50_50": "50 / 50 (2 payments)",
+      "50_25_25": "50 / 25 / 25 (3 payments)"
+    },
+    "plan_preview": "Splits to {{parts}}",
+    "billing_errors": {
+      "cannot_replan_paid_installment": "Can't change the plan — an installment is already paid or invoiced.",
+      "installment_plan_web_dev_one_time_only": "Installment plans apply only to one-time Web Dev jobs."
     },
     "payment": {
       "due_date": "Due",

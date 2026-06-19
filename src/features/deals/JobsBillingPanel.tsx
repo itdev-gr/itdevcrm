@@ -20,10 +20,13 @@ import { useEndJob, useUpdateJobBilling } from './hooks/useCustomJobMutations';
 import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
+import { splitInstallments, type InstallmentPlan } from './installmentSplit';
 import type { BillingType } from '@/lib/rpc';
 
 /** Billing-term options offered per job, in display order. */
 const TERMS: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];
+/** Installment plans offered for one-time web_dev jobs. */
+const PLANS: InstallmentPlan[] = ['none', '50_50', '50_25_25'];
 
 const SEPARATE = '__separate__';
 /** Prefix for "pair with job X" options whose value encodes the target job id. */
@@ -136,6 +139,21 @@ function JobRow({
     }
   }
 
+  // Installment plans apply only to one-time web_dev jobs.
+  const planEligible = job.department === 'web_dev' && job.billing_type === 'one_time';
+  const currentPlan = (job.installment_plan as InstallmentPlan) ?? 'none';
+
+  async function onPlanChange(value: string) {
+    if (value === currentPlan) return;
+    try {
+      await update.mutateAsync({ jobId: job.id, installmentPlan: value as InstallmentPlan });
+    } catch (err) {
+      // Translate known billing error codes (e.g. cannot_replan_paid_installment).
+      const code = (err as Error & { errors?: string[] }).errors?.[0] ?? (err as Error).message;
+      alert(t(`jobs_billing.billing_errors.${code}`, { defaultValue: code }));
+    }
+  }
+
   return (
     <tr className="border-t">
       <td className="px-1.5 py-1.5 text-[11px] text-foreground">
@@ -189,56 +207,81 @@ function JobRow({
               : t('jobs_billing.group.separate')}
           </span>
         ) : (
-          <div className="flex min-w-[12.5rem] flex-wrap gap-1">
-            <Select value={job.billing_type} onValueChange={onTermChange} disabled={ended}>
-              <SelectTrigger
-                className="h-7 w-[6.25rem] text-[11px]"
-                aria-label={t('jobs_billing.col_term')}
+          <div className="space-y-1">
+            <div className="flex min-w-[12.5rem] flex-wrap gap-1">
+              <Select value={job.billing_type} onValueChange={onTermChange} disabled={ended}>
+                <SelectTrigger
+                  className="h-7 w-[6.25rem] text-[11px]"
+                  aria-label={t('jobs_billing.col_term')}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TERMS.map((term) => (
+                    <SelectItem key={term} value={term}>
+                      {t(`jobs_billing.cadence_options.${term}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={job.billing_group_id ?? SEPARATE}
+                onValueChange={onGroupChange}
+                disabled={ended || !canGroup}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TERMS.map((term) => (
-                  <SelectItem key={term} value={term}>
-                    {t(`jobs_billing.cadence_options.${term}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={job.billing_group_id ?? SEPARATE}
-              onValueChange={onGroupChange}
-              disabled={ended || !canGroup}
-            >
-              <SelectTrigger
-                className="h-7 w-[6.75rem] text-[11px]"
-                aria-label={t('jobs_billing.col_group')}
-                title={t('jobs_billing.group.future_only')}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SEPARATE}>{t('jobs_billing.group.separate')}</SelectItem>
-                {/* Keep the job's own group selectable so the current value resolves. */}
-                {job.billing_group_id && groupLabels.has(job.billing_group_id) && (
-                  <SelectItem value={job.billing_group_id}>
-                    {groupLabels.get(job.billing_group_id)}
-                  </SelectItem>
-                )}
-                {joinableGroups.map(([gid, label]) => (
-                  <SelectItem key={gid} value={gid}>
-                    {label}
-                  </SelectItem>
-                ))}
-                {pairTargets.map((other) => (
-                  <SelectItem key={other.id} value={`${PAIR_PREFIX}${other.id}`}>
-                    {t('jobs_billing.group.pair_with', {
-                      title: other.title || t('jobs_billing.untitled'),
-                    })}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  className="h-7 w-[6.75rem] text-[11px]"
+                  aria-label={t('jobs_billing.col_group')}
+                  title={t('jobs_billing.group.future_only')}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SEPARATE}>{t('jobs_billing.group.separate')}</SelectItem>
+                  {/* Keep the job's own group selectable so the current value resolves. */}
+                  {job.billing_group_id && groupLabels.has(job.billing_group_id) && (
+                    <SelectItem value={job.billing_group_id}>
+                      {groupLabels.get(job.billing_group_id)}
+                    </SelectItem>
+                  )}
+                  {joinableGroups.map(([gid, label]) => (
+                    <SelectItem key={gid} value={gid}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                  {pairTargets.map((other) => (
+                    <SelectItem key={other.id} value={`${PAIR_PREFIX}${other.id}`}>
+                      {t('jobs_billing.group.pair_with', {
+                        title: other.title || t('jobs_billing.untitled'),
+                      })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {planEligible && (
+                <Select value={currentPlan} onValueChange={onPlanChange} disabled={ended}>
+                  <SelectTrigger className="h-7 w-[7.5rem] text-[11px]" aria-label={t('jobs_billing.plan_label')}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLANS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {t(`jobs_billing.plan_options.${p}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            {planEligible && currentPlan !== 'none' && job.amount_net != null && (
+              <p className="text-[10px] text-muted-foreground">
+                {t('jobs_billing.plan_preview', {
+                  parts: splitInstallments(Number(job.amount_net || 0), currentPlan)
+                    .map((n) => formatEur(n))
+                    .join(' + '),
+                })}
+              </p>
+            )}
           </div>
         )}
       </td>
