@@ -2,7 +2,7 @@
 // No @/ aliases, no src/lib imports — must run in Vercel serverless context.
 
 import {
-  CONTRACT_PROVIDER_LINES,
+  CONTRACT_PROVIDER_STAMP_DATA_URI,
   CONTRACT_PROVIDER_SIGNATURE_DATA_URI,
 } from './_contract-provider.js';
 
@@ -60,24 +60,25 @@ export function renderContractHtml(input: ContractPdfInput): string {
              text-transform: uppercase; color: #64748b; }
   .body { font-size: 13px; line-height: 1.7; overflow-wrap: break-word; }
   .sigs { display: flex; gap: 48px; margin-top: 64px; font-size: 11px; }
-  .sig-col { flex: 1; display: flex; flex-direction: column; min-height: 160px; }
-  .sig-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding-bottom: 8px; }
-  .provider-details { font-size: 10px; line-height: 1.55; color: #334155; }
-  .sig-image { height: 52px; width: auto; object-fit: contain; align-self: flex-start; }
+  .sig-col { flex: 1; display: flex; flex-direction: column; min-height: 220px; }
+  .sig-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding-bottom: 8px; }
+  .provider-stamp { width: 100%; max-width: 340px; height: auto; object-fit: contain; align-self: flex-start; }
+  .party-stamp { width: 100%; max-width: 280px; height: auto; object-fit: contain; display: block; margin-top: 4px; }
+  .sig-image { height: 110px; width: auto; object-fit: contain; align-self: flex-start; }
   .sig-line { border-top: 1px solid #0f172a; padding-top: 8px; text-align: center; }
   </style></head><body><div class="page">
   <div class="head"><div class="brand">ITDEV</div><div class="num">${escapeHtml(input.contractNumber)}</div></div>
   <h1>${escapeHtml(input.title)}</h1>
   <div class="meta">${escapeHtml(date)}</div>
   <div class="parties">
-    <div class="party"><b>Πάροχος / Provider</b>${CONTRACT_PROVIDER_LINES.map(escapeHtml).join('<br/>')}</div>
+    <div class="party"><b>Πάροχος / Provider</b><img class="party-stamp" src="${CONTRACT_PROVIDER_STAMP_DATA_URI}" alt="IT. DEV E.E."/></div>
     <div class="party"><b>Πελάτης / Client</b>${clientLines}</div>
   </div>
   <div class="body">${bodyHtml}</div>
   <div class="sigs">
     <div class="sig-col">
       <div class="sig-body">
-        <div class="provider-details">${CONTRACT_PROVIDER_LINES.map(escapeHtml).join('<br/>')}</div>
+        <img class="provider-stamp" src="${CONTRACT_PROVIDER_STAMP_DATA_URI}" alt="IT. DEV E.E."/>
         <img class="sig-image" src="${CONTRACT_PROVIDER_SIGNATURE_DATA_URI}" alt="Υπογραφή παρόχου"/>
       </div>
       <div class="sig-line">Για τον Πάροχο</div>
