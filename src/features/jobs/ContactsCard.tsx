@@ -75,8 +75,8 @@ function ContactsForm({ client, clientId }: { client: ClientShape; clientId: str
   });
 
   return (
-    <div className="rounded-md border bg-card">
-      <header className="flex items-center justify-between border-b bg-muted px-4 py-2">
+    <div className="rounded-xl border border-border/60 bg-card shadow-sm">
+      <header className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-4 py-2.5">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Contacts
         </span>

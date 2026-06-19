@@ -14,7 +14,10 @@ export function CallLink({ phone, className }: CallLinkProps) {
   return (
     <a
       href={href}
-      className={className ?? 'inline-flex items-center gap-1 text-blue-600 hover:underline'}
+      className={
+        className ??
+        'inline-flex items-center gap-1 font-medium text-primary transition-colors hover:text-[#147272] hover:underline dark:text-[#7ad4d4] dark:hover:text-[#9de0e0]'
+      }
       title="Κλήση"
     >
       <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />

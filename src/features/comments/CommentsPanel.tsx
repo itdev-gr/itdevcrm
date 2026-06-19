@@ -65,7 +65,7 @@ export function CommentsPanel({ parentType, parentId }: Props) {
         </div>
       </div>
 
-      <div className="shrink-0 rounded-xl border border-border/60 bg-muted/15 p-4">
+      <div className="shrink-0 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
         <p className="mb-3 text-sm font-medium text-foreground">
           {t('comments.new_comment', { defaultValue: 'New comment' })}
         </p>
