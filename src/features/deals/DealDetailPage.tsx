@@ -131,7 +131,7 @@ export function DealDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8">
       <div className="rounded-xl border border-border/60 bg-card p-3.5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-2.5">
           <div className="min-w-0">
@@ -257,7 +257,7 @@ export function DealDetailPage() {
         onClose={() => setWelcomeOpen(false)}
       />
 
-      <Tabs defaultValue="overview" className="lg:min-h-0 lg:flex-1 lg:flex lg:flex-col">
+      <Tabs defaultValue="overview">
         <DetailTabsList>
           <TabsTrigger value="overview" className={detailTabTriggerClass}>
             {t('tabs.overview')}
@@ -285,16 +285,13 @@ export function DealDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-3 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
-          <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
-            <div className="min-w-0 space-y-3 lg:h-full lg:overflow-auto lg:pr-1">
+        <TabsContent value="overview" className="mt-3 flex-none outline-none">
+          <div className={detailOverviewWithCommentsGridClass}>
+            <div className="min-w-0 space-y-3">
               <DealForm initial={deal} />
               <DealNotesArea deal={deal} />
               <DealServiceInfo dealId={dealId} />
               <section className="min-w-0 rounded-xl border border-border/60 bg-card p-3 shadow-sm">
-                <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t('jobs_billing.overview_heading')}
-                </h2>
                 <JobsBillingPanel
                   dealId={dealId}
                   defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
@@ -303,7 +300,7 @@ export function DealDetailPage() {
               </section>
             </div>
             <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-              <div className={commentsPanelShellClass}>
+              <div className={cn(commentsPanelShellClass, 'min-h-[20rem] lg:max-h-[calc(100vh-8rem)]')}>
                 <div className={commentsPanelHeaderClass}>
                   <h2 className="text-sm font-semibold">{tLeads('tabs.comments')}</h2>
                 </div>
@@ -315,7 +312,7 @@ export function DealDetailPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="payment" className="mt-5 space-y-4 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="payment" className="mt-3 flex-none space-y-4 outline-none">
           {canManageBilling && (
             <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
               <JobsBillingPanel
@@ -333,32 +330,32 @@ export function DealDetailPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="jobs" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="jobs" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <JobsTab dealId={dealId} accountingCompletedAt={deal.accounting_completed_at} />
           </div>
         </TabsContent>
-        <TabsContent value="tasks" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="tasks" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <AssignedTasksTab source={{ kind: 'deal', id: dealId }} />
           </div>
         </TabsContent>
-        <TabsContent value="attachments" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="attachments" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <AttachmentsPanel parentType="deal" parentId={dealId} />
           </div>
         </TabsContent>
-        <TabsContent value="activity" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="activity" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <ActivityPanel entityType="deals" entityId={dealId} />
           </div>
         </TabsContent>
-        <TabsContent value="offers" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="offers" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <OffersTab dealId={dealId} />
           </div>
         </TabsContent>
-        <TabsContent value="contracts" className="mt-5 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent value="contracts" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             {deal.client_id && <ContractsTab clientId={deal.client_id} />}
           </div>

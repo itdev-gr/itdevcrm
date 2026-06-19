@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass } from '@/components/layout/page-shell';
+import { cn } from '@/lib/utils';
 import { LeadForm } from './LeadForm';
 import { useLead } from './hooks/useLead';
 import { useConvertLead } from './hooks/useConvertLead';
@@ -281,7 +282,7 @@ export function LeadDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
+      <Tabs defaultValue="overview">
         <DetailTabsList>
           <TabsTrigger value="overview" className={detailTabTriggerClass}>
             {t('tabs.overview')}
@@ -297,13 +298,19 @@ export function LeadDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-5 outline-none">
+        <TabsContent value="overview" className="mt-3 flex-none outline-none">
           <div className={detailOverviewWithCommentsGridClass}>
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-4">
               <LeadForm lead={lead} />
+              <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+                <h2 className="mb-4 text-sm font-semibold tracking-tight text-foreground">
+                  {t('tabs.attachments')}
+                </h2>
+                <AttachmentsPanel parentType="lead" parentId={leadId} />
+              </section>
             </div>
-            <aside className="min-w-0 xl:sticky xl:top-24 xl:self-start">
-              <div className={commentsPanelShellClass}>
+            <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+              <div className={cn(commentsPanelShellClass, 'min-h-[20rem] lg:max-h-[calc(100vh-8rem)]')}>
                 <div className={commentsPanelHeaderClass}>
                   <h2 className="text-sm font-semibold">{t('tabs.comments')}</h2>
                 </div>
@@ -314,17 +321,17 @@ export function LeadDetailPage() {
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value="attachments" className="mt-5 outline-none">
+        <TabsContent value="attachments" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <AttachmentsPanel parentType="lead" parentId={leadId} />
           </div>
         </TabsContent>
-        <TabsContent value="activity" className="mt-5 outline-none">
+        <TabsContent value="activity" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <ActivityPanel entityType="leads" entityId={leadId} />
           </div>
         </TabsContent>
-        <TabsContent value="offers" className="mt-5 outline-none">
+        <TabsContent value="offers" className="mt-3 flex-none outline-none">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <OffersTab leadId={leadId} />
           </div>
