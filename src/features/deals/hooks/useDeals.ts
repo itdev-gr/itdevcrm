@@ -4,6 +4,8 @@ import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
 
 export type DealRow = Database['public']['Tables']['deals']['Row'] & {
+  /** Legacy ClickUp "Invoiced Date" (not yet in generated types). */
+  invoiced_date?: string | null;
   client?: {
     id: string;
     name: string;

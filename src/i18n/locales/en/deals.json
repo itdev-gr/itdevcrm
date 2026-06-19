@@ -137,6 +137,7 @@
     "title": "Jobs & billing",
     "overview_heading": "Jobs & billing",
     "add_job": "+ Add job",
+    "invoiced_date": "Invoiced date",
     "empty_jobs": "No jobs yet.",
     "empty_payments": "No payments yet.",
     "payments_title": "Payments",

@@ -296,6 +296,7 @@ export function DealDetailPage() {
                   dealId={dealId}
                   defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
                   readOnly={!canManageBilling}
+                  invoicedDate={deal.invoiced_date ?? null}
                 />
               </section>
             </div>
@@ -318,6 +319,7 @@ export function DealDetailPage() {
               <JobsBillingPanel
                 dealId={dealId}
                 defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+                invoicedDate={deal.invoiced_date ?? null}
               />
             </div>
           )}

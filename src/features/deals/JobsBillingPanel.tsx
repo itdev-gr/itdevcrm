@@ -469,10 +469,17 @@ type Props = {
   defaultVatRate?: number;
   /** Hide all mutation controls and render a clean read-only view. */
   readOnly?: boolean;
+  /** Legacy ClickUp "Invoiced Date" — the real start date, shown read-only. */
+  invoicedDate?: string | null;
 };
 
-export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false }: Props) {
-  const { t } = useTranslation('deals');
+export function JobsBillingPanel({
+  dealId,
+  defaultVatRate = 24,
+  readOnly = false,
+  invoicedDate = null,
+}: Props) {
+  const { t, i18n } = useTranslation('deals');
   const { data, isLoading } = useJobsBilling(dealId);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -507,6 +514,13 @@ export function JobsBillingPanel({ dealId, defaultVatRate = 24, readOnly = false
             </Button>
           )}
         </div>
+
+        <p className="text-[11px] text-muted-foreground" data-testid="jobs-billing-invoiced-date">
+          {t('jobs_billing.invoiced_date')}:{' '}
+          <span className="font-medium text-foreground">
+            {invoicedDate ? formatDate(invoicedDate, i18n.language) : '—'}
+          </span>
+        </p>
 
         {!readOnly && showAdd && (
           <AddCustomJobForm

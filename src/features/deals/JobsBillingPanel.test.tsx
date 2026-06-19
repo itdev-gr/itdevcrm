@@ -247,3 +247,19 @@ describe('JobsBillingPanel readOnly', () => {
     expect(screen.getByRole('button', { name: /add job/i })).toBeInTheDocument();
   });
 });
+
+describe('JobsBillingPanel invoiced date', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows the invoiced date when provided', () => {
+    billing.current = { jobs: [], payments: [] };
+    render(wrap(<JobsBillingPanel dealId="d1" invoicedDate="2026-05-21" />));
+    expect(screen.getByTestId('jobs-billing-invoiced-date')).toHaveTextContent('2026');
+  });
+
+  it('shows an em dash when there is no invoiced date', () => {
+    billing.current = { jobs: [], payments: [] };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    expect(screen.getByTestId('jobs-billing-invoiced-date')).toHaveTextContent('—');
+  });
+});
