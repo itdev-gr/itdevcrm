@@ -141,4 +141,15 @@ ads board lifecycle; ai_seo dual-board; recurring_yearly end-to-end; web_dev ins
 
 Product assumption in Bug 1: **Closed = engagement ended → recurring billing stops.** If a closed deal should keep billing, drop the `<> 'closed'` clause in `ensure_recurring_payments` (rollback documented in the migration). All verification data removed; baseline restored (deals/clients = 479).
 
+## BUG 4 (HIGH) — found in prod after deploy: unbounded duplicate recurring payments
+Reported on real deal `fd090fb8` (12+ identical 21/06→21/07 monthly rows). Root cause:
+- The ClickUp reseed/import creates `deal_payments` with **NULL `service_index` (and NULL `service_type`)** — all 56 reseed rows had it.
+- `ensure_recurring_payments`'s idempotency guard used `dp2.service_index = dp.service_index`; `NULL = NULL` is NULL (never TRUE), so the guard never matched its own successors → a new duplicate was created on **every** cron run.
+- The cron is invoked on **every accounting-board mount** (`useAccountingKanbanRealtime`) → duplicates accrued on each page view ("all the time").
+- Scale at detection: 5 deals, 38 excess rows.
+
+Fix — migration `20260619120000_fix_recurring_idempotency_null_service_index`: made the guard NULL-safe (`is not distinct from` on service_index/service_type/amount_net, + billing_type). Verified: generator now creates **0** rows for `fd090fb8`. Cleanup: removed 37 redundant pending/un-invoiced duplicate rows + their lines; 0 duplicate groups remain; `fd090fb8` back to 4 legitimate payments.
+
+Follow-ups for you: (a) the **reseed/import should populate `service_index` + `service_type`** so payments link cleanly to services/jobs (the function is now robust regardless); (b) consider **not** calling `ensure_recurring_payments` on every board mount (write-on-read) — harmless now that it's idempotent, but wasteful.
+
 **Email:** all relevant automations are globally OFF; test contact + redirected job-notifications pointed at mkifokeris@itdev.gr; net result — no automated emails fired.
