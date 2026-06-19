@@ -103,8 +103,8 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   }
   const notes = pick(['notes']) ?? (noteLines.length > 0 ? noteLines.join('\n') : null);
 
-  // Dedup on the Meta lead id stored in source_data (no dedicated column needed,
-  // so this works before any migration). Retries return the existing lead.
+  // Dedup on the Meta lead id stored in source_data. Retries return the existing
+  // record — whether it landed in `leads` (clean) or `lead_intake` (held duplicate).
   if (leadgenId) {
     const { data: existing } = await admin
       .from('leads')
@@ -115,10 +115,68 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
       res.status(200).json({ ok: true, deduped: true, lead_id: existing[0].id });
       return;
     }
+    const { data: held } = await admin
+      .from('lead_intake')
+      .select('id')
+      .eq('source_data->>leadgen_id', leadgenId)
+      .limit(1);
+    if (held && held.length > 0) {
+      res.status(200).json({ ok: true, deduped: true, held: true, intake_id: held[0].id });
+      return;
+    }
   }
 
   const { first, last } = splitFullName(fullName ?? '');
   const title = (formName ?? 'Meta lead').slice(0, 200);
+
+  // ---- Duplicate guard -----------------------------------------------------
+  // Hold leads whose email or phone already exists (on another lead, or on a
+  // client that has a deal) in `lead_intake` for review, instead of inserting
+  // into `leads` (which would queue a welcome email + round-robin assign an
+  // unreviewed contact). Clean leads fall through to the normal insert below.
+  const phoneDigits = (phone ?? '').replace(/\D/g, '');
+  const phoneNorm = phoneDigits.length >= 10 ? phoneDigits.slice(-10) : null;
+
+  const { data: dupRows } = await admin.rpc('find_lead_duplicates', {
+    p_email: email,
+    p_phone: phone,
+  });
+  const matches = (dupRows ?? []) as Array<{
+    match_type: string;
+    record_id: string;
+    display_name: string;
+    context: string | null;
+    matched_field: string;
+  }>;
+
+  if (matches.length > 0) {
+    const matchedOn = Array.from(new Set(matches.map((m) => m.matched_field)));
+    const { data: intake, error: intakeErr } = await admin
+      .from('lead_intake')
+      .insert({
+        source: 'meta',
+        source_data: payload,
+        title,
+        contact_first_name: first,
+        contact_last_name: last,
+        email,
+        phone,
+        phone_normalized: phoneNorm,
+        website,
+        company_name: company,
+        contact_info: notes,
+        matched_on: matchedOn,
+        matches,
+      })
+      .select('id')
+      .single();
+    if (intakeErr || !intake) {
+      res.status(500).json({ error: intakeErr?.message ?? 'intake_failed' });
+      return;
+    }
+    res.status(200).json({ ok: true, held: true, intake_id: intake.id });
+    return;
+  }
 
   const { data: inserted, error } = await admin
     .from('leads')
