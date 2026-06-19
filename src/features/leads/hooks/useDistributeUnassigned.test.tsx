@@ -23,6 +23,7 @@ vi.mock('@/lib/sentry/captureMutation', () => ({
   captureMutation: (_scope: string, _op: string, fn: (...args: unknown[]) => unknown) => fn,
 }));
 
+import { queryKeys } from '@/lib/queryKeys';
 import { useDistributeUnassigned } from './useDistributeUnassigned';
 
 function wrap(client: QueryClient) {
@@ -44,5 +45,32 @@ describe('useDistributeUnassigned', () => {
 
     expect(count).toBe(5);
     expect(restRpc).toHaveBeenCalledWith('distribute_unassigned_leads', undefined);
+  });
+
+  it('awaits the leads refetch before resolving so the UI shows fresh counts', async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    let releaseRefetch!: () => void;
+    const refetchGate = new Promise<void>((res) => {
+      releaseRefetch = res;
+    });
+    vi.spyOn(qc, 'invalidateQueries').mockReturnValue(refetchGate as unknown as Promise<void>);
+
+    const { result } = renderHook(() => useDistributeUnassigned(), { wrapper: wrap(qc) });
+
+    let resolved = false;
+    const done = result.current.mutateAsync().then(() => {
+      resolved = true;
+    });
+
+    // Flush micro- and macro-tasks; the mutation must still be pending on the refetch.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(qc.invalidateQueries).toHaveBeenCalledWith({ queryKey: queryKeys.leads() });
+    expect(resolved).toBe(false);
+
+    releaseRefetch();
+    await done;
+    expect(resolved).toBe(true);
   });
 });

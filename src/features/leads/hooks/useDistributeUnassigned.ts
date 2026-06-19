@@ -17,8 +17,9 @@ export function useDistributeUnassigned() {
       if (error) throw new Error(error.message);
       return data ?? 0;
     }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.leads() });
-    },
+    // Return the promise so `mutateAsync` resolves only after the leads list
+    // has refetched — otherwise the caller's success alert blocks the thread
+    // while the table still shows the pre-distribution (stale) count.
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.leads() }),
   });
 }

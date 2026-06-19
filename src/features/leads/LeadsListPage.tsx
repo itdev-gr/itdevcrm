@@ -61,6 +61,7 @@ export function LeadsListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
+  const [confirmDistribute, setConfirmDistribute] = useState(false);
 
   const rows = useMemo(
     () =>
@@ -150,6 +151,17 @@ export function LeadsListPage() {
     }
   }
 
+  async function onConfirmDistribute() {
+    try {
+      const n = await distribute.mutateAsync();
+      alert(t('distribute.done', { count: n }));
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setConfirmDistribute(false);
+    }
+  }
+
   if (isLoading) return <div className="p-8 text-muted-foreground">…</div>;
   if (error) return <div className="p-8 text-red-600">{error.message}</div>;
 
@@ -186,10 +198,7 @@ export function LeadsListPage() {
             variant="outline"
             size="sm"
             disabled={unassignedCount === 0 || distribute.isPending}
-            onClick={async () => {
-              const n = await distribute.mutateAsync();
-              alert(t('distribute.done', { count: n }));
-            }}
+            onClick={() => setConfirmDistribute(true)}
           >
             {t('distribute.button', { count: unassignedCount })}
           </Button>
@@ -355,6 +364,18 @@ export function LeadsListPage() {
         confirmLabel={t('delete.button')}
         onConfirm={onConfirmDelete}
         pending={del.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmDistribute}
+        onOpenChange={(o) => {
+          if (!o) setConfirmDistribute(false);
+        }}
+        title={t('distribute.confirm_title')}
+        description={t('distribute.confirm_body', { count: unassignedCount })}
+        confirmLabel={t('distribute.confirm_cta')}
+        onConfirm={onConfirmDistribute}
+        pending={distribute.isPending}
       />
     </div>
   );

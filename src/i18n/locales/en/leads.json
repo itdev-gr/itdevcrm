@@ -64,6 +64,9 @@
   "distribute": {
     "auto_label": "Auto-distribute new leads",
     "button": "Distribute unassigned ({{count}})",
+    "confirm_title": "Distribute unassigned leads?",
+    "confirm_body": "{{count}} unassigned lead(s) will be assigned to the Sales team in round-robin order. You can reassign them individually afterwards.",
+    "confirm_cta": "Distribute",
     "done": "Distributed {{count}} lead(s)"
   },
   "export_csv": "Export CSV",
