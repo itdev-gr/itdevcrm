@@ -7,28 +7,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useNotifications } from './hooks/useNotifications';
 import { useMarkNotificationRead } from './hooks/useMarkNotificationRead';
 import { useNotificationsRealtime } from './hooks/useNotificationsRealtime';
-
-type NotifPayload = Record<string, unknown> | null;
-
-function readPath(parentType: unknown, parentId: unknown): string | null {
-  if (typeof parentId !== 'string') return null;
-  switch (parentType) {
-    case 'lead':
-      return `/leads/${parentId}`;
-    case 'client':
-      return `/clients/${parentId}`;
-    case 'deal':
-      return `/deals/${parentId}`;
-    default:
-      return null;
-  }
-}
-
-function readString(p: NotifPayload, key: string): string | null {
-  if (!p) return null;
-  const v = p[key];
-  return typeof v === 'string' && v.length > 0 ? v : null;
-}
+import {
+  CompactNotificationRow,
+  readPath,
+  readString,
+  type NotifPayload,
+} from './notification-presenters';
 
 export function NotificationsBell() {
   const { t } = useTranslation('sales');
@@ -37,9 +21,6 @@ export function NotificationsBell() {
   useNotificationsRealtime();
   const [open, setOpen] = useState(false);
 
-  // The bell only displays unread items — once an item is cleared (from
-  // anywhere, including the home-page NotificationsColumn), it disappears
-  // from here. The full feed lives in NotificationsColumn.
   const list = all.filter((n) => !n.read_at);
   const unreadCount = list.length;
 
@@ -54,84 +35,35 @@ export function NotificationsBell() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            // theme: intentionally fixed — solid red unread-count badge reads on both themes
             <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1 text-[10px] text-white">
               {unreadCount}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96" align="end">
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">{t('notifications.title')}</h3>
+      <PopoverContent className="w-80 p-0" align="end">
+        <div className="border-b border-border/60 px-3 py-2">
+          <h3 className="text-xs font-semibold">{t('notifications.title')}</h3>
+        </div>
+        <div className="max-h-[min(24rem,70vh)] overflow-y-auto p-2">
           {list.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="px-1 py-3 text-center text-[11px] text-muted-foreground">
               {t('notifications.empty_unread', { defaultValue: 'All caught up.' })}
             </p>
           ) : (
             <ul className="space-y-1">
               {list.map((n) => {
                 const payload = (n.payload ?? null) as NotifPayload;
-                const parentType = payload?.parent_type ?? null;
-                const parentId = payload?.parent_id ?? null;
-                const path = readPath(parentType, parentId);
-                const author = readString(payload, 'author_name');
+                const path = readPath(payload?.parent_type, payload?.parent_id);
                 const parentLabel = readString(payload, 'parent_label');
-                const preview = readString(payload, 'preview');
-                const when = new Date(n.created_at).toLocaleString();
-
                 const body = (
-                  <div
-                    className={`rounded-md p-2 text-xs ${
-                      n.read_at ? 'bg-muted' : 'bg-blue-50 font-medium dark:bg-blue-950/40'
-                    }`}
-                  >
-                    {n.type === 'mention' ? (
-                      <div className="space-y-0.5">
-                        <div>
-                          <span className="font-semibold">{author ?? 'Someone'}</span>{' '}
-                          <span className="font-normal">mentioned you</span>
-                          {parentLabel && (
-                            <>
-                              {' '}
-                              <span className="font-normal">on</span>{' '}
-                              <span className="font-semibold">{parentLabel}</span>
-                            </>
-                          )}
-                        </div>
-                        {preview && (
-                          <div className="text-muted-foreground font-normal italic">"{preview}"</div>
-                        )}
-                      </div>
-                    ) : n.type === 'payment_overdue' ? (
-                      <div className="space-y-0.5">
-                        <div>
-                          <span className="font-semibold text-red-700 dark:text-red-300">⚠ Payment overdue</span>
-                          {parentLabel && (
-                            <>
-                              {' '}<span className="font-normal">—</span>{' '}
-                              <span className="font-semibold">{parentLabel}</span>
-                            </>
-                          )}
-                        </div>
-                        <div className="font-normal text-muted-foreground">
-                          {readString(payload, 'service_type')}
-                          {payload?.amount_gross != null && (
-                            <> · €{Number(payload.amount_gross).toFixed(2)}</>
-                          )}
-                          {readString(payload, 'due_date') && (
-                            <> · due {readString(payload, 'due_date')}</>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="font-normal">
-                        <span className="font-semibold">{n.type}</span>
-                        {parentLabel && <> · {parentLabel}</>}
-                      </div>
-                    )}
-                    <div className="mt-1 text-[10px] font-normal text-muted-foreground">{when}</div>
-                  </div>
+                  <CompactNotificationRow
+                    type={n.type}
+                    payload={payload}
+                    parentLabel={parentLabel}
+                    isRead={!!n.read_at}
+                    createdAt={n.created_at}
+                  />
                 );
 
                 return (
@@ -140,7 +72,7 @@ export function NotificationsBell() {
                       <Link
                         to={path}
                         onClick={() => onItemClick(n.id, !!n.read_at)}
-                        className="block"
+                        className="block rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {body}
                       </Link>
@@ -148,7 +80,7 @@ export function NotificationsBell() {
                       <button
                         type="button"
                         onClick={() => onItemClick(n.id, !!n.read_at)}
-                        className="block w-full text-left"
+                        className="block w-full rounded-lg text-left outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {body}
                       </button>
