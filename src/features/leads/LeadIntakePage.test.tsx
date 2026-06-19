@@ -17,6 +17,7 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }
 vi.mock('react-router-dom', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
 }));
+vi.mock('./LeadImportControls', () => ({ LeadImportControls: () => null }));
 
 import { LeadIntakePage } from './LeadIntakePage';
 

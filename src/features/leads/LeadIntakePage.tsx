@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLeadIntake, type LeadIntakeRow, type LeadIntakeMatch } from './hooks/useLeadIntake';
 import { useReleaseLeadIntake } from './hooks/useReleaseLeadIntake';
 import { useDiscardLeadIntake } from './hooks/useDiscardLeadIntake';
+import { LeadImportControls } from './LeadImportControls';
 
 function fullName(r: LeadIntakeRow): string {
   const n = `${r.contact_first_name ?? ''} ${r.contact_last_name ?? ''}`.trim();
@@ -48,6 +49,8 @@ export function LeadIntakePage() {
         <h1 className="text-xl font-semibold">{t('leads:intake.title')}</h1>
         <p className="text-sm opacity-70">{t('leads:intake.subtitle')}</p>
       </div>
+
+      <LeadImportControls />
 
       {isLoading ? (
         <p className="text-sm opacity-70">…</p>
