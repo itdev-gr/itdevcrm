@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Calendar, CheckCircle2, Lock, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyableCode } from '@/components/CopyableCode';
-import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
+import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,9 @@ export function JobsKanbanCard({
 }) {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
-  const { data: owners = [] } = useAssignableOwners();
+  // Resolve from the full staff directory: job owners are service-team members
+  // (e.g. local_seo), who are not in the sales-only assignable_owners list.
+  const { data: owners = [] } = useMentionableUsers();
   const owner = job.owner_user_id ? owners.find((o) => o.user_id === job.owner_user_id) : null;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({

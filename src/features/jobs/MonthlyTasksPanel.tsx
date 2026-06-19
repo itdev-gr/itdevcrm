@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
+import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { relativeFromNow } from '@/lib/datetime';
 import {
   useJobMonthlyTasks,
@@ -34,7 +34,7 @@ export function MonthlyTasksPanel({ jobId, serviceType, isBlocked }: Props) {
   const lang: 'en' | 'el' = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data, isLoading } = useJobMonthlyTasks(jobId, serviceType);
   const toggle = useToggleMonthlyTask(jobId);
-  const { data: owners = [] } = useAssignableOwners();
+  const { data: owners = [] } = useMentionableUsers();
 
   if (isLoading || !data) {
     return (

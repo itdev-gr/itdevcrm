@@ -15,7 +15,7 @@ import { JobInfoPanel } from './JobInfoPanel';
 import { infoFieldsFor } from './serviceInfoFields';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { ContactsCard } from './ContactsCard';
-import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
+import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { stageCompletesJob } from './stageCompletion';
@@ -32,7 +32,7 @@ export function JobDetailPage() {
   const { t, i18n } = useTranslation('jobs');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: job, isLoading, error } = useJob(jobId);
-  const { data: owners = [] } = useAssignableOwners();
+  const { data: owners = [] } = useMentionableUsers();
   const { data: stages = [] } = usePipelineStages();
 
   const serviceType = (job?.service_type ?? '') as ServiceType;
