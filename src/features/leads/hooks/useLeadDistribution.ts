@@ -13,7 +13,11 @@ type FromAny = (table: string) => {
     eq: (c: string, v: unknown) => Promise<{ error: { message: string } | null }>;
   };
 };
-const from = supabase.from as unknown as FromAny;
+// `.bind(supabase)` is required: supabase-js's `from()` reads `this` (e.g.
+// `this.rest`), so a bare `supabase.from` reference loses its binding and
+// crashes with "Cannot read properties of undefined (reading 'rest')" before
+// any request is sent — silently breaking the read query and the toggle update.
+const from = supabase.from.bind(supabase) as unknown as FromAny;
 
 export function useLeadDistribution() {
   const qc = useQueryClient();
