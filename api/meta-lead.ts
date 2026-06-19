@@ -129,11 +129,11 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const { first, last } = splitFullName(fullName ?? '');
   const title = (formName ?? 'Meta lead').slice(0, 200);
 
-  // ---- Duplicate guard -----------------------------------------------------
-  // Hold leads whose email or phone already exists (on another lead, or on a
-  // client that has a deal) in `lead_intake` for review, instead of inserting
-  // into `leads` (which would queue a welcome email + round-robin assign an
-  // unreviewed contact). Clean leads fall through to the normal insert below.
+  // ---- Intake queue --------------------------------------------------------
+  // Every incoming lead is held in `lead_intake` for review — nothing reaches the
+  // sales board until a reviewer Releases it. We still run the duplicate check so
+  // possible duplicates (email/phone already on another lead or a deal-customer)
+  // are flagged in the queue; clean leads simply have empty `matches`.
   const phoneDigits = (phone ?? '').replace(/\D/g, '');
   const phoneNorm = phoneDigits.length >= 10 ? phoneDigits.slice(-10) : null;
 
@@ -148,38 +148,10 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     context: string | null;
     matched_field: string;
   }>;
+  const matchedOn = Array.from(new Set(matches.map((m) => m.matched_field)));
 
-  if (matches.length > 0) {
-    const matchedOn = Array.from(new Set(matches.map((m) => m.matched_field)));
-    const { data: intake, error: intakeErr } = await admin
-      .from('lead_intake')
-      .insert({
-        source: 'meta',
-        source_data: payload,
-        title,
-        contact_first_name: first,
-        contact_last_name: last,
-        email,
-        phone,
-        phone_normalized: phoneNorm,
-        website,
-        company_name: company,
-        contact_info: notes,
-        matched_on: matchedOn,
-        matches,
-      })
-      .select('id')
-      .single();
-    if (intakeErr || !intake) {
-      res.status(500).json({ error: intakeErr?.message ?? 'intake_failed' });
-      return;
-    }
-    res.status(200).json({ ok: true, held: true, intake_id: intake.id });
-    return;
-  }
-
-  const { data: inserted, error } = await admin
-    .from('leads')
+  const { data: intake, error: intakeErr } = await admin
+    .from('lead_intake')
     .insert({
       source: 'meta',
       source_data: payload,
@@ -188,18 +160,20 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
       contact_last_name: last,
       email,
       phone,
+      phone_normalized: phoneNorm,
       website,
       company_name: company,
       contact_info: notes,
+      matched_on: matchedOn,
+      matches,
     })
     .select('id')
     .single();
-
-  if (error || !inserted) {
-    res.status(500).json({ error: error?.message ?? 'insert_failed' });
+  if (intakeErr || !intake) {
+    res.status(500).json({ error: intakeErr?.message ?? 'intake_failed' });
     return;
   }
-  res.status(200).json({ ok: true, lead_id: inserted.id });
+  res.status(200).json({ ok: true, held: true, duplicate: matches.length > 0, intake_id: intake.id });
 }
 
 export default withSentry('meta-lead', handler);

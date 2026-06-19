@@ -59,9 +59,15 @@ export function LeadIntakePage() {
                     <div className="text-sm opacity-80">{r.phone}</div>
                     {r.title ? <div className="text-xs opacity-60">{r.title}</div> : null}
                     <div className="flex flex-wrap gap-1 pt-1">
-                      {matches.map((m, i) => (
-                        <MatchBadge key={`${m.record_id}-${i}`} m={m} t={t} />
-                      ))}
+                      {matches.length === 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                          ✓ {t('leads:intake.clean')}
+                        </span>
+                      ) : (
+                        matches.map((m, i) => (
+                          <MatchBadge key={`${m.record_id}-${i}`} m={m} t={t} />
+                        ))
+                      )}
                     </div>
                   </div>
                   <div className="flex shrink-0 gap-2">

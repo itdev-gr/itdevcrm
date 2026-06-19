@@ -2,9 +2,10 @@
   "title": "Leads",
   "intake": {
     "nav": "Lead Intake",
-    "title": "Lead Intake — Duplicate Review",
-    "subtitle": "New Meta leads that match an existing lead or customer wait here. Release the ones you want on the board, or discard duplicates.",
+    "title": "Lead Intake — Review",
+    "subtitle": "Every new lead from Meta lands here for review. Release the ones you want onto the sales board, or discard. Possible duplicates are flagged.",
     "empty": "No leads waiting for review.",
+    "clean": "No duplicate — new lead",
     "release": "Release",
     "discard": "Discard",
     "confirm_discard": "Discard this lead? It will not appear on the sales board.",

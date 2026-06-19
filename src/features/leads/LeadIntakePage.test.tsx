@@ -55,6 +55,30 @@ describe('LeadIntakePage', () => {
     expect(release).toHaveBeenCalledWith('i1');
   });
 
+  it('shows a clean (no-duplicate) lead with the clean indicator', () => {
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i2',
+          title: 'Contact form',
+          contact_first_name: 'New',
+          contact_last_name: 'Person',
+          email: 'new@person.gr',
+          phone: '+306900000002',
+          created_at: '2026-06-19T11:00:00Z',
+          matched_on: [],
+          matches: [],
+        },
+      ],
+      isLoading: false,
+    });
+    render(<LeadIntakePage />);
+    expect(screen.getByText('new@person.gr')).toBeInTheDocument();
+    expect(screen.getByText(/leads:intake.clean/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
+    expect(release).toHaveBeenCalledWith('i2');
+  });
+
   it('shows the empty state', () => {
     useLeadIntake.mockReturnValue({ data: [], isLoading: false });
     render(<LeadIntakePage />);
