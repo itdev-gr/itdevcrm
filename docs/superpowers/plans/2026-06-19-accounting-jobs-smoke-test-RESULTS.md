@@ -150,6 +150,8 @@ Reported on real deal `fd090fb8` (12+ identical 21/06→21/07 monthly rows). Roo
 
 Fix — migration `20260619120000_fix_recurring_idempotency_null_service_index`: made the guard NULL-safe (`is not distinct from` on service_index/service_type/amount_net, + billing_type). Verified: generator now creates **0** rows for `fd090fb8`. Cleanup: removed 37 redundant pending/un-invoiced duplicate rows + their lines; 0 duplicate groups remain; `fd090fb8` back to 4 legitimate payments.
 
-Follow-ups for you: (a) the **reseed/import should populate `service_index` + `service_type`** so payments link cleanly to services/jobs (the function is now robust regardless); (b) consider **not** calling `ensure_recurring_payments` on every board mount (write-on-read) — harmless now that it's idempotent, but wasteful.
+Follow-ups — both now FIXED:
+- (a) **service_index/service_type self-healing** (migrations `20260619130000` + `20260619140000`): a BEFORE INSERT trigger on `deal_payments` assigns `service_index` (reusing the matching series' index, else next free) and derives `service_type` from the unique amount-matching job; an AFTER INSERT trigger on `jobs` backfills payments inserted before their job (reseed ordering). Existing rows backfilled. Result: **0 NULL `service_index`, 0 NULL `service_type`** across all payments; verified working live on incoming reseed rows. (The external reseed itself is unchanged — the DB now fixes it regardless.)
+- (b) **cron-on-mount removed** (`useAccountingKanbanRealtime.ts`): the accounting board no longer calls `ensure_recurring_payments` on every load; recurring roll-forward is the daily pg_cron only. Typecheck + lint pass.
 
 **Email:** all relevant automations are globally OFF; test contact + redirected job-notifications pointed at mkifokeris@itdev.gr; net result — no automated emails fired.

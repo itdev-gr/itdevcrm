@@ -6,13 +6,10 @@ import { queryKeys } from '@/lib/queryKeys';
 export function useAccountingKanbanRealtime() {
   const qc = useQueryClient();
   useEffect(() => {
-    // Auto-roll recurring payments forward whenever an accounting user opens
-    // the board. Server-side function is idempotent — only creates rows when
-    // an existing recurring payment is within 7 days of expiry.
-    void supabase.rpc('ensure_recurring_payments').then(() => {
-      void qc.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
-    });
-
+    // Recurring payments roll forward via the daily pg_cron (ensure_recurring_payments).
+    // We intentionally do NOT call that cron on board mount: it is a write-on-read that
+    // previously amplified a duplicate-payment bug. The board only subscribes to live
+    // changes below.
     const channel = supabase
       .channel('accounting-kanban')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'deals' }, () => {
