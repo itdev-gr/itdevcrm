@@ -35,10 +35,11 @@ import { DealNotesArea } from './DealNotesArea';
 const UNASSIGNED = '__unassigned__';
 
 const CLIENT_STATUS_STYLES: Record<string, string> = {
-  new: 'border-border/70 bg-muted/40',
-  active: 'border-emerald-500/30 bg-emerald-500/5',
-  blocked: 'border-red-500/30 bg-red-500/5',
-  done: 'border-border/70 bg-muted/40',
+  new: 'border-border/70 bg-muted/40 dark:border-border/60 dark:bg-muted/70',
+  active:
+    'border-emerald-500/30 bg-emerald-500/5 dark:border-emerald-500/40 dark:bg-emerald-950/50 dark:text-emerald-100',
+  blocked: 'border-red-500/30 bg-red-500/5 dark:border-red-500/40 dark:bg-red-950/50 dark:text-red-100',
+  done: 'border-border/70 bg-muted/40 dark:border-border/60 dark:bg-muted/70',
 };
 
 export function DealDetailPage() {

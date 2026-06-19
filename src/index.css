@@ -126,4 +126,11 @@
   html {
     @apply font-sans;
   }
+  .dark select {
+    color-scheme: dark;
+  }
+  .dark select option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
 }

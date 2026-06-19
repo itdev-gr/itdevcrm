@@ -288,7 +288,7 @@ export function FilterSelect({ className, ...props }: React.ComponentProps<'sele
   return (
     <select
       className={cn(
-        'h-9 rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20',
+        'h-9 rounded-lg border border-input/80 bg-background px-3 text-sm text-foreground shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20 dark:[color-scheme:dark]',
         className,
       )}
       {...props}
