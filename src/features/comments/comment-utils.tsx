@@ -67,6 +67,10 @@ export function formatCommentTime(iso: string, locale: string): { label: string;
     hour: '2-digit',
     minute: '2-digit',
   });
+  const clock = date.toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   const diffMs = Date.now() - date.getTime();
   const diffMin = Math.floor(diffMs / 60_000);
@@ -74,27 +78,30 @@ export function formatCommentTime(iso: string, locale: string): { label: string;
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffMin < 1) {
-    return { label: locale.startsWith('el') ? 'τώρα' : 'just now', title };
+    const relative = locale.startsWith('el') ? 'τώρα' : 'just now';
+    return { label: `${relative} · ${clock}`, title };
   }
   if (diffMin < 60) {
     const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-    return { label: rtf.format(-diffMin, 'minute'), title };
+    return { label: `${rtf.format(-diffMin, 'minute')} · ${clock}`, title };
   }
   if (diffHours < 24) {
     const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-    return { label: rtf.format(-diffHours, 'hour'), title };
+    return { label: `${rtf.format(-diffHours, 'hour')} · ${clock}`, title };
   }
   if (diffDays < 7) {
     const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-    return { label: rtf.format(-diffDays, 'day'), title };
+    return { label: `${rtf.format(-diffDays, 'day')} · ${clock}`, title };
   }
 
+  const dateLabel = date.toLocaleDateString(locale, {
+    day: '2-digit',
+    month: 'short',
+    year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
+  });
+
   return {
-    label: date.toLocaleDateString(locale, {
-      day: '2-digit',
-      month: 'short',
-      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
-    }),
+    label: `${dateLabel} · ${clock}`,
     title,
   };
 }
