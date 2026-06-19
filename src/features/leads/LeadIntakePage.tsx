@@ -13,8 +13,17 @@ function MatchBadge({ m, t }: { m: LeadIntakeMatch; t: (k: string) => string }) 
   const verb =
     m.matched_field === 'email' ? t('leads:intake.match_email') : t('leads:intake.match_phone');
   const kind =
-    m.match_type === 'lead' ? t('leads:intake.match_lead') : t('leads:intake.match_deal_client');
-  const to = m.match_type === 'lead' ? `/leads/${m.record_id}` : `/clients/${m.record_id}`;
+    m.match_type === 'lead'
+      ? t('leads:intake.match_lead')
+      : m.match_type === 'deal_client'
+        ? t('leads:intake.match_deal_client')
+        : t('leads:intake.match_queued');
+  const to =
+    m.match_type === 'lead'
+      ? `/leads/${m.record_id}`
+      : m.match_type === 'deal_client'
+        ? `/clients/${m.record_id}`
+        : `/sales/lead-intake`;
   return (
     <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
       {m.matched_field === 'email' ? '📧' : '📞'} {verb} {kind}{' '}

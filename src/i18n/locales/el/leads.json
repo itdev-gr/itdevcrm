@@ -12,7 +12,8 @@
     "match_email": "ίδιο email με",
     "match_phone": "τηλέφωνο ταιριάζει με",
     "match_lead": "lead",
-    "match_deal_client": "πελάτη"
+    "match_deal_client": "πελάτη",
+    "match_queued": "άλλο lead σε αναμονή"
   },
   "new_lead": "Νέα επαφή",
   "new_lead_description": "Προσθήκη νέας επαφής στη ροή πωλήσεων.",

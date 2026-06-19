@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 
 export type LeadIntakeMatch = {
-  match_type: 'lead' | 'deal_client';
+  match_type: 'lead' | 'deal_client' | 'queued';
   record_id: string;
   display_name: string;
   context: string | null;

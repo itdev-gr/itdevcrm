@@ -12,7 +12,8 @@
     "match_email": "same email as",
     "match_phone": "phone matches",
     "match_lead": "lead",
-    "match_deal_client": "customer"
+    "match_deal_client": "customer",
+    "match_queued": "another waiting lead"
   },
   "new_lead": "New lead",
   "new_lead_description": "Add a new lead to the sales pipeline.",
