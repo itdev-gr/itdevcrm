@@ -95,19 +95,20 @@ exists and is dead-end. (Rows with 0 or 2+ lead matches are ignored by bulk.)
   transaction; acceptable for the current backlog (~1.3k pending) — note in the plan if it
   needs batching later.
 
-### Duplicate detection — add `stage_code`
+### Duplicate detection — `stage_code` (DEFERRED, not in this build)
 
-Recreate `find_lead_duplicates` (drop+create; the return signature changes) to also return
-**`stage_code text`** — the matched lead's stage code for `match_type='lead'` (NULL for
-`deal_client`/`queued`). This lets the UI label dead-end matches accurately for *new* rows.
-Backward compatible (adds one key to each match object). Server enforcement remains
-authoritative, so the existing backlog (matches without `stage_code`) is still handled
-correctly by the live-stage checks above.
+Originally we considered recreating `find_lead_duplicates` to return the matched lead's
+`stage_code` so the UI could relabel dead-end matches. It has **no consumer** in this
+design — the dead-end rule is enforced server-side against the lead's *live* stage
+(`lead_is_dead_end`), and the bulk count comes from the server preview — so adding it
+would be a risky drop/recreate of a core function for no behavioural gain. Deferred. The
+manual Merge button keeps its label; when its target turns out dead-end the RPC removes the
+row and the UI shows a short toast (below).
 
 ### Frontend
 
-- **`LeadIntakeMatch`** type gains `stage_code: string | null`.
-- **rpc.ts:** `bulkMergeIntakePreview()` and `bulkMergeIntake()` wrappers (loose `rpcCall`).
+- **rpc.ts:** `bulkMergeIntakePreview()` and `bulkMergeIntake()` wrappers (loose `rpcCall`);
+  `mergeLeadIntake` return type gains optional `dropped_dead_end`.
 - **Hooks:** `useBulkMergePreview()` (query, key `['lead_intake','bulk_preview']`) and
   `useBulkMergeIntake()` (mutation; invalidates `['lead_intake']`, `['leads']`, and the
   preview key).
@@ -158,16 +159,16 @@ Bulk merge (N) button → confirm → bulk_merge_intake:
 ## Changes / Revert
 
 **New/changed objects:** `lead_is_dead_end` (new); `merge_lead_intake`,
-`lead_intake_auto_merge`, `find_lead_duplicates` (replaced — dead-end checks + stage_code);
-`bulk_merge_intake_preview`, `bulk_merge_intake` (new). Frontend: type + 2 rpc wrappers +
-2 hooks + LeadIntakePage header + i18n.
+`lead_intake_auto_merge` (replaced — dead-end checks); `bulk_merge_intake_preview`,
+`bulk_merge_intake` (new). Frontend: 2 rpc wrappers + 2 hooks + a dead-end toast in
+`useMergeLeadIntake` + LeadIntakePage header + i18n.
 
 **Rollback SQL:**
 ```sql
 drop function if exists public.bulk_merge_intake();
 drop function if exists public.bulk_merge_intake_preview();
--- restore prior merge_lead_intake / lead_intake_auto_merge / find_lead_duplicates from
--- migrations 20260621120200, 20260621120300, 20260619200000 respectively
+-- restore prior merge_lead_intake / lead_intake_auto_merge from
+-- migrations 20260621120200 / 20260621120300 respectively
 drop function if exists public.lead_is_dead_end(uuid);
 ```
 (Frontend: revert the LeadIntakePage / rpc.ts / hooks / type / i18n commits.)
@@ -176,4 +177,4 @@ drop function if exists public.lead_is_dead_end(uuid);
 
 - Treating Won/converted leads as dead-end (only `dead_end` + `not_interested`).
 - Bulk-handling ambiguous (2+ match) rows.
-- Backfilling `stage_code` into existing queued `matches` (server live-checks cover them).
+- `stage_code` in `matches` / per-row "Remove" relabel (server live-checks cover dead-end).
