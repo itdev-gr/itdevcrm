@@ -13,6 +13,18 @@ vi.mock('./hooks/useReleaseLeadIntake', () => ({
 vi.mock('./hooks/useDiscardLeadIntake', () => ({
   useDiscardLeadIntake: () => ({ mutate: discard, isPending: false }),
 }));
+const merge = vi.fn();
+vi.mock('./hooks/useMergeLeadIntake', () => ({
+  useMergeLeadIntake: () => ({ mutate: merge, isPending: false }),
+}));
+const setAutoMerge = vi.fn();
+vi.mock('./hooks/useAutoMerge', () => ({
+  useAutoMerge: () => ({
+    autoEnabled: false,
+    isLoading: false,
+    setEnabled: { mutate: setAutoMerge, isPending: false },
+  }),
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 vi.mock('react-router-dom', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
@@ -88,5 +100,64 @@ describe('LeadIntakePage', () => {
     useLeadIntake.mockReturnValue({ data: [], isLoading: false });
     render(<LeadIntakePage />);
     expect(screen.getByText('leads:intake.empty')).toBeInTheDocument();
+  });
+
+  it('merges directly when there is exactly one lead match', () => {
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i1',
+          title: 'AI SEO form',
+          email: 'x@kara.gr',
+          phone: '+306900000001',
+          created_at: '2026-06-19T10:00:00Z',
+          matched_on: ['email'],
+          matches: [
+            {
+              match_type: 'lead',
+              record_id: 'L1',
+              display_name: 'Old Lead',
+              context: 'Won',
+              matched_field: 'email',
+              matched_email: 'old@kara.gr',
+              matched_phone: null,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.merge' }));
+    expect(merge).toHaveBeenCalledWith({ id: 'i1', targetLeadId: 'L1' });
+  });
+
+  it('disables Merge when there is no lead match', () => {
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i3',
+          title: 'Contact',
+          email: 'c@x.gr',
+          phone: '+306900000003',
+          created_at: '2026-06-19T12:00:00Z',
+          matched_on: ['email'],
+          matches: [
+            {
+              match_type: 'deal_client',
+              record_id: 'C1',
+              display_name: 'Existing Customer',
+              context: 'D-1',
+              matched_field: 'email',
+              matched_email: 'c@x.gr',
+              matched_phone: null,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    render(<LeadIntakePage />);
+    expect(screen.getByRole('button', { name: 'leads:intake.merge' })).toBeDisabled();
   });
 });

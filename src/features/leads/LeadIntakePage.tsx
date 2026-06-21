@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useLeadIntake, type LeadIntakeRow, type LeadIntakeMatch } from './hooks/useLeadIntake';
 import { useReleaseLeadIntake } from './hooks/useReleaseLeadIntake';
 import { useDiscardLeadIntake } from './hooks/useDiscardLeadIntake';
+import { useMergeLeadIntake } from './hooks/useMergeLeadIntake';
+import { useAutoMerge } from './hooks/useAutoMerge';
+import { leadMatchesOf } from './intakeMatches';
 import { LeadImportControls } from './LeadImportControls';
 
 function fullName(r: LeadIntakeRow): string {
@@ -80,13 +84,27 @@ export function LeadIntakePage() {
   const { data, isLoading } = useLeadIntake();
   const release = useReleaseLeadIntake();
   const discard = useDiscardLeadIntake();
+  const merge = useMergeLeadIntake();
+  const autoMerge = useAutoMerge();
+  const [pickFor, setPickFor] = useState<string | null>(null);
   const rows = data ?? [];
 
   return (
     <div className="space-y-4 p-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t('leads:intake.title')}</h1>
-        <p className="text-sm opacity-70">{t('leads:intake.subtitle')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">{t('leads:intake.title')}</h1>
+          <p className="text-sm opacity-70">{t('leads:intake.subtitle')}</p>
+        </div>
+        <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm opacity-90">
+          <input
+            type="checkbox"
+            checked={autoMerge.autoEnabled}
+            disabled={autoMerge.isLoading || autoMerge.setEnabled.isPending}
+            onChange={(e) => autoMerge.setEnabled.mutate(e.target.checked)}
+          />
+          {t('leads:intake.auto_merge_label')}
+        </label>
       </div>
 
       <LeadImportControls />
@@ -101,6 +119,15 @@ export function LeadIntakePage() {
         <ul className="space-y-2">
           {rows.map((r) => {
             const matches = (r.matches as unknown as LeadIntakeMatch[]) ?? [];
+            const leadMatches = leadMatchesOf(matches);
+            const canMerge = leadMatches.length > 0;
+            function onMerge() {
+              if (leadMatches.length === 1) {
+                merge.mutate({ id: r.id, targetLeadId: leadMatches[0].record_id });
+              } else {
+                setPickFor(r.id);
+              }
+            }
             return (
               <li key={r.id} className="rounded border p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -151,6 +178,15 @@ export function LeadIntakePage() {
                   <div className="flex shrink-0 gap-2">
                     <button
                       type="button"
+                      className="rounded bg-sky-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                      disabled={!canMerge || merge.isPending}
+                      title={canMerge ? undefined : t('leads:intake.merge_disabled')}
+                      onClick={onMerge}
+                    >
+                      {t('leads:intake.merge')}
+                    </button>
+                    <button
+                      type="button"
                       className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
                       disabled={release.isPending}
                       onClick={() => release.mutate(r.id)}
@@ -169,6 +205,34 @@ export function LeadIntakePage() {
                     </button>
                   </div>
                 </div>
+                {pickFor === r.id && leadMatches.length > 1 ? (
+                  <div className="mt-2 rounded border border-sky-300 bg-sky-50 p-2 text-sm dark:border-sky-900/50 dark:bg-sky-900/20">
+                    <div className="mb-1 font-medium">{t('leads:intake.merge_pick')}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {leadMatches.map((m) => (
+                        <button
+                          key={m.record_id}
+                          type="button"
+                          className="rounded border bg-card px-2 py-1 text-xs"
+                          onClick={() => {
+                            merge.mutate({ id: r.id, targetLeadId: m.record_id });
+                            setPickFor(null);
+                          }}
+                        >
+                          {m.display_name}
+                          {m.context ? ` (${m.context})` : ''}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        className="rounded px-2 py-1 text-xs underline"
+                        onClick={() => setPickFor(null)}
+                      >
+                        {t('leads:intake.merge_cancel')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </li>
             );
           })}
