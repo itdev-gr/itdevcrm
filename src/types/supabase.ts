@@ -1817,18 +1817,21 @@ export type Database = {
       lead_distribution_state: {
         Row: {
           auto_enabled: boolean
+          auto_merge_enabled: boolean
           id: boolean
           last_assigned_user_id: string | null
           updated_at: string
         }
         Insert: {
           auto_enabled?: boolean
+          auto_merge_enabled?: boolean
           id?: boolean
           last_assigned_user_id?: string | null
           updated_at?: string
         }
         Update: {
           auto_enabled?: boolean
+          auto_merge_enabled?: boolean
           id?: boolean
           last_assigned_user_id?: string | null
           updated_at?: string
@@ -1854,6 +1857,7 @@ export type Database = {
           id: string
           matched_on: string[]
           matches: Json
+          merged_into_lead_id: string | null
           phone: string | null
           phone_normalized: string | null
           released_lead_id: string | null
@@ -1875,6 +1879,7 @@ export type Database = {
           id?: string
           matched_on?: string[]
           matches?: Json
+          merged_into_lead_id?: string | null
           phone?: string | null
           phone_normalized?: string | null
           released_lead_id?: string | null
@@ -1896,6 +1901,7 @@ export type Database = {
           id?: string
           matched_on?: string[]
           matches?: Json
+          merged_into_lead_id?: string | null
           phone?: string | null
           phone_normalized?: string | null
           released_lead_id?: string | null
@@ -1996,6 +2002,7 @@ export type Database = {
           id: string
           industry: string | null
           instagram: string | null
+          intake_log: string | null
           linkedin: string | null
           notes: string | null
           owner_user_id: string | null
@@ -2045,6 +2052,7 @@ export type Database = {
           id?: string
           industry?: string | null
           instagram?: string | null
+          intake_log?: string | null
           linkedin?: string | null
           notes?: string | null
           owner_user_id?: string | null
@@ -2094,6 +2102,7 @@ export type Database = {
           id?: string
           industry?: string | null
           instagram?: string | null
+          intake_log?: string | null
           linkedin?: string | null
           notes?: string | null
           owner_user_id?: string | null
