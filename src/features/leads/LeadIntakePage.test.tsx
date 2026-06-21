@@ -102,6 +102,49 @@ describe('LeadIntakePage', () => {
     expect(screen.getByText('leads:intake.empty')).toBeInTheDocument();
   });
 
+  it('opens the picker and merges into the chosen lead when there are 2+ matches', () => {
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i9',
+          title: 'Form',
+          email: 'd@x.gr',
+          phone: '+306900000009',
+          created_at: '2026-06-19T13:00:00Z',
+          matched_on: ['phone'],
+          matches: [
+            {
+              match_type: 'lead',
+              record_id: 'L1',
+              display_name: 'Lead One',
+              context: 'New',
+              matched_field: 'phone',
+              matched_email: null,
+              matched_phone: '6900000009',
+            },
+            {
+              match_type: 'lead',
+              record_id: 'L2',
+              display_name: 'Lead Two',
+              context: 'Won',
+              matched_field: 'phone',
+              matched_email: null,
+              matched_phone: '6900000009',
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    render(<LeadIntakePage />);
+    // First click opens the picker (does not merge yet — ambiguous).
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.merge' }));
+    expect(merge).not.toHaveBeenCalled();
+    // Choosing a specific lead merges into it.
+    fireEvent.click(screen.getByRole('button', { name: /Lead Two/ }));
+    expect(merge).toHaveBeenCalledWith({ id: 'i9', targetLeadId: 'L2' });
+  });
+
   it('merges directly when there is exactly one lead match', () => {
     useLeadIntake.mockReturnValue({
       data: [
