@@ -37,6 +37,7 @@ const baseLead: LeadRow = {
   additional_contacts: [],
   additional_notes: null,
   address: null,
+  intake_log: null,
   automations_enabled: true,
   contact_info: null,
   converted_at: null,

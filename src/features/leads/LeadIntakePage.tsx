@@ -122,8 +122,9 @@ export function LeadIntakePage() {
             const leadMatches = leadMatchesOf(matches);
             const canMerge = leadMatches.length > 0;
             function onMerge() {
-              if (leadMatches.length === 1) {
-                merge.mutate({ id: r.id, targetLeadId: leadMatches[0].record_id });
+              const only = leadMatches[0];
+              if (leadMatches.length === 1 && only) {
+                merge.mutate({ id: r.id, targetLeadId: only.record_id });
               } else {
                 setPickFor(r.id);
               }
