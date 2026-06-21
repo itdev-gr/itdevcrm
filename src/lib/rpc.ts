@@ -232,6 +232,24 @@ export async function discardLeadIntake(id: string): Promise<LeadIntakeActionRes
   return { ok: true };
 }
 
+// Admin-only. Appends a held duplicate's info onto an existing pipeline lead
+// (chosen by the admin) and marks the intake row merged. Loose `rpcCall` (not in
+// generated types). Errors: not_authorized, not_found, already_<status>,
+// target_not_a_match, target_lead_missing.
+export async function mergeLeadIntake(
+  id: string,
+  targetLeadId: string,
+): Promise<LeadIntakeActionResult> {
+  const { data, error } = await rpcCall('merge_lead_intake', {
+    p_id: id,
+    p_target_lead_id: targetLeadId,
+  });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; lead_id?: string; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['merge_failed'] };
+  return r.lead_id ? { ok: true, lead_id: r.lead_id } : { ok: true };
+}
+
 export type ImportLeadsResult =
   | { ok: true; imported: number; flagged: number }
   | { ok: false; errors: string[] };
