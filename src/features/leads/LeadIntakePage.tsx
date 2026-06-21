@@ -6,6 +6,8 @@ import { useReleaseLeadIntake } from './hooks/useReleaseLeadIntake';
 import { useDiscardLeadIntake } from './hooks/useDiscardLeadIntake';
 import { useMergeLeadIntake } from './hooks/useMergeLeadIntake';
 import { useAutoMerge } from './hooks/useAutoMerge';
+import { useBulkMergePreview } from './hooks/useBulkMergePreview';
+import { useBulkMergeIntake } from './hooks/useBulkMergeIntake';
 import { leadMatchesOf } from './intakeMatches';
 import { LeadImportControls } from './LeadImportControls';
 
@@ -87,6 +89,20 @@ export function LeadIntakePage() {
   const merge = useMergeLeadIntake();
   const autoMerge = useAutoMerge();
   const [pickFor, setPickFor] = useState<string | null>(null);
+  const bulkPreview = useBulkMergePreview();
+  const bulkMerge = useBulkMergeIntake();
+  const mergeableCount = bulkPreview.data?.mergeable ?? 0;
+  const deadCount = bulkPreview.data?.dead_end ?? 0;
+  async function onBulkMerge() {
+    if (mergeableCount === 0) return;
+    if (!window.confirm(t('leads:intake.bulk_confirm', { count: mergeableCount, dead: deadCount }))) return;
+    try {
+      const res = await bulkMerge.mutateAsync(undefined);
+      window.alert(t('leads:intake.bulk_done', { merged: res.merged, dropped: res.dropped }));
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
+  }
   const rows = data ?? [];
 
   return (
@@ -96,15 +112,25 @@ export function LeadIntakePage() {
           <h1 className="text-xl font-semibold">{t('leads:intake.title')}</h1>
           <p className="text-sm opacity-70">{t('leads:intake.subtitle')}</p>
         </div>
-        <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm opacity-90">
-          <input
-            type="checkbox"
-            checked={autoMerge.autoEnabled}
-            disabled={autoMerge.isLoading || autoMerge.setEnabled.isPending}
-            onChange={(e) => autoMerge.setEnabled.mutate(e.target.checked)}
-          />
-          {t('leads:intake.auto_merge_label')}
-        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="rounded bg-sky-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            disabled={mergeableCount === 0 || bulkMerge.isPending || bulkPreview.isLoading}
+            onClick={onBulkMerge}
+          >
+            {t('leads:intake.bulk_merge', { count: mergeableCount })}
+          </button>
+          <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm opacity-90">
+            <input
+              type="checkbox"
+              checked={autoMerge.autoEnabled}
+              disabled={autoMerge.isLoading || autoMerge.setEnabled.isPending}
+              onChange={(e) => autoMerge.setEnabled.mutate(e.target.checked)}
+            />
+            {t('leads:intake.auto_merge_label')}
+          </label>
+        </div>
       </div>
 
       <LeadImportControls />

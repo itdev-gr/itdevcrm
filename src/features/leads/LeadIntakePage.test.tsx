@@ -25,6 +25,12 @@ vi.mock('./hooks/useAutoMerge', () => ({
     setEnabled: { mutate: setAutoMerge, isPending: false },
   }),
 }));
+const bulkMerge = vi.fn();
+vi.mock('./hooks/useBulkMergeIntake', () => ({
+  useBulkMergeIntake: () => ({ mutateAsync: bulkMerge, isPending: false }),
+}));
+const { useBulkMergePreview } = vi.hoisted(() => ({ useBulkMergePreview: vi.fn() }));
+vi.mock('./hooks/useBulkMergePreview', () => ({ useBulkMergePreview }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 vi.mock('react-router-dom', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
@@ -34,7 +40,10 @@ vi.mock('./LeadImportControls', () => ({ LeadImportControls: () => null }));
 import { LeadIntakePage } from './LeadIntakePage';
 
 describe('LeadIntakePage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useBulkMergePreview.mockReturnValue({ data: { mergeable: 0, dead_end: 0 }, isLoading: false });
+  });
 
   it('renders a held lead with its match and fires release', () => {
     useLeadIntake.mockReturnValue({
@@ -202,5 +211,24 @@ describe('LeadIntakePage', () => {
     });
     render(<LeadIntakePage />);
     expect(screen.getByRole('button', { name: 'leads:intake.merge' })).toBeDisabled();
+  });
+
+  it('shows the bulk merge count and runs it after confirm', () => {
+    useBulkMergePreview.mockReturnValue({ data: { mergeable: 3, dead_end: 1 }, isLoading: false });
+    useLeadIntake.mockReturnValue({ data: [], isLoading: false });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
+    bulkMerge.mockResolvedValue({ ok: true, merged: 3, dropped: 1 });
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: /leads:intake.bulk_merge/ }));
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(bulkMerge).toHaveBeenCalled();
+  });
+
+  it('disables bulk merge when the count is zero', () => {
+    useBulkMergePreview.mockReturnValue({ data: { mergeable: 0, dead_end: 0 }, isLoading: false });
+    useLeadIntake.mockReturnValue({ data: [], isLoading: false });
+    render(<LeadIntakePage />);
+    expect(screen.getByRole('button', { name: /leads:intake.bulk_merge/ })).toBeDisabled();
   });
 });
