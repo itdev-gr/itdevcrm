@@ -37,7 +37,15 @@
     "import_done": "Imported {{imported}} leads ({{flagged}} flagged as possible duplicates).",
     "import_empty": "No leads found in the file.",
     "import_parse_error": "Could not read the file. Use a CSV or Excel (.xlsx) file.",
-    "import_failed": "Import failed. Please try again."
+    "import_failed": "Import failed. Please try again.",
+    "merge": "Merge",
+    "merge_disabled": "No matching existing lead — only Release/Discard available",
+    "merge_pick": "Add to which lead?",
+    "merge_cancel": "Cancel",
+    "auto_merge_label": "Auto-merge duplicates"
+  },
+  "intake_log": {
+    "label": "New info from duplicates"
   },
   "new_lead": "New lead",
   "new_lead_description": "Add a new lead to the sales pipeline.",
