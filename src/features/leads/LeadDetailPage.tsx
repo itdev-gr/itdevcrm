@@ -302,6 +302,16 @@ export function LeadDetailPage() {
           <div className={detailOverviewWithCommentsGridClass}>
             <div className="min-w-0 space-y-4">
               <LeadForm lead={lead} />
+              {lead.intake_log ? (
+                <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+                  <h2 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
+                    {t('intake_log.label')}
+                  </h2>
+                  <pre className="whitespace-pre-wrap break-words font-sans text-sm text-muted-foreground">
+                    {lead.intake_log}
+                  </pre>
+                </section>
+              ) : null}
               <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
                 <h2 className="mb-4 text-sm font-semibold tracking-tight text-foreground">
                   {t('tabs.attachments')}
