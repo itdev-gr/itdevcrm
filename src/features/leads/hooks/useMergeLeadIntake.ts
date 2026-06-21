@@ -19,7 +19,8 @@ export function useMergeLeadIntake() {
     onSuccess: (res) => {
       void qc.invalidateQueries({ queryKey: ['lead_intake'] });
       void qc.invalidateQueries({ queryKey: ['leads'] });
-      if (res && 'dropped_dead_end' in res && res.dropped_dead_end) {
+      const droppedDeadEnd = (res as { dropped_dead_end?: boolean } | undefined)?.dropped_dead_end;
+      if (droppedDeadEnd) {
         window.alert(t('leads:intake.merge_removed_dead_end'));
       }
     },

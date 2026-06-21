@@ -247,7 +247,11 @@ export async function mergeLeadIntake(
   if (error) return { ok: false, errors: [error.message] };
   const r = data as { ok: boolean; lead_id?: string; dropped_dead_end?: boolean; errors?: string[] };
   if (!r.ok) return { ok: false, errors: r.errors ?? ['merge_failed'] };
-  return { ok: true, lead_id: r.lead_id, dropped_dead_end: r.dropped_dead_end };
+  return {
+    ok: true,
+    ...(r.lead_id ? { lead_id: r.lead_id } : {}),
+    ...(r.dropped_dead_end ? { dropped_dead_end: true } : {}),
+  };
 }
 
 export type BulkMergePreviewResult =
