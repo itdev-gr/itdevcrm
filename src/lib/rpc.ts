@@ -211,7 +211,7 @@ export async function closeDeal(
 
 // --- Lead intake (duplicate review) ------------------------------------------
 export type LeadIntakeActionResult =
-  | { ok: true; lead_id?: string }
+  | { ok: true; lead_id?: string; dropped_dead_end?: boolean }
   | { ok: false; errors: string[] };
 
 // Admin-only. Release moves a held duplicate into `leads`; discard marks it
@@ -245,9 +245,35 @@ export async function mergeLeadIntake(
     p_target_lead_id: targetLeadId,
   });
   if (error) return { ok: false, errors: [error.message] };
-  const r = data as { ok: boolean; lead_id?: string; errors?: string[] };
+  const r = data as { ok: boolean; lead_id?: string; dropped_dead_end?: boolean; errors?: string[] };
   if (!r.ok) return { ok: false, errors: r.errors ?? ['merge_failed'] };
-  return r.lead_id ? { ok: true, lead_id: r.lead_id } : { ok: true };
+  return { ok: true, lead_id: r.lead_id, dropped_dead_end: r.dropped_dead_end };
+}
+
+export type BulkMergePreviewResult =
+  | { ok: true; mergeable: number; dead_end: number }
+  | { ok: false; errors: string[] };
+
+// Admin-only. Counts pending single-lead-match rows split into mergeable vs dead-end.
+export async function bulkMergeIntakePreview(): Promise<BulkMergePreviewResult> {
+  const { data, error } = await rpcCall('bulk_merge_intake_preview', {});
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; mergeable?: number; dead_end?: number; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['preview_failed'] };
+  return { ok: true, mergeable: r.mergeable ?? 0, dead_end: r.dead_end ?? 0 };
+}
+
+export type BulkMergeResult =
+  | { ok: true; merged: number; dropped: number }
+  | { ok: false; errors: string[] };
+
+// Admin-only. Merges all clear-cut duplicates; dead-end targets are removed.
+export async function bulkMergeIntake(): Promise<BulkMergeResult> {
+  const { data, error } = await rpcCall('bulk_merge_intake', {});
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; merged?: number; dropped?: number; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['bulk_merge_failed'] };
+  return { ok: true, merged: r.merged ?? 0, dropped: r.dropped ?? 0 };
 }
 
 export type ImportLeadsResult =
