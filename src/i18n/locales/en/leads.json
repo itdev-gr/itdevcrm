@@ -42,7 +42,11 @@
     "merge_disabled": "No matching existing lead — only Release/Discard available",
     "merge_pick": "Add to which lead?",
     "merge_cancel": "Cancel",
-    "auto_merge_label": "Auto-merge duplicates"
+    "auto_merge_label": "Auto-merge duplicates",
+    "bulk_merge": "Bulk merge ({{count}})",
+    "bulk_confirm": "Merge {{count}} duplicates into their existing leads? {{dead}} duplicates of dead-end / not-interested leads will also be removed.",
+    "bulk_done": "Merged {{merged}} · removed {{dropped}}.",
+    "merge_removed_dead_end": "The existing lead is dead-end / not interested — the new lead was removed instead of merged."
   },
   "intake_log": {
     "label": "New info from duplicates"
