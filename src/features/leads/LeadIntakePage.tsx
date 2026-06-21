@@ -96,9 +96,18 @@ export function LeadIntakePage() {
   async function onBulkMerge() {
     if (mergeableCount === 0) return;
     if (!window.confirm(t('leads:intake.bulk_confirm', { count: mergeableCount, dead: deadCount }))) return;
+    // The backlog can be large; the server processes a bounded batch per call (8s
+    // statement timeout). Loop until nothing mergeable remains.
+    let merged = 0;
+    let dropped = 0;
     try {
-      const res = await bulkMerge.mutateAsync(undefined);
-      window.alert(t('leads:intake.bulk_done', { merged: res.merged, dropped: res.dropped }));
+      for (let i = 0; i < 200; i += 1) {
+        const res = await bulkMerge.mutateAsync(undefined);
+        merged += res.merged;
+        dropped += res.dropped;
+        if (res.remaining <= 0) break;
+      }
+      window.alert(t('leads:intake.bulk_done', { merged, dropped }));
     } catch (e) {
       window.alert((e as Error).message);
     }

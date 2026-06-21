@@ -268,16 +268,17 @@ export async function bulkMergeIntakePreview(): Promise<BulkMergePreviewResult> 
 }
 
 export type BulkMergeResult =
-  | { ok: true; merged: number; dropped: number }
+  | { ok: true; merged: number; dropped: number; remaining: number }
   | { ok: false; errors: string[] };
 
-// Admin-only. Merges all clear-cut duplicates; dead-end targets are removed.
+// Admin-only. Merges one bounded batch of clear-cut duplicates (dead-end targets removed)
+// and reports how many mergeable rows remain, so the caller can loop until done.
 export async function bulkMergeIntake(): Promise<BulkMergeResult> {
   const { data, error } = await rpcCall('bulk_merge_intake', {});
   if (error) return { ok: false, errors: [error.message] };
-  const r = data as { ok: boolean; merged?: number; dropped?: number; errors?: string[] };
+  const r = data as { ok: boolean; merged?: number; dropped?: number; remaining?: number; errors?: string[] };
   if (!r.ok) return { ok: false, errors: r.errors ?? ['bulk_merge_failed'] };
-  return { ok: true, merged: r.merged ?? 0, dropped: r.dropped ?? 0 };
+  return { ok: true, merged: r.merged ?? 0, dropped: r.dropped ?? 0, remaining: r.remaining ?? 0 };
 }
 
 export type ImportLeadsResult =

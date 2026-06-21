@@ -218,7 +218,7 @@ describe('LeadIntakePage', () => {
     useLeadIntake.mockReturnValue({ data: [], isLoading: false });
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.spyOn(window, 'alert').mockImplementation(() => {});
-    bulkMerge.mockResolvedValue({ ok: true, merged: 3, dropped: 1 });
+    bulkMerge.mockResolvedValue({ ok: true, merged: 3, dropped: 1, remaining: 0 });
     render(<LeadIntakePage />);
     fireEvent.click(screen.getByRole('button', { name: /leads:intake.bulk_merge/ }));
     expect(confirmSpy).toHaveBeenCalled();
