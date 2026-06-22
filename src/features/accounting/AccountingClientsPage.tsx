@@ -37,13 +37,21 @@ function yearlyRevenue(c: AccountingClientRow): number {
     .reduce((sum, j) => sum + (Number(j.amount_net) || 0), 0);
 }
 
-function clientStatus(c: AccountingClientRow, t: (key: string) => string) {
-  if (isBlocked(c) || c.status === 'blocked')
-    return { label: t('clients_page.status.blocked'), tone: 'blocked' as const };
-  if (c.status === 'done')
-    return { label: t('clients_page.status.done'), tone: 'done' as const };
-  if (activeJobs(c).length === 0) return { label: t('clients_page.status.no_jobs'), tone: 'pending' as const };
-  return { label: t('clients_page.status.active'), tone: 'active' as const };
+type Tone = 'active' | 'pending' | 'blocked' | 'done';
+const ALL_TONES: Tone[] = ['active', 'pending', 'blocked', 'done'];
+const TONE_LABEL_KEY: Record<Tone, string> = {
+  active: 'clients_page.status.active',
+  pending: 'clients_page.status.no_jobs',
+  blocked: 'clients_page.status.blocked',
+  done: 'clients_page.status.done',
+};
+
+// Same derivation the Status column shows, so filtering matches what's on screen.
+function clientTone(c: AccountingClientRow): Tone {
+  if (isBlocked(c) || c.status === 'blocked') return 'blocked';
+  if (c.status === 'done') return 'done';
+  if (activeJobs(c).length === 0) return 'pending';
+  return 'active';
 }
 
 const STATUS_STYLES = {
@@ -58,11 +66,11 @@ export function AccountingClientsPage() {
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: clients = [], isLoading } = useAccountingClients();
   const [search, setSearch] = useState('');
-  const [blockedOnly, setBlockedOnly] = useState(false);
+  const [enabled, setEnabled] = useState<Set<Tone>>(() => new Set(ALL_TONES));
 
   const q = search.trim().toLowerCase();
   const visible = clients.filter((c) => {
-    if (blockedOnly && !isBlocked(c)) return false;
+    if (!enabled.has(clientTone(c))) return false;
     if (!q) return true;
     const haystack = [
       c.code,
@@ -97,15 +105,37 @@ export function AccountingClientsPage() {
             className="h-9 rounded-full border-border/70 bg-background pl-9 shadow-sm"
           />
         </div>
-        <label className="flex cursor-pointer items-center gap-2 rounded-full border border-border/70 bg-background px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-muted/40">
-          <input
-            type="checkbox"
-            checked={blockedOnly}
-            onChange={(e) => setBlockedOnly(e.target.checked)}
-            className="size-3.5 rounded border-input accent-primary"
-          />
-          <span className="text-muted-foreground">{t('clients_page.show_blocked_only')}</span>
-        </label>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('clients_page.table.status')}
+          </span>
+          {ALL_TONES.map((tone) => {
+            const on = enabled.has(tone);
+            return (
+              <button
+                key={tone}
+                type="button"
+                aria-pressed={on}
+                onClick={() =>
+                  setEnabled((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(tone)) next.delete(tone);
+                    else next.add(tone);
+                    return next;
+                  })
+                }
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium shadow-sm transition-colors',
+                  on
+                    ? cn(STATUS_STYLES[tone], 'border-transparent')
+                    : 'border-border/70 bg-background text-muted-foreground/60 hover:bg-muted/40',
+                )}
+              >
+                {t(TONE_LABEL_KEY[tone])}
+              </button>
+            );
+          })}
+        </div>
         <span className="ml-auto text-xs tabular-nums text-muted-foreground">
           {visible.length} / {clients.length}
         </span>
@@ -166,7 +196,8 @@ export function AccountingClientsPage() {
                   const jobs = activeJobs(c);
                   const monthly = monthlyRevenue(c);
                   const yearly = yearlyRevenue(c);
-                  const { label: status, tone } = clientStatus(c, t);
+                  const tone = clientTone(c);
+                  const status = t(TONE_LABEL_KEY[tone]);
                   const contactName = [c.contact_first_name, c.contact_last_name]
                     .filter(Boolean)
                     .join(' ');
