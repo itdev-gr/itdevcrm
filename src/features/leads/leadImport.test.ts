@@ -11,6 +11,12 @@ describe('mapHeader', () => {
     expect(mapHeader('Full Name')).toBe('full_name');
     expect(mapHeader('Unknown Col')).toBeNull();
   });
+
+  it('matches Meta/Excel Greek headers incl. underscore form', () => {
+    expect(mapHeader('αριθμός_τηλεφώνου')).toBe('phone');
+    expect(mapHeader('Αριθμός Τηλεφώνου')).toBe('phone');
+    expect(mapHeader('όνομα_εταιρείας')).toBe('company');
+  });
 });
 
 describe('mapRowsToLeads', () => {
@@ -23,6 +29,15 @@ describe('mapRowsToLeads', () => {
     expect(rows[0]?.email).toBe('maria@x.gr');
     expect(rows[0]?.phone).toBe('6900000000');
     expect(rows[0]?.source_data).toEqual({ City: 'Athens' });
+  });
+
+  it('maps Meta Greek headers and strips the p: phone prefix', () => {
+    const { rows } = mapRowsToLeads([
+      { Name: 'George Korfias', email: 'k@x.gr', 'αριθμός_τηλεφώνου': 'p:+41761650096', 'όνομα_εταιρείας': 'SAN GIORGIO' },
+    ]);
+    expect(rows[0]?.phone).toBe('+41761650096');
+    expect(rows[0]?.company).toBe('SAN GIORGIO');
+    expect(rows[0]?.full_name).toBe('George Korfias');
   });
 
   it('skips rows with no name, email, or phone', () => {

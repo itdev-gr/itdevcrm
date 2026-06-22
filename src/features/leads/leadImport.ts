@@ -16,17 +16,28 @@ export type ImportedLeadRow = {
 type LeadField = Exclude<keyof ImportedLeadRow, 'source_data'>;
 
 const FIELD_ALIASES: Record<LeadField, string[]> = {
-  full_name: ['name', 'full name', 'fullname', 'full_name', 'όνομα', 'ονοματεπώνυμο', 'ονοματεπωνυμο'],
+  full_name: ['name', 'full name', 'fullname', 'όνομα', 'ονοματεπώνυμο', 'ονοματεπωνυμο'],
   email: ['email', 'e-mail', 'mail', 'ηλεκτρονικό ταχυδρομείο', 'ηλεκτρονικο ταχυδρομειο'],
-  phone: ['phone', 'phone number', 'tel', 'telephone', 'mobile', 'τηλέφωνο', 'τηλεφωνο', 'κινητό', 'κινητο'],
-  company: ['company', 'company name', 'εταιρεία', 'εταιρεια', 'επιχείρηση', 'επιχειρηση'],
+  // incl. the Meta lead-form Greek label "αριθμός τηλεφώνου" (phone number)
+  phone: ['phone', 'phone number', 'tel', 'telephone', 'mobile', 'τηλέφωνο', 'τηλεφωνο', 'κινητό', 'κινητο', 'αριθμός τηλεφώνου', 'αριθμος τηλεφωνου'],
+  // incl. the Meta lead-form Greek label "όνομα εταιρείας" (company name)
+  company: ['company', 'company name', 'εταιρεία', 'εταιρεια', 'επιχείρηση', 'επιχειρηση', 'όνομα εταιρείας', 'ονομα εταιρειας'],
   website: ['website', 'site', 'url', 'web', 'ιστοσελίδα', 'ιστοσελιδα'],
   notes: ['notes', 'note', 'comments', 'σημειώσεις', 'σημειωσεις', 'σχόλια', 'σχολια'],
 };
 
 const MAX_ROWS = 2000;
 
-const norm = (s: string): string => s.trim().toLowerCase();
+// Lowercase, trim, and treat underscores as spaces + collapse runs of whitespace, so
+// Meta/Excel headers like "αριθμός_τηλεφώνου" match the space-form aliases above.
+const norm = (s: string): string => s.trim().toLowerCase().replace(/_/g, ' ').replace(/\s+/g, ' ');
+
+// Meta → Excel values are prefixed (p: phone, l: lead id, etc.). Strip the phone prefix
+// so the value lands as a clean number.
+function cleanValue(field: LeadField, v: string): string {
+  if (field === 'phone') return v.replace(/^p:\s*/i, '').trim();
+  return v;
+}
 
 export function mapHeader(header: string): LeadField | null {
   const h = norm(header);
@@ -58,7 +69,8 @@ export function mapRowsToLeads(raw: Record<string, unknown>[]): MapResult {
       const v = val == null ? '' : String(val).trim();
       const field = mapHeader(key);
       if (field) {
-        if (v) lead[field] = v;
+        const cv = cleanValue(field, v);
+        if (cv) lead[field] = cv;
       } else if (v) {
         lead.source_data[key] = v;
       }
