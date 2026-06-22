@@ -15,6 +15,8 @@ export function readPath(parentType: unknown, parentId: unknown): string | null 
       return `/deals/${parentId}`;
     case 'job':
       return `/jobs/${parentId}`;
+    case 'user_task':
+      return '/tasks';
     default:
       return null;
   }
