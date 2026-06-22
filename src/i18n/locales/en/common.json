@@ -78,9 +78,14 @@
     "unassigned": "Unassigned",
     "unknown": "Unknown",
     "range": {
+      "this_month": "This month",
+      "last_month": "Last month",
       "last_6_months": "Last 6 months",
       "this_year": "This year",
-      "last_12_months": "Last 12 months"
+      "last_12_months": "Last 12 months",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To"
     }
   }
 }

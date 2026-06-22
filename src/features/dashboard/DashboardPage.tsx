@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { RefreshCw, Target, TrendingUp, Wallet } from 'lucide-react';
 import { PageHeader, SegmentedControl } from '@/components/layout/page-shell';
+import { Input } from '@/components/ui/input';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { useContractedMRR } from '@/features/accounting_report/hooks/useContractedMRR';
 import { cn } from '@/lib/utils';
@@ -34,7 +35,13 @@ import {
   type DashboardDeal,
 } from './hooks/useDashboardData';
 
-type Preset = 'last_6_months' | 'this_year' | 'last_12_months';
+type Preset =
+  | 'this_month'
+  | 'last_month'
+  | 'last_6_months'
+  | 'this_year'
+  | 'last_12_months'
+  | 'custom';
 
 const CHART = {
   income: '#1a9696',
@@ -50,12 +57,20 @@ function isoDay(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-function rangeFor(preset: Preset): { from: string; to: string } {
+function rangeFor(preset: Exclude<Preset, 'custom'>): { from: string; to: string } {
   const now = new Date();
   const to = isoDay(now);
-  if (preset === 'this_year') return { from: `${now.getUTCFullYear()}-01-01`, to };
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  if (preset === 'this_month') return { from: isoDay(new Date(Date.UTC(y, m, 1))), to };
+  if (preset === 'last_month')
+    return {
+      from: isoDay(new Date(Date.UTC(y, m - 1, 1))),
+      to: isoDay(new Date(Date.UTC(y, m, 0))),
+    };
+  if (preset === 'this_year') return { from: `${y}-01-01`, to };
   const months = preset === 'last_6_months' ? 5 : 11;
-  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
+  const from = new Date(Date.UTC(y, m - months, 1));
   return { from: isoDay(from), to };
 }
 
@@ -208,7 +223,12 @@ export function DashboardPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
   const [preset, setPreset] = useState<Preset>('last_6_months');
-  const range = useMemo(() => rangeFor(preset), [preset]);
+  const [customFrom, setCustomFrom] = useState<string>(() => rangeFor('this_month').from);
+  const [customTo, setCustomTo] = useState<string>(() => rangeFor('this_month').to);
+  const range = useMemo(
+    () => (preset === 'custom' ? { from: customFrom, to: customTo } : rangeFor(preset)),
+    [preset, customFrom, customTo],
+  );
   const rangeLabel = useMemo(() => formatRangeLabel(range.from, range.to, locale), [range, locale]);
 
   const leads = useDashboardLeads(range);
@@ -291,19 +311,50 @@ export function DashboardPage() {
     [t('dashboard.open')]: r.open,
   }));
 
-  const presets: Preset[] = ['last_6_months', 'this_year', 'last_12_months'];
+  const presets: Preset[] = [
+    'this_month',
+    'last_month',
+    'last_6_months',
+    'this_year',
+    'last_12_months',
+    'custom',
+  ];
 
   return (
     <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={t('dashboard.title')} description={rangeLabel}>
-        <SegmentedControl
-          value={preset}
-          onChange={(v) => setPreset(v as Preset)}
-          options={presets.map((p) => ({
-            value: p,
-            label: t(`dashboard.range.${p}`),
-          }))}
-        />
+        <div className="flex flex-wrap items-end gap-3">
+          <SegmentedControl
+            value={preset}
+            onChange={(v) => setPreset(v as Preset)}
+            options={presets.map((p) => ({
+              value: p,
+              label: t(`dashboard.range.${p}`),
+            }))}
+          />
+          {preset === 'custom' && (
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <label className="flex items-center gap-2 text-muted-foreground">
+                {t('dashboard.range.from')}
+                <Input
+                  type="date"
+                  value={range.from}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="h-9 w-auto"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-muted-foreground">
+                {t('dashboard.range.to')}
+                <Input
+                  type="date"
+                  value={range.to}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="h-9 w-auto"
+                />
+              </label>
+            </div>
+          )}
+        </div>
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
