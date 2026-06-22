@@ -17,6 +17,8 @@ const merge = vi.fn();
 vi.mock('./hooks/useMergeLeadIntake', () => ({
   useMergeLeadIntake: () => ({ mutate: merge, isPending: false }),
 }));
+const { useDeadEndLeads } = vi.hoisted(() => ({ useDeadEndLeads: vi.fn() }));
+vi.mock('./hooks/useDeadEndLeads', () => ({ useDeadEndLeads }));
 const setAutoMerge = vi.fn();
 vi.mock('./hooks/useAutoMerge', () => ({
   useAutoMerge: () => ({
@@ -50,6 +52,7 @@ describe('LeadIntakePage', () => {
     vi.clearAllMocks();
     useBulkMergePreview.mockReturnValue({ data: { mergeable: 0, dead_end: 0 }, isLoading: false });
     useBulkReleasePreview.mockReturnValue({ data: { releasable: 0 }, isLoading: false });
+    useDeadEndLeads.mockReturnValue(new Set());
   });
 
   it('confirms before releasing a flagged (duplicate) lead, then forces release', () => {
@@ -287,5 +290,56 @@ describe('LeadIntakePage', () => {
     useLeadIntake.mockReturnValue({ data: [], isLoading: false });
     render(<LeadIntakePage />);
     expect(screen.getByRole('button', { name: /leads:intake.bulk_merge/ })).toBeDisabled();
+  });
+
+  it('warns before merging into a dead-end target and merges only on confirm', () => {
+    useDeadEndLeads.mockReturnValue(new Set(['L1']));
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i9',
+          title: 'Form',
+          email: 'd@x.gr',
+          phone: '+306900000009',
+          created_at: '2026-06-19T13:00:00Z',
+          matched_on: ['phone'],
+          matches: [
+            { match_type: 'lead', record_id: 'L1', display_name: 'Lead One', context: 'Not Interested', matched_field: 'phone', matched_email: null, matched_phone: '6900000009' },
+            { match_type: 'lead', record_id: 'L2', display_name: 'Lead Two', context: 'New', matched_field: 'phone', matched_email: null, matched_phone: '6900000009' },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.merge' })); // opens picker
+    fireEvent.click(screen.getByRole('button', { name: /Lead One/ })); // dead-end target
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(merge).toHaveBeenCalledWith({ id: 'i9', targetLeadId: 'L1' });
+  });
+
+  it('does not direct-merge a single dead-end match when confirm is dismissed', () => {
+    useDeadEndLeads.mockReturnValue(new Set(['L1']));
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i1',
+          title: 'AI SEO form',
+          email: 'x@kara.gr',
+          phone: '+306900000001',
+          created_at: '2026-06-19T10:00:00Z',
+          matched_on: ['email'],
+          matches: [
+            { match_type: 'lead', record_id: 'L1', display_name: 'Old Lead', context: 'Dead End', matched_field: 'email', matched_email: 'old@kara.gr', matched_phone: null },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.merge' }));
+    expect(merge).not.toHaveBeenCalled();
   });
 });

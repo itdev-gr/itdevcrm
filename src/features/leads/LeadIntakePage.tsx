@@ -11,6 +11,7 @@ import { useBulkMergeIntake } from './hooks/useBulkMergeIntake';
 import { useBulkReleasePreview } from './hooks/useBulkReleasePreview';
 import { useBulkReleaseIntake } from './hooks/useBulkReleaseIntake';
 import { leadMatchesOf } from './intakeMatches';
+import { useDeadEndLeads } from './hooks/useDeadEndLeads';
 import { LeadImportControls } from './LeadImportControls';
 
 function fullName(r: LeadIntakeRow): string {
@@ -133,6 +134,11 @@ export function LeadIntakePage() {
     }
   }
   const rows = data ?? [];
+  const deadEndSet = useDeadEndLeads(
+    rows.flatMap((r) =>
+      leadMatchesOf((r.matches as unknown as LeadIntakeMatch[]) ?? []).map((m) => m.record_id),
+    ),
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -184,10 +190,16 @@ export function LeadIntakePage() {
             const matches = (r.matches as unknown as LeadIntakeMatch[]) ?? [];
             const leadMatches = leadMatchesOf(matches);
             const canMerge = leadMatches.length > 0;
+            function mergeInto(targetLeadId: string) {
+              if (deadEndSet.has(targetLeadId) && !window.confirm(t('leads:intake.merge_dead_end_confirm'))) {
+                return;
+              }
+              merge.mutate({ id: r.id, targetLeadId });
+            }
             function onMerge() {
               const only = leadMatches[0];
               if (leadMatches.length === 1 && only) {
-                merge.mutate({ id: r.id, targetLeadId: only.record_id });
+                mergeInto(only.record_id);
               } else {
                 setPickFor(r.id);
               }
@@ -281,20 +293,27 @@ export function LeadIntakePage() {
                   <div className="mt-2 rounded border border-sky-300 bg-sky-50 p-2 text-sm dark:border-sky-900/50 dark:bg-sky-900/20">
                     <div className="mb-1 font-medium">{t('leads:intake.merge_pick')}</div>
                     <div className="flex flex-wrap gap-2">
-                      {leadMatches.map((m) => (
-                        <button
-                          key={m.record_id}
-                          type="button"
-                          className="rounded border bg-card px-2 py-1 text-xs"
-                          onClick={() => {
-                            merge.mutate({ id: r.id, targetLeadId: m.record_id });
-                            setPickFor(null);
-                          }}
-                        >
-                          {m.display_name}
-                          {m.context ? ` (${m.context})` : ''}
-                        </button>
-                      ))}
+                      {leadMatches.map((m) => {
+                        const isDead = deadEndSet.has(m.record_id);
+                        return (
+                          <button
+                            key={m.record_id}
+                            type="button"
+                            className={
+                              'rounded border bg-card px-2 py-1 text-xs ' +
+                              (isDead ? 'border-amber-400 text-amber-700 dark:text-amber-300' : '')
+                            }
+                            onClick={() => {
+                              mergeInto(m.record_id);
+                              setPickFor(null);
+                            }}
+                          >
+                            {m.display_name}
+                            {m.context ? ` (${m.context})` : ''}
+                            {isDead ? ` ⚠ ${t('leads:intake.merge_dead_end_tag')}` : ''}
+                          </button>
+                        );
+                      })}
                       <button
                         type="button"
                         className="rounded px-2 py-1 text-xs underline"
