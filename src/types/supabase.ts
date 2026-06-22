@@ -62,6 +62,7 @@ export type Database = {
           department_group_id: string
           description: string | null
           id: string
+          importance: string
           job_id: string | null
           resolved_at: string | null
           resolved_by_user_id: string | null
@@ -79,6 +80,7 @@ export type Database = {
           department_group_id: string
           description?: string | null
           id?: string
+          importance?: string
           job_id?: string | null
           resolved_at?: string | null
           resolved_by_user_id?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           department_group_id?: string
           description?: string | null
           id?: string
+          importance?: string
           job_id?: string | null
           resolved_at?: string | null
           resolved_by_user_id?: string | null
@@ -843,6 +846,27 @@ export type Database = {
           updated_at?: string | null
           vat_amount?: number | null
           vat_rate?: number | null
+        }
+        Relationships: []
+      }
+      deal_payments_service_backfill_20260622: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          new_service_type: string | null
+          old_service_type: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          new_service_type?: string | null
+          old_service_type?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          new_service_type?: string | null
+          old_service_type?: string | null
         }
         Relationships: []
       }
@@ -1817,6 +1841,24 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs_hosting_billing_backup_20260622: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          old_billing_type: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_billing_type?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_billing_type?: string | null
+        }
+        Relationships: []
+      }
       lead_distribution_state: {
         Row: {
           auto_enabled: boolean
@@ -2248,6 +2290,162 @@ export type Database = {
           company_name?: string | null
           id?: string | null
           notes?: string | null
+        }
+        Relationships: []
+      }
+      leads_clickup_customer_backup_20260622: {
+        Row: {
+          additional_contacts: Json | null
+          additional_notes: string | null
+          address: string | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          automations_enabled: boolean | null
+          backed_up_at: string | null
+          code: string | null
+          company_name: string | null
+          contact_first_name: string | null
+          contact_info: string | null
+          contact_last_name: string | null
+          converted_at: string | null
+          converted_client_id: string | null
+          converted_deal_id: string | null
+          country: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          email_opt_out: boolean | null
+          estimated_monthly_value: number | null
+          estimated_one_time_value: number | null
+          estimated_total_value: number | null
+          expected_close_date: string | null
+          facebook: string | null
+          id: string | null
+          industry: string | null
+          instagram: string | null
+          intake_log: string | null
+          linkedin: string | null
+          notes: string | null
+          owner_user_id: string | null
+          payment_method: string | null
+          phone: string | null
+          phone_normalized: string | null
+          scheduled_for: string | null
+          services_planned: Json | null
+          source: string | null
+          source_data: Json | null
+          stage_id: string | null
+          tiktok: string | null
+          title: string | null
+          unsubscribe_token: string | null
+          updated_at: string | null
+          vat_number: string | null
+          website: string | null
+          won_by_user_id: string | null
+        }
+        Insert: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Update: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
         }
         Relationships: []
       }
@@ -2999,6 +3197,7 @@ export type Database = {
           created_by: string | null
           due_at: string
           id: string
+          importance: string
           notes: string | null
           title: string
           updated_at: string
@@ -3010,6 +3209,7 @@ export type Database = {
           created_by?: string | null
           due_at: string
           id?: string
+          importance?: string
           notes?: string | null
           title: string
           updated_at?: string
@@ -3021,6 +3221,7 @@ export type Database = {
           created_by?: string | null
           due_at?: string
           id?: string
+          importance?: string
           notes?: string | null
           title?: string
           updated_at?: string
