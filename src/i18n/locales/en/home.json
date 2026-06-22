@@ -32,6 +32,8 @@
   "assigned_tasks": {
     "title": "Assigned to me",
     "all_team_title": "Assigned tasks",
+    "personal": "Personal",
+    "overdue": "Overdue",
     "empty": "No open tasks. You're clear.",
     "empty_admin": "No open tasks across the team.",
     "resolve": "Resolve",

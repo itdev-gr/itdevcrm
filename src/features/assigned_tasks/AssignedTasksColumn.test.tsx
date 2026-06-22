@@ -59,6 +59,32 @@ vi.mock('./hooks/useAssignedTaskDetail', () => ({
   }),
 }));
 
+const { personalData, togglePersonalSpy } = vi.hoisted(() => ({
+  personalData: { current: [] as Array<Record<string, unknown>> },
+  togglePersonalSpy: vi.fn(),
+}));
+
+vi.mock('@/features/home/hooks/useOpenUserTasks', () => ({
+  useOpenUserTasks: ({ assigneeUserId }: { assigneeUserId: string | null }) => ({
+    data: assigneeUserId === 'u-me' ? personalData.current : [],
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/features/home/hooks/useDeleteTask', () => ({
+  useToggleTaskComplete: () => ({ mutate: togglePersonalSpy, isPending: false }),
+  useDeleteTask: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+
+vi.mock('@/features/home/TaskDialog', () => ({
+  TaskDialog: ({ open, task }: { open: boolean; task?: unknown }) =>
+    open ? (
+      <div role="dialog" aria-label={task ? 'edit task' : 'new task'}>
+        task dialog
+      </div>
+    ) : null,
+}));
+
 import { AssignedTasksColumn } from './AssignedTasksColumn';
 
 function wrap(children: React.ReactNode) {
@@ -72,8 +98,49 @@ function wrap(children: React.ReactNode) {
   );
 }
 
+const personalTask = {
+  id: 'p1',
+  user_id: 'u-me',
+  created_by: null,
+  title: 'Call back lead',
+  notes: 'ring at 3pm',
+  due_at: new Date(Date.now() + 3_600_000).toISOString(),
+  completed_at: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 describe('AssignedTasksColumn', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    personalData.current = [];
+  });
+
+  it('shows personal calendar tasks assigned to me next to deal/job tasks', () => {
+    personalData.current = [personalTask];
+    render(wrap(<AssignedTasksColumn />));
+    expect(screen.getByText('Call back lead')).toBeInTheDocument();
+    expect(screen.getByText('Renew domain')).toBeInTheDocument();
+    expect(screen.getByText('(2)')).toBeInTheDocument();
+  });
+
+  it('clicking a personal task opens the edit dialog', async () => {
+    const user = userEvent.setup();
+    personalData.current = [personalTask];
+    render(wrap(<AssignedTasksColumn />));
+    await user.click(screen.getByRole('button', { name: /call back lead/i }));
+    expect(screen.getByRole('dialog', { name: /edit task/i })).toBeInTheDocument();
+  });
+
+  it('resolving a personal task marks it complete', async () => {
+    const user = userEvent.setup();
+    personalData.current = [personalTask];
+    render(wrap(<AssignedTasksColumn />));
+    // Personal tasks render first, so its Resolve button is the first one.
+    const resolveButtons = screen.getAllByRole('button', { name: /resolve/i });
+    await user.click(resolveButtons[0]!);
+    expect(togglePersonalSpy).toHaveBeenCalledWith({ id: 'p1', completed: true });
+  });
 
   it('renders the open tasks for the current user', () => {
     render(wrap(<AssignedTasksColumn />));

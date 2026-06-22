@@ -11,6 +11,9 @@ import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 import { TaskDialog } from '@/features/home/TaskDialog';
+import { useOpenUserTasks } from '@/features/home/hooks/useOpenUserTasks';
+import { useToggleTaskComplete } from '@/features/home/hooks/useDeleteTask';
+import type { UserTaskRow } from '@/features/home/hooks/useUserTasks';
 
 function sourceHref(task: AssignedTaskRow): string {
   if (task.deal_id) return `/deals/${task.deal_id}`;
@@ -18,6 +21,18 @@ function sourceHref(task: AssignedTaskRow): string {
   return '#';
 }
 
+// Kept out of the component body so the "now" read stays out of render purity.
+function isTaskOverdue(dueIso: string): boolean {
+  return new Date(dueIso).getTime() < Date.now();
+}
+
+function formatDue(dueIso: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  }).format(new Date(dueIso));
+}
+
+/** A deal/job-scoped assigned task (from the `assigned_tasks` table). */
 function Row({
   task, canResolve, onOpen,
 }: {
@@ -75,17 +90,101 @@ function Row({
   );
 }
 
+/** A personal/calendar task (from the `user_tasks` table). */
+function PersonalRow({
+  task, canResolve, onOpen,
+}: {
+  task: UserTaskRow;
+  canResolve: boolean;
+  onOpen: (task: UserTaskRow) => void;
+}) {
+  const { t, i18n } = useTranslation('home');
+  const complete = useToggleTaskComplete();
+  const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
+  const overdue = isTaskOverdue(task.due_at);
+  const dueLabel = formatDue(task.due_at, locale);
+  return (
+    <li>
+      <button
+        type="button"
+        aria-label={task.title}
+        onClick={() => onOpen(task)}
+        className="flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate text-sm font-medium">{task.title}</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {t('assigned_tasks.personal')}
+            </span>
+            <span
+              className={cn(
+                'text-[11px]',
+                overdue ? 'font-medium text-destructive' : 'text-muted-foreground',
+              )}
+            >
+              {overdue ? `${t('assigned_tasks.overdue')} · ` : ''}
+              {dueLabel}
+            </span>
+          </div>
+          {task.notes && (
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{task.notes}</p>
+          )}
+        </div>
+        {canResolve && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              complete.mutate({ id: task.id, completed: true });
+            }}
+            disabled={complete.isPending}
+          >
+            <CheckCircle2 className="size-3.5" />
+            {t('assigned_tasks.resolve')}
+          </Button>
+        )}
+      </button>
+    </li>
+  );
+}
+
+type WidgetItem =
+  | { kind: 'assigned'; task: AssignedTaskRow }
+  | { kind: 'personal'; task: UserTaskRow };
+
 export function AssignedTasksColumn() {
   const { t } = useTranslation('home');
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const [showAllAdmin, setShowAllAdmin] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
-  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [editingPersonal, setEditingPersonal] = useState<UserTaskRow | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   useAssignedTasksRealtime();
 
   const assigneeUserId = isAdmin && showAllAdmin ? null : userId || null;
-  const { data: tasks = [] } = useAssignedTasksOpen({ assigneeUserId });
+  const { data: assignedTasks = [] } = useAssignedTasksOpen({ assigneeUserId });
+  const { data: personalTasks = [] } = useOpenUserTasks({ assigneeUserId });
+
+  // One unified "assigned to me" list: personal/calendar tasks first (already
+  // soonest-due-first from the query), then deal/job tasks (newest-first).
+  const items: WidgetItem[] = [
+    ...personalTasks.map((task) => ({ kind: 'personal' as const, task })),
+    ...assignedTasks.map((task) => ({ kind: 'assigned' as const, task })),
+  ];
+
+  function openNewTask() {
+    setEditingPersonal(null);
+    setTaskDialogOpen(true);
+  }
+  function openEditTask(task: UserTaskRow) {
+    setEditingPersonal(task);
+    setTaskDialogOpen(true);
+  }
 
   const title = showAllAdmin ? t('assigned_tasks.all_team_title') : t('assigned_tasks.title');
   const empty = showAllAdmin ? t('assigned_tasks.empty_admin') : t('assigned_tasks.empty');
@@ -95,10 +194,10 @@ export function AssignedTasksColumn() {
       <header className="flex shrink-0 items-center justify-between border-b border-border/60 px-4 py-3 sm:px-5">
         <h2 className="text-sm font-semibold">
           {title}{' '}
-          <span className="font-normal text-muted-foreground">({tasks.length})</span>
+          <span className="font-normal text-muted-foreground">({items.length})</span>
         </h2>
         <div className="flex items-center gap-2">
-          <Button type="button" size="sm" variant="outline" onClick={() => setNewTaskOpen(true)}>
+          <Button type="button" size="sm" variant="outline" onClick={openNewTask}>
             <Plus className="size-3.5" />
             {t('calendar.new_task')}
           </Button>
@@ -119,21 +218,30 @@ export function AssignedTasksColumn() {
         </div>
       </header>
       <div className="min-h-0 max-h-72 flex-1 overflow-y-auto p-3 sm:p-4">
-        {tasks.length === 0 ? (
+        {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-10 text-center">
             <CheckCircle2 className="mb-2 size-8 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">{empty}</p>
           </div>
         ) : (
           <ul className="space-y-2">
-            {tasks.map((task) => (
-              <Row
-                key={task.id}
-                task={task}
-                canResolve={isAdmin || task.assignee_user_id === userId}
-                onOpen={setOpenTaskId}
-              />
-            ))}
+            {items.map((item) =>
+              item.kind === 'assigned' ? (
+                <Row
+                  key={`a-${item.task.id}`}
+                  task={item.task}
+                  canResolve={isAdmin || item.task.assignee_user_id === userId}
+                  onOpen={setOpenTaskId}
+                />
+              ) : (
+                <PersonalRow
+                  key={`p-${item.task.id}`}
+                  task={item.task}
+                  canResolve={isAdmin || item.task.user_id === userId}
+                  onOpen={openEditTask}
+                />
+              ),
+            )}
           </ul>
         )}
       </div>
@@ -141,7 +249,14 @@ export function AssignedTasksColumn() {
         taskId={openTaskId}
         onOpenChange={(open) => !open && setOpenTaskId(null)}
       />
-      <TaskDialog open={newTaskOpen} onOpenChange={setNewTaskOpen} />
+      <TaskDialog
+        open={taskDialogOpen}
+        onOpenChange={(open) => {
+          setTaskDialogOpen(open);
+          if (!open) setEditingPersonal(null);
+        }}
+        task={editingPersonal}
+      />
     </section>
   );
 }
