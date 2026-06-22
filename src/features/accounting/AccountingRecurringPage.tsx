@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Ban, RefreshCw, Search, Users } from 'lucide-react';
+import { AlertTriangle, Ban, Search, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { FilterBar, PageHeader } from '@/components/layout/page-shell';
 import { CallLink } from '@/components/CallLink';
@@ -109,7 +109,6 @@ export function AccountingRecurringPage() {
   const totals = useMemo(
     () => ({
       count: rows.length,
-      monthly: rows.reduce((sum, r) => sum + r.monthly_total + r.yearly_total / 12, 0),
       overdue: rows.filter((r) => r.has_overdue_payment).length,
       blocked: rows.filter((r) => r.is_blocked).length,
     }),
@@ -120,17 +119,11 @@ export function AccountingRecurringPage() {
     <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={t('recurring_clients.title')} />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatTile
           label={t('recurring_clients.stats.active_clients')}
           value={String(totals.count)}
           icon={Users}
-        />
-        <StatTile
-          label={t('recurring_clients.stats.monthly')}
-          value={`€${totals.monthly.toFixed(0)}`}
-          icon={RefreshCw}
-          accent="primary"
         />
         <StatTile
           label={t('recurring_clients.stats.overdue')}
