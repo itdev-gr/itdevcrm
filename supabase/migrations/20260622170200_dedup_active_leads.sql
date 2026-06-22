@@ -22,10 +22,12 @@ select l.id, l.phone_normalized,
   first_value(l.id) over w as primary_id
 from public.leads l
 left join public.pipeline_stages ps on ps.id = l.stage_id
-where l.archived = false and l.converted_at is null and coalesce(l.phone_normalized,'') <> ''
+-- length>=10 guards against placeholder/country-code-only phones (e.g. "+30" -> "30")
+-- being treated as a shared key and grouping distinct leads as one false duplicate.
+where l.archived = false and l.converted_at is null and length(coalesce(l.phone_normalized,'')) >= 10
   and l.phone_normalized in (
     select phone_normalized from public.leads
-     where archived = false and converted_at is null and coalesce(phone_normalized,'') <> ''
+     where archived = false and converted_at is null and length(coalesce(phone_normalized,'')) >= 10
      group by phone_normalized having count(*) > 1)
 window w as (
   partition by l.phone_normalized order by
