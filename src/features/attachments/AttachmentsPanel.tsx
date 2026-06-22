@@ -19,14 +19,25 @@ export function AttachmentsPanel({ parentType, parentId }: Props) {
   const del = useDeleteAttachment();
   const inputRef = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<'contract' | 'invoice' | 'other'>('other');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  async function onFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function onFileChange(e: ChangeEvent<HTMLInputElement>) {
+    setSelectedFile(e.target.files?.[0] ?? null);
+  }
+
+  async function onUpload() {
+    if (!selectedFile) return;
     try {
-      await upload.mutateAsync({ parent_type: parentType, parent_id: parentId, file, kind });
-    } finally {
+      await upload.mutateAsync({
+        parent_type: parentType,
+        parent_id: parentId,
+        file: selectedFile,
+        kind,
+      });
+      setSelectedFile(null);
       if (inputRef.current) inputRef.current.value = '';
+    } catch (err) {
+      alert((err as Error).message);
     }
   }
 
@@ -40,7 +51,7 @@ export function AttachmentsPanel({ parentType, parentId }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as 'contract' | 'invoice' | 'other')}
@@ -51,8 +62,20 @@ export function AttachmentsPanel({ parentType, parentId }: Props) {
           <option value="invoice">{t('attachments.kinds.invoice')}</option>
         </select>
         <input ref={inputRef} type="file" onChange={onFileChange} className="text-sm" />
+        <Button
+          type="button"
+          size="sm"
+          disabled={!selectedFile || upload.isPending}
+          onClick={() => void onUpload()}
+        >
+          {upload.isPending ? t('attachments.uploading') : t('attachments.upload')}
+        </Button>
+        {selectedFile ? (
+          <span className="max-w-[220px] truncate text-xs text-muted-foreground" title={selectedFile.name}>
+            {selectedFile.name}
+          </span>
+        ) : null}
         <span className="text-xs text-muted-foreground">{t('attachments.max_size')}</span>
-        {upload.isPending && <span className="text-xs">{t('attachments.uploading')}</span>}
       </div>
 
       {list.length === 0 ? (
