@@ -217,11 +217,13 @@ function JobRow({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TERMS.map((term) => (
-                    <SelectItem key={term} value={term}>
-                      {t(`jobs_billing.cadence_options.${term}`)}
-                    </SelectItem>
-                  ))}
+                  {(job.department === 'hosting' ? (['recurring_yearly'] as BillingType[]) : TERMS).map(
+                    (term) => (
+                      <SelectItem key={term} value={term}>
+                        {t(`jobs_billing.cadence_options.${term}`)}
+                      </SelectItem>
+                    ),
+                  )}
                 </SelectContent>
               </Select>
               <Select

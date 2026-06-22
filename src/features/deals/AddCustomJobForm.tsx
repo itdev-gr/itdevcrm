@@ -50,6 +50,9 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   const [description, setDescription] = useState('');
   const [setupFee, setSetupFee] = useState('');
 
+  // Hosting is billed yearly only.
+  const cadences: BillingType[] = department === 'hosting' ? ['recurring_yearly'] : CADENCES;
+
   // Installment plans apply only to one-time Web Dev jobs.
   const planEligible = department === 'web_dev' && cadence === 'one_time';
   const effectivePlan: InstallmentPlan = planEligible ? plan : 'none';
@@ -103,7 +106,11 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
         <Label className="text-xs">{t('jobs_billing.form.department')}</Label>
         <Select
           value={department}
-          onValueChange={(v) => setDepartment(v as JobDepartment | typeof BILLING_ONLY)}
+          onValueChange={(v) => {
+            const dep = v as JobDepartment | typeof BILLING_ONLY;
+            setDepartment(dep);
+            if (dep === 'hosting') setCadence('recurring_yearly');
+          }}
         >
           <SelectTrigger className="mt-1 h-8 w-full text-xs" aria-label={t('jobs_billing.form.department')}>
             <SelectValue />
@@ -122,12 +129,16 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
       </div>
       <div>
         <Label className="text-xs">{t('jobs_billing.form.cadence')}</Label>
-        <Select value={cadence} onValueChange={(v) => setCadence(v as BillingType)}>
+        <Select
+          value={cadence}
+          onValueChange={(v) => setCadence(v as BillingType)}
+          disabled={department === 'hosting'}
+        >
           <SelectTrigger className="mt-1 h-8 w-full text-xs" aria-label={t('jobs_billing.form.cadence')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {CADENCES.map((c) => (
+            {cadences.map((c) => (
               <SelectItem key={c} value={c}>
                 {t(`jobs_billing.cadence_options.${c}`)}
               </SelectItem>
