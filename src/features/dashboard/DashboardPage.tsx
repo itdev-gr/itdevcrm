@@ -12,22 +12,26 @@ import {
   Legend,
   CartesianGrid,
 } from 'recharts';
-import {
-  Percent,
-  RefreshCw,
-  Target,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
+import { RefreshCw, Target, TrendingUp, Wallet } from 'lucide-react';
 import { PageHeader, SegmentedControl } from '@/components/layout/page-shell';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { useContractedMRR } from '@/features/accounting_report/hooks/useContractedMRR';
 import { cn } from '@/lib/utils';
-import { monthKeys, cohortStats, type LeadLite, type CohortRow } from './aggregate';
+import {
+  monthKeys,
+  cohortStats,
+  dealsByPerson,
+  type LeadLite,
+  type CohortRow,
+  type DealLite,
+  type DealPersonRow,
+} from './aggregate';
 import {
   useDashboardLeads,
+  useDashboardDeals,
   useMonthlyPL,
   useRecurringCollected,
+  type DashboardDeal,
 } from './hooks/useDashboardData';
 
 type Preset = 'last_6_months' | 'this_year' | 'last_12_months';
@@ -38,8 +42,6 @@ const CHART = {
   profit: '#2563eb',
   recurring: '#7c3aed',
   won: '#059669',
-  lost: '#dc2626',
-  open: '#94a3b8',
 } as const;
 
 function isoDay(d: Date): string {
@@ -96,30 +98,75 @@ function Tile({
   );
 }
 
-function CohortTable({ title, rows }: { title: string; rows: CohortRow[] }) {
+function WonByPersonTable({ rows }: { rows: DealPersonRow[] }) {
   const { t } = useTranslation();
   return (
     <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
       <div className="border-b border-border/60 px-4 py-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <h3 className="text-sm font-semibold">{t('dashboard.deals_won_by_person')}</h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-sm">
+        <table className="w-full min-w-[420px] border-collapse text-sm">
           <thead className="bg-muted/40">
             <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <th className="px-4 py-3 font-medium">{title}</th>
-              <th className="px-4 py-3 text-right font-medium">{t('dashboard.leads')}</th>
-              <th className="px-4 py-3 text-right font-medium">{t('dashboard.won')}</th>
-              <th className="px-4 py-3 text-right font-medium">{t('dashboard.lost')}</th>
-              <th className="px-4 py-3 text-right font-medium">{t('dashboard.open')}</th>
-              <th className="px-4 py-3 text-right font-medium">{t('dashboard.win_rate')}</th>
+              <th className="px-4 py-3 font-medium">{t('dashboard.by_person')}</th>
+              <th className="px-4 py-3 text-right font-medium">{t('dashboard.deals_won')}</th>
               <th className="px-4 py-3 text-right font-medium">{t('dashboard.value_won')}</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={3} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  {t('dashboard.no_leads')}
+                </td>
+              </tr>
+            )}
+            {rows.map((r) => (
+              <tr
+                key={r.key}
+                className="border-t border-border/40 tabular-nums transition-colors hover:bg-muted/30"
+              >
+                <td className="px-4 py-3 font-medium">{r.key}</td>
+                <td className="px-4 py-3 text-right font-medium text-emerald-700 dark:text-emerald-400">
+                  {r.deals}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <span className="font-medium">€{r.oneTime.toFixed(0)}</span>
+                  {r.monthly > 0 && (
+                    <span className="ml-1 text-xs text-emerald-700 dark:text-emerald-400">
+                      +€{r.monthly.toFixed(0)}/mo
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function LeadsBySourceTable({ rows }: { rows: CohortRow[] }) {
+  const { t } = useTranslation();
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="border-b border-border/60 px-4 py-3">
+        <h3 className="text-sm font-semibold">{t('dashboard.leads_by_source')}</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[320px] border-collapse text-sm">
+          <thead className="bg-muted/40">
+            <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="px-4 py-3 font-medium">{t('dashboard.by_source')}</th>
+              <th className="px-4 py-3 text-right font-medium">{t('dashboard.leads_received')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={2} className="px-4 py-10 text-center text-sm text-muted-foreground">
                   {t('dashboard.no_leads')}
                 </td>
               </tr>
@@ -131,28 +178,6 @@ function CohortTable({ title, rows }: { title: string; rows: CohortRow[] }) {
               >
                 <td className="px-4 py-3 font-medium">{r.key}</td>
                 <td className="px-4 py-3 text-right">{r.total}</td>
-                <td className="px-4 py-3 text-right font-medium text-emerald-700 dark:text-emerald-400">
-                  {r.won}
-                </td>
-                <td className="px-4 py-3 text-right text-red-700 dark:text-red-400">{r.lost}</td>
-                <td className="px-4 py-3 text-right text-muted-foreground">{r.open}</td>
-                <td className="px-4 py-3 text-right">
-                  {r.winRate === null ? (
-                    <span className="text-muted-foreground/50">—</span>
-                  ) : (
-                    <span className="inline-flex min-w-10 justify-end rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                      {Math.round(r.winRate * 100)}%
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="font-medium">€{r.wonOneTime.toFixed(0)}</span>
-                  {r.wonMonthly > 0 && (
-                    <span className="ml-1 text-xs text-emerald-700 dark:text-emerald-400">
-                      +€{r.wonMonthly.toFixed(0)}/mo
-                    </span>
-                  )}
-                </td>
               </tr>
             ))}
           </tbody>
@@ -185,6 +210,7 @@ export function DashboardPage() {
   const rangeLabel = useMemo(() => formatRangeLabel(range.from, range.to, locale), [range, locale]);
 
   const leads = useDashboardLeads(range);
+  const deals = useDashboardDeals();
   const pl = useMonthlyPL(range);
   const recurring = useRecurringCollected(range);
   const contractedMrr = useContractedMRR();
@@ -196,35 +222,44 @@ export function DashboardPage() {
       id ? (m.get(id) ?? t('dashboard.unknown')) : t('dashboard.unassigned');
   }, [owners, t]);
 
+  // Leads — volume + source only (wins are tracked as deals, not lead stages).
   const leadLites: LeadLite[] = useMemo(
     () =>
       (leads.data ?? []).map((l) => ({
         owner: ownerName(l.owner_user_id),
         source: SOURCE_LABELS[l.source] ?? l.source,
-        outcome:
-          l.stage?.terminal_outcome === 'won'
-            ? 'won'
-            : l.stage?.terminal_outcome === 'lost'
-              ? 'lost'
-              : 'open',
-        oneTimeValue: Number(l.estimated_one_time_value) || 0,
-        monthlyValue: Number(l.estimated_monthly_value) || 0,
+        outcome: 'open',
+        oneTimeValue: 0,
+        monthlyValue: 0,
       })),
     [leads.data, ownerName],
   );
-
-  const byOwner = useMemo(() => cohortStats(leadLites, (l) => l.owner), [leadLites]);
   const bySource = useMemo(() => cohortStats(leadLites, (l) => l.source), [leadLites]);
+  const leadsReceived = leadLites.length;
 
-  const totals = useMemo(() => {
-    const won = leadLites.filter((l) => l.outcome === 'won').length;
-    const lost = leadLites.filter((l) => l.outcome === 'lost').length;
-    return {
-      created: leadLites.length,
-      won,
-      winRate: won + lost > 0 ? won / (won + lost) : null,
+  // Deals = the wins. Active only: exclude closed (churned) deals; won-date in range.
+  const dealLites: DealLite[] = useMemo(() => {
+    const isActiveWonInRange = (d: DashboardDeal) => {
+      if (d.accounting_stage?.code === 'closed') return false;
+      const won = d.invoiced_date ?? d.actual_close_date;
+      return !!won && won >= range.from && won <= range.to;
     };
-  }, [leadLites]);
+    return (deals.data ?? []).filter(isActiveWonInRange).map((d) => ({
+      person: ownerName(d.won_by_user_id),
+      oneTime: Number(d.one_time_value) || 0,
+      monthly: Number(d.recurring_monthly_value) || 0,
+    }));
+  }, [deals.data, range, ownerName]);
+
+  const wonByPerson = useMemo(() => dealsByPerson(dealLites), [dealLites]);
+  const wonTotals = useMemo(
+    () => ({
+      count: dealLites.length,
+      oneTime: dealLites.reduce((s, d) => s + d.oneTime, 0),
+      monthly: dealLites.reduce((s, d) => s + d.monthly, 0),
+    }),
+    [dealLites],
+  );
 
   const trendData = useMemo(() => {
     const plByMonth = new Map((pl.data ?? []).map((r) => [r.period, r]));
@@ -240,11 +275,9 @@ export function DashboardPage() {
 
   const collectedInRange = trendData.reduce((s, r) => s + r.income, 0);
 
-  const ownerChartData = byOwner.map((r) => ({
+  const wonChartData = wonByPerson.map((r) => ({
     name: r.key,
-    [t('dashboard.won')]: r.won,
-    [t('dashboard.lost')]: r.lost,
-    [t('dashboard.open')]: r.open,
+    [t('dashboard.deals_won')]: r.deals,
   }));
 
   const presets: Preset[] = ['last_6_months', 'this_year', 'last_12_months'];
@@ -263,18 +296,19 @@ export function DashboardPage() {
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <Tile label={t('dashboard.leads_received')} value={String(leadsReceived)} icon={TrendingUp} />
         <Tile
-          label={t('dashboard.leads_created')}
-          value={String(totals.created)}
-          icon={TrendingUp}
+          label={t('dashboard.deals_won')}
+          value={String(wonTotals.count)}
+          icon={Target}
+          accent="success"
         />
-        <Tile label={t('dashboard.won')} value={String(totals.won)} icon={Target} accent="success" />
         <Tile
-          label={t('dashboard.win_rate')}
-          value={totals.winRate === null ? '—' : `${Math.round(totals.winRate * 100)}%`}
-          hint={t('dashboard.win_rate_hint')}
-          icon={Percent}
-          accent="primary"
+          label={t('dashboard.won_value')}
+          value={`€${wonTotals.oneTime.toFixed(0)}`}
+          hint={wonTotals.monthly > 0 ? `+€${wonTotals.monthly.toFixed(0)}/mo` : ''}
+          icon={Wallet}
+          accent="success"
         />
         <Tile
           label={t('dashboard.contracted_mrr')}
@@ -306,47 +340,17 @@ export function DashboardPage() {
               }}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line
-              type="monotone"
-              dataKey="income"
-              name={t('dashboard.income')}
-              stroke={CHART.income}
-              strokeWidth={2.5}
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="expenses"
-              name={t('dashboard.expenses')}
-              stroke={CHART.expenses}
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="profit"
-              name={t('dashboard.profit')}
-              stroke={CHART.profit}
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="recurring"
-              name={t('dashboard.recurring_collected')}
-              stroke={CHART.recurring}
-              strokeDasharray="5 5"
-              strokeWidth={2}
-              dot={false}
-            />
+            <Line type="monotone" dataKey="income" name={t('dashboard.income')} stroke={CHART.income} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+            <Line type="monotone" dataKey="expenses" name={t('dashboard.expenses')} stroke={CHART.expenses} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="profit" name={t('dashboard.profit')} stroke={CHART.profit} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="recurring" name={t('dashboard.recurring_collected')} stroke={CHART.recurring} strokeDasharray="5 5" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
 
-      <ChartCard title={t('dashboard.conversion_by_person')}>
-        <ResponsiveContainer width="100%" height={Math.max(180, ownerChartData.length * 48)}>
-          <BarChart data={ownerChartData} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }}>
+      <ChartCard title={t('dashboard.deals_won_by_person')}>
+        <ResponsiveContainer width="100%" height={Math.max(180, wonChartData.length * 48)}>
+          <BarChart data={wonChartData} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
             <XAxis type="number" allowDecimals={false} fontSize={11} tickLine={false} axisLine={false} />
             <YAxis type="category" dataKey="name" width={120} fontSize={11} tickLine={false} axisLine={false} />
@@ -357,17 +361,14 @@ export function DashboardPage() {
                 background: 'var(--card)',
               }}
             />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Bar dataKey={t('dashboard.won')} stackId="a" fill={CHART.won} radius={[0, 0, 0, 0]} />
-            <Bar dataKey={t('dashboard.lost')} stackId="a" fill={CHART.lost} />
-            <Bar dataKey={t('dashboard.open')} stackId="a" fill={CHART.open} radius={[0, 4, 4, 0]} />
+            <Bar dataKey={t('dashboard.deals_won')} fill={CHART.won} radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <CohortTable title={t('dashboard.by_person')} rows={byOwner} />
-        <CohortTable title={t('dashboard.by_source')} rows={bySource} />
+        <WonByPersonTable rows={wonByPerson} />
+        <LeadsBySourceTable rows={bySource} />
       </div>
     </div>
   );

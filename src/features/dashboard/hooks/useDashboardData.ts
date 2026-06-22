@@ -30,6 +30,35 @@ export function useDashboardLeads(range: { from: string; to: string }) {
   });
 }
 
+export type DashboardDeal = {
+  won_by_user_id: string | null;
+  one_time_value: number | null;
+  recurring_monthly_value: number | null;
+  invoiced_date: string | null;
+  actual_close_date: string | null;
+  accounting_stage: { code: string } | null;
+};
+
+/**
+ * ACTIVE deals = the wins. Excludes archived; the page also drops closed (churned)
+ * deals via accounting_stage.code === 'closed'. Won-date = invoiced_date ?? actual_close_date.
+ */
+export function useDashboardDeals() {
+  return useQuery({
+    queryKey: ['dashboard-deals'] as const,
+    queryFn: async (): Promise<DashboardDeal[]> => {
+      const { data, error } = await supabase
+        .from('deals')
+        .select(
+          'won_by_user_id, one_time_value, recurring_monthly_value, invoiced_date, actual_close_date, accounting_stage:accounting_stage_id ( code )',
+        )
+        .eq('archived', false);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as unknown as DashboardDeal[];
+    },
+  });
+}
+
 export type MonthlyPLRow = {
   period: string; // YYYY-MM
   total_income_gross: number | null;
