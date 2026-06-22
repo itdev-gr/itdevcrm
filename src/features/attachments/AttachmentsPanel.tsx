@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Paperclip, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAttachments } from './hooks/useAttachments';
@@ -55,26 +56,50 @@ export function AttachmentsPanel({ parentType, parentId }: Props) {
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as 'contract' | 'invoice' | 'other')}
-          className="rounded border px-2 py-1 text-sm"
+          className="h-9 rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm"
         >
           <option value="other">{t('attachments.kinds.other')}</option>
           <option value="contract">{t('attachments.kinds.contract')}</option>
           <option value="invoice">{t('attachments.kinds.invoice')}</option>
         </select>
-        <input ref={inputRef} type="file" onChange={onFileChange} className="text-sm" />
+
+        <input
+          ref={inputRef}
+          type="file"
+          onChange={onFileChange}
+          className="sr-only"
+          aria-label={t('attachments.choose_file')}
+        />
+
+        <div className="flex min-w-0 items-center gap-2 rounded-lg border border-input/80 bg-background px-1 py-1 shadow-sm">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => inputRef.current?.click()}
+          >
+            <Paperclip className="size-4" />
+            {t('attachments.choose_file')}
+          </Button>
+          <span
+            className="max-w-[240px] truncate px-1 text-sm text-muted-foreground"
+            title={selectedFile?.name ?? t('attachments.no_file')}
+          >
+            {selectedFile?.name ?? t('attachments.no_file')}
+          </span>
+        </div>
+
         <Button
           type="button"
           size="sm"
           disabled={!selectedFile || upload.isPending}
           onClick={() => void onUpload()}
         >
+          <Upload className="size-4" />
           {upload.isPending ? t('attachments.uploading') : t('attachments.upload')}
         </Button>
-        {selectedFile ? (
-          <span className="max-w-[220px] truncate text-xs text-muted-foreground" title={selectedFile.name}>
-            {selectedFile.name}
-          </span>
-        ) : null}
+
         <span className="text-xs text-muted-foreground">{t('attachments.max_size')}</span>
       </div>
 

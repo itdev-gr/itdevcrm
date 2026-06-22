@@ -25,6 +25,8 @@
     "mention_hint": "Type @ to mention someone"
   },
   "attachments": {
+    "choose_file": "Choose file",
+    "no_file": "No file chosen",
     "upload": "Upload file",
     "uploading": "Uploading…",
     "max_size": "Max 25 MB",
