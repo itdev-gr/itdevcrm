@@ -42,6 +42,8 @@ const CHART = {
   profit: '#2563eb',
   recurring: '#7c3aed',
   won: '#059669',
+  lost: '#dc2626',
+  open: '#94a3b8',
 } as const;
 
 function isoDay(d: Date): string {
@@ -222,19 +224,26 @@ export function DashboardPage() {
       id ? (m.get(id) ?? t('dashboard.unknown')) : t('dashboard.unassigned');
   }, [owners, t]);
 
-  // Leads — volume + source only (wins are tracked as deals, not lead stages).
+  // Leads — received count + by-source, plus the per-person conversion diagram
+  // (won/lost/open from lead stages) which the dashboard keeps as before.
   const leadLites: LeadLite[] = useMemo(
     () =>
       (leads.data ?? []).map((l) => ({
         owner: ownerName(l.owner_user_id),
         source: SOURCE_LABELS[l.source] ?? l.source,
-        outcome: 'open',
-        oneTimeValue: 0,
-        monthlyValue: 0,
+        outcome:
+          l.stage?.terminal_outcome === 'won'
+            ? 'won'
+            : l.stage?.terminal_outcome === 'lost'
+              ? 'lost'
+              : 'open',
+        oneTimeValue: Number(l.estimated_one_time_value) || 0,
+        monthlyValue: Number(l.estimated_monthly_value) || 0,
       })),
     [leads.data, ownerName],
   );
   const bySource = useMemo(() => cohortStats(leadLites, (l) => l.source), [leadLites]);
+  const byOwner = useMemo(() => cohortStats(leadLites, (l) => l.owner), [leadLites]);
   const leadsReceived = leadLites.length;
 
   // Deals = the wins. Active only: exclude closed (churned) deals; won-date in range.
@@ -275,9 +284,11 @@ export function DashboardPage() {
 
   const collectedInRange = trendData.reduce((s, r) => s + r.income, 0);
 
-  const wonChartData = wonByPerson.map((r) => ({
+  const ownerChartData = byOwner.map((r) => ({
     name: r.key,
-    [t('dashboard.deals_won')]: r.deals,
+    [t('dashboard.won')]: r.won,
+    [t('dashboard.lost')]: r.lost,
+    [t('dashboard.open')]: r.open,
   }));
 
   const presets: Preset[] = ['last_6_months', 'this_year', 'last_12_months'];
@@ -348,9 +359,9 @@ export function DashboardPage() {
         </ResponsiveContainer>
       </ChartCard>
 
-      <ChartCard title={t('dashboard.deals_won_by_person')}>
-        <ResponsiveContainer width="100%" height={Math.max(180, wonChartData.length * 48)}>
-          <BarChart data={wonChartData} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }}>
+      <ChartCard title={t('dashboard.conversion_by_person')}>
+        <ResponsiveContainer width="100%" height={Math.max(180, ownerChartData.length * 48)}>
+          <BarChart data={ownerChartData} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
             <XAxis type="number" allowDecimals={false} fontSize={11} tickLine={false} axisLine={false} />
             <YAxis type="category" dataKey="name" width={120} fontSize={11} tickLine={false} axisLine={false} />
@@ -361,7 +372,10 @@ export function DashboardPage() {
                 background: 'var(--card)',
               }}
             />
-            <Bar dataKey={t('dashboard.deals_won')} fill={CHART.won} radius={[0, 4, 4, 0]} />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
+            <Bar dataKey={t('dashboard.won')} stackId="a" fill={CHART.won} radius={[0, 0, 0, 0]} />
+            <Bar dataKey={t('dashboard.lost')} stackId="a" fill={CHART.lost} />
+            <Bar dataKey={t('dashboard.open')} stackId="a" fill={CHART.open} radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
