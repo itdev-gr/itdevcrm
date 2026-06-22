@@ -8,7 +8,7 @@
 
 **Tech Stack:** React + react-query + recharts; Vitest for the pure aggregator. No DB/schema changes.
 
-**Key facts (verified 2026-06-22):** 474 active deals; won-date = `coalesce(invoiced_date, actual_close_date)` (all set, all 2026); `won_by_user_id` set on 419; deals have **no** `lead_source`; deal amounts partial (15 one-time, 140 monthly).
+**Key facts (verified 2026-06-22):** Show only **ACTIVE deals** — exclude **closed** ones (churned customers we no longer have). "Closed" = the deal's accounting stage `code = 'closed'` (board `accounting_onboarding`). Of 474 non-archived deals, **232 are closed → 242 active** (codes new/paid_in_full/awaiting_payment/on_hold/documents_verified all stay). Active value: €7,154 one-time + €37,232/mo. Won-date = `coalesce(invoiced_date, actual_close_date)` (all set, all 2026); `won_by_user_id` set on most; deals have **no** `lead_source`.
 
 ---
 
@@ -75,19 +75,22 @@ export type DashboardDeal = {
   recurring_monthly_value: number | null;
   invoiced_date: string | null;
   actual_close_date: string | null;
+  accounting_stage: { code: string } | null; // exclude code==='closed' (churned)
 };
 
-/** Active deals = the wins. Won-date = invoiced_date ?? actual_close_date (filtered in the page). */
+/** ACTIVE deals = the wins. Excludes archived + closed (churned). Won-date = invoiced_date ?? actual_close_date. */
 export function useDashboardDeals() {
   return useQuery({
     queryKey: ['dashboard-deals'] as const,
     queryFn: async (): Promise<DashboardDeal[]> => {
       const { data, error } = await supabase
         .from('deals')
-        .select('won_by_user_id, one_time_value, recurring_monthly_value, invoiced_date, actual_close_date')
+        .select(
+          'won_by_user_id, one_time_value, recurring_monthly_value, invoiced_date, actual_close_date, accounting_stage:accounting_stage_id ( code )',
+        )
         .eq('archived', false);
       if (error) throw new Error(error.message);
-      return (data ?? []) as DashboardDeal[];
+      return (data ?? []) as unknown as DashboardDeal[];
     },
   });
 }
@@ -108,11 +111,12 @@ export function useDashboardDeals() {
 ```ts
 const deals = useDashboardDeals();
 const dealLites: DealLite[] = useMemo(() => {
-  const inRange = (d: DashboardDeal) => {
+  const isActiveWonInRange = (d: DashboardDeal) => {
+    if (d.accounting_stage?.code === 'closed') return false; // churned — not a deal we still have
     const won = d.invoiced_date ?? d.actual_close_date;
     return !!won && won >= range.from && won <= range.to;
   };
-  return (deals.data ?? []).filter(inRange).map((d) => ({
+  return (deals.data ?? []).filter(isActiveWonInRange).map((d) => ({
     person: ownerName(d.won_by_user_id),
     oneTime: Number(d.one_time_value) || 0,
     monthly: Number(d.recurring_monthly_value) || 0,
@@ -181,11 +185,11 @@ Add a focused `WonByPersonTable` component in the file (mirrors `CohortTable` st
 
 ### Task 5: Verify live + record
 
-- [ ] **Step 1:** Confirm via SQL the "Deals won" number for the default range matches the tile (count of active deals with `coalesce(invoiced_date,actual_close_date)` in range ≈ 474).
+- [ ] **Step 1:** Confirm via SQL the "Deals won" number matches the tile: non-archived deals whose accounting stage `code <> 'closed'` with `coalesce(invoiced_date,actual_close_date)` in range ≈ **242**.
 - [ ] **Step 2:** Memory note (dashboard won = deals; financial widgets pending accounting rebuild) + MEMORY.md pointer.
 
 ## Self-Review
-- **Spec coverage:** won=deals → Tasks 1-3; accounting deals counted as won → won-date coalesce includes all 474 (all carry accounting stage) ✓; drop win rate → Task 3 Step 2/5; by-source stays leads (deals lack source) → Task 3 Step 4. All covered.
+- **Spec coverage:** won=deals → Tasks 1-3; **active-only (exclude `closed`)** → hook type + `isActiveWonInRange` (Task 2/3); accounting (non-closed) deals counted as won → won-date coalesce, 242 active ✓; drop win rate → Task 3 Step 2/5; by-source stays leads (deals lack source) → Task 3 Step 4. All covered.
 - **Placeholders:** none — code given. Task 3 Step 4 references new components `WonByPersonTable`/`LeadsBySourceTable` modeled on existing `CohortTable` (same file) — implementer mirrors its markup.
 - **Type consistency:** `DealLite`/`DealPersonRow` (Task 1) used in Task 3; `useDashboardDeals`/`DashboardDeal` (Task 2) used in Task 3.
 - **Caveat to surface in UI/notes:** "Won value" is partial (most deals have €0 amount) — expected, not a bug.
