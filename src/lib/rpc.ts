@@ -216,8 +216,11 @@ export type LeadIntakeActionResult =
 
 // Admin-only. Release moves a held duplicate into `leads`; discard marks it
 // discarded. Both go through the loose `rpcCall` (not in generated types).
-export async function releaseLeadIntake(id: string): Promise<LeadIntakeActionResult> {
-  const { data, error } = await rpcCall('release_lead_intake', { p_id: id });
+export async function releaseLeadIntake(
+  id: string,
+  force = false,
+): Promise<LeadIntakeActionResult> {
+  const { data, error } = await rpcCall('release_lead_intake', { p_id: id, p_force: force });
   if (error) return { ok: false, errors: [error.message] };
   const r = data as { ok: boolean; lead_id?: string; errors?: string[] };
   if (!r.ok) return { ok: false, errors: r.errors ?? ['release_failed'] };
