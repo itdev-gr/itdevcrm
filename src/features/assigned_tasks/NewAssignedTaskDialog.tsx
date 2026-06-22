@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { useCreateAssignedTask } from './hooks/useCreateAssignedTask';
+import { ImportanceSelect } from '@/features/tasks/ImportanceSelect';
+import type { ImportanceCode } from '@/features/tasks/importance';
 
 type Props = {
   open: boolean;
@@ -27,11 +29,12 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
   const [description, setDescription] = useState('');
   const [assigneeUserId, setAssigneeUserId] = useState('');
   const [departmentId, setDepartmentId] = useState<string | null>(null);
+  const [importance, setImportance] = useState<ImportanceCode | ''>('');
   const [submitting, setSubmitting] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !assigneeUserId || !departmentId) return;
+    if (!title.trim() || !assigneeUserId || !departmentId || !importance) return;
     setSubmitting(true);
     try {
       await create.mutateAsync({
@@ -40,11 +43,13 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
         description: description.trim() || null,
         assigneeUserId,
         departmentId,
+        importance,
       });
       setTitle('');
       setDescription('');
       setAssigneeUserId('');
       setDepartmentId(null);
+      setImportance('');
       onOpenChange(false);
     } catch (err) {
       alert((err as Error).message);
@@ -53,7 +58,7 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
     }
   }
 
-  const canSubmit = !!title.trim() && !!assigneeUserId && !!departmentId;
+  const canSubmit = !!title.trim() && !!assigneeUserId && !!departmentId && !!importance;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,6 +125,12 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
                 );
               })}
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="at-importance">
+              {t('importance.label', { ns: 'common' })} <span className="text-red-600 dark:text-red-400">*</span>
+            </Label>
+            <ImportanceSelect id="at-importance" value={importance} onChange={setImportance} />
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>

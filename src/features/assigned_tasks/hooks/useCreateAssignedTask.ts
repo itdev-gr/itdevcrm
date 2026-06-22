@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import type { ImportanceCode } from '@/features/tasks/importance';
 
 export type CreateAssignedTaskInput = {
   source: { kind: 'deal' | 'job'; id: string };
@@ -8,6 +9,7 @@ export type CreateAssignedTaskInput = {
   description: string | null;
   assigneeUserId: string;
   departmentId: string;
+  importance: ImportanceCode;
 };
 
 export function useCreateAssignedTask() {
@@ -32,6 +34,7 @@ export function useCreateAssignedTask() {
           assignee_user_id: input.assigneeUserId,
           created_by_user_id: user.id,
           department_group_id: input.departmentId,
+          importance: input.importance,
         } as never)
         .select('id')
         .single();

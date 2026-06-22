@@ -37,7 +37,7 @@ function wrap(children: React.ReactNode) {
 describe('NewAssignedTaskDialog', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('keeps submit disabled until title, assignee, and a department are picked', async () => {
+  it('keeps submit disabled until title, assignee, department AND importance are picked', async () => {
     const user = userEvent.setup();
     render(wrap(<NewAssignedTaskDialog open onOpenChange={() => {}} source={{ kind: 'deal', id: 'd1' }} />));
 
@@ -46,9 +46,10 @@ describe('NewAssignedTaskDialog', () => {
 
     await user.type(screen.getByLabelText(/task title/i), 'My task');
     await user.selectOptions(screen.getByLabelText(/assign to/i), 'u1');
-    expect(submit).toBeDisabled(); // no department yet
-
     await user.click(screen.getByRole('radio', { name: 'Web Dev' }));
+    expect(submit).toBeDisabled(); // no importance yet
+
+    await user.selectOptions(screen.getByLabelText(/importance/i), 'low');
     expect(submit).toBeEnabled();
   });
 
@@ -60,6 +61,7 @@ describe('NewAssignedTaskDialog', () => {
     await user.selectOptions(screen.getByLabelText(/assign to/i), 'u1');
     await user.click(screen.getByRole('radio', { name: 'Web Dev' }));
     await user.click(screen.getByRole('radio', { name: 'Hosting' }));
+    await user.selectOptions(screen.getByLabelText(/importance/i), 'medium');
     await user.click(screen.getByRole('button', { name: /create task/i }));
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
@@ -69,6 +71,33 @@ describe('NewAssignedTaskDialog', () => {
       description: null,
       assigneeUserId: 'u1',
       departmentId: 'g2', // hosting replaced web_dev
+      importance: 'medium',
     });
+  });
+});
+
+describe('NewAssignedTaskDialog importance', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('requires importance and sends it in the create payload', async () => {
+    const user = userEvent.setup();
+    render(wrap(<NewAssignedTaskDialog open onOpenChange={() => {}} source={{ kind: 'deal', id: 'd1' }} />));
+
+    await user.type(screen.getByLabelText(/task title/i), 'Task A');
+    await user.selectOptions(screen.getByLabelText(/assign to/i), 'u1');
+    await user.click(screen.getByRole('radio', { name: 'Web Dev' }));
+
+    const submit = screen.getByRole('button', { name: /create task/i });
+    expect(submit).toBeDisabled(); // importance still empty
+
+    await user.selectOptions(screen.getByLabelText(/importance/i), 'urgent');
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ importance: 'urgent', title: 'Task A', assigneeUserId: 'u1', departmentId: 'g1' }),
+      ),
+    );
   });
 });
