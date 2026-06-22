@@ -190,11 +190,12 @@ export function LeadIntakePage() {
             const matches = (r.matches as unknown as LeadIntakeMatch[]) ?? [];
             const leadMatches = leadMatchesOf(matches);
             const canMerge = leadMatches.length > 0;
-            function mergeInto(targetLeadId: string) {
+            function mergeInto(targetLeadId: string): boolean {
               if (deadEndSet.has(targetLeadId) && !window.confirm(t('leads:intake.merge_dead_end_confirm'))) {
-                return;
+                return false;
               }
               merge.mutate({ id: r.id, targetLeadId });
+              return true;
             }
             function onMerge() {
               const only = leadMatches[0];
@@ -304,8 +305,7 @@ export function LeadIntakePage() {
                               (isDead ? 'border-amber-400 text-amber-700 dark:text-amber-300' : '')
                             }
                             onClick={() => {
-                              mergeInto(m.record_id);
-                              setPickFor(null);
+                              if (mergeInto(m.record_id)) setPickFor(null);
                             }}
                           >
                             {m.display_name}

@@ -342,4 +342,31 @@ describe('LeadIntakePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'leads:intake.merge' }));
     expect(merge).not.toHaveBeenCalled();
   });
+
+  it('keeps the picker open when the dead-end confirm is dismissed', () => {
+    useDeadEndLeads.mockReturnValue(new Set(['L1']));
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i9',
+          title: 'Form',
+          email: 'd@x.gr',
+          phone: '+306900000009',
+          created_at: '2026-06-19T13:00:00Z',
+          matched_on: ['phone'],
+          matches: [
+            { match_type: 'lead', record_id: 'L1', display_name: 'Lead One', context: 'Not Interested', matched_field: 'phone', matched_email: null, matched_phone: '6900000009' },
+            { match_type: 'lead', record_id: 'L2', display_name: 'Lead Two', context: 'New', matched_field: 'phone', matched_email: null, matched_phone: '6900000009' },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.merge' })); // open picker
+    fireEvent.click(screen.getByRole('button', { name: /Lead One/ })); // dead-end target, confirm dismissed
+    expect(merge).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Lead Two/ })).toBeInTheDocument(); // picker still open
+  });
 });
