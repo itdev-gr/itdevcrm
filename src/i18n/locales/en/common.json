@@ -26,10 +26,25 @@
   },
   "tasks_page": {
     "title": "Tasks",
-    "subtitle": "All tasks assigned to you.",
+    "subtitle": "Your tasks and the ones you've assigned to others.",
     "empty": "No tasks assigned to you.",
     "empty_admin": "No open tasks for the team.",
-    "created": "Created"
+    "created": "Created",
+    "tab_board": "Board",
+    "tab_archive": "Resolved archive",
+    "all_team": "All team",
+    "filter_to_me": "To me",
+    "filter_by_me": "By me",
+    "filter_all": "All",
+    "column_resolved": "Resolved",
+    "assigned_to": "→ {{name}}",
+    "personal": "Personal",
+    "resolve": "Resolve",
+    "reopen": "Reopen",
+    "board_empty": "Nothing here.",
+    "archive_empty": "You haven't resolved any tasks yet.",
+    "resolved_on": "Resolved {{date}}",
+    "show_more": "Show more"
   },
   "docs": {
     "toc_label": "On this page",
