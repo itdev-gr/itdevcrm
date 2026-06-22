@@ -28,13 +28,13 @@ function activeJobs(c: AccountingClientRow) {
 function monthlyRevenue(c: AccountingClientRow): number {
   return activeJobs(c)
     .filter((j) => j.billing_type === 'recurring_monthly')
-    .reduce((sum, j) => sum + (Number(j.monthly_amount) || 0), 0);
+    .reduce((sum, j) => sum + (Number(j.amount_net) || 0), 0);
 }
 
 function yearlyRevenue(c: AccountingClientRow): number {
   return activeJobs(c)
     .filter((j) => j.billing_type === 'recurring_yearly')
-    .reduce((sum, j) => sum + (Number(j.monthly_amount) || 0), 0);
+    .reduce((sum, j) => sum + (Number(j.amount_net) || 0), 0);
 }
 
 function clientStatus(c: AccountingClientRow, t: (key: string) => string) {

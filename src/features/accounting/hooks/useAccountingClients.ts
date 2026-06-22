@@ -23,8 +23,7 @@ export type AccountingClientRow = {
     id: string;
     service_type: string;
     billing_type: string;
-    monthly_amount: number | null;
-    one_time_amount: number | null;
+    amount_net: number | null;
     status: string;
     archived: boolean;
   }[];
@@ -42,7 +41,7 @@ export function useAccountingClients() {
           industry, country, address, vat_number, assigned_owner_id, created_at, start_date,
           client_blocks!client_id(unblocked_at, reason),
           deals!client_id(id, archived, locked_at),
-          jobs!client_id(id, service_type, billing_type, monthly_amount, one_time_amount, status, archived)
+          jobs!client_id(id, service_type, billing_type, amount_net, status, archived)
           `,
         )
         .eq('archived', false)

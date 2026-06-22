@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * Contracted MRR: monthly recurring jobs at face value plus yearly jobs at
- * 1/12 of their annual amount (yearly jobs store the ANNUAL price in
- * monthly_amount). Mirrors the "Monthly recurring" total on the Accounting →
- * Recurring page so the two screens always agree; the amount actually
- * collected in a period is a separate number (see useMRR).
+ * 1/12 of their annual amount. The figure lives in jobs.amount_net (the
+ * universal amount column; for yearly jobs it holds the ANNUAL price). Mirrors
+ * the "Monthly recurring" total on the Accounting → Recurring page; the amount
+ * actually collected in a period is a separate number (see useMRR).
  */
 export function monthlyEquivalent(billingType: string, amount: number | null): number {
   const n = Number(amount) || 0;
@@ -19,15 +19,15 @@ export function useContractedMRR() {
     queryFn: async (): Promise<number> => {
       const { data, error } = await supabase
         .from('jobs')
-        .select('monthly_amount, billing_type, clients!inner(archived)')
+        .select('amount_net, billing_type, clients!inner(archived)')
         .eq('status', 'active')
         .eq('archived', false)
         .neq('billing_type', 'one_time')
         .eq('clients.archived', false);
       if (error) throw new Error(error.message);
       return (
-        (data ?? []) as { monthly_amount: number | null; billing_type: string }[]
-      ).reduce((s, r) => s + monthlyEquivalent(r.billing_type, r.monthly_amount), 0);
+        (data ?? []) as { amount_net: number | null; billing_type: string }[]
+      ).reduce((s, r) => s + monthlyEquivalent(r.billing_type, r.amount_net), 0);
     },
   });
 }

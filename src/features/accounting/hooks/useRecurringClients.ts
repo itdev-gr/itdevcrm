@@ -35,7 +35,7 @@ type ClientRecord = {
     id: string;
     service_type: string;
     billing_type: string;
-    monthly_amount: number | string | null;
+    amount_net: number | string | null;
     status: string;
     archived: boolean;
   }>;
@@ -54,7 +54,7 @@ export function useRecurringClients() {
       const { data, error } = await supabase
         .from('clients')
         .select(
-          'id, name, contact_first_name, contact_last_name, email, phone, industry, status, jobs(id, service_type, billing_type, monthly_amount, status, archived), client_blocks(id, unblocked_at), deals(id, archived, deal_payments(status, end_date, billing_type))',
+          'id, name, contact_first_name, contact_last_name, email, phone, industry, status, jobs(id, service_type, billing_type, amount_net, status, archived), client_blocks(id, unblocked_at), deals(id, archived, deal_payments(status, end_date, billing_type))',
         )
         .eq('archived', false);
       if (error) throw new Error(error.message);
@@ -72,17 +72,17 @@ export function useRecurringClients() {
           );
           if (activeJobs.length === 0) return null;
 
-          // Yearly jobs store the ANNUAL price in monthly_amount — keep the
-          // two billing cadences in separate buckets so nothing gets counted
+          // Amount lives in jobs.amount_net (yearly jobs hold the ANNUAL price there).
+          // Keep the two billing cadences in separate buckets so nothing gets counted
           // as 12x its real monthly value.
           const monthlyTotal = activeJobs.reduce(
             (sum, j) =>
-              sum + (j.billing_type === 'recurring_monthly' ? Number(j.monthly_amount) || 0 : 0),
+              sum + (j.billing_type === 'recurring_monthly' ? Number(j.amount_net) || 0 : 0),
             0,
           );
           const yearlyTotal = activeJobs.reduce(
             (sum, j) =>
-              sum + (j.billing_type === 'recurring_yearly' ? Number(j.monthly_amount) || 0 : 0),
+              sum + (j.billing_type === 'recurring_yearly' ? Number(j.amount_net) || 0 : 0),
             0,
           );
           const services = Array.from(new Set(activeJobs.map((j) => j.service_type)));
