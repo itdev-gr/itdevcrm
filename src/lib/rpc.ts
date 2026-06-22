@@ -257,6 +257,16 @@ export async function mergeLeadIntake(
   };
 }
 
+// Returns the subset of the given lead ids that are dead-end / not-interested,
+// so the intake merge picker can warn before merging into one (which discards
+// the new submission). Loose `rpcCall` (not in generated types). Read-only.
+export async function deadEndLeadIds(ids: string[]): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await rpcCall('lead_dead_end_ids', { p_ids: ids });
+  if (error) return [];
+  return ((data as { id: string }[]) ?? []).map((row) => row.id);
+}
+
 export type BulkMergePreviewResult =
   | { ok: true; mergeable: number; dead_end: number }
   | { ok: false; errors: string[] };
