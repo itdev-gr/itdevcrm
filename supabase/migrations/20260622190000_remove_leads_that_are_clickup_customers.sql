@@ -1,0 +1,26 @@
+-- One-time cleanup: remove pipeline leads that are already CUSTOMERS in ClickUp
+-- (ClickUp "Leads" list tasks past the `sales` status: accounting / technical /
+-- done / close this client) but were NOT in the CRM clients table — the ClickUp→CRM
+-- migration gap. Matched CRM leads ↔ ClickUp customers by email OR normalized phone
+-- (last-10-digit key) using the ClickUp API; won/converted leads excluded.
+--
+-- Applied to prod 2026-06-22 via the Management API after explicit user confirmation
+-- of the exact 16 rows: 16 leads + 83 lead-comments deleted. Full row backup taken first.
+-- The match set was computed from ClickUp API output (not reproducible in pure SQL),
+-- so the backup table IS the authoritative record of what was removed.
+--
+-- ROLLBACK (restores the lead rows; deleted polymorphic comments are not recoverable):
+--   insert into public.leads (<explicit column list matching public.leads>)
+--   select <same columns> from public.leads_clickup_customer_backup_20260622;
+--   -- then optionally: drop table public.leads_clickup_customer_backup_20260622;
+--
+-- Effective operations that were run:
+--   create table public.leads_clickup_customer_backup_20260622 as
+--     select l.*, now() as backed_up_at from public.leads l
+--     left join public.pipeline_stages ps on ps.id = l.stage_id
+--     where l.id in (<16 ids from ClickUp match>)
+--       and (ps.code is distinct from 'won') and l.converted_at is null;
+--   delete from public.comments where parent_type='lead'
+--     and parent_id in (select id from public.leads_clickup_customer_backup_20260622);
+--   delete from public.leads
+--     where id in (select id from public.leads_clickup_customer_backup_20260622);
