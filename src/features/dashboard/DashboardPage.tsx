@@ -266,10 +266,11 @@ export function DashboardPage() {
   const byOwner = useMemo(() => cohortStats(leadLites, (l) => l.owner), [leadLites]);
   const leadsReceived = leadLites.length;
 
-  // Deals = the wins. Active only: exclude closed (churned) deals; won-date in range.
+  // Deals = the wins. Active only: exclude closed (churned) + done (finished); won-date in range.
   const dealLites: DealLite[] = useMemo(() => {
     const isActiveWonInRange = (d: DashboardDeal) => {
-      if (d.accounting_stage?.code === 'closed') return false;
+      const code = d.accounting_stage?.code;
+      if (code === 'closed' || code === 'done') return false;
       const won = d.invoiced_date ?? d.actual_close_date;
       return !!won && won >= range.from && won <= range.to;
     };
