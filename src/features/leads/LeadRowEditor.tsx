@@ -8,6 +8,7 @@ import { stageAccent } from '@/lib/stage-colors';
 import { cn } from '@/lib/utils';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
 import { useUpdateLead } from './hooks/useUpdateLead';
+import { fieldInputClass, tableSelectClass } from './leadsTableLayout';
 import type { LeadRow } from './hooks/useLeads';
 import type { AssignableOwner } from './hooks/useAssignableOwners';
 import type { StageRow } from '@/features/stages/hooks/usePipelineStages';
@@ -15,8 +16,8 @@ import type { StageRow } from '@/features/stages/hooks/usePipelineStages';
 const UNASSIGNED = '__unassigned__';
 const SOURCES = ['manual', 'meta', 'import'] as const;
 
-const fieldInputClass =
-  'h-8 rounded-lg border-input/70 bg-background text-sm shadow-none focus-visible:border-[#1a9696]/40 focus-visible:ring-[#1a9696]/20';
+const cellClass = 'px-3 py-2.5 align-middle';
+const sectionBorder = 'border-l border-border/50';
 
 type Props = {
   lead: LeadRow;
@@ -64,8 +65,13 @@ export function LeadRowEditor({
   }
 
   return (
-    <tr className={cn('transition-colors hover:bg-muted/30', selected && 'bg-[#1a9696]/5')}>
-      <td className="px-3 py-2 align-top">
+    <tr
+      className={cn(
+        'group border-b border-border/40 transition-colors last:border-b-0 hover:bg-muted/35',
+        selected && 'bg-[#1a9696]/5',
+      )}
+    >
+      <td className={cellClass}>
         <input
           type="checkbox"
           checked={selected}
@@ -73,7 +79,7 @@ export function LeadRowEditor({
           aria-label="select"
         />
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <Link
           to={`/leads/${lead.id}`}
           className="inline-flex rounded-md bg-muted/60 px-2 py-0.5 font-mono text-xs font-medium text-[#157777] hover:bg-[#1a9696]/10 dark:text-[#7ad4d4]"
@@ -81,11 +87,11 @@ export function LeadRowEditor({
           {lead.code ?? t('table.open')}
         </Link>
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <FilterSelect
           value={lead.source ?? 'manual'}
           onChange={(e) => commit({ source: e.target.value })}
-          className="h-8 w-full min-w-[100px] text-xs"
+          className={cn(tableSelectClass, 'min-w-[96px]')}
         >
           {SOURCES.map((s) => (
             <option key={s} value={s}>
@@ -94,11 +100,12 @@ export function LeadRowEditor({
           ))}
         </FilterSelect>
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className={fieldInputClass}
+          title={title || undefined}
           onBlur={() => {
             const v = title.trim();
             if (!v) {
@@ -109,11 +116,12 @@ export function LeadRowEditor({
           }}
         />
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <Input
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           className={fieldInputClass}
+          title={fullName || undefined}
           onBlur={() => {
             const v = fullName.trim();
             const cur = [lead.contact_first_name, lead.contact_last_name].filter(Boolean).join(' ');
@@ -121,41 +129,48 @@ export function LeadRowEditor({
           }}
         />
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cn(cellClass, sectionBorder)}>
         <Input
+          type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={fieldInputClass}
+          className={cn(fieldInputClass, 'font-mono text-xs tracking-tight')}
+          title={email || undefined}
+          spellCheck={false}
           onBlur={() => {
             if (email.trim() !== (lead.email ?? '')) void commit({ email: email.trim() || null });
           }}
         />
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <Input
+          type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className={fieldInputClass}
+          className={cn(fieldInputClass, 'tabular-nums')}
+          title={phone || undefined}
           onBlur={() => {
             if (phone.trim() !== (lead.phone ?? '')) void commit({ phone: phone.trim() || null });
           }}
         />
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <Input
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
-          className={fieldInputClass}
+          className={cn(fieldInputClass, 'text-xs')}
+          title={website || undefined}
+          spellCheck={false}
           onBlur={() => {
             if (website.trim() !== (lead.website ?? '')) void commit({ website: website.trim() || null });
           }}
         />
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cn(cellClass, sectionBorder)}>
         <FilterSelect
           value={lead.industry ?? ''}
           onChange={(e) => commit({ industry: e.target.value || null })}
-          className="h-8 w-full text-xs"
+          className={tableSelectClass}
         >
           <option value="">—</option>
           {INDUSTRIES.map((ind) => (
@@ -168,24 +183,25 @@ export function LeadRowEditor({
           )}
         </FilterSelect>
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <Input
           value={company}
           onChange={(e) => setCompany(e.target.value)}
           className={fieldInputClass}
+          title={company || undefined}
           onBlur={() => {
             if (company.trim() !== (lead.company_name ?? ''))
               void commit({ company_name: company.trim() || null });
           }}
         />
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cn(cellClass, sectionBorder)}>
         <FilterSelect
           value={lead.owner_user_id ?? UNASSIGNED}
           onChange={(e) =>
             commit({ owner_user_id: e.target.value === UNASSIGNED ? null : e.target.value })
           }
-          className="h-8 w-full min-w-[140px] text-xs"
+          className={cn(tableSelectClass, 'min-w-[148px]')}
         >
           <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
           {owners.map((o) => (
@@ -195,12 +211,12 @@ export function LeadRowEditor({
           ))}
         </FilterSelect>
       </td>
-      <td className="px-3 py-2 align-top">
+      <td className={cellClass}>
         <div className={cn('rounded-lg border-l-[3px] pl-2', statusAccent.columnBorder.replace('border-t-', 'border-l-'))}>
           <FilterSelect
             value={lead.stage_id ?? ''}
             onChange={(e) => commit({ stage_id: e.target.value })}
-            className="h-8 w-full min-w-[140px] text-xs"
+            className={cn(tableSelectClass, 'min-w-[140px]')}
           >
             {stages.map((s) => (
               <option key={s.id} value={s.id} disabled={isStageMoveBlocked(s, currentUserId)}>

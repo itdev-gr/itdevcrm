@@ -10,6 +10,12 @@ import { Input } from '@/components/ui/input';
 import { formatDate } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
+import {
+  ACCOUNTING_CLIENTS_TABLE_COLS,
+  ACCOUNTING_CLIENTS_TABLE_MIN_WIDTH,
+  tableCellClass,
+  tableSectionBorder,
+} from '@/features/clients/clientsTableLayout';
 
 function isBlocked(c: AccountingClientRow): boolean {
   return (c.client_blocks ?? []).some((b) => b.unblocked_at == null);
@@ -110,27 +116,45 @@ export function AccountingClientsPage() {
           </div>
         ) : (
           <div className="h-full overflow-auto">
-            <table className="w-full min-w-[1100px] border-collapse text-sm">
+            <table
+              className="w-full table-fixed border-collapse text-sm"
+              style={{ minWidth: ACCOUNTING_CLIENTS_TABLE_MIN_WIDTH }}
+            >
+              <colgroup>
+                {ACCOUNTING_CLIENTS_TABLE_COLS.map((w, i) => (
+                  <col key={i} className={w} />
+                ))}
+              </colgroup>
               <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
                 <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.code')}</th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.start_date')}</th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.company')}</th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.contact')}</th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.email')}</th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.phone')}</th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.vat')}</th>
-                  <th className="px-4 py-3 text-right font-medium">
+                  <th className={cn(tableCellClass, 'font-medium')}>{t('clients_page.table.code')}</th>
+                  <th className={cn(tableCellClass, 'font-medium')}>{t('clients_page.table.start_date')}</th>
+                  <th className={cn(tableCellClass, tableSectionBorder, 'font-medium text-foreground/80')}>
+                    {t('clients_page.table.company')}
+                  </th>
+                  <th className={cn(tableCellClass, tableSectionBorder, 'font-medium')}>
+                    {t('clients_page.table.contact')}
+                  </th>
+                  <th className={cn(tableCellClass, 'font-medium text-foreground/80')}>
+                    {t('clients_page.table.email')}
+                  </th>
+                  <th className={cn(tableCellClass, 'font-medium')}>{t('clients_page.table.phone')}</th>
+                  <th className={cn(tableCellClass, tableSectionBorder, 'font-medium')}>
+                    {t('clients_page.table.vat')}
+                  </th>
+                  <th className={cn(tableCellClass, 'text-right font-medium')}>
                     {t('clients_page.table.active_jobs')}
                   </th>
-                  <th className="px-4 py-3 text-right font-medium">
+                  <th className={cn(tableCellClass, 'text-right font-medium')}>
                     {t('clients_page.table.monthly_revenue')}
                   </th>
-                  <th className="px-4 py-3 text-right font-medium">
+                  <th className={cn(tableCellClass, 'text-right font-medium')}>
                     {t('clients_page.table.yearly_revenue')}
                   </th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.status')}</th>
-                  <th className="px-4 py-3 font-medium">{t('clients_page.table.industry')}</th>
+                  <th className={cn(tableCellClass, tableSectionBorder, 'font-medium')}>
+                    {t('clients_page.table.status')}
+                  </th>
+                  <th className={cn(tableCellClass, 'font-medium')}>{t('clients_page.table.industry')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,64 +171,75 @@ export function AccountingClientsPage() {
                       key={c.id}
                       className="group border-b border-border/40 transition-colors last:border-b-0 hover:bg-muted/35"
                     >
-                      <td className="px-4 py-3">
+                      <td className={tableCellClass}>
                         {c.code ? (
                           <CopyableCode code={c.code} className="text-[10px]" />
                         ) : (
                           <span className="text-muted-foreground/50">—</span>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
+                      <td className={cn(tableCellClass, 'whitespace-nowrap text-xs text-muted-foreground')}>
                         {c.start_date ? formatDate(c.start_date) : formatDate(c.created_at)}
                       </td>
-                      <td className="max-w-[220px] px-4 py-3">
+                      <td className={cn(tableCellClass, tableSectionBorder)}>
                         <Link
                           to={`/clients/${c.id}`}
-                          className="block truncate font-medium text-primary hover:underline"
+                          className="block font-medium text-primary transition-colors hover:underline"
+                          title={c.name}
                         >
                           {c.name}
                         </Link>
                       </td>
-                      <td className="max-w-[140px] truncate px-4 py-3 text-muted-foreground">
+                      <td className={cn(tableCellClass, tableSectionBorder, 'text-muted-foreground')} title={contactName || undefined}>
                         {contactName || <span className="text-muted-foreground/50">—</span>}
                       </td>
-                      <td className="max-w-[180px] truncate px-4 py-3 text-muted-foreground">
-                        {c.email ?? <span className="text-muted-foreground/50">—</span>}
+                      <td className={tableCellClass}>
+                        {c.email ? (
+                          <a
+                            href={`mailto:${c.email}`}
+                            className="block font-mono text-xs tracking-tight text-muted-foreground transition-colors hover:text-primary"
+                            title={c.email}
+                          >
+                            {c.email}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className={cn(tableCellClass, 'text-muted-foreground')}>
                         <CallLink phone={c.phone} />
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                      <td className={cn(tableCellClass, tableSectionBorder, 'font-mono text-xs text-muted-foreground')}>
                         {c.vat_number ?? <span className="font-sans text-muted-foreground/50">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
+                      <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                         {jobs.length > 0 ? (
                           <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
                             {jobs.length}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground/50">0</span>
+                          <span className="text-muted-foreground/40">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
+                      <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                         {monthly > 0 ? (
                           <span className="font-medium text-emerald-700 dark:text-emerald-400">
                             €{monthly.toFixed(0)}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground/50">€0</span>
+                          <span className="text-muted-foreground/40">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
+                      <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                         {yearly > 0 ? (
                           <span className="font-medium text-emerald-700 dark:text-emerald-400">
                             €{yearly.toFixed(0)}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground/50">€0</span>
+                          <span className="text-muted-foreground/40">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className={cn(tableCellClass, tableSectionBorder)}>
                         <span
                           className={cn(
                             'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -214,9 +249,11 @@ export function AccountingClientsPage() {
                           {status}
                         </span>
                       </td>
-                      <td className="max-w-[140px] truncate px-4 py-3 text-muted-foreground">
+                      <td className={cn(tableCellClass, 'text-muted-foreground')} title={c.industry ? industryLabel(c.industry, lang) : undefined}>
                         {c.industry ? (
-                          industryLabel(c.industry, lang)
+                          <span className="inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-xs">
+                            {industryLabel(c.industry, lang)}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground/50">—</span>
                         )}

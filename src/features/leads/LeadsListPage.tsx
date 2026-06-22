@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Download, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -16,6 +17,7 @@ import { useLeadDistribution } from './hooks/useLeadDistribution';
 import { useDistributeUnassigned } from './hooks/useDistributeUnassigned';
 import { isLeadDeletable } from './leadDeletable';
 import { LeadRowEditor } from './LeadRowEditor';
+import { LEADS_TABLE_COLS, LEADS_TABLE_MIN_WIDTH } from './leadsTableLayout';
 import { filterAndSortLeads, UNASSIGNED, type LeadSort, type LeadSortKey } from './leadsTableFilter';
 import { leadsToCsv, type CsvColumn } from './leadsCsv';
 import type { LeadRow } from './hooks/useLeads';
@@ -292,11 +294,19 @@ export function LeadsListPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-muted/60 backdrop-blur-sm">
+          <div className="max-h-[calc(100vh-14rem)] overflow-auto">
+            <table
+              className="w-full table-fixed border-collapse text-sm"
+              style={{ minWidth: LEADS_TABLE_MIN_WIDTH }}
+            >
+              <colgroup>
+                {LEADS_TABLE_COLS.map((w, i) => (
+                  <col key={i} className={w} />
+                ))}
+              </colgroup>
+              <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
                 <tr className="border-b border-border/60 text-left">
-                  <th className="w-10 px-3 py-3">
+                  <th className="px-3 py-3">
                     <input
                       type="checkbox"
                       aria-label="select all"
@@ -304,19 +314,26 @@ export function LeadsListPage() {
                       onChange={(e) => selectAll(e.target.checked)}
                     />
                   </th>
-                  {cols.map((c) => (
+                  {cols.map((c, i) => (
                     <th
                       key={c.key}
-                      className="cursor-pointer whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                      className={cn(
+                        'cursor-pointer px-3 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground',
+                        i === 4 && 'border-l border-border/50',
+                        i === 7 && 'border-l border-border/50',
+                        i === 9 && 'border-l border-border/50',
+                        (c.key === 'email' || c.key === 'website' || c.key === 'company_name') &&
+                          'text-foreground/80',
+                      )}
                       onClick={() => toggleSort(c.key)}
                     >
-                      {c.label}
+                      <span className="block truncate">{c.label}</span>
                       {sort.key === c.key ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
+              <tbody>
                 {pageRows.map((lead) => (
                   <LeadRowEditor
                     key={lead.id}

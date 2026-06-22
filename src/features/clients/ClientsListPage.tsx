@@ -11,6 +11,12 @@ import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
 import { useMyClients } from './hooks/useMyClients';
 import { CreateClientDialog } from './CreateClientDialog';
+import {
+  CLIENTS_LIST_TABLE_COLS,
+  CLIENTS_LIST_TABLE_MIN_WIDTH,
+  tableCellClass,
+  tableSectionBorder,
+} from './clientsTableLayout';
 
 export function ClientsListPage() {
   const { t, i18n } = useTranslation('clients');
@@ -92,16 +98,24 @@ export function ClientsListPage() {
           </div>
         ) : (
           <div className="h-full overflow-auto">
-            <table className="w-full min-w-[900px] border-collapse text-sm">
+            <table
+              className="w-full table-fixed border-collapse text-sm"
+              style={{ minWidth: CLIENTS_LIST_TABLE_MIN_WIDTH }}
+            >
+              <colgroup>
+                {CLIENTS_LIST_TABLE_COLS.map((w, i) => (
+                  <col key={i} className={w} />
+                ))}
+              </colgroup>
               <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
                 <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">{t('table.name')}</th>
-                  <th className="px-4 py-3 font-medium">{t('table.contact')}</th>
-                  <th className="px-4 py-3 font-medium">{t('table.email')}</th>
-                  <th className="px-4 py-3 font-medium">{t('table.phone')}</th>
-                  <th className="px-4 py-3 font-medium">{t('table.industry')}</th>
-                  <th className="px-4 py-3 font-medium">{t('table.country')}</th>
-                  <th className="px-4 py-3 font-medium">{t('table.actions')}</th>
+                  <th className={cn(tableCellClass, 'font-medium text-foreground/80')}>{t('table.name')}</th>
+                  <th className={cn(tableCellClass, tableSectionBorder, 'font-medium')}>{t('table.contact')}</th>
+                  <th className={cn(tableCellClass, 'font-medium text-foreground/80')}>{t('table.email')}</th>
+                  <th className={cn(tableCellClass, 'font-medium')}>{t('table.phone')}</th>
+                  <th className={cn(tableCellClass, tableSectionBorder, 'font-medium')}>{t('table.industry')}</th>
+                  <th className={cn(tableCellClass, 'font-medium')}>{t('table.country')}</th>
+                  <th className={cn(tableCellClass, 'font-medium')}>{t('table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -114,25 +128,27 @@ export function ClientsListPage() {
                       key={c.id}
                       className="group border-b border-border/40 transition-colors last:border-b-0 hover:bg-muted/35"
                     >
-                      <td className="max-w-[240px] px-4 py-3">
-                        <div className="flex min-w-0 items-center gap-2">
+                      <td className={tableCellClass}>
+                        <div className="flex min-w-0 items-start gap-2">
                           <Link
                             to={`/clients/${c.id}`}
-                            className="truncate font-medium text-primary hover:underline"
+                            className="min-w-0 font-medium text-primary transition-colors hover:underline"
+                            title={c.name}
                           >
                             {c.name}
                           </Link>
                           <BlockBadge clientId={c.id} />
                         </div>
                       </td>
-                      <td className="max-w-[160px] truncate px-4 py-3 text-muted-foreground">
+                      <td className={cn(tableCellClass, tableSectionBorder, 'text-muted-foreground')} title={contactName || undefined}>
                         {contactName || <span className="text-muted-foreground/50">—</span>}
                       </td>
-                      <td className="max-w-[200px] truncate px-4 py-3">
+                      <td className={tableCellClass}>
                         {c.email ? (
                           <a
                             href={`mailto:${c.email}`}
-                            className="text-muted-foreground transition-colors hover:text-primary"
+                            className="block font-mono text-xs tracking-tight text-muted-foreground transition-colors hover:text-primary"
+                            title={c.email}
                           >
                             {c.email}
                           </a>
@@ -140,20 +156,22 @@ export function ClientsListPage() {
                           <span className="text-muted-foreground/50">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className={cn(tableCellClass, 'text-muted-foreground')}>
                         {c.phone ? <CallLink phone={c.phone} /> : <span className="text-muted-foreground/50">—</span>}
                       </td>
-                      <td className="max-w-[140px] truncate px-4 py-3 text-muted-foreground">
+                      <td className={cn(tableCellClass, tableSectionBorder, 'text-muted-foreground')}>
                         {c.industry ? (
-                          industryLabel(c.industry, lang)
+                          <span className="inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-xs">
+                            {industryLabel(c.industry, lang)}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground/50">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className={cn(tableCellClass, 'text-muted-foreground')}>
                         {c.country || <span className="text-muted-foreground/50">—</span>}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className={tableCellClass}>
                         <Link
                           to={`/clients/${c.id}`}
                           className={cn(
