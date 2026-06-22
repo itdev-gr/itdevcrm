@@ -8,6 +8,8 @@ import { useMergeLeadIntake } from './hooks/useMergeLeadIntake';
 import { useAutoMerge } from './hooks/useAutoMerge';
 import { useBulkMergePreview } from './hooks/useBulkMergePreview';
 import { useBulkMergeIntake } from './hooks/useBulkMergeIntake';
+import { useBulkReleasePreview } from './hooks/useBulkReleasePreview';
+import { useBulkReleaseIntake } from './hooks/useBulkReleaseIntake';
 import { leadMatchesOf } from './intakeMatches';
 import { LeadImportControls } from './LeadImportControls';
 
@@ -91,8 +93,11 @@ export function LeadIntakePage() {
   const [pickFor, setPickFor] = useState<string | null>(null);
   const bulkPreview = useBulkMergePreview();
   const bulkMerge = useBulkMergeIntake();
+  const bulkReleasePreview = useBulkReleasePreview();
+  const bulkRelease = useBulkReleaseIntake();
   const mergeableCount = bulkPreview.data?.mergeable ?? 0;
   const deadCount = bulkPreview.data?.dead_end ?? 0;
+  const releasableCount = bulkReleasePreview.data?.releasable ?? 0;
   async function onBulkMerge() {
     if (mergeableCount === 0) return;
     if (!window.confirm(t('leads:intake.bulk_confirm', { count: mergeableCount, dead: deadCount }))) return;
@@ -112,6 +117,21 @@ export function LeadIntakePage() {
       window.alert((e as Error).message);
     }
   }
+  async function onBulkRelease() {
+    if (releasableCount === 0) return;
+    if (!window.confirm(t('leads:intake.bulk_release_confirm', { count: releasableCount }))) return;
+    let released = 0;
+    try {
+      for (let i = 0; i < 200; i += 1) {
+        const res = await bulkRelease.mutateAsync(undefined);
+        released += res.released;
+        if (res.remaining <= 0) break;
+      }
+      window.alert(t('leads:intake.bulk_release_done', { released }));
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
+  }
   const rows = data ?? [];
 
   return (
@@ -122,6 +142,14 @@ export function LeadIntakePage() {
           <p className="text-sm opacity-70">{t('leads:intake.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="rounded bg-emerald-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            disabled={releasableCount === 0 || bulkRelease.isPending || bulkReleasePreview.isLoading}
+            onClick={onBulkRelease}
+          >
+            {t('leads:intake.bulk_release', { count: releasableCount })}
+          </button>
           <button
             type="button"
             className="rounded bg-sky-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"

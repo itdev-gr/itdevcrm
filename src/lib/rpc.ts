@@ -281,6 +281,33 @@ export async function bulkMergeIntake(): Promise<BulkMergeResult> {
   return { ok: true, merged: r.merged ?? 0, dropped: r.dropped ?? 0, remaining: r.remaining ?? 0 };
 }
 
+export type BulkReleasePreviewResult =
+  | { ok: true; releasable: number }
+  | { ok: false; errors: string[] };
+
+// Admin-only. Counts clean (no-duplicate) pending rows that bulk-release would release.
+export async function bulkReleaseIntakePreview(): Promise<BulkReleasePreviewResult> {
+  const { data, error } = await rpcCall('bulk_release_intake_preview', {});
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; releasable?: number; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['preview_failed'] };
+  return { ok: true, releasable: r.releasable ?? 0 };
+}
+
+export type BulkReleaseResult =
+  | { ok: true; released: number; remaining: number }
+  | { ok: false; errors: string[] };
+
+// Admin-only. Releases one bounded batch of clean pending rows to Unique Lead and reports
+// how many remain, so the caller can loop until done.
+export async function bulkReleaseIntake(): Promise<BulkReleaseResult> {
+  const { data, error } = await rpcCall('bulk_release_intake', {});
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; released?: number; remaining?: number; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['bulk_release_failed'] };
+  return { ok: true, released: r.released ?? 0, remaining: r.remaining ?? 0 };
+}
+
 export type ImportLeadsResult =
   | { ok: true; imported: number; flagged: number }
   | { ok: false; errors: string[] };

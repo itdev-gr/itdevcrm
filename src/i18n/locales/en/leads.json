@@ -46,7 +46,10 @@
     "bulk_merge": "Bulk merge ({{count}})",
     "bulk_confirm": "Merge {{count}} duplicates into their existing leads? {{dead}} duplicates of dead-end / not-interested leads will also be removed.",
     "bulk_done": "Merged {{merged}} · removed {{dropped}}.",
-    "merge_removed_dead_end": "The existing lead is dead-end / not interested — the new lead was removed instead of merged."
+    "merge_removed_dead_end": "The existing lead is dead-end / not interested — the new lead was removed instead of merged.",
+    "bulk_release": "Bulk release ({{count}})",
+    "bulk_release_confirm": "Release {{count}} clean (non-duplicate) leads onto the sales board?",
+    "bulk_release_done": "Released {{released}} leads."
   },
   "intake_log": {
     "label": "New info from duplicates"

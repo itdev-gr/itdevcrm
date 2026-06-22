@@ -31,6 +31,12 @@ vi.mock('./hooks/useBulkMergeIntake', () => ({
 }));
 const { useBulkMergePreview } = vi.hoisted(() => ({ useBulkMergePreview: vi.fn() }));
 vi.mock('./hooks/useBulkMergePreview', () => ({ useBulkMergePreview }));
+const bulkRelease = vi.fn();
+vi.mock('./hooks/useBulkReleaseIntake', () => ({
+  useBulkReleaseIntake: () => ({ mutateAsync: bulkRelease, isPending: false }),
+}));
+const { useBulkReleasePreview } = vi.hoisted(() => ({ useBulkReleasePreview: vi.fn() }));
+vi.mock('./hooks/useBulkReleasePreview', () => ({ useBulkReleasePreview }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 vi.mock('react-router-dom', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
@@ -43,6 +49,7 @@ describe('LeadIntakePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useBulkMergePreview.mockReturnValue({ data: { mergeable: 0, dead_end: 0 }, isLoading: false });
+    useBulkReleasePreview.mockReturnValue({ data: { releasable: 0 }, isLoading: false });
   });
 
   it('renders a held lead with its match and fires release', () => {
@@ -223,6 +230,25 @@ describe('LeadIntakePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /leads:intake.bulk_merge/ }));
     expect(confirmSpy).toHaveBeenCalled();
     expect(bulkMerge).toHaveBeenCalled();
+  });
+
+  it('shows the bulk release count and runs it after confirm', () => {
+    useBulkReleasePreview.mockReturnValue({ data: { releasable: 5 }, isLoading: false });
+    useLeadIntake.mockReturnValue({ data: [], isLoading: false });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
+    bulkRelease.mockResolvedValue({ ok: true, released: 5, remaining: 0 });
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: /leads:intake.bulk_release/ }));
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(bulkRelease).toHaveBeenCalled();
+  });
+
+  it('disables bulk release when the count is zero', () => {
+    useBulkReleasePreview.mockReturnValue({ data: { releasable: 0 }, isLoading: false });
+    useLeadIntake.mockReturnValue({ data: [], isLoading: false });
+    render(<LeadIntakePage />);
+    expect(screen.getByRole('button', { name: /leads:intake.bulk_release/ })).toBeDisabled();
   });
 
   it('disables bulk merge when the count is zero', () => {
