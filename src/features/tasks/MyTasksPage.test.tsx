@@ -57,9 +57,9 @@ describe('MyTasksPage', () => {
     });
     render(<MyTasksPage />);
     const buttons = screen.getAllByRole('button', { name: /assigned_tasks.resolve/ });
-    fireEvent.click(buttons[0]); // assigned task (high) sorts first
+    fireEvent.click(buttons[0]!); // assigned task (high) sorts first
     expect(resolve).toHaveBeenCalledWith({ id: 'a1' });
-    fireEvent.click(buttons[1]); // personal task
+    fireEvent.click(buttons[1]!); // personal task
     expect(complete).toHaveBeenCalledWith({ id: 'p1', completed: true });
   });
 
