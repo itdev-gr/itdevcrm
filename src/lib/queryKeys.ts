@@ -45,6 +45,12 @@ export const queryKeys = {
     ['user-tasks', start, end, ownerId ?? 'all'] as const,
   openUserTasks: (assigneeId: string | null) =>
     ['user-tasks', 'open', assigneeId ?? 'all'] as const,
+  tasksBoardUser: (scope: string, cutoff: string) =>
+    ['user-tasks', 'board', scope, cutoff] as const,
+  tasksBoardAssigned: (scope: string, cutoff: string) =>
+    ['assigned-tasks', 'board', scope, cutoff] as const,
+  tasksArchive: (meId: string, limit: number) =>
+    ['tasks', 'archive', meId, limit] as const,
   servicePackages: () => ['service-packages'] as const,
   serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,

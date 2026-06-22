@@ -29,7 +29,7 @@ export type AssignedTaskRow = {
   department: AssignedTaskDepartment | null;
 };
 
-const SELECT = `
+export const ASSIGNED_TASK_SELECT = `
   id, title, description,
   deal_id, job_id, client_id, source_code,
   assignee_user_id, created_by_user_id,
@@ -46,7 +46,7 @@ export function useAssignedTasksOpen(params: { assigneeUserId: string | null }) 
     queryFn: async () => {
       let q = supabase
         .from('assigned_tasks')
-        .select(SELECT)
+        .select(ASSIGNED_TASK_SELECT)
         .eq('status', 'open');
       if (assigneeUserId) q = q.eq('assignee_user_id', assigneeUserId);
       const { data, error } = await q.order('created_at', { ascending: false });
