@@ -1540,6 +1540,7 @@ export type Database = {
           description: string | null
           details: Json
           id: string
+          installment_plan: string
           is_blocked: boolean
           is_custom: boolean
           monthly_amount: number | null
@@ -1579,6 +1580,7 @@ export type Database = {
           description?: string | null
           details?: Json
           id?: string
+          installment_plan?: string
           is_blocked?: boolean
           is_custom?: boolean
           monthly_amount?: number | null
@@ -1618,6 +1620,7 @@ export type Database = {
           description?: string | null
           details?: Json
           id?: string
+          installment_plan?: string
           is_blocked?: boolean
           is_custom?: boolean
           monthly_amount?: number | null
@@ -1915,6 +1918,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "lead_intake_merged_into_lead_id_fkey"
+            columns: ["merged_into_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lead_intake_released_lead_id_fkey"
             columns: ["released_lead_id"]
             isOneToOne: false
@@ -1922,6 +1932,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lead_intake_company_backup_20260622: {
+        Row: {
+          backed_up_at: string | null
+          company_name: string | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          company_name?: string | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          company_name?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      lead_intake_phone_backup_20260622: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          phone: string | null
+          phone_normalized: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+        }
+        Relationships: []
       }
       lead_sequence_runs: {
         Row: {
@@ -2181,6 +2230,240 @@ export type Database = {
           },
         ]
       }
+      leads_campaign_backfill_backup_20260622: {
+        Row: {
+          backed_up_at: string | null
+          company_name: string | null
+          id: string | null
+          notes: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          company_name?: string | null
+          id?: string | null
+          notes?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          company_name?: string | null
+          id?: string | null
+          notes?: string | null
+        }
+        Relationships: []
+      }
+      leads_clickup_phone_backup_20260622: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          old_phone: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_phone?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_phone?: string | null
+        }
+        Relationships: []
+      }
+      leads_client_dup_backup_20260622: {
+        Row: {
+          additional_contacts: Json | null
+          additional_notes: string | null
+          address: string | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          automations_enabled: boolean | null
+          backed_up_at: string | null
+          code: string | null
+          company_name: string | null
+          contact_first_name: string | null
+          contact_info: string | null
+          contact_last_name: string | null
+          converted_at: string | null
+          converted_client_id: string | null
+          converted_deal_id: string | null
+          country: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          email_opt_out: boolean | null
+          estimated_monthly_value: number | null
+          estimated_one_time_value: number | null
+          estimated_total_value: number | null
+          expected_close_date: string | null
+          facebook: string | null
+          id: string | null
+          industry: string | null
+          instagram: string | null
+          intake_log: string | null
+          linkedin: string | null
+          notes: string | null
+          owner_user_id: string | null
+          payment_method: string | null
+          phone: string | null
+          phone_normalized: string | null
+          scheduled_for: string | null
+          services_planned: Json | null
+          source: string | null
+          source_data: Json | null
+          stage_id: string | null
+          tiktok: string | null
+          title: string | null
+          unsubscribe_token: string | null
+          updated_at: string | null
+          vat_number: string | null
+          website: string | null
+          won_by_user_id: string | null
+        }
+        Insert: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Update: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Relationships: []
+      }
+      leads_dedup_backup_20260622: {
+        Row: {
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          backed_up_at: string | null
+          dedup_dim: string | null
+          id: string | null
+          kept_into: string | null
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          backed_up_at?: string | null
+          dedup_dim?: string | null
+          id?: string | null
+          kept_into?: string | null
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          backed_up_at?: string | null
+          dedup_dim?: string | null
+          id?: string | null
+          kept_into?: string | null
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -2372,6 +2655,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string
+          exclude_from_lead_distribution: boolean
           full_name: string
           is_active: boolean
           is_admin: boolean
@@ -2393,6 +2677,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          exclude_from_lead_distribution?: boolean
           full_name?: string
           is_active?: boolean
           is_admin?: boolean
@@ -2414,6 +2699,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          exclude_from_lead_distribution?: boolean
           full_name?: string
           is_active?: boolean
           is_admin?: boolean
@@ -2879,6 +3165,13 @@ export type Database = {
       }
     }
     Functions: {
+      apply_intake_merge: {
+        Args: {
+          p_lead_id: string
+          r: Database["public"]["Tables"]["lead_intake"]["Row"]
+        }
+        Returns: undefined
+      }
       assignable_owners: {
         Args: never
         Returns: {
@@ -2896,6 +3189,14 @@ export type Database = {
         Args: { reason?: string; target_job_id: string }
         Returns: Json
       }
+      build_lead_info_block: {
+        Args: { p_source_data: Json; p_title?: string }
+        Returns: string
+      }
+      bulk_merge_intake: { Args: { p_limit?: number }; Returns: Json }
+      bulk_merge_intake_preview: { Args: never; Returns: Json }
+      bulk_release_intake: { Args: { p_limit?: number }; Returns: Json }
+      bulk_release_intake_preview: { Args: never; Returns: Json }
       close_deal: { Args: { p_deal_id: string; p_jobs?: Json }; Returns: Json }
       complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
       convert_lead_to_client: {
@@ -2910,6 +3211,7 @@ export type Database = {
           p_deal_id: string
           p_department: string
           p_description: string
+          p_installment_plan?: string
           p_setup_fee?: number
           p_title: string
           p_vat_rate: number
@@ -2965,9 +3267,15 @@ export type Database = {
           context: string
           display_name: string
           match_type: string
+          matched_email: string
           matched_field: string
+          matched_phone: string
           record_id: string
         }[]
+      }
+      format_intake_merge_block: {
+        Args: { r: Database["public"]["Tables"]["lead_intake"]["Row"] }
+        Returns: string
       }
       generate_job_code: {
         Args: { p_deal_id: string; p_service_type: string }
@@ -2989,16 +3297,24 @@ export type Database = {
           sublabel: string
         }[]
       }
+      import_leads_to_intake: { Args: { p_rows: Json }; Returns: Json }
       is_client_blocked: {
         Args: { target_client_id: string }
         Returns: boolean
       }
       job_billing_ref_count: { Args: { p_job_id: string }; Returns: number }
       job_service_abbr: { Args: { st: string }; Returns: string }
+      lead_dead_end_ids: {
+        Args: { p_ids: string[] }
+        Returns: {
+          id: string
+        }[]
+      }
       lead_email_payload: {
         Args: { l: Database["public"]["Tables"]["leads"]["Row"] }
         Returns: Json
       }
+      lead_is_dead_end: { Args: { p_lead_id: string }; Returns: boolean }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
       mark_overdue_payments: { Args: never; Returns: number }
       mentionable_users: {
@@ -3010,6 +3326,10 @@ export type Database = {
           is_admin: boolean
           user_id: string
         }[]
+      }
+      merge_lead_intake: {
+        Args: { p_id: string; p_target_lead_id: string }
+        Returns: Json
       }
       move_overdue_deals_to_on_hold: { Args: never; Returns: number }
       my_google_status: {
@@ -3029,7 +3349,10 @@ export type Database = {
         Args: { partial_payment_mode: boolean; target_deal_id: string }
         Returns: number
       }
-      release_lead_intake: { Args: { p_id: string }; Returns: Json }
+      release_lead_intake: {
+        Args: { p_force?: boolean; p_id: string }
+        Returns: Json
+      }
       run_monthly_task_reset: { Args: never; Returns: undefined }
       sales_kanban_counts: {
         Args: { p_owner?: string; p_search?: string; p_source?: string }
@@ -3061,6 +3384,7 @@ export type Database = {
           p_billing_type?: string
           p_clear_group?: boolean
           p_description?: string
+          p_installment_plan?: string
           p_job_id: string
           p_title?: string
           p_vat_rate?: number
