@@ -8,6 +8,7 @@ import {
   FileText,
   Globe,
   Home,
+  ListChecks,
   Megaphone,
   Receipt,
   RefreshCw,
@@ -94,6 +95,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       <NavLink to="/" end className={({ isActive }) => sidebarLinkClass(isActive)}>
         <Home className="size-4 shrink-0 opacity-80" />
         {t('nav.home')}
+      </NavLink>
+
+      <NavLink to="/tasks" className={({ isActive }) => sidebarLinkClass(isActive)}>
+        <ListChecks className="size-4 shrink-0 opacity-80" />
+        {t('nav.tasks')}
       </NavLink>
 
       {isAdmin && (

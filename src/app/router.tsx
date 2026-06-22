@@ -19,6 +19,7 @@ function lazyPage<K extends string>(
 }
 
 const HomePage = lazyPage(() => import('./routes/HomePage'), 'HomePage');
+const MyTasksPage = lazyPage(() => import('@/features/tasks/MyTasksPage'), 'MyTasksPage');
 const NotFoundPage = lazyPage(() => import('./routes/NotFoundPage'), 'NotFoundPage');
 const LoginPage = lazyPage(() => import('@/features/auth/LoginPage'), 'LoginPage');
 const ForgotPasswordPage = lazyPage(
@@ -161,6 +162,7 @@ export const router = createBrowserRouter([
         element: <ShellLayout />,
         children: [
           { path: '/', element: <HomePage /> },
+          { path: 'tasks', element: <MyTasksPage /> },
           {
             path: 'dashboard',
             element: (
