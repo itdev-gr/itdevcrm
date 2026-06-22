@@ -23,6 +23,7 @@ export type AssignedTaskRow = {
   resolved_at: string | null;
   resolved_by_user_id: string | null;
   created_at: string;
+  importance: string;
   department_group_id: string | null;
   client: { id: string; name: string } | null;
   department: AssignedTaskDepartment | null;
@@ -32,7 +33,7 @@ const SELECT = `
   id, title, description,
   deal_id, job_id, client_id, source_code,
   assignee_user_id, created_by_user_id,
-  status, resolved_at, resolved_by_user_id, created_at,
+  status, resolved_at, resolved_by_user_id, created_at, importance,
   department_group_id,
   client:client_id ( id, name ),
   department:department_group_id ( id, code, display_names, position )
