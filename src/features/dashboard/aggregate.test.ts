@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthKeys, cohortStats, type LeadLite } from './aggregate';
+import { monthKeys, cohortStats, dealsByPerson, type LeadLite, type DealLite } from './aggregate';
 
 describe('monthKeys', () => {
   it('lists YYYY-MM buckets inclusive of both ends', () => {
@@ -51,5 +51,18 @@ describe('cohortStats', () => {
       (l) => l.owner,
     );
     expect(rows.map((r) => r.key)).toEqual(['B', 'A']);
+  });
+});
+
+describe('dealsByPerson', () => {
+  it('groups deal count + value by person, sorted by deal count desc', () => {
+    const deals: DealLite[] = [
+      { person: 'Maria', oneTime: 100, monthly: 50 },
+      { person: 'Maria', oneTime: 0, monthly: 30 },
+      { person: 'Nikos', oneTime: 200, monthly: 0 },
+    ];
+    const rows = dealsByPerson(deals);
+    expect(rows[0]).toEqual({ key: 'Maria', deals: 2, oneTime: 100, monthly: 80 });
+    expect(rows[1]).toEqual({ key: 'Nikos', deals: 1, oneTime: 200, monthly: 0 });
   });
 });

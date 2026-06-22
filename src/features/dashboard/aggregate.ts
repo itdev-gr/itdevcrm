@@ -39,6 +39,25 @@ export function monthKeys(fromIso: string, toIso: string): string[] {
   return keys;
 }
 
+export type DealLite = { person: string; oneTime: number; monthly: number };
+export type DealPersonRow = { key: string; deals: number; oneTime: number; monthly: number };
+
+/** Group active deals (= wins) by the person who won them: count + one-time/monthly value. */
+export function dealsByPerson(deals: DealLite[]): DealPersonRow[] {
+  const byKey = new Map<string, DealPersonRow>();
+  for (const d of deals) {
+    let row = byKey.get(d.person);
+    if (!row) {
+      row = { key: d.person, deals: 0, oneTime: 0, monthly: 0 };
+      byKey.set(d.person, row);
+    }
+    row.deals += 1;
+    row.oneTime += d.oneTime;
+    row.monthly += d.monthly;
+  }
+  return [...byKey.values()].sort((a, b) => b.deals - a.deals);
+}
+
 export function cohortStats(leads: LeadLite[], keyFn: (l: LeadLite) => string): CohortRow[] {
   const byKey = new Map<string, CohortRow>();
   for (const l of leads) {
