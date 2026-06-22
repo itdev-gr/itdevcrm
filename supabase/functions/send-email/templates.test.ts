@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { renderTemplate, renderDbTemplate } from './templates';
+import { describe, it, expect, vi } from 'vitest';
 
-// renderDbTemplate reads Deno.env at call time; stub it for the Node test runtime.
-Object.assign(globalThis, { Deno: { env: { get: () => undefined } } });
+// templates.ts reads Deno.env at module-eval time (APP_BASE) — not only at call
+// time — so the stub must exist BEFORE the import. vi.hoisted runs before imports.
+vi.hoisted(() => {
+  (globalThis as { Deno?: unknown }).Deno = { env: { get: () => undefined } };
+});
+
+import { renderTemplate, renderDbTemplate } from './templates';
 
 describe('email templates', () => {
   it('renders a Greek payment_due_soon email with amount and date', () => {

@@ -28,11 +28,11 @@ describe('useContractedMRR', () => {
   it('sums monthly jobs at face value and yearly jobs at amount/12', async () => {
     clientArchivedEq.mockResolvedValue({
       data: [
-        { monthly_amount: 900, billing_type: 'recurring_monthly' },
-        { monthly_amount: 650, billing_type: 'recurring_monthly' },
-        // Yearly jobs store the ANNUAL amount in monthly_amount.
-        { monthly_amount: 30, billing_type: 'recurring_yearly' },
-        { monthly_amount: null, billing_type: 'recurring_monthly' },
+        { amount_net: 900, billing_type: 'recurring_monthly' },
+        { amount_net: 650, billing_type: 'recurring_monthly' },
+        // Yearly jobs store the ANNUAL amount in amount_net.
+        { amount_net: 30, billing_type: 'recurring_yearly' },
+        { amount_net: null, billing_type: 'recurring_monthly' },
       ],
       error: null,
     });
