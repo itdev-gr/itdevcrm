@@ -23,6 +23,79 @@ const str = (v: unknown): string | null => {
   return s.length > 0 ? s : null;
 };
 
+// ---- Columnar (Meta → Excel → Zapier) format --------------------------------
+// Some Meta leads arrive as a positional spreadsheet row with keys COL$A..COL$S
+// and prefixed values (l: lead id, p: phone, c:/as:/ag:/f: campaign/adset/ad/form
+// ids). The webhook's named-field resolver can't read this, so those leads landed
+// blank. This parser maps the columns explicitly; non-columnar payloads return null
+// and fall back to the named-field path (so future header-based payloads still work).
+type ColumnarLead = {
+  leadgenId: string | null;
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  formName: string | null;
+  noteBlock: string | null;
+};
+
+function stripPrefix(v: string | null, prefix: string): string | null {
+  if (!v) return null;
+  return v.startsWith(prefix) ? str(v.slice(prefix.length)) : v;
+}
+
+function looksLikeUrl(v: string | null): boolean {
+  if (!v) return false;
+  return /^https?:\/\//i.test(v) || /\b[a-z0-9-]+\.[a-z]{2,}(\/|$)/i.test(v);
+}
+
+function metaDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
+export function parseColumnarMetaLead(data: Record<string, unknown>): ColumnarLead | null {
+  if (!('COL$A' in data) && !('COL$N' in data)) return null;
+  const c = (k: string): string | null => str(data[k]);
+
+  const leadgenId = stripPrefix(c('COL$A'), 'l:');
+  const fullName = c('COL$N');
+  const email = c('COL$P');
+  const phone = stripPrefix(c('COL$O'), 'p:');
+  const formName = c('COL$J');
+  const colR = c('COL$R');
+  const website = looksLikeUrl(colR) ? colR : null;
+
+  const platformRaw = (c('COL$L') ?? '').toLowerCase();
+  const platform =
+    platformRaw === 'fb' ? 'Facebook' : platformRaw === 'ig' ? 'Instagram' : c('COL$L');
+
+  // Custom form answers (question text is not in the positional payload).
+  const answers = [c('COL$M'), c('COL$Q'), website ? null : colR].filter(
+    (x): x is string => !!x,
+  );
+
+  const lines: string[] = [];
+  if (formName) lines.push(`Form: ${formName}`);
+  const campaign = c('COL$H');
+  const adset = c('COL$F');
+  const ad = c('COL$D');
+  if (campaign) lines.push(`Campaign: ${campaign}`);
+  if (adset) lines.push(`Ad set: ${adset}`);
+  if (ad) lines.push(`Ad: ${ad}`);
+  if (platform) lines.push(`Platform: ${platform}`);
+  const submitted = metaDate(c('COL$B'));
+  if (submitted) lines.push(`Submitted: ${submitted}`);
+  if (answers.length > 0) {
+    lines.push('Answers:');
+    for (const a of answers) lines.push(`- ${a}`);
+  }
+  const noteBlock = lines.length > 0 ? lines.join('\n') : null;
+
+  return { leadgenId, fullName, email, phone, website, formName, noteBlock };
+}
+
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
@@ -78,30 +151,40 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     return null;
   };
 
-  const leadgenId = pick(['leadgen_id', 'id']);
-  const fullName = pick(['full_name', 'name'], /ονοματεπ|full.?name/i);
-  const email = pick(['email'], /email/i);
-  const phone = pick(['phone', 'phone_number'], /phone|τηλεφ/i);
-  const company = pick(['company', 'company_name'], /company|εταιρ/i);
-  const website = pick(['website'], /website/i);
-  const formName = pick(['form_name', 'campaign']);
+  // Meta → Excel → Zapier rows arrive as the positional COL$ format; everything
+  // else (direct Meta/manual params) uses the named-field resolver.
+  const columnar = parseColumnarMetaLead(data);
+
+  const leadgenId = columnar ? columnar.leadgenId : pick(['leadgen_id', 'id']);
+  const fullName = columnar ? columnar.fullName : pick(['full_name', 'name'], /ονοματεπ|full.?name/i);
+  const email = columnar ? columnar.email : pick(['email'], /email/i);
+  const phone = columnar ? columnar.phone : pick(['phone', 'phone_number'], /phone|τηλεφ/i);
+  const company = columnar ? null : pick(['company', 'company_name'], /company|εταιρ/i);
+  const website = columnar ? columnar.website : pick(['website'], /website/i);
+  const formName = columnar ? columnar.formName : pick(['form_name', 'campaign']);
 
   // Normalize the dedup id so retries match regardless of Meta's field name.
   if (leadgenId) payload.leadgen_id = leadgenId;
 
-  // Remaining custom answers (e.g. the Greek questionnaire) → notes for sales.
-  const SYSTEM = new Set([
-    'key', 'created_time', 'form_id', 'form_name', 'campaign', 'id', 'leadgen_id',
-    'is_organic', 'page_id', 'platform', 'website', 'ad_id', 'adset_id', 'ad_name',
-    'adset_name', 'campaign_id', 'campaign_name',
-  ]);
-  const noteLines: string[] = [];
-  for (const k of Object.keys(data)) {
-    if (k.startsWith('raw_') || used.has(k) || SYSTEM.has(k)) continue;
-    const v = str(data[k]);
-    if (v) noteLines.push(`${k}: ${v}`);
+  let notes: string | null;
+  if (columnar) {
+    // Campaign context + form answers, already assembled by the columnar parser.
+    notes = columnar.noteBlock;
+  } else {
+    // Remaining custom answers (e.g. the Greek questionnaire) → notes for sales.
+    const SYSTEM = new Set([
+      'key', 'created_time', 'form_id', 'form_name', 'campaign', 'id', 'leadgen_id',
+      'is_organic', 'page_id', 'platform', 'website', 'ad_id', 'adset_id', 'ad_name',
+      'adset_name', 'campaign_id', 'campaign_name',
+    ]);
+    const noteLines: string[] = [];
+    for (const k of Object.keys(data)) {
+      if (k.startsWith('raw_') || used.has(k) || SYSTEM.has(k)) continue;
+      const v = str(data[k]);
+      if (v) noteLines.push(`${k}: ${v}`);
+    }
+    notes = pick(['notes']) ?? (noteLines.length > 0 ? noteLines.join('\n') : null);
   }
-  const notes = pick(['notes']) ?? (noteLines.length > 0 ? noteLines.join('\n') : null);
 
   // Dedup on the Meta lead id stored in source_data. Retries return the existing
   // record — whether it landed in `leads` (clean) or `lead_intake` (held duplicate).
