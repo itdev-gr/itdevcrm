@@ -564,7 +564,7 @@ describe('mergeArchiveEntries', () => {
     const byId = Object.fromEntries(out.map((e) => [e.id, e]));
     expect(byId.u1).toMatchObject({ kind: 'user', key: 'user:u1', link: null });
     expect(byId.a1).toMatchObject({ kind: 'assigned', key: 'assigned:a1', link: '/deals/d1' });
-    expect(byId.a2.link).toBe('/jobs/j1');
+    expect(byId.a2?.link).toBe('/jobs/j1');
   });
 
   it('respects the limit', () => {
