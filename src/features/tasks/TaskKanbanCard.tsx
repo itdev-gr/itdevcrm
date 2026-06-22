@@ -30,6 +30,9 @@ export function TaskKanbanCard({
       style={style}
       {...attributes}
       {...listeners}
+      // dnd-kit makes the draggable wrapper a role="button"; label it by the
+      // task title so its accessible name doesn't swallow the inner buttons.
+      aria-label={card.title}
       className={cn(
         'rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm',
         draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default',
