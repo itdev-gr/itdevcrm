@@ -1363,8 +1363,11 @@ begin
   if new.completed_at is null or old.completed_at is not null then
     return new;
   end if;
-  -- only when someone else created the task for this user
-  if new.created_by is null or new.created_by = new.user_id then
+  -- only when someone else created the task for this user, and the creator is
+  -- not the one performing the completion
+  if new.created_by is null
+     or new.created_by = new.user_id
+     or new.created_by = auth.uid() then
     return new;
   end if;
   insert into public.notifications (user_id, type, payload)
