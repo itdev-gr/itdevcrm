@@ -5,6 +5,7 @@
   "tagline": "Multi-department CRM",
   "nav": {
     "home": "Home",
+    "tasks": "Tasks",
     "login": "Login",
     "logout": "Logout",
     "section": {
@@ -14,6 +15,20 @@
     },
     "documentation": "Documentation",
     "open_menu": "Open menu"
+  },
+  "importance": {
+    "label": "Importance",
+    "placeholder": "Select importance…",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent"
+  },
+  "tasks_page": {
+    "title": "Tasks",
+    "subtitle": "All tasks assigned to you.",
+    "empty": "No tasks assigned to you.",
+    "empty_admin": "No open tasks for the team."
   },
   "docs": {
     "toc_label": "On this page",
