@@ -5,6 +5,7 @@ import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
 import { useJobsForDeal } from './hooks/useJobsForDeal';
 import { useJobsForClient } from './hooks/useJobsForClient';
 import { relativeFromNow } from '@/lib/datetime';
+import { jobAmountLabel } from './jobAmount';
 import type { JobRow, ServiceType } from './hooks/useJobs';
 
 const SERVICE_TO_KANBAN: Record<ServiceType, string> = {
@@ -100,12 +101,7 @@ export function JobsTab(props: Scope) {
             const svc = j.service_type as ServiceType;
             const billingLabel =
               BILLING_LABEL[j.billing_type]?.[lang] ?? j.billing_type;
-            const amount =
-              Number(j.monthly_amount ?? 0) > 0
-                ? `€${Number(j.monthly_amount).toFixed(0)}/${lang === 'el' ? 'μήνα' : 'mo'}`
-                : Number(j.one_time_amount ?? 0) > 0
-                  ? `€${Number(j.one_time_amount).toFixed(0)}`
-                  : '—';
+            const amount = jobAmountLabel(j.billing_type, j.amount_net, lang);
             return (
               <tr key={j.id} className="border-t border-border/40 transition-colors hover:bg-muted/35">
                 <td className="px-4 py-3">

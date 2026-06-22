@@ -35,6 +35,7 @@ import { useDeleteJobs } from './hooks/useDeleteJobs';
 import { useJobBillingRefCount } from './hooks/useJobBillingRefCount';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
+import { jobAmountLabel } from './jobAmount';
 import type { ServiceType } from './hooks/useJobs';
 
 const JOB_STATUS_STYLES: Record<string, string> = {
@@ -259,11 +260,17 @@ export function JobDetailPage() {
                       </span>
                     </dd>
                   </div>
-                  {Number(job.one_time_amount ?? 0) > 0 && (
+                  {Number(job.amount_net ?? 0) > 0 && (
                     <div>
-                      <dt className="text-[11px] text-muted-foreground">One-time</dt>
+                      <dt className="text-[11px] text-muted-foreground">
+                        {job.billing_type === 'recurring_monthly'
+                          ? 'Monthly'
+                          : job.billing_type === 'recurring_yearly'
+                            ? 'Yearly'
+                            : 'One-time'}
+                      </dt>
                       <dd className="mt-0.5 text-sm font-medium tabular-nums">
-                        €{Number(job.one_time_amount).toFixed(2)}
+                        {jobAmountLabel(job.billing_type, job.amount_net, lang)}
                       </dd>
                     </div>
                   )}

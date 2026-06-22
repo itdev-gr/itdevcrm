@@ -9,6 +9,7 @@ import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUse
 import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
+import { jobAmountLabel } from './jobAmount';
 import type { JobRow } from './hooks/useJobs';
 
 export function JobsKanbanCard({
@@ -41,7 +42,7 @@ export function JobsKanbanCard({
   const subtitle = [contactName ? job.client?.name : null, industryLabel(job.client?.industry, lang)]
     .filter(Boolean)
     .join(' · ');
-  const monthly = Number(job.monthly_amount ?? 0);
+  const amountLabel = jobAmountLabel(job.billing_type, job.amount_net, lang);
   const displayCode = job.code ?? job.deal?.code ?? null;
 
   return (
@@ -90,9 +91,9 @@ export function JobsKanbanCard({
 
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
 
-          {monthly > 0 && (
+          {amountLabel !== '—' && (
             <span className="inline-flex rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
-              €{monthly.toFixed(0)}/mo
+              {amountLabel}
             </span>
           )}
 
