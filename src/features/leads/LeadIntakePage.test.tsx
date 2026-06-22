@@ -52,7 +52,7 @@ describe('LeadIntakePage', () => {
     useBulkReleasePreview.mockReturnValue({ data: { releasable: 0 }, isLoading: false });
   });
 
-  it('renders a held lead with its match and fires release', () => {
+  it('confirms before releasing a flagged (duplicate) lead, then forces release', () => {
     useLeadIntake.mockReturnValue({
       data: [
         {
@@ -79,13 +79,44 @@ describe('LeadIntakePage', () => {
       ],
       isLoading: false,
     });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<LeadIntakePage />);
     expect(screen.getByText('x@kara.gr')).toBeInTheDocument();
     expect(screen.getByText('Old Lead')).toBeInTheDocument();
-    // the matched duplicate's own contact details are shown
-    expect(screen.getByText(/old@kara.gr/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
-    expect(release).toHaveBeenCalledWith('i1');
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(release).toHaveBeenCalledWith({ id: 'i1', force: true });
+  });
+
+  it('does not release a flagged lead when the confirm is dismissed', () => {
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'i1',
+          title: 'AI SEO form',
+          email: 'x@kara.gr',
+          phone: '+306900000001',
+          created_at: '2026-06-19T10:00:00Z',
+          matched_on: ['email'],
+          matches: [
+            {
+              match_type: 'lead',
+              record_id: 'L1',
+              display_name: 'Old Lead',
+              context: 'Won',
+              matched_field: 'email',
+              matched_email: 'old@kara.gr',
+              matched_phone: null,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
+    expect(release).not.toHaveBeenCalled();
   });
 
   it('shows a clean (no-duplicate) lead with the clean indicator', () => {
@@ -109,7 +140,7 @@ describe('LeadIntakePage', () => {
     expect(screen.getByText('new@person.gr')).toBeInTheDocument();
     expect(screen.getByText(/leads:intake.clean/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
-    expect(release).toHaveBeenCalledWith('i2');
+    expect(release).toHaveBeenCalledWith({ id: 'i2', force: false });
   });
 
   it('shows the empty state', () => {

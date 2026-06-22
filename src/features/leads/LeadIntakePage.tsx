@@ -192,6 +192,14 @@ export function LeadIntakePage() {
                 setPickFor(r.id);
               }
             }
+            function onRelease() {
+              if (matches.length > 0) {
+                if (!window.confirm(t('leads:intake.release_confirm_dup', { count: matches.length }))) return;
+                release.mutate({ id: r.id, force: true });
+              } else {
+                release.mutate({ id: r.id, force: false });
+              }
+            }
             return (
               <li key={r.id} className="rounded border p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -253,7 +261,7 @@ export function LeadIntakePage() {
                       type="button"
                       className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
                       disabled={release.isPending}
-                      onClick={() => release.mutate(r.id)}
+                      onClick={onRelease}
                     >
                       {t('leads:intake.release')}
                     </button>
