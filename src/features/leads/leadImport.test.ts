@@ -17,6 +17,11 @@ describe('mapHeader', () => {
     expect(mapHeader('Αριθμός Τηλεφώνου')).toBe('phone');
     expect(mapHeader('όνομα_εταιρείας')).toBe('company');
   });
+
+  it('matches the Meta website-form English phone field work_phone_number', () => {
+    expect(mapHeader('work_phone_number')).toBe('phone');
+    expect(mapHeader('Work Phone Number')).toBe('phone');
+  });
 });
 
 describe('mapRowsToLeads', () => {
@@ -38,6 +43,13 @@ describe('mapRowsToLeads', () => {
     expect(rows[0]?.phone).toBe('+41761650096');
     expect(rows[0]?.company).toBe('SAN GIORGIO');
     expect(rows[0]?.full_name).toBe('George Korfias');
+  });
+
+  it('maps the work_phone_number column and strips the p: prefix', () => {
+    const { rows } = mapRowsToLeads([
+      { Name: 'Art Filatov', email: 'art@x.gr', work_phone_number: 'p:306977270071' },
+    ]);
+    expect(rows[0]?.phone).toBe('306977270071');
   });
 
   it('skips rows with no name, email, or phone', () => {

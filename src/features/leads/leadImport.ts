@@ -18,8 +18,9 @@ type LeadField = Exclude<keyof ImportedLeadRow, 'source_data'>;
 const FIELD_ALIASES: Record<LeadField, string[]> = {
   full_name: ['name', 'full name', 'fullname', 'όνομα', 'ονοματεπώνυμο', 'ονοματεπωνυμο'],
   email: ['email', 'e-mail', 'mail', 'ηλεκτρονικό ταχυδρομείο', 'ηλεκτρονικο ταχυδρομειο'],
-  // incl. the Meta lead-form Greek label "αριθμός τηλεφώνου" (phone number)
-  phone: ['phone', 'phone number', 'tel', 'telephone', 'mobile', 'τηλέφωνο', 'τηλεφωνο', 'κινητό', 'κινητο', 'αριθμός τηλεφώνου', 'αριθμος τηλεφωνου'],
+  // incl. the Meta lead-form Greek label "αριθμός τηλεφώνου" (phone number) and the
+  // website-form English field "work_phone_number" (underscores → spaces via norm()).
+  phone: ['phone', 'phone number', 'tel', 'telephone', 'mobile', 'mobile number', 'work phone number', 'τηλέφωνο', 'τηλεφωνο', 'κινητό', 'κινητο', 'αριθμός τηλεφώνου', 'αριθμος τηλεφωνου'],
   // incl. the Meta lead-form Greek label "όνομα εταιρείας" (company name)
   company: ['company', 'company name', 'εταιρεία', 'εταιρεια', 'επιχείρηση', 'επιχειρηση', 'όνομα εταιρείας', 'ονομα εταιρειας'],
   website: ['website', 'site', 'url', 'web', 'ιστοσελίδα', 'ιστοσελιδα'],
