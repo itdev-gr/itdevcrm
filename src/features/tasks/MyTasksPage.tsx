@@ -14,6 +14,7 @@ import {
 import { useResolveAssignedTask } from '@/features/assigned_tasks/hooks/useResolveAssignedTask';
 import { DepartmentChip } from '@/features/assigned_tasks/DepartmentChip';
 import type { UserTaskRow } from '@/features/home/hooks/useUserTasks';
+import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { importanceOf, importanceRank, type ImportanceCode } from './importance';
 import { ImportanceBadge } from './ImportanceBadge';
 
@@ -30,6 +31,12 @@ function formatDue(dueIso: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
   }).format(new Date(dueIso));
+}
+function formatCreated(iso: string, locale: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
 }
 function sourceHref(task: AssignedTaskRow): string {
   if (task.deal_id) return `/deals/${task.deal_id}`;
@@ -49,6 +56,12 @@ export function MyTasksPage() {
   const complete = useToggleTaskComplete();
   const resolve = useResolveAssignedTask();
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
+  const { data: owners = [] } = useAssignableOwners();
+  const nameById = new Map(owners.map((o) => [o.user_id, o.full_name || o.email]));
+  function creatorLabel(id: string): string {
+    if (id === userId) return th('task.assignee_me', { defaultValue: 'Me' });
+    return nameById.get(id) ?? '—';
+  }
 
   // personal first (already due-asc), then assigned (created-desc); a STABLE sort
   // by importance rank keeps that intra-importance order while putting urgent on top.
@@ -107,6 +120,14 @@ export function MyTasksPage() {
                         {formatDue(item.task.due_at, locale)}
                       </span>
                     </div>
+                    {item.task.created_at && (
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        {t('tasks_page.created')} {formatCreated(item.task.created_at, locale)} ·{' '}
+                        <span className="font-medium">
+                          {creatorLabel(item.task.created_by ?? item.task.user_id)}
+                        </span>
+                      </p>
+                    )}
                     {item.task.notes && (
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.task.notes}</p>
                     )}
@@ -141,6 +162,12 @@ export function MyTasksPage() {
                         {item.task.source_code ?? '—'}
                       </Link>
                     </div>
+                    {item.task.created_at && (
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        {t('tasks_page.created')} {formatCreated(item.task.created_at, locale)} ·{' '}
+                        <span className="font-medium">{creatorLabel(item.task.created_by_user_id)}</span>
+                      </p>
+                    )}
                     {item.task.client && (
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.task.client.name}</p>
                     )}

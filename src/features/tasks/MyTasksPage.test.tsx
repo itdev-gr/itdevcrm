@@ -4,6 +4,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 const { useOpenUserTasks } = vi.hoisted(() => ({ useOpenUserTasks: vi.fn() }));
 const { useAssignedTasksOpen } = vi.hoisted(() => ({ useAssignedTasksOpen: vi.fn() }));
+const { useAssignableOwners } = vi.hoisted(() => ({ useAssignableOwners: vi.fn() }));
 const complete = vi.fn();
 const resolve = vi.fn();
 vi.mock('@/features/home/hooks/useOpenUserTasks', () => ({ useOpenUserTasks }));
@@ -14,6 +15,7 @@ vi.mock('@/features/home/hooks/useDeleteTask', () => ({
 vi.mock('@/features/assigned_tasks/hooks/useResolveAssignedTask', () => ({
   useResolveAssignedTask: () => ({ mutate: resolve, isPending: false }),
 }));
+vi.mock('@/features/leads/hooks/useAssignableOwners', () => ({ useAssignableOwners }));
 vi.mock('@/features/assigned_tasks/DepartmentChip', () => ({ DepartmentChip: () => null }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k, i18n: { resolvedLanguage: 'en' } }),
@@ -27,7 +29,12 @@ vi.mock('@/lib/stores/authStore', () => ({
 import { MyTasksPage } from './MyTasksPage';
 
 describe('MyTasksPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useAssignableOwners.mockReturnValue({
+      data: [{ user_id: 'creator1', full_name: 'Creator One', email: 'c1@x.gr', is_admin: false }],
+    });
+  });
 
   it('unions both task types, sorts urgent before low, and shows badges', () => {
     useOpenUserTasks.mockReturnValue({
@@ -68,5 +75,30 @@ describe('MyTasksPage', () => {
     useAssignedTasksOpen.mockReturnValue({ data: [] });
     render(<MyTasksPage />);
     expect(screen.getByText('tasks_page.empty')).toBeInTheDocument();
+  });
+
+  it('shows the created date and creator name on a task', () => {
+    useOpenUserTasks.mockReturnValue({ data: [] });
+    useAssignedTasksOpen.mockReturnValue({
+      data: [
+        {
+          id: 'a1',
+          title: 'A',
+          assignee_user_id: 'me',
+          created_by_user_id: 'creator1',
+          created_at: '2026-07-01T10:00:00Z',
+          source_code: 'D-1',
+          deal_id: 'd1',
+          job_id: null,
+          description: null,
+          client: null,
+          department: null,
+          importance: 'low',
+        },
+      ],
+    });
+    render(<MyTasksPage />);
+    expect(screen.getByText('Creator One')).toBeInTheDocument(); // who created it
+    expect(screen.getByText(/2026/)).toBeInTheDocument(); // when it was created
   });
 });

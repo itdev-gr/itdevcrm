@@ -28,7 +28,8 @@
     "title": "Tasks",
     "subtitle": "All tasks assigned to you.",
     "empty": "No tasks assigned to you.",
-    "empty_admin": "No open tasks for the team."
+    "empty_admin": "No open tasks for the team.",
+    "created": "Created"
   },
   "docs": {
     "toc_label": "On this page",
