@@ -39,6 +39,7 @@ describe('useCreateAssignedTask', () => {
       description: 'before May 30',
       assigneeUserId: 'u2',
       departmentId: 'g-web-dev',
+      importance: 'high',
     });
     expect(id).toBe('t1');
     expect(insert).toHaveBeenCalledWith({
@@ -49,6 +50,7 @@ describe('useCreateAssignedTask', () => {
       assignee_user_id: 'u2',
       created_by_user_id: 'me',
       department_group_id: 'g-web-dev',
+      importance: 'high',
     });
   });
 
@@ -63,6 +65,7 @@ describe('useCreateAssignedTask', () => {
       description: null,
       assigneeUserId: 'u3',
       departmentId: 'g-hosting',
+      importance: 'high',
     });
     expect(insert).toHaveBeenCalledWith({
       title: 'Hotfix',
@@ -72,6 +75,7 @@ describe('useCreateAssignedTask', () => {
       assignee_user_id: 'u3',
       created_by_user_id: 'me',
       department_group_id: 'g-hosting',
+      importance: 'high',
     });
   });
 
@@ -87,6 +91,7 @@ describe('useCreateAssignedTask', () => {
         description: null,
         assigneeUserId: 'u2',
         departmentId: 'g-web-dev',
+        importance: 'high',
       }),
     ).rejects.toThrow('rls denied');
   });
