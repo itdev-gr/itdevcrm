@@ -18,6 +18,8 @@ import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners'
 import { useUpsertTask } from './hooks/useUpsertTask';
 import { useDeleteTask } from './hooks/useDeleteTask';
 import type { UserTaskRow } from './hooks/useUserTasks';
+import { ImportanceSelect } from '@/features/tasks/ImportanceSelect';
+import { importanceOf, type ImportanceCode } from '@/features/tasks/importance';
 
 type Props = {
   open: boolean;
@@ -45,6 +47,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
   const [dueAt, setDueAt] = useState('');
   const [completed, setCompleted] = useState(false);
   const [assigneeId, setAssigneeId] = useState('');
+  const [importance, setImportance] = useState<ImportanceCode | ''>('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset state every time the dialog opens with a different target.
@@ -57,26 +60,27 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
       setDueAt(toLocalInputValue(new Date(task.due_at)));
       setCompleted(!!task.completed_at);
       setAssigneeId(task.user_id);
+      setImportance(importanceOf(task));
     } else {
       setTitle('');
       setNotes('');
       setDueAt(toLocalInputValue(defaultDueAt ?? new Date()));
       setCompleted(false);
       setAssigneeId(userId);
+      setImportance('');
     }
   }, [open, task, defaultDueAt, userId]);
 
   async function onSave() {
-    if (!userId || !title.trim() || !dueAt) return;
+    if (!userId || !title.trim() || !dueAt || !importance) return;
     const assignee = assigneeId || userId;
     const payload = {
       user_id: assignee,
-      // Stamp the creator when assigning to a colleague — RLS requires it.
-      // Self-tasks omit it so the insert also works pre-migration.
       ...(assignee !== userId ? { created_by: task?.created_by ?? userId } : {}),
       title: title.trim(),
       notes: notes.trim() || null,
       due_at: new Date(dueAt).toISOString(),
+      importance,
       completed_at: completed ? task?.completed_at ?? new Date().toISOString() : null,
     };
     await upsert.mutateAsync(task?.id ? { ...payload, id: task.id } : payload);
@@ -148,6 +152,10 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
             />
           </div>
           <div className="space-y-1.5">
+            <Label htmlFor="task-importance">{t('importance.label', { ns: 'common', defaultValue: 'Importance' })}</Label>
+            <ImportanceSelect id="task-importance" value={importance} onChange={setImportance} />
+          </div>
+          <div className="space-y-1.5">
             <Label htmlFor="task-notes">{t('task.notes', { defaultValue: 'Notes' })}</Label>
             <textarea
               id="task-notes"
@@ -188,7 +196,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
             </Button>
             <Button
               onClick={onSave}
-              disabled={!title.trim() || !dueAt || upsert.isPending || del.isPending}
+              disabled={!title.trim() || !dueAt || !importance || upsert.isPending || del.isPending}
             >
               {t('task.save', { defaultValue: 'Save' })}
             </Button>

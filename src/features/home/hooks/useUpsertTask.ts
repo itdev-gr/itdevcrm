@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { captureMutation } from '@/lib/sentry/captureMutation';
+import type { ImportanceCode } from '@/features/tasks/importance';
 
 type Input = {
   id?: string;
@@ -11,6 +12,7 @@ type Input = {
   title: string;
   notes: string | null;
   due_at: string; // ISO
+  importance: ImportanceCode;
   completed_at?: string | null;
 };
 
@@ -26,6 +28,7 @@ export function useUpsertTask() {
           title: input.title.trim(),
           notes: input.notes,
           due_at: input.due_at,
+          importance: input.importance,
           completed_at: input.completed_at ?? null,
           ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
         };
