@@ -38,7 +38,10 @@ function yearlyRevenue(c: AccountingClientRow): number {
 }
 
 function clientStatus(c: AccountingClientRow, t: (key: string) => string) {
-  if (isBlocked(c)) return { label: t('clients_page.status.blocked'), tone: 'blocked' as const };
+  if (isBlocked(c) || c.status === 'blocked')
+    return { label: t('clients_page.status.blocked'), tone: 'blocked' as const };
+  if (c.status === 'done')
+    return { label: t('clients_page.status.done'), tone: 'done' as const };
   if (activeJobs(c).length === 0) return { label: t('clients_page.status.no_jobs'), tone: 'pending' as const };
   return { label: t('clients_page.status.active'), tone: 'active' as const };
 }
@@ -47,6 +50,7 @@ const STATUS_STYLES = {
   active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
   pending: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
   blocked: 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300',
+  done: 'bg-slate-200 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300',
 } as const;
 
 export function AccountingClientsPage() {

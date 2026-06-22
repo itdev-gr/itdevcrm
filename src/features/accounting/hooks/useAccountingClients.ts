@@ -14,6 +14,7 @@ export type AccountingClientRow = {
   country: string | null;
   address: string | null;
   vat_number: string | null;
+  status: string | null;
   assigned_owner_id: string | null;
   created_at: string;
   start_date: string | null;
@@ -38,7 +39,7 @@ export function useAccountingClients() {
         .select(
           `
           id, code, name, contact_first_name, contact_last_name, email, phone, website,
-          industry, country, address, vat_number, assigned_owner_id, created_at, start_date,
+          industry, country, address, vat_number, status, assigned_owner_id, created_at, start_date,
           client_blocks!client_id(unblocked_at, reason),
           deals!client_id(id, archived, locked_at),
           jobs!client_id(id, service_type, billing_type, amount_net, status, archived)
