@@ -30,6 +30,7 @@ returns int language plpgsql security definer set search_path = public as $$
 declare
   v_from_stage uuid;
   v_new_lead_stage uuid;
+  v_pool uuid[];
   v_count int := 0;
   r record;
 begin
@@ -37,6 +38,7 @@ begin
     raise exception 'permission_denied';
   end if;
 
+  -- Must match SHUFFLABLE_CODES in src/features/sales/SalesKanbanPage.tsx.
   if p_stage_code not in
        ('new_lead','no_answer','working_on_it','offer_sent','scheduled','hot') then
     raise exception 'stage_not_shufflable';
@@ -51,11 +53,20 @@ begin
   select id into v_new_lead_stage
     from public.pipeline_stages where board = 'sales' and code = 'new_lead';
 
+  -- Server-side guard: the client computes assignees from lead_shuffle_pool(),
+  -- but as a security-definer RPC we still reject any owner that is null or no
+  -- longer in the sales pool, so a malformed payload can't silently unassign a
+  -- lead or hand it to someone outside the pool. Atomic: one bad row aborts all.
+  v_pool := public.sales_pool_ids();
+
   for r in
     select (e->>'lead_id')::uuid as lead_id,
            (e->>'owner_user_id')::uuid as owner_user_id
       from jsonb_array_elements(coalesce(p_assignments, '[]'::jsonb)) e
   loop
+    if r.owner_user_id is null or not (r.owner_user_id = any(v_pool)) then
+      raise exception 'invalid_assignee';
+    end if;
     update public.leads
        set owner_user_id = r.owner_user_id,
            stage_id = v_new_lead_stage
