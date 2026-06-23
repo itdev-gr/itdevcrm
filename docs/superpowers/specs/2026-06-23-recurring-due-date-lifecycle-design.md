@@ -162,9 +162,10 @@ subtitled **"7 days prior"**. Payment-reminder emails (−7d/+1d/+7d,
      `deal_payments_settle_to_paid_in_full()` (On Hold + Awaiting, due-date rule).
   5. data correction + `deals_due_date_resweep_backup_20260623`.
 - **In-file ROLLBACK:** restore each function body from its prior migration
-  (`mark_overdue_payments` ← `20260610000004`; `move_overdue_deals_to_on_hold` &
-  `deal_payments_move_to_awaiting` & `deal_payments_release_from_on_hold` ←
-  `20260623140000`/`20260503000019`); restore each corrected deal's stage from
+  (`mark_overdue_payments` ← `20260610000005`; `move_overdue_deals_to_on_hold` &
+  `deal_payments_release_from_on_hold` ← `20260623140000`;
+  `deal_payments_move_to_awaiting` ← `20260503000021`, which carries the `'new'`-stage
+  guard); restore each corrected deal's stage from
   `deals_due_date_resweep_backup_20260623` (the hold trigger re-syncs jobs).
 - **No frontend change** in this spec (the drag RPC `accounting_mark_paid_in_full`
   is unaffected). Atomic commit; revert = the rollback block.

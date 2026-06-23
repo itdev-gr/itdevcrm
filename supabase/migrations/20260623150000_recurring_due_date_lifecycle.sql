@@ -114,6 +114,7 @@ declare
   awaiting_id uuid;
   on_hold_id  uuid;
   d record;
+  current_stage_code text;
 begin
   if new.billing_type = 'recurring_test_2min' then
     return new;
@@ -139,6 +140,16 @@ begin
   if on_hold_id is not null and d.accounting_stage_id = on_hold_id then
     return new;  -- leave On Hold deals alone (still owe an earlier month)
   end if;
+
+  select code into current_stage_code
+    from public.pipeline_stages where id = d.accounting_stage_id;
+  -- Brand-new deals stay in the New column (accounting moves them out manually);
+  -- preserves migration 20260503000021. NOTE: unlike that version we DO NOT skip
+  -- completed deals — a resting recurring client in paid_in_full must reach Awaiting.
+  if current_stage_code = 'new' then
+    return new;
+  end if;
+
   if exists (select 1 from public.pipeline_stages ps
               where ps.id = d.accounting_stage_id and ps.is_terminal = true) then
     return new;  -- done / closed
@@ -262,7 +273,7 @@ update public.deals d
 --   -- restore prior bodies:
 --   --   mark_overdue_payments()        from 20260610000005
 --   --   move_overdue_deals_to_on_hold()      from 20260623140000
---   --   deal_payments_move_to_awaiting()     from 20260503000019
+--   --   deal_payments_move_to_awaiting()     from 20260503000021 (has the 'new' guard)
 --   drop trigger if exists deal_payments_settle_to_paid_in_full on public.deal_payments;
 --   drop function if exists public.deal_payments_settle_to_paid_in_full();
 --   -- re-create deal_payments_release_from_on_hold() + trigger from 20260623140000.
