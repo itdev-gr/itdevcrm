@@ -4,6 +4,8 @@ import { vi, describe, it, expect } from 'vitest';
 
 vi.mock('./TasksKanbanBoard', () => ({ TasksKanbanBoard: () => <div>BOARD</div> }));
 vi.mock('./ResolvedArchive', () => ({ ResolvedArchive: () => <div>ARCHIVE</div> }));
+// The page now renders TaskDialog (data hooks); this test only covers tab switching.
+vi.mock('@/features/home/TaskDialog', () => ({ TaskDialog: () => null }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k, i18n: { resolvedLanguage: 'en' } }),
 }));
