@@ -46,6 +46,13 @@
     "resolved_on": "Resolved {{date}}",
     "show_more": "Show more"
   },
+  "client_picker": {
+    "label": "Client (optional)",
+    "search_placeholder": "Search client…",
+    "none": "No client",
+    "no_results": "No clients found",
+    "clear": "Clear"
+  },
   "docs": {
     "toc_label": "On this page",
     "toc_jump": "Jump to section…"
