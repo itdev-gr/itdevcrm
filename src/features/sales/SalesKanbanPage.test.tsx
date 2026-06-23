@@ -6,13 +6,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { i18n } from '@/lib/i18n';
 
-const { shuffleMutateAsync } = vi.hoisted(() => ({
+const { shuffleMutateAsync, authState, countsState } = vi.hoisted(() => ({
   shuffleMutateAsync: vi.fn().mockResolvedValue(4),
+  authState: { isAdmin: true, user: { id: 'admin-1' } as { id: string } | null },
+  countsState: new Map<string, number>(),
 }));
 
 vi.mock('@/lib/stores/authStore', () => ({
   useAuthStore: (sel: (s: { isAdmin: boolean; user: { id: string } | null }) => unknown) =>
-    sel({ isAdmin: true, user: { id: 'admin-1' } }),
+    sel({ isAdmin: authState.isAdmin, user: authState.user }),
 }));
 
 const stage = (code: string, position: number) => ({
@@ -32,7 +34,7 @@ vi.mock('@/features/stages/hooks/usePipelineStages', () => ({
 }));
 
 vi.mock('./hooks/useSalesKanbanCounts', () => ({
-  useSalesKanbanCounts: () => ({ data: new Map([['stage-no_answer', 12]]) }),
+  useSalesKanbanCounts: () => ({ data: countsState }),
 }));
 
 vi.mock('./hooks/useShuffleStageLeads', () => ({
@@ -73,6 +75,10 @@ function renderPage() {
 describe('SalesKanbanPage shuffle control', () => {
   beforeEach(() => {
     shuffleMutateAsync.mockClear();
+    authState.isAdmin = true;
+    authState.user = { id: 'admin-1' };
+    countsState.clear();
+    countsState.set('stage-no_answer', 12);
     vi.spyOn(window, 'alert').mockImplementation(() => undefined);
   });
 
@@ -94,5 +100,17 @@ describe('SalesKanbanPage shuffle control', () => {
       stageId: 'stage-no_answer',
       stageCode: 'no_answer',
     });
+  });
+
+  it('hides the shuffle control from non-admins', () => {
+    authState.isAdmin = false;
+    renderPage();
+    expect(screen.queryByRole('button', { name: /shuffle/i })).not.toBeInTheDocument();
+  });
+
+  it('disables the Shuffle button when the selected stage has no leads', () => {
+    countsState.clear();
+    renderPage();
+    expect(screen.getByRole('button', { name: /shuffle/i })).toBeDisabled();
   });
 });
