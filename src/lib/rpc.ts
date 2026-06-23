@@ -23,6 +23,20 @@ export async function completeAccounting(dealId: string): Promise<CompleteAccoun
   return data as CompleteAccountingResult;
 }
 
+export type MarkPaidInFullResult =
+  | { ok: true; deal_id: string; mode?: 'unlocked' | 'spawned' }
+  | { ok: false; errors: string[] };
+
+export async function markPaidInFull(dealId: string): Promise<MarkPaidInFullResult> {
+  const { data, error } = await supabase.rpc('accounting_mark_paid_in_full', {
+    target_deal_id: dealId,
+  });
+  if (error) {
+    return { ok: false, errors: [error.message] };
+  }
+  return data as MarkPaidInFullResult;
+}
+
 export type BlockClientResult = { ok: true; block_id: string } | { ok: false; errors: string[] };
 export type UnblockClientResult = { ok: true; block_id: string } | { ok: false; errors: string[] };
 
