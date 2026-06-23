@@ -252,7 +252,7 @@ import { leadMatchesOf, coldLeadMatchesOf } from './intakeMatches';
 import type { LeadIntakeMatch } from './hooks/useLeadIntake';
 
 const m = (o: Partial<LeadIntakeMatch>): LeadIntakeMatch =>
-  ({ match_type: 'lead', record_id: 'x', display_name: 'X' } as LeadIntakeMatch & typeof o);
+  ({ match_type: 'lead', record_id: 'x', display_name: 'X', ...o } as LeadIntakeMatch);
 
 describe('intakeMatches', () => {
   it('leadMatchesOf keeps only lead matches', () => {
