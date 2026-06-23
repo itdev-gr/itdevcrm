@@ -19,6 +19,12 @@ vi.mock('./hooks/useMergeLeadIntake', () => ({
 }));
 const { useDeadEndLeads } = vi.hoisted(() => ({ useDeadEndLeads: vi.fn() }));
 vi.mock('./hooks/useDeadEndLeads', () => ({ useDeadEndLeads }));
+const { useColdLeads } = vi.hoisted(() => ({ useColdLeads: vi.fn() }));
+vi.mock('./hooks/useColdLeads', () => ({ useColdLeads }));
+const reengage = vi.fn();
+vi.mock('./hooks/useReengageLeadIntake', () => ({
+  useReengageLeadIntake: () => ({ mutate: reengage, isPending: false }),
+}));
 const setAutoMerge = vi.fn();
 vi.mock('./hooks/useAutoMerge', () => ({
   useAutoMerge: () => ({
@@ -53,6 +59,7 @@ describe('LeadIntakePage', () => {
     useBulkMergePreview.mockReturnValue({ data: { mergeable: 0, dead_end: 0 }, isLoading: false });
     useBulkReleasePreview.mockReturnValue({ data: { releasable: 0 }, isLoading: false });
     useDeadEndLeads.mockReturnValue(new Set());
+    useColdLeads.mockReturnValue(new Set());
   });
 
   it('confirms before releasing a flagged (duplicate) lead, then forces release', () => {
@@ -368,5 +375,39 @@ describe('LeadIntakePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Lead One/ })); // dead-end target, confirm dismissed
     expect(merge).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: /Lead Two/ })).toBeInTheDocument(); // picker still open
+  });
+
+  it('re-engages a cold lead on Release for a Meta row matching a single cold lead', () => {
+    useColdLeads.mockReturnValue(new Set(['cold-lead-1']));
+    useLeadIntake.mockReturnValue({
+      data: [
+        {
+          id: 'row1',
+          source: 'meta',
+          title: 'Meta form',
+          email: 'cold@test.gr',
+          phone: '+306900000010',
+          created_at: '2026-06-22T10:00:00Z',
+          matched_on: ['email'],
+          matches: [
+            {
+              match_type: 'lead',
+              record_id: 'cold-lead-1',
+              display_name: 'Old Lead',
+              context: 'Cold',
+              matched_field: 'email',
+              matched_email: 'cold@test.gr',
+              matched_phone: null,
+            },
+          ],
+        },
+      ],
+      isLoading: false,
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<LeadIntakePage />);
+    fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
+    expect(reengage).toHaveBeenCalledWith({ id: 'row1', targetLeadId: 'cold-lead-1' });
+    expect(release).not.toHaveBeenCalled();
   });
 });

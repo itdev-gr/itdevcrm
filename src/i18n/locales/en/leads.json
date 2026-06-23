@@ -53,7 +53,9 @@
     "release_confirm_dup": "This lead matches {{count}} existing record(s). Releasing it will create a NEW lead on the sales board anyway. Continue?",
     "release_reflagged": "This lead now matches existing records and was not released — review the duplicate flags, then Release again to override.",
     "merge_dead_end_tag": "dead-end",
-    "merge_dead_end_confirm": "That lead is marked dead-end / not interested. Merging into it will DISCARD this new submission instead of keeping it. Continue?"
+    "merge_dead_end_confirm": "That lead is marked dead-end / not interested. Merging into it will DISCARD this new submission instead of keeping it. Continue?",
+    "reengage_confirm": "Re-engage {{name}} — move to Unique Lead and append this submission?",
+    "reengage_pick": "Which cold lead to re-engage?"
   },
   "intake_log": {
     "label": "New info from duplicates"

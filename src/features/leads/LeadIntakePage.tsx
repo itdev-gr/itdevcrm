@@ -10,8 +10,10 @@ import { useBulkMergePreview } from './hooks/useBulkMergePreview';
 import { useBulkMergeIntake } from './hooks/useBulkMergeIntake';
 import { useBulkReleasePreview } from './hooks/useBulkReleasePreview';
 import { useBulkReleaseIntake } from './hooks/useBulkReleaseIntake';
-import { leadMatchesOf } from './intakeMatches';
+import { leadMatchesOf, coldLeadMatchesOf } from './intakeMatches';
 import { useDeadEndLeads } from './hooks/useDeadEndLeads';
+import { useColdLeads } from './hooks/useColdLeads';
+import { useReengageLeadIntake } from './hooks/useReengageLeadIntake';
 import { LeadImportControls } from './LeadImportControls';
 
 function fullName(r: LeadIntakeRow): string {
@@ -139,6 +141,13 @@ export function LeadIntakePage() {
       leadMatchesOf((r.matches as unknown as LeadIntakeMatch[]) ?? []).map((m) => m.record_id),
     ),
   );
+  const reengage = useReengageLeadIntake();
+  const [reengageFor, setReengageFor] = useState<string | null>(null);
+  const coldSet = useColdLeads(
+    rows.flatMap((r) =>
+      leadMatchesOf((r.matches as unknown as LeadIntakeMatch[]) ?? []).map((m) => m.record_id),
+    ),
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -190,6 +199,7 @@ export function LeadIntakePage() {
             const matches = (r.matches as unknown as LeadIntakeMatch[]) ?? [];
             const leadMatches = leadMatchesOf(matches);
             const canMerge = leadMatches.length > 0;
+            const coldMatches = r.source === 'meta' ? coldLeadMatchesOf(matches, coldSet) : [];
             function mergeInto(targetLeadId: string): boolean {
               if (deadEndSet.has(targetLeadId) && !window.confirm(t('leads:intake.merge_dead_end_confirm'))) {
                 return false;
@@ -205,7 +215,21 @@ export function LeadIntakePage() {
                 setPickFor(r.id);
               }
             }
+            function reengageInto(targetLeadId: string, name: string) {
+              if (!window.confirm(t('leads:intake.reengage_confirm', { name }))) return;
+              reengage.mutate({ id: r.id, targetLeadId });
+            }
             function onRelease() {
+              // Meta re-submission matching a cold lead → re-engage that lead
+              // (move to Unique Lead + append) instead of creating a duplicate.
+              if (coldMatches.length === 1 && coldMatches[0]) {
+                reengageInto(coldMatches[0].record_id, coldMatches[0].display_name);
+                return;
+              }
+              if (coldMatches.length > 1) {
+                setReengageFor(r.id);
+                return;
+              }
               if (matches.length > 0) {
                 if (!window.confirm(t('leads:intake.release_confirm_dup', { count: matches.length }))) return;
                 release.mutate({ id: r.id, force: true });
@@ -319,6 +343,30 @@ export function LeadIntakePage() {
                         className="rounded px-2 py-1 text-xs underline"
                         onClick={() => setPickFor(null)}
                       >
+                        {t('leads:intake.merge_cancel')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                {reengageFor === r.id && coldMatches.length > 1 ? (
+                  <div className="mt-2 rounded border border-emerald-300 bg-emerald-50 p-2 text-sm dark:border-emerald-900/50 dark:bg-emerald-900/20">
+                    <div className="mb-1 font-medium">{t('leads:intake.reengage_pick')}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {coldMatches.map((m) => (
+                        <button
+                          key={m.record_id}
+                          type="button"
+                          className="rounded border bg-card px-2 py-1 text-xs"
+                          onClick={() => {
+                            reengageInto(m.record_id, m.display_name);
+                            setReengageFor(null);
+                          }}
+                        >
+                          {m.display_name}
+                          {m.context ? ` (${m.context})` : ''}
+                        </button>
+                      ))}
+                      <button type="button" className="rounded px-2 py-1 text-xs underline" onClick={() => setReengageFor(null)}>
                         {t('leads:intake.merge_cancel')}
                       </button>
                     </div>
