@@ -57,6 +57,39 @@
       "payment_method_required": "Choose a payment method (cash or online) on the deal before moving it."
     }
   },
+  "new_deal": {
+    "button": "New deal",
+    "title": "New deal",
+    "description": "Create a deal directly in accounting. It lands in the New column.",
+    "existing_client": "Existing client",
+    "new_client": "New client",
+    "client_name": "Client / company name",
+    "client_email": "Email",
+    "client_phone": "Phone",
+    "deal_title": "Deal title",
+    "one_time": "One-time (€)",
+    "monthly": "Monthly (€)",
+    "payment_method": "Payment method",
+    "payment_none": "—",
+    "payment_cash": "Cash",
+    "payment_online": "Online",
+    "notes": "Notes",
+    "cancel": "Cancel",
+    "submit": "Create deal",
+    "submitting": "Creating…",
+    "errors": {
+      "missing_client": "Pick a client.",
+      "missing_client_name": "Enter the client / company name.",
+      "missing_title": "Enter a deal title.",
+      "invalid_amount": "Amounts can't be negative.",
+      "not_authorized": "You don't have permission to create deals.",
+      "client_not_found": "That client no longer exists.",
+      "client_has_live_deal": "This client already has an active deal.",
+      "invalid_payment_method": "Invalid payment method.",
+      "ambiguous_client": "Choose either an existing or a new client, not both.",
+      "create_failed": "Could not create the deal. Try again."
+    }
+  },
   "card": {
     "services": "Services",
     "lock_date": "Locked"
