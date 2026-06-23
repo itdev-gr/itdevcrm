@@ -3193,6 +3193,7 @@ export type Database = {
       user_tasks: {
         Row: {
           completed_at: string | null
+          client_id: string | null
           created_at: string
           created_by: string | null
           due_at: string
@@ -3205,6 +3206,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           due_at: string
@@ -3217,6 +3219,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           due_at?: string
