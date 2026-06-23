@@ -19,6 +19,9 @@ export function useCreateAccountingDeal() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
       void qc.invalidateQueries({ queryKey: queryKeys.clients() });
+      // useAccountingClients keys off a literal ['accounting-clients']; refresh it
+      // so an inline-created client shows on the accounting Clients page immediately.
+      void qc.invalidateQueries({ queryKey: ['accounting-clients'] });
     },
   });
 }
