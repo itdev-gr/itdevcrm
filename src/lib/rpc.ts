@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { ImportedLeadRow } from '@/features/leads/leadImport';
+import type { CreateDealParams } from '@/features/accounting/newDeal';
 
 export type LockDealResult = { ok: true; deal_id: string } | { ok: false; errors: string[] };
 
@@ -377,4 +378,21 @@ export async function importLeadsToIntake(
   const r = data as { ok: boolean; imported?: number; flagged?: number; errors?: string[] };
   if (!r.ok) return { ok: false, errors: r.errors ?? ['import_failed'] };
   return { ok: true, imported: r.imported ?? 0, flagged: r.flagged ?? 0 };
+}
+
+// --- Accounting: create deal (+ linked won lead) -----------------------------
+export type AccountingCreateDealResult =
+  | { ok: true; deal_id: string; code: string }
+  | { ok: false; errors: string[] };
+
+// Accounting creates a deal directly on the onboarding board. Not in the
+// generated types → loose `rpcCall`. The RPC enforces the capability server-side.
+export async function accountingCreateDeal(
+  params: CreateDealParams,
+): Promise<AccountingCreateDealResult> {
+  const { data, error } = await rpcCall('accounting_create_deal', params);
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; deal_id?: string; code?: string; errors?: string[] };
+  if (!r.ok || !r.deal_id) return { ok: false, errors: r.errors ?? ['create_failed'] };
+  return { ok: true, deal_id: r.deal_id, code: r.code ?? '' };
 }
