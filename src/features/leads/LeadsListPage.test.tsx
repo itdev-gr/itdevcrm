@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
@@ -6,8 +6,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { i18n } from '@/lib/i18n';
 
-const { distributeMutateAsync } = vi.hoisted(() => ({
+const { distributeMutateAsync, useLeadsMock } = vi.hoisted(() => ({
   distributeMutateAsync: vi.fn().mockResolvedValue(2),
+  useLeadsMock: vi.fn().mockReturnValue({ data: [], isLoading: false, error: null }),
 }));
 
 vi.mock('@/lib/stores/authStore', () => ({
@@ -32,7 +33,10 @@ const oneUnassignedLead = {
 };
 
 vi.mock('./hooks/useLeads', () => ({
-  useLeads: () => ({ data: [oneUnassignedLead], isLoading: false, error: null }),
+  useLeads: (opts: unknown) => {
+    useLeadsMock(opts);
+    return { data: [oneUnassignedLead], isLoading: false, error: null };
+  },
 }));
 vi.mock('./hooks/useAssignableOwners', () => ({ useAssignableOwners: () => ({ data: [] }) }));
 vi.mock('@/features/stages/hooks/usePipelineStages', () => ({ usePipelineStages: () => ({ data: [] }) }));
@@ -71,6 +75,7 @@ function renderPage() {
 describe('LeadsListPage distribute confirmation', () => {
   beforeEach(() => {
     distributeMutateAsync.mockClear();
+    useLeadsMock.mockClear();
     vi.spyOn(window, 'alert').mockImplementation(() => undefined);
   });
 
@@ -93,5 +98,12 @@ describe('LeadsListPage distribute confirmation', () => {
     await user.click(within(dialog).getByRole('button', { name: /^distribute$/i }));
 
     expect(distributeMutateAsync).toHaveBeenCalledOnce();
+  });
+
+  it('passes includeConverted to useLeads and flips it with the toggle', () => {
+    renderPage();
+    expect(useLeadsMock).toHaveBeenLastCalledWith({ includeConverted: false });
+    fireEvent.click(screen.getByLabelText('Include won/converted'));
+    expect(useLeadsMock).toHaveBeenLastCalledWith({ includeConverted: true });
   });
 });

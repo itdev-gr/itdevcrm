@@ -34,7 +34,9 @@ export function LeadsListPage() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const userId = useAuthStore((s) => s.user?.id ?? null);
 
-  const { data: leads = [], isLoading, error } = useLeads({});
+  const [includeConverted, setIncludeConverted] = useState(false);
+
+  const { data: leads = [], isLoading, error } = useLeads({ includeConverted });
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const bulk = useBulkUpdateLeads();
@@ -85,7 +87,7 @@ export function LeadsListPage() {
   const pageRows = rows.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
   useEffect(() => {
     setPage(0);
-  }, [search, statusId, ownerId, sort]);
+  }, [search, statusId, ownerId, sort, includeConverted]);
 
   function toggleSort(key: LeadSortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
@@ -235,6 +237,15 @@ export function LeadsListPage() {
             </option>
           ))}
         </FilterSelect>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            aria-label={t('filters.include_won')}
+            checked={includeConverted}
+            onChange={(e) => setIncludeConverted(e.target.checked)}
+          />
+          {t('filters.include_won')}
+        </label>
         <span className="ml-auto text-sm text-muted-foreground">
           {rows.length} {t('title').toLowerCase()}
         </span>

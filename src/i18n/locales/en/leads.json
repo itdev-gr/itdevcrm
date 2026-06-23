@@ -101,7 +101,8 @@
     "sort_oldest": "Oldest first",
     "sort_value_high": "Value: high to low",
     "sort_value_low": "Value: low to high",
-    "sort_recent": "Recently updated"
+    "sort_recent": "Recently updated",
+    "include_won": "Include won/converted"
   },
   "table": {
     "code": "Code",
