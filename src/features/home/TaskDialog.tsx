@@ -20,6 +20,7 @@ import { useDeleteTask } from './hooks/useDeleteTask';
 import type { UserTaskRow } from './hooks/useUserTasks';
 import { ImportanceSelect } from '@/features/tasks/ImportanceSelect';
 import { importanceOf, type ImportanceCode } from '@/features/tasks/importance';
+import { ClientPicker, type PickedClient } from '@/features/clients/ClientPicker';
 
 type Props = {
   open: boolean;
@@ -28,6 +29,8 @@ type Props = {
   task?: UserTaskRow | null;
   /** Pre-fill the due-at when creating (e.g. clicked on a specific day in Day view). */
   defaultDueAt?: Date | null;
+  /** Pre-select a client when creating (e.g. from a client's Tasks tab). */
+  defaultClient?: PickedClient | null;
 };
 
 function toLocalInputValue(d: Date): string {
@@ -35,7 +38,7 @@ function toLocalInputValue(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
+export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClient }: Props) {
   const { t } = useTranslation('home');
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const { data: owners = [] } = useAssignableOwners();
@@ -48,6 +51,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
   const [completed, setCompleted] = useState(false);
   const [assigneeId, setAssigneeId] = useState('');
   const [importance, setImportance] = useState<ImportanceCode | ''>('');
+  const [client, setClient] = useState<PickedClient | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset state every time the dialog opens with a different target.
@@ -61,6 +65,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
       setCompleted(!!task.completed_at);
       setAssigneeId(task.user_id);
       setImportance(importanceOf(task));
+      setClient(task.client_id ? { id: task.client_id, name: '' } : null);
     } else {
       setTitle('');
       setNotes('');
@@ -68,8 +73,9 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
       setCompleted(false);
       setAssigneeId(userId);
       setImportance('');
+      setClient(defaultClient ?? null);
     }
-  }, [open, task, defaultDueAt, userId]);
+  }, [open, task, defaultDueAt, defaultClient, userId]);
 
   async function onSave() {
     if (!userId || !title.trim() || !dueAt || !importance) return;
@@ -82,6 +88,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
       due_at: new Date(dueAt).toISOString(),
       importance,
       completed_at: completed ? task?.completed_at ?? new Date().toISOString() : null,
+      client_id: client?.id ?? null,
     };
     await upsert.mutateAsync(task?.id ? { ...payload, id: task.id } : payload);
     onOpenChange(false);
@@ -155,6 +162,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt }: Props) {
             <Label htmlFor="task-importance">{t('importance.label', { ns: 'common', defaultValue: 'Importance' })}</Label>
             <ImportanceSelect id="task-importance" value={importance} onChange={setImportance} />
           </div>
+          <ClientPicker value={client} onChange={setClient} id="task-client" />
           <div className="space-y-1.5">
             <Label htmlFor="task-notes">{t('task.notes', { defaultValue: 'Notes' })}</Label>
             <textarea

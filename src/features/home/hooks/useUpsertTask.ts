@@ -14,6 +14,7 @@ type Input = {
   due_at: string; // ISO
   importance: ImportanceCode;
   completed_at?: string | null;
+  client_id?: string | null;
 };
 
 export function useUpsertTask() {
@@ -31,6 +32,7 @@ export function useUpsertTask() {
           importance: input.importance,
           completed_at: input.completed_at ?? null,
           ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
+          ...(input.client_id !== undefined ? { client_id: input.client_id } : {}),
         };
         if (input.id) {
           const { data, error } = await supabase
