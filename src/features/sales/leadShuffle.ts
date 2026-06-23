@@ -45,9 +45,9 @@ export function planLeadShuffle(leads: ShuffleLead[], pool: string[]): ShuffleAs
   });
 
   // Balanced base assignment (counts differ by at most 1).
-  const assigned: string[] = ordered.map((_, k) => pool[k % n]);
+  const assigned: string[] = ordered.map((_, k) => pool[k % n]!);
 
-  const isConflict = (k: number) => assigned[k] === ordered[k].ownerId;
+  const isConflict = (k: number) => assigned[k] === ordered[k]!.ownerId;
 
   for (let k = 0; k < ordered.length; k++) {
     if (!isConflict(k)) continue;
@@ -56,9 +56,11 @@ export function planLeadShuffle(leads: ShuffleLead[], pool: string[]): ShuffleAs
     for (let j = 0; j < ordered.length; j++) {
       if (j === k) continue;
       // After a swap, lead k takes assigned[j] and lead j takes assigned[k].
-      if (assigned[j] === ordered[k].ownerId) continue; // k would still conflict
-      if (assigned[k] === ordered[j].ownerId) continue; // j would newly conflict
-      [assigned[k], assigned[j]] = [assigned[j], assigned[k]];
+      if (assigned[j] === ordered[k]!.ownerId) continue; // k would still conflict
+      if (assigned[k] === ordered[j]!.ownerId) continue; // j would newly conflict
+      const tmp = assigned[k]!;
+      assigned[k] = assigned[j]!;
+      assigned[j] = tmp;
       swapped = true;
       break;
     }
@@ -69,12 +71,12 @@ export function planLeadShuffle(leads: ShuffleLead[], pool: string[]): ShuffleAs
       for (const a of assigned) load.set(a, (load.get(a) ?? 0) + 1);
       let best: string | null = null;
       for (const p of pool) {
-        if (p === ordered[k].ownerId) continue;
+        if (p === ordered[k]!.ownerId) continue;
         if (best === null || load.get(p)! < load.get(best)!) best = p;
       }
       if (best) assigned[k] = best;
     }
   }
 
-  return ordered.map((lead, k) => ({ leadId: lead.id, newOwnerId: assigned[k] }));
+  return ordered.map((lead, k) => ({ leadId: lead.id, newOwnerId: assigned[k]! }));
 }

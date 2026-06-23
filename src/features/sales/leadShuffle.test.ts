@@ -10,7 +10,7 @@ function counts(assignments: { newOwnerId: string }[]) {
 }
 
 function cyclicLeads(n: number): ShuffleLead[] {
-  return Array.from({ length: n }, (_, i) => ({ id: `l${i}`, ownerId: pool[i % 3] }));
+  return Array.from({ length: n }, (_, i) => ({ id: `l${i}`, ownerId: pool[i % 3]! }));
 }
 
 describe('planLeadShuffle', () => {
@@ -83,7 +83,7 @@ describe('planLeadShuffle', () => {
         // no longer in the pool ('ghost'), the rest spread across the pool.
         const leads: ShuffleLead[] = Array.from({ length: m }, (_, i) => ({
           id: `l${i}`,
-          ownerId: i % 7 === 0 ? null : i % 11 === 0 ? 'ghost' : reps[(i * 3 + 1) % repCount],
+          ownerId: i % 7 === 0 ? null : i % 11 === 0 ? 'ghost' : reps[(i * 3 + 1) % repCount]!,
         }));
         const out = planLeadShuffle(leads, reps);
         expect(out).toHaveLength(m);
