@@ -3402,6 +3402,7 @@ export type Database = {
       bulk_release_intake: { Args: { p_limit?: number }; Returns: Json }
       bulk_release_intake_preview: { Args: never; Returns: Json }
       close_deal: { Args: { p_deal_id: string; p_jobs?: Json }; Returns: Json }
+      accounting_mark_paid_in_full: { Args: { target_deal_id: string }; Returns: Json }
       complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
       convert_lead_to_client: {
         Args: { target_lead_id: string }
