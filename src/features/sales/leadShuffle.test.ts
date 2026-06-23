@@ -60,4 +60,39 @@ describe('planLeadShuffle', () => {
     const leads = cyclicLeads(17);
     expect(planLeadShuffle(leads, pool)).toEqual(planLeadShuffle(leads, pool));
   });
+
+  it('returns an empty array when there are no leads', () => {
+    expect(planLeadShuffle([], pool)).toEqual([]);
+  });
+
+  it('reassigns a lead whose current owner is no longer in the pool', () => {
+    const leads: ShuffleLead[] = [
+      { id: 'l1', ownerId: 'ghost' },
+      { id: 'l2', ownerId: 'ghost' },
+    ];
+    const out = planLeadShuffle(leads, pool);
+    expect(out).toHaveLength(2);
+    for (const a of out) expect(pool).toContain(a.newOwnerId);
+  });
+
+  it('upholds the hard invariants (no-self, in-pool, complete) across many shapes', () => {
+    for (let repCount = 2; repCount <= 6; repCount++) {
+      const reps = Array.from({ length: repCount }, (_, i) => `rep${i}`);
+      for (let m = 0; m <= 40; m++) {
+        // Deterministic, varied ownership: some unassigned, some owned by a rep
+        // no longer in the pool ('ghost'), the rest spread across the pool.
+        const leads: ShuffleLead[] = Array.from({ length: m }, (_, i) => ({
+          id: `l${i}`,
+          ownerId: i % 7 === 0 ? null : i % 11 === 0 ? 'ghost' : reps[(i * 3 + 1) % repCount],
+        }));
+        const out = planLeadShuffle(leads, reps);
+        expect(out).toHaveLength(m);
+        const ownerOf = new Map(leads.map((l) => [l.id, l.ownerId]));
+        for (const a of out) {
+          expect(a.newOwnerId).not.toBe(ownerOf.get(a.leadId)); // no-self (hard rule)
+          expect(reps).toContain(a.newOwnerId); // always a real pool member
+        }
+      }
+    }
+  });
 });

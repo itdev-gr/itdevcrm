@@ -19,12 +19,14 @@ export interface ShuffleAssignment {
  * by swapping its target with another lead's. A swap preserves both reps' counts,
  * so balance survives the repair. In the rare case where no count-preserving swap
  * exists (e.g. one rep owns nearly every lead in the stage), the conflicting lead
- * is moved to the least-loaded non-self rep — trading a small imbalance for the
- * no-self guarantee, which is the higher-priority rule.
+ * is moved to the least-loaded non-self rep — trading some imbalance (bounded by
+ * how lopsided the current ownership is) for the no-self guarantee, which is the
+ * higher-priority rule.
  *
  * Deterministic: same input -> same output (no randomness), so it is unit testable
  * and the result is reproducible.
  *
+ * @param pool Ordered, de-duplicated rep ids (real ids are non-empty UUIDs).
  * @throws Error('shuffle_needs_two_reps') if the pool has fewer than two reps.
  */
 export function planLeadShuffle(leads: ShuffleLead[], pool: string[]): ShuffleAssignment[] {
