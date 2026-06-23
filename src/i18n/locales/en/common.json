@@ -50,7 +50,6 @@
   "client_picker": {
     "label": "Client (optional)",
     "search_placeholder": "Search client…",
-    "none": "No client",
     "no_results": "No clients found",
     "clear": "Clear"
   },

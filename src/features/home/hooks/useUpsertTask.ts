@@ -55,6 +55,7 @@ export function useUpsertTask() {
     ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['user-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['client-tasks'] });
     },
   });
 }
