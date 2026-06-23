@@ -72,11 +72,14 @@ No reusable client search/combobox component exists.
 
 - **`TaskDialog`** (personal, `useUpsertTask`): add the `ClientPicker`; persist
   `client_id` (nullable) on insert/update. Pre-fill when the dialog is opened with
-  a client context (see E).
-- **`NewAssignedTaskDialog`** (delegated): add the `ClientPicker`. When opened from
-  a deal/job, pre-select that source's client (shown, editable). Extend
-  `useCreateAssignedTask` input to accept an optional `clientId`; when provided,
-  pass it through (the trigger still fills it from deal/job when omitted).
+  a client context (see E and D's "+ New task").
+- **`NewAssignedTaskDialog`** (delegated): **no change needed.** A delegated task is
+  always created from a deal/job, and the `assigned_tasks_populate_source`
+  BEFORE-INSERT trigger *requires* a deal/job and sets `client_id` from it
+  (overwriting any supplied value). So delegated tasks already capture the client
+  automatically and will appear on the client tab with no form change. (Standalone,
+  client-only delegation is out of scope — it would need a trigger change the
+  product owner hasn't asked for.)
 
 ### D. Client page — new **Tasks** tab
 
@@ -126,7 +129,6 @@ No reusable client search/combobox component exists.
 - `ClientPicker` / `useClientSearch`: renders matches, debounces, selects, clears.
 - `user_tasks` client wiring: `useUpsertTask` sends `client_id`; `TaskDialog`
   shows the picker and submits it.
-- `useCreateAssignedTask`: passes `clientId` when provided.
 - Client Tasks tab query: unions personal + delegated for a client; open/resolved
   split.
 - Card click routing: `assigned` → assigned dialog, `user` → user dialog; inner
@@ -139,8 +141,8 @@ No reusable client search/combobox component exists.
 - **Migration:** `user_tasks.client_id` column + index. Rollback in-file:
   `drop index if exists user_tasks_client_id; alter table public.user_tasks drop column if exists client_id;`
 - **Code:** new `ClientPicker`, `useClientSearch`, `UserTaskDetailDialog`,
-  `ClientTasksTab` (+ hooks); edits to `TaskDialog`, `useUpsertTask`,
-  `NewAssignedTaskDialog`, `useCreateAssignedTask`, `MyTasksPage`,
+  `ClientTasksTab` (+ hooks); edits to `TaskDialog`, `useUpsertTask`, `MyTasksPage`,
   `TasksKanbanBoard`, `TaskKanbanCard`, `ClientDetailPage`, `queryKeys`, i18n
   (en + el). Atomic commits per task; revert = git revert of those commits +
-  rollback migration.
+  rollback migration. (No change to `NewAssignedTaskDialog`/`useCreateAssignedTask` —
+  delegated tasks already carry the client.)
