@@ -300,8 +300,8 @@ export function DealDetailPage() {
                 />
               </section>
             </div>
-            <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-              <div className={cn(commentsPanelShellClass, 'min-h-[20rem] lg:max-h-[calc(100vh-8rem)]')}>
+            <aside className="min-w-0 lg:h-full lg:min-h-0">
+              <div className={cn(commentsPanelShellClass, 'min-h-[20rem] lg:h-full lg:max-h-none lg:min-h-0')}>
                 <div className={commentsPanelHeaderClass}>
                   <h2 className="text-sm font-semibold">{tLeads('tabs.comments')}</h2>
                 </div>
