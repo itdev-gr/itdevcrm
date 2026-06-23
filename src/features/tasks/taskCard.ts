@@ -23,6 +23,8 @@ export type TaskCard = {
   resolvedAt: string | null;
   sourceCode: string | null;
   link: string | null;    // deal/job link, or null for personal
+  notes: string | null;
+  clientName: string | null;
 };
 
 export function relationOf(assigneeId: string, creatorId: string | null, meId: string): TaskRelation {
@@ -47,6 +49,8 @@ export function userTaskToCard(row: UserTaskRow, meId: string): TaskCard {
     resolvedAt: row.completed_at ?? null,
     sourceCode: null,
     link: null,
+    notes: row.notes ?? null,
+    clientName: null,
   };
 }
 
@@ -66,6 +70,8 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
     resolvedAt: row.resolved_at ?? null,
     sourceCode: row.source_code,
     link,
+    notes: row.description ?? null,
+    clientName: row.client?.name ?? null,
   };
 }
 

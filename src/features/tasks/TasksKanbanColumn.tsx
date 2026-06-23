@@ -5,13 +5,14 @@ import { TaskKanbanCard } from './TaskKanbanCard';
 import type { ColumnKey, TaskCard, DragAction } from './taskCard';
 
 export function TasksKanbanColumn({
-  column, label, cards, nameFor, onAction,
+  column, label, cards, nameFor, onAction, onOpen,
 }: {
   column: ColumnKey;
   label: string;
   cards: TaskCard[];
   nameFor: (id: string) => string;
   onAction: (card: TaskCard, action: DragAction) => void;
+  onOpen: (card: TaskCard) => void;
 }) {
   const { t } = useTranslation('common');
   const { setNodeRef, isOver } = useDroppable({ id: column });
@@ -35,7 +36,7 @@ export function TasksKanbanColumn({
           </p>
         ) : (
           cards.map((c) => (
-            <TaskKanbanCard key={c.key} card={c} assigneeName={nameFor(c.assigneeId)} onAction={(a) => onAction(c, a)} />
+            <TaskKanbanCard key={c.key} card={c} assigneeName={nameFor(c.assigneeId)} onAction={(a) => onAction(c, a)} onOpen={onOpen} />
           ))
         )}
       </div>

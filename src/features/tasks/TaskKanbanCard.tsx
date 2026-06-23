@@ -9,11 +9,12 @@ import { ImportanceBadge } from './ImportanceBadge';
 import { isDraggable, type TaskCard, type DragAction } from './taskCard';
 
 export function TaskKanbanCard({
-  card, assigneeName, onAction,
+  card, assigneeName, onAction, onOpen,
 }: {
   card: TaskCard;
   assigneeName: string;
   onAction: (action: DragAction) => void;
+  onOpen: (card: TaskCard) => void;
 }) {
   const { t } = useTranslation('common');
   const draggable = isDraggable(card);
@@ -33,6 +34,10 @@ export function TaskKanbanCard({
       // dnd-kit makes the draggable wrapper a role="button"; label it by the
       // task title so its accessible name doesn't swallow the inner buttons.
       aria-label={card.title}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('a,button')) return;
+        onOpen(card);
+      }}
       className={cn(
         'rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm',
         draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default',

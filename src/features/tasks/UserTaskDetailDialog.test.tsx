@@ -1,0 +1,29 @@
+import { render, screen } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
+import { describe, it, expect } from 'vitest';
+import { i18n } from '@/lib/i18n';
+import { UserTaskDetailDialog } from './UserTaskDetailDialog';
+
+const card = {
+  key: 'user:u1', kind: 'user' as const, id: 'u1', title: 'Call ACME',
+  importance: 'high' as const, relation: 'mine' as const, resolved: false,
+  assigneeId: 'me', creatorId: 'me', dueAt: '2026-07-01T09:00:00Z',
+  resolvedAt: null, sourceCode: null, link: null,
+  notes: 'ring after lunch', clientName: 'ACME',
+};
+
+function wrap(n: React.ReactNode) { return <I18nextProvider i18n={i18n}>{n}</I18nextProvider>; }
+
+describe('UserTaskDetailDialog', () => {
+  it('shows title, notes, and client', () => {
+    render(wrap(<UserTaskDetailDialog card={card} onOpenChange={() => {}} />));
+    expect(screen.getByText('Call ACME')).toBeInTheDocument();
+    expect(screen.getByText('ring after lunch')).toBeInTheDocument();
+    expect(screen.getAllByText(/ACME/).length).toBeGreaterThan(0);
+  });
+
+  it('renders nothing when card is null', () => {
+    const { container } = render(wrap(<UserTaskDetailDialog card={null} onOpenChange={() => {}} />));
+    expect(container).toBeEmptyDOMElement();
+  });
+});

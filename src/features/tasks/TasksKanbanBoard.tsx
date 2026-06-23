@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { useTaskBoardData, isoDaysAgo } from './hooks/useTaskBoardData';
 import { useTaskBoardActions } from './hooks/useTaskBoardActions';
 import { TasksKanbanColumn } from './TasksKanbanColumn';
+import { AssignedTaskDetailDialog } from '@/features/assigned_tasks/AssignedTaskDetailDialog';
+import { UserTaskDetailDialog } from './UserTaskDetailDialog';
 import {
   BOARD_COLUMNS, buildBoardCards, columnOf, matchesFilter, resolveDrag,
   type BoardFilter, type ColumnKey, type TaskCard, type DragAction,
@@ -25,6 +27,7 @@ export function TasksKanbanBoard() {
   const [allTeam, setAllTeam] = useState(false);
   const [filter, setFilter] = useState<BoardFilter>('to_me');
   const [activeCard, setActiveCard] = useState<TaskCard | null>(null);
+  const [openCard, setOpenCard] = useState<TaskCard | null>(null);
   const [cutoffIso] = useState(() => isoDaysAgo(RESOLVED_WINDOW_DAYS));
 
   const { data: owners = [] } = useAssignableOwners();
@@ -106,6 +109,7 @@ export function TasksKanbanBoard() {
                 cards={byColumn.get(c) ?? []}
                 nameFor={nameFor}
                 onAction={fire}
+                onOpen={setOpenCard}
               />
             ))}
           </div>
@@ -117,6 +121,12 @@ export function TasksKanbanBoard() {
             ) : null}
           </DragOverlay>
         </DndContext>
+      )}
+      {openCard?.kind === 'assigned' && (
+        <AssignedTaskDetailDialog taskId={openCard.id} onOpenChange={(o) => !o && setOpenCard(null)} />
+      )}
+      {openCard?.kind === 'user' && (
+        <UserTaskDetailDialog card={openCard} onOpenChange={(o) => !o && setOpenCard(null)} />
       )}
     </div>
   );
