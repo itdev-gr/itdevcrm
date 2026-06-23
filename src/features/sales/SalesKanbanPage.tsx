@@ -24,8 +24,19 @@ import { SalesKanbanCard } from './SalesKanbanCard';
 import { useSalesKanbanCounts } from './hooks/useSalesKanbanCounts';
 import { useSalesKanbanRealtime } from './useSalesKanbanRealtime';
 import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useShuffleStageLeads } from './hooks/useShuffleStageLeads';
 import { isStageMoveBlocked } from './stageAccess';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
+
+const SHUFFLABLE_CODES = [
+  'new_lead',
+  'no_answer',
+  'working_on_it',
+  'offer_sent',
+  'scheduled',
+  'hot',
+] as const;
 
 export function SalesKanbanPage() {
   const { t, i18n } = useTranslation('sales');
@@ -50,6 +61,9 @@ export function SalesKanbanPage() {
   const { data: stages = [], isLoading } = usePipelineStages();
   const moveStage = useMoveLeadStage();
   const convert = useConvertLead();
+  const shuffle = useShuffleStageLeads();
+  const [shuffleCode, setShuffleCode] = useState<string>('no_answer');
+  const [confirmShuffle, setConfirmShuffle] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const salesStages = stages
@@ -65,6 +79,25 @@ export function SalesKanbanPage() {
     search,
   };
   const { data: counts } = useSalesKanbanCounts(columnFilter);
+
+  const shufflableStages = salesStages.filter((s) =>
+    (SHUFFLABLE_CODES as readonly string[]).includes(s.code),
+  );
+  const shuffleStage = shufflableStages.find((s) => s.code === shuffleCode) ?? shufflableStages[0];
+  const shuffleCount = shuffleStage ? (counts?.get(shuffleStage.id) ?? 0) : 0;
+
+  async function onConfirmShuffle() {
+    if (!shuffleStage) return;
+    try {
+      const n = await shuffle.mutateAsync({ stageId: shuffleStage.id, stageCode: shuffleStage.code });
+      alert(t('kanban.shuffle.done', { count: n }));
+    } catch (e) {
+      const msg = (e as Error).message;
+      alert(t(`kanban.shuffle.errors.${msg}`, { defaultValue: msg }));
+    } finally {
+      setConfirmShuffle(false);
+    }
+  }
 
   // Resolve owner/won-by names once (was a per-card query + O(n) find).
   const ownerName = new Map(owners.map((o) => [o.user_id, o.full_name || o.email]));
@@ -104,6 +137,29 @@ export function SalesKanbanPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={t('kanban.title')}>
+        {isAdmin && shufflableStages.length > 0 && (
+          <div className="flex items-center gap-2">
+            <FilterSelect
+              value={shuffleStage?.code ?? ''}
+              onChange={(e) => setShuffleCode(e.target.value)}
+              title={t('kanban.shuffle.stage_label')}
+            >
+              {shufflableStages.map((s) => (
+                <option key={s.id} value={s.code}>
+                  {(s.display_names as { en: string; el: string })[lang]}
+                </option>
+              ))}
+            </FilterSelect>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={shuffleCount === 0 || shuffle.isPending}
+              onClick={() => setConfirmShuffle(true)}
+            >
+              {t('kanban.shuffle.button', { count: shuffleCount })}
+            </Button>
+          </div>
+        )}
         <Button onClick={() => setCreateOpen(true)}>{tLeads('actions.create')}</Button>
       </PageHeader>
 
@@ -206,6 +262,20 @@ export function SalesKanbanPage() {
         </DragOverlay>
       </DndContext>
       <CreateLeadDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <ConfirmDialog
+        open={confirmShuffle}
+        onOpenChange={(o) => {
+          if (!o) setConfirmShuffle(false);
+        }}
+        title={t('kanban.shuffle.confirm_title')}
+        description={t('kanban.shuffle.confirm_body', {
+          count: shuffleCount,
+          stage: shuffleStage ? (shuffleStage.display_names as { en: string; el: string })[lang] : '',
+        })}
+        confirmLabel={t('kanban.shuffle.confirm_cta')}
+        onConfirm={onConfirmShuffle}
+        pending={shuffle.isPending}
+      />
     </div>
   );
 }
