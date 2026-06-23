@@ -14,6 +14,7 @@ import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ContractsTab } from '@/features/contracts/ContractsTab';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
+import { ClientTasksTab } from './ClientTasksTab';
 import { useClientBlock } from '@/features/client_blocks/hooks/useClientBlock';
 import { useUnblockClient } from '@/features/client_blocks/hooks/useUnblockClient';
 import { BlockBadge } from '@/features/client_blocks/BlockBadge';
@@ -108,6 +109,7 @@ export function ClientDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="comments">{t('tabs.comments')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
+          <TabsTrigger value="tasks">{t('tabs.tasks')}</TabsTrigger>
           <TabsTrigger value="contracts">{tContracts('tab.title')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
         </TabsList>
@@ -132,6 +134,9 @@ export function ClientDetailPage() {
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <AttachmentsPanel parentType="client" parentId={clientId} />
+        </TabsContent>
+        <TabsContent value="tasks" className="pt-4">
+          <ClientTasksTab clientId={clientId} clientName={client?.name ?? ''} />
         </TabsContent>
         <TabsContent value="contracts" className="pt-4">
           <ContractsTab clientId={clientId} />

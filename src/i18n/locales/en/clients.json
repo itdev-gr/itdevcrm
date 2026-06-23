@@ -46,10 +46,12 @@
     "overview": "Overview",
     "deals": "Deals",
     "jobs": "Jobs",
+    "tasks": "Tasks",
     "comments": "Comments",
     "attachments": "Attachments",
     "activity": "Activity"
   },
+  "tasks_tab": { "open": "Open", "resolved": "Resolved", "empty": "No tasks for this client yet.", "new": "New task" },
   "actions": {
     "view": "View",
     "edit": "Edit",
