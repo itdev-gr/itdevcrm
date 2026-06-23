@@ -1,30 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { leadMatchesOf } from './intakeMatches';
+import { leadMatchesOf, coldLeadMatchesOf } from './intakeMatches';
 import type { LeadIntakeMatch } from './hooks/useLeadIntake';
 
-const m = (over: Partial<LeadIntakeMatch>): LeadIntakeMatch => ({
-  match_type: 'lead',
-  record_id: 'L1',
-  display_name: 'X',
-  context: null,
-  matched_field: 'email',
-  matched_email: null,
-  matched_phone: null,
-  ...over,
-});
+const m = (o: Partial<LeadIntakeMatch>): LeadIntakeMatch =>
+  ({ match_type: 'lead', record_id: 'x', display_name: 'X', ...o } as LeadIntakeMatch);
 
-describe('leadMatchesOf', () => {
-  it('keeps only pipeline-lead matches', () => {
-    const out = leadMatchesOf([
-      m({ match_type: 'lead', record_id: 'L1' }),
-      m({ match_type: 'deal_client', record_id: 'C1' }),
-      m({ match_type: 'queued', record_id: 'Q1' }),
-      m({ match_type: 'lead', record_id: 'L2' }),
-    ]);
-    expect(out.map((x) => x.record_id)).toEqual(['L1', 'L2']);
+describe('intakeMatches', () => {
+  it('leadMatchesOf keeps only lead matches', () => {
+    const out = leadMatchesOf([m({ record_id: 'a' }), m({ match_type: 'deal_client', record_id: 'c' })]);
+    expect(out.map((x) => x.record_id)).toEqual(['a']);
   });
 
-  it('returns empty when there are no lead matches', () => {
-    expect(leadMatchesOf([m({ match_type: 'deal_client' })])).toEqual([]);
+  it('coldLeadMatchesOf keeps lead matches whose id is in the cold set', () => {
+    const matches = [m({ record_id: 'cold1' }), m({ record_id: 'warm1' }), m({ match_type: 'deal_client', record_id: 'cold1' })];
+    const out = coldLeadMatchesOf(matches, new Set(['cold1']));
+    expect(out.map((x) => x.record_id)).toEqual(['cold1']);
   });
 });
