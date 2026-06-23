@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import { useAccountingClients, type AccountingClientRow } from './hooks/useAccountingClients';
+import { useAccountingClients } from './hooks/useAccountingClients';
+import {
+  activeJobs,
+  clientTone,
+  monthlyRevenue,
+  yearlyRevenue,
+  type Tone,
+} from './accountingClientTone';
 import { CopyableCode } from '@/components/CopyableCode';
 import { CallLink } from '@/components/CallLink';
 import { FilterBar, PageHeader } from '@/components/layout/page-shell';
@@ -17,27 +24,6 @@ import {
   tableSectionBorder,
 } from '@/features/clients/clientsTableLayout';
 
-function isBlocked(c: AccountingClientRow): boolean {
-  return (c.client_blocks ?? []).some((b) => b.unblocked_at == null);
-}
-
-function activeJobs(c: AccountingClientRow) {
-  return (c.jobs ?? []).filter((j) => !j.archived && j.status === 'active');
-}
-
-function monthlyRevenue(c: AccountingClientRow): number {
-  return activeJobs(c)
-    .filter((j) => j.billing_type === 'recurring_monthly')
-    .reduce((sum, j) => sum + (Number(j.amount_net) || 0), 0);
-}
-
-function yearlyRevenue(c: AccountingClientRow): number {
-  return activeJobs(c)
-    .filter((j) => j.billing_type === 'recurring_yearly')
-    .reduce((sum, j) => sum + (Number(j.amount_net) || 0), 0);
-}
-
-type Tone = 'active' | 'pending' | 'blocked' | 'done';
 const ALL_TONES: Tone[] = ['active', 'pending', 'blocked', 'done'];
 const TONE_LABEL_KEY: Record<Tone, string> = {
   active: 'clients_page.status.active',
@@ -45,14 +31,6 @@ const TONE_LABEL_KEY: Record<Tone, string> = {
   blocked: 'clients_page.status.blocked',
   done: 'clients_page.status.done',
 };
-
-// Same derivation the Status column shows, so filtering matches what's on screen.
-function clientTone(c: AccountingClientRow): Tone {
-  if (isBlocked(c) || c.status === 'blocked') return 'blocked';
-  if (c.status === 'done') return 'done';
-  if (activeJobs(c).length === 0) return 'pending';
-  return 'active';
-}
 
 const STATUS_STYLES = {
   active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
