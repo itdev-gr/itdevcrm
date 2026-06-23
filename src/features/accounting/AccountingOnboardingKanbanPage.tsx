@@ -19,6 +19,10 @@ import { AccountingKanbanColumn } from './AccountingKanbanColumn';
 import { AccountingKanbanCard } from './AccountingKanbanCard';
 import { CloseDealDialog } from './CloseDealDialog';
 import { useAccountingKanbanRealtime } from './hooks/useAccountingKanbanRealtime';
+import { Button } from '@/components/ui/button';
+import { NewDealDialog } from './NewDealDialog';
+import { useEffectivePermission } from '@/features/permissions/hooks/useEffectivePermission';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 const STAGE_SUBTITLES: Record<string, { en: string; el: string }> = {
   awaiting_payment: { en: '7 days prior', el: '7 μέρες πριν' },
@@ -35,6 +39,10 @@ export function AccountingOnboardingKanbanPage() {
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveAccountingStage();
   const markPaid = useMarkPaidInFull();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const { allowed: canCreate } = useEffectivePermission('accounting_onboarding', 'create');
+  const canCreateDeal = isAdmin || canCreate;
+  const [openNewDeal, setOpenNewDeal] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const activeDeal = activeId ? (deals.find((d) => d.id === activeId) ?? null) : null;
@@ -92,7 +100,11 @@ export function AccountingOnboardingKanbanPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title={t('kanban.title')} />
+      <PageHeader title={t('kanban.title')}>
+        {canCreateDeal ? (
+          <Button onClick={() => setOpenNewDeal(true)}>+ {t('new_deal.button')}</Button>
+        ) : null}
+      </PageHeader>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -120,6 +132,7 @@ export function AccountingOnboardingKanbanPage() {
         dealLabel={closingDeal?.client?.name ?? ''}
         onClose={() => setClosingDeal(null)}
       />
+      <NewDealDialog open={openNewDeal} onClose={() => setOpenNewDeal(false)} />
     </div>
   );
 }
