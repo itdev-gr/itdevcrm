@@ -181,6 +181,7 @@ export function AccountingRecurringPage() {
                     .filter(Boolean)
                     .join(' ');
                   const isOverdue = r.has_overdue_payment && !r.is_blocked;
+                  const nextDue = r.earliest_due ?? r.renewal_due;
                   return (
                     <tr
                       key={r.client_id}
@@ -244,7 +245,7 @@ export function AccountingRecurringPage() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs">
-                        {r.earliest_due ? (
+                        {nextDue ? (
                           <span
                             className={cn(
                               isOverdue
@@ -252,7 +253,7 @@ export function AccountingRecurringPage() {
                                 : 'text-muted-foreground',
                             )}
                           >
-                            {formatDate(r.earliest_due, i18n.language)}
+                            {formatDate(nextDue, i18n.language)}
                           </span>
                         ) : (
                           <span className="text-muted-foreground/50">—</span>
