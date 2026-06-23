@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core';
 import { useAccountingDeals, type AccountingDealRow } from './hooks/useAccountingDeals';
 import { useMoveAccountingStage } from './hooks/useMoveAccountingStage';
-import { useCompleteAccounting } from './hooks/useCompleteAccounting';
+import { useMarkPaidInFull } from './hooks/useMarkPaidInFull';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { PageHeader } from '@/components/layout/page-shell';
 import { AccountingKanbanColumn } from './AccountingKanbanColumn';
@@ -34,7 +34,7 @@ export function AccountingOnboardingKanbanPage() {
   const { data: deals = [], isLoading } = useAccountingDeals();
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveAccountingStage();
-  const complete = useCompleteAccounting();
+  const markPaid = useMarkPaidInFull();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const activeDeal = activeId ? (deals.find((d) => d.id === activeId) ?? null) : null;
@@ -80,7 +80,7 @@ export function AccountingOnboardingKanbanPage() {
     }
     if (paidStage && stageId === paidStage.id) {
       try {
-        await complete.mutateAsync(dealId);
+        await markPaid.mutateAsync(dealId);
       } catch (err) {
         const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
         alert(errors.map((er) => t(`complete.errors.${er}`, { defaultValue: er })).join('\n'));
