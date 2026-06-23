@@ -1,11 +1,11 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-query';
 import { markPaidInFull } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export function useMarkPaidInFull() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<string, DefaultError, string>({
     mutationFn: captureMutation('accounting', 'mark_paid_in_full', async (dealId: string) => {
       const result = await markPaidInFull(dealId);
       if (!result.ok) {
