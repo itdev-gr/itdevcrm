@@ -100,7 +100,7 @@ export function JobDetailPage() {
   const fullName = contactName || job.client?.name || job.deal?.title || '—';
 
   return (
-    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className="rounded-xl border border-border/60 bg-card p-3.5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-2.5">
           <div className="min-w-0">
@@ -204,7 +204,7 @@ export function JobDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="overview" className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         <DetailTabsList>
           <TabsTrigger value="overview" className={detailTabTriggerClass}>
             Overview
@@ -225,9 +225,9 @@ export function JobDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-3 flex-none outline-none">
-          <div className={detailOverviewWithCommentsGridClass}>
-            <div className="min-w-0 space-y-3">
+        <TabsContent value="overview" className="mt-3 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
+            <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               {job.billing_type === 'recurring_monthly' && infoFieldsFor(job.service_type).length === 0 && (
                 <MonthlyTasksPanel
                   jobId={job.id}
@@ -318,7 +318,7 @@ export function JobDetailPage() {
         </TabsContent>
 
         {infoFieldsFor(job.service_type).length > 0 && (
-          <TabsContent value="info" className="mt-3 flex-none outline-none">
+          <TabsContent value="info" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
             <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
               <JobInfoPanel
                 jobId={job.id}
@@ -328,17 +328,17 @@ export function JobDetailPage() {
             </div>
           </TabsContent>
         )}
-        <TabsContent value="tasks" className="mt-3 flex-none outline-none">
+        <TabsContent value="tasks" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
             <AssignedTasksTab source={{ kind: 'job', id: job.id }} />
           </div>
         </TabsContent>
-        <TabsContent value="attachments" className="mt-3 flex-none outline-none">
+        <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
             <AttachmentsPanel parentType="job" parentId={job.id} />
           </div>
         </TabsContent>
-        <TabsContent value="activity" className="mt-3 flex-none outline-none">
+        <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
             <ActivityPanel entityType="jobs" entityId={job.id} />
           </div>

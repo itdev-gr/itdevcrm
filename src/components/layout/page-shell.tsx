@@ -184,7 +184,7 @@ export const detailTabTriggerClass =
 
 /** Side-by-side overview + comments column on detail pages. */
 export const detailOverviewWithCommentsGridClass =
-  'grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)] xl:grid-cols-[minmax(0,1fr)_minmax(28rem,34rem)]';
+  'grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)] xl:grid-cols-[minmax(0,1fr)_minmax(28rem,34rem)]';
 
 export const commentsPanelShellClass =
   'flex max-h-[calc(100vh-6rem)] min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm';

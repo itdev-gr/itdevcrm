@@ -153,7 +153,7 @@ export function LeadDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="flex min-h-full flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
@@ -282,7 +282,7 @@ export function LeadDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="overview" className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         <DetailTabsList>
           <TabsTrigger value="overview" className={detailTabTriggerClass}>
             {t('tabs.overview')}
@@ -298,9 +298,9 @@ export function LeadDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-3 flex-none outline-none">
-          <div className={detailOverviewWithCommentsGridClass}>
-            <div className="min-w-0 space-y-4">
+        <TabsContent value="overview" className="mt-3 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
+            <div className="min-w-0 space-y-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <LeadForm lead={lead} />
               {lead.intake_log ? (
                 <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
@@ -331,17 +331,17 @@ export function LeadDetailPage() {
             </aside>
           </div>
         </TabsContent>
-        <TabsContent value="attachments" className="mt-3 flex-none outline-none">
+        <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <AttachmentsPanel parentType="lead" parentId={leadId} />
           </div>
         </TabsContent>
-        <TabsContent value="activity" className="mt-3 flex-none outline-none">
+        <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <ActivityPanel entityType="leads" entityId={leadId} />
           </div>
         </TabsContent>
-        <TabsContent value="offers" className="mt-3 flex-none outline-none">
+        <TabsContent value="offers" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <OffersTab leadId={leadId} />
           </div>
