@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { TaskDialog } from '@/features/home/TaskDialog';
 import { TasksKanbanBoard } from './TasksKanbanBoard';
 import { ResolvedArchive } from './ResolvedArchive';
 
@@ -9,12 +11,18 @@ type Tab = 'board' | 'archive';
 export function MyTasksPage() {
   const { t } = useTranslation('common');
   const [tab, setTab] = useState<Tab>('board');
+  const [newOpen, setNewOpen] = useState(false);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t('tasks_page.title')}</h1>
-        <p className="text-sm opacity-70">{t('tasks_page.subtitle')}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">{t('tasks_page.title')}</h1>
+          <p className="text-sm opacity-70">{t('tasks_page.subtitle')}</p>
+        </div>
+        <Button type="button" size="sm" onClick={() => setNewOpen(true)}>
+          + {t('tasks_page.new_task')}
+        </Button>
       </div>
       <div className="flex gap-1 border-b border-border/60">
         {(['board', 'archive'] as Tab[]).map((key) => (
@@ -36,6 +44,7 @@ export function MyTasksPage() {
       <div className="min-h-0 flex-1">
         {tab === 'board' ? <TasksKanbanBoard /> : <ResolvedArchive />}
       </div>
+      <TaskDialog open={newOpen} onOpenChange={setNewOpen} />
     </div>
   );
 }

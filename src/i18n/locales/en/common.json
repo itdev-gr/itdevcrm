@@ -44,7 +44,8 @@
     "board_empty": "Nothing here.",
     "archive_empty": "You haven't resolved any tasks yet.",
     "resolved_on": "Resolved {{date}}",
-    "show_more": "Show more"
+    "show_more": "Show more",
+    "new_task": "New task"
   },
   "client_picker": {
     "label": "Client (optional)",
