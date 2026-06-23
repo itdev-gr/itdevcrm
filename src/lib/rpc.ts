@@ -267,6 +267,32 @@ export async function deadEndLeadIds(ids: string[]): Promise<string[]> {
   return ((data as { id: string }[]) ?? []).map((row) => row.id);
 }
 
+// Returns the subset of the given lead ids that are in a COLD stage (dead_end /
+// not_interested / no_answer / constant_na) — drives the Meta re-engage path.
+export async function coldLeadIds(ids: string[]): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await rpcCall('lead_cold_ids', { p_ids: ids });
+  if (error) return [];
+  return ((data as { id: string }[]) ?? []).map((row) => row.id);
+}
+
+// Admin-only. Re-engage a cold lead from a Meta intake duplicate: move it to
+// Unique Lead, append the submission, resolve the intake row. Loose `rpcCall`.
+// Errors: not_found, not_pending, not_a_match, not_cold.
+export async function reengageLeadIntake(
+  id: string,
+  targetLeadId: string,
+): Promise<LeadIntakeActionResult> {
+  const { data, error } = await rpcCall('reengage_lead_intake', {
+    p_id: id,
+    p_target_lead_id: targetLeadId,
+  });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; lead_id?: string; errors?: string[] };
+  if (!r.ok) return { ok: false, errors: r.errors ?? ['reengage_failed'] };
+  return r.lead_id ? { ok: true, lead_id: r.lead_id } : { ok: true };
+}
+
 export type BulkMergePreviewResult =
   | { ok: true; mergeable: number; dead_end: number }
   | { ok: false; errors: string[] };
