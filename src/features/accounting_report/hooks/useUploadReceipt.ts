@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { sanitizeStorageFileName } from '@/lib/sanitizeStorageKey';
 
 export const MAX_BYTES = 10 * 1024 * 1024;
 export const ALLOWED_MIME = [
@@ -8,10 +9,6 @@ export const ALLOWED_MIME = [
   'image/jpeg',
   'image/webp',
 ] as const;
-
-function sanitise(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
-}
 
 export function useUploadReceipt() {
   const qc = useQueryClient();
@@ -23,7 +20,7 @@ export function useUploadReceipt() {
       if (!ALLOWED_MIME.includes(file.type as (typeof ALLOWED_MIME)[number])) {
         throw new Error('Unsupported file type.');
       }
-      const path = `${expenseId}/${crypto.randomUUID()}-${sanitise(file.name)}`;
+      const path = `${expenseId}/${crypto.randomUUID()}-${sanitizeStorageFileName(file.name)}`;
       const { error: upErr } = await supabase.storage
         .from('expense-receipts')
         .upload(path, file, { upsert: false });
