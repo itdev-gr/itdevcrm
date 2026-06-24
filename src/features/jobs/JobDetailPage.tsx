@@ -17,6 +17,8 @@ import {
 } from '@/components/layout/page-shell';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
+import { areasForJob, canUploadArea } from '@/features/attachments/serviceAreas';
+import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachmentsSection';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { useJob } from './hooks/useJob';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
@@ -331,12 +333,21 @@ export function JobDetailPage() {
 
         {infoFieldsFor(job.service_type).length > 0 && (
           <TabsContent value="info" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-            <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
               <JobInfoPanel
                 jobId={job.id}
                 serviceType={job.service_type}
                 initialDetails={(job.details ?? {}) as Record<string, unknown>}
               />
+              {areasForJob(job).map((area) => (
+                <ServiceAttachmentsSection
+                  key={area.kind}
+                  jobId={job.id}
+                  area={area}
+                  canUpload={canUploadArea(isAdmin, groupCodes, area)}
+                  lang={lang}
+                />
+              ))}
             </div>
           </TabsContent>
         )}
@@ -347,7 +358,11 @@ export function JobDetailPage() {
         </TabsContent>
         <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-            <AttachmentsPanel parentType="job" parentId={job.id} />
+            <AttachmentsPanel
+              parentType="job"
+              parentId={job.id}
+              hideKinds={['svc_local', 'svc_web', 'svc_webdev']}
+            />
           </div>
         </TabsContent>
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
