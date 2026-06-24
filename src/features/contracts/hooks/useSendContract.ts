@@ -9,6 +9,7 @@ type Input = {
   title: string;
   to: string;
   clientName: string;
+  code: string;
 };
 
 export function useSendContract() {
@@ -34,6 +35,7 @@ export function useSendContract() {
           to: input.to,
           templateKey: 'contract_send',
           data: {
+            code: input.code,
             client_name: input.clientName,
             contract_title: input.title,
             contract_number: input.contractNumber,

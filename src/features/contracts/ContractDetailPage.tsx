@@ -68,6 +68,7 @@ export function ContractDetailPage() {
         title: curTitle,
         to: clientEmail,
         clientName: contract.clients?.name ?? '',
+        code: contract.clients?.code ?? '',
       });
       window.alert(t('detail.sent_ok'));
     } catch (err) {

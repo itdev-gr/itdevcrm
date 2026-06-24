@@ -30,6 +30,7 @@ const input = {
   title: 'Σύμβαση Web',
   to: 'client@acme.gr',
   clientName: 'Acme SA',
+  code: '000032',
 };
 
 describe('useSendContract', () => {
@@ -57,6 +58,7 @@ describe('useSendContract', () => {
         to: 'client@acme.gr',
         templateKey: 'contract_send',
         data: {
+          code: '000032',
           client_name: 'Acme SA',
           contract_title: 'Σύμβαση Web',
           contract_number: 'CTR-202606-0001',

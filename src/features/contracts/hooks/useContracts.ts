@@ -5,7 +5,7 @@ import type { Database } from '@/types/supabase';
 
 export type ContractRow = Database['public']['Tables']['contracts']['Row'];
 export type ContractWithClient = ContractRow & {
-  clients: { name: string | null; email: string | null } | null;
+  clients: { name: string | null; email: string | null; code: string | null } | null;
 };
 
 export function useContractsForClient(clientId: string) {
@@ -30,7 +30,7 @@ export function useContracts() {
     queryFn: async (): Promise<ContractWithClient[]> => {
       const { data, error } = await supabase
         .from('contracts')
-        .select('*, clients(name, email)')
+        .select('*, clients(name, email, code)')
         .order('created_at', { ascending: false });
       if (error) throw new Error(error.message);
       return (data ?? []) as ContractWithClient[];
@@ -45,7 +45,7 @@ export function useContract(contractId: string) {
     queryFn: async (): Promise<ContractWithClient> => {
       const { data, error } = await supabase
         .from('contracts')
-        .select('*, clients(name, email)')
+        .select('*, clients(name, email, code)')
         .eq('id', contractId)
         .single();
       if (error) throw new Error(error.message);
