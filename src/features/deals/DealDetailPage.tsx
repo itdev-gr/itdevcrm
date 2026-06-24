@@ -32,6 +32,7 @@ import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
 import { buildWonDraft } from '@/features/email/buildDraft';
 import { DealServiceInfo } from './DealServiceInfo';
+import { DealServiceAttachments } from './DealServiceAttachments';
 import { DealNotesArea } from './DealNotesArea';
 
 const UNASSIGNED = '__unassigned__';
@@ -313,6 +314,7 @@ export function DealDetailPage() {
               <DealForm initial={deal} />
               <DealNotesArea deal={deal} />
               <DealServiceInfo dealId={dealId} />
+              <DealServiceAttachments dealId={dealId} />
               <section className="min-w-0 rounded-xl border border-border/60 bg-card p-3 shadow-sm">
                 <JobsBillingPanel
                   dealId={dealId}
