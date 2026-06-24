@@ -48,6 +48,10 @@ const FieldRulesPage = lazyPage(
   () => import('@/features/permissions/FieldRulesPage'),
   'FieldRulesPage',
 );
+const AnnouncementsAdminPage = lazyPage(
+  () => import('@/features/announcements/AnnouncementsAdminPage'),
+  'AnnouncementsAdminPage',
+);
 const PermissionsTestPage = lazyPage(
   () => import('@/features/permissions/PermissionsTestPage'),
   'PermissionsTestPage',
@@ -187,6 +191,7 @@ export const router = createBrowserRouter([
               { path: 'service-packages', element: <ServicePackagesPage /> },
               { path: 'email-automations', element: <EmailAutomationsPage /> },
               { path: 'contract-templates', element: <ContractTemplatesPage /> },
+              { path: 'announcements', element: <AnnouncementsAdminPage /> },
             ],
           },
           {
