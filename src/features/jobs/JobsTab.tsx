@@ -114,7 +114,9 @@ export function JobsTab(props: Scope) {
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{billingLabel}</td>
-                <td className="px-4 py-3 text-right tabular-nums">{amount}</td>
+                <td className="px-4 py-3 text-right tabular-nums">
+                  {j.parent_job_id == null ? amount : '—'}
+                </td>
                 <td className="px-4 py-3">
                   <StageBadge job={j} lang={lang} />
                 </td>

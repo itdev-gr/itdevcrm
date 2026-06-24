@@ -177,7 +177,6 @@ export function JobDetailPage() {
           <div className="mt-2.5 rounded-md bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
             {t('part_of_ai_seo', {
               code: parentJob?.code ?? '',
-              amount: parentJob?.amount_net != null ? Number(parentJob.amount_net).toFixed(2) : '',
             })}{' '}
             <Link to={`/jobs/${job.parent_job_id}`} className="font-semibold underline">
               {t('view_billing_record')}
@@ -273,7 +272,7 @@ export function JobDetailPage() {
                       </span>
                     </dd>
                   </div>
-                  {Number(job.amount_net ?? 0) > 0 && (
+                  {job.parent_job_id == null && Number(job.amount_net ?? 0) > 0 && (
                     <div>
                       <dt className="text-[11px] text-muted-foreground">
                         {job.billing_type === 'recurring_monthly'

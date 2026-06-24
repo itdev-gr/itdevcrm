@@ -91,7 +91,7 @@ export function JobsKanbanCard({
 
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
 
-          {amountLabel !== '—' && (
+          {amountLabel !== '—' && job.parent_job_id == null && (
             <span className="inline-flex rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
               {amountLabel}
             </span>
