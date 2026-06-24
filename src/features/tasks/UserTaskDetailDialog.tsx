@@ -6,17 +6,19 @@ import { ImportanceBadge } from './ImportanceBadge';
 import type { TaskCard } from './taskCard';
 
 export function UserTaskDetailDialog({
-  card, onOpenChange,
+  card, creatorName, onOpenChange,
 }: {
   card: TaskCard | null;
+  creatorName?: string | null;
   onOpenChange: (open: boolean) => void;
 }) {
   const { t, i18n } = useTranslation('home');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
   if (!card) return null;
-  const due = card.dueAt
-    ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(card.dueAt))
-    : null;
+  const fmt = (iso: string) =>
+    new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+  const due = card.dueAt ? fmt(card.dueAt) : null;
+  const created = card.createdAtIso ? fmt(card.createdAtIso) : null;
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -38,6 +40,21 @@ export function UserTaskDetailDialog({
             </p>
           )}
           {card.notes && <p className="whitespace-pre-wrap text-foreground">{card.notes}</p>}
+          {(creatorName || created) && (
+            <p className="text-xs text-muted-foreground">
+              {creatorName && (
+                <>
+                  {t('assigned_tasks.created_by_label')}: <span className="text-foreground">{creatorName}</span>
+                </>
+              )}
+              {creatorName && created && ' · '}
+              {created && (
+                <>
+                  {t('assigned_tasks.created_label')}: <span className="text-foreground">{created}</span>
+                </>
+              )}
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

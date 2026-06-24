@@ -126,7 +126,11 @@ export function TasksKanbanBoard() {
         <AssignedTaskDetailDialog taskId={openCard.id} onOpenChange={(o) => !o && setOpenCard(null)} />
       )}
       {openCard?.kind === 'user' && (
-        <UserTaskDetailDialog card={openCard} onOpenChange={(o) => !o && setOpenCard(null)} />
+        <UserTaskDetailDialog
+          card={openCard}
+          creatorName={openCard.creatorId ? nameFor(openCard.creatorId) : null}
+          onOpenChange={(o) => !o && setOpenCard(null)}
+        />
       )}
     </div>
   );

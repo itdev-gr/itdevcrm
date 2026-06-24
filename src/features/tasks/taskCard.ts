@@ -19,6 +19,7 @@ export type TaskCard = {
   resolved: boolean;
   assigneeId: string;
   creatorId: string | null;
+  createdAtIso: string | null;
   dueAt: string | null;
   resolvedAt: string | null;
   sourceCode: string | null;
@@ -45,6 +46,7 @@ export function userTaskToCard(row: UserTaskRow, meId: string): TaskCard {
     resolved: row.completed_at != null,
     assigneeId: row.user_id,
     creatorId,
+    createdAtIso: row.created_at ?? null,
     dueAt: row.due_at ?? null,
     resolvedAt: row.completed_at ?? null,
     sourceCode: null,
@@ -66,6 +68,7 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
     resolved: row.status === 'resolved',
     assigneeId: row.assignee_user_id,
     creatorId: row.created_by_user_id,
+    createdAtIso: row.created_at ?? null,
     dueAt: null,
     resolvedAt: row.resolved_at ?? null,
     sourceCode: row.source_code,
