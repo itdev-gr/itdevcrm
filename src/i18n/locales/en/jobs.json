@@ -1,6 +1,12 @@
 {
   "part_of_ai_seo": "Part of AI SEO {{code}}",
   "view_billing_record": "View billing record",
+  "attachments": {
+    "title": "Attachments",
+    "empty": "No files yet.",
+    "upload": "Upload",
+    "deal_title": "Service files"
+  },
   "delete": {
     "button": "Delete",
     "title": "Delete this job?",

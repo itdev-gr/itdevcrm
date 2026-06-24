@@ -1,6 +1,12 @@
 {
   "part_of_ai_seo": "Μέρος του AI SEO {{code}}",
   "view_billing_record": "Προβολή χρέωσης",
+  "attachments": {
+    "title": "Συνημμένα",
+    "empty": "Δεν υπάρχουν αρχεία.",
+    "upload": "Μεταφόρτωση",
+    "deal_title": "Αρχεία υπηρεσιών"
+  },
   "delete": {
     "button": "Διαγραφή",
     "title": "Διαγραφή αυτής της εργασίας;",
