@@ -11,11 +11,13 @@ import { useDeleteAttachment } from './hooks/useDeleteAttachment';
 type Props = {
   parentType: 'client' | 'deal' | 'job' | 'lead';
   parentId: string;
+  hideKinds?: string[];
 };
 
-export function AttachmentsPanel({ parentType, parentId }: Props) {
+export function AttachmentsPanel({ parentType, parentId, hideKinds = [] }: Props) {
   const { t } = useTranslation('sales');
-  const { data: list = [] } = useAttachments(parentType, parentId);
+  const { data: rawList = [] } = useAttachments(parentType, parentId);
+  const list = hideKinds.length ? rawList.filter((a) => !hideKinds.includes(a.kind ?? '')) : rawList;
   const upload = useUploadAttachment();
   const del = useDeleteAttachment();
   const inputRef = useRef<HTMLInputElement>(null);
