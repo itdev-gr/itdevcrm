@@ -14,7 +14,13 @@ export function useDeleteAttachment() {
   const qc = useQueryClient();
   return useMutation<void, DefaultError, Vars>({
     mutationFn: captureMutation('attachments', 'delete', async (vars: Vars) => {
-      await supabase.storage.from('attachments').remove([vars.storage_path]);
+      // Remove the storage object FIRST and surface its error. Storage delete is
+      // RLS-gated; if it fails (not permitted) we must NOT delete the row, or the
+      // file would be orphaned in the bucket forever.
+      const { error: storageErr } = await supabase.storage
+        .from('attachments')
+        .remove([vars.storage_path]);
+      if (storageErr) throw new Error(storageErr.message);
       const { error } = await supabase.from('attachments').delete().eq('id', vars.id);
       if (error) throw new Error(error.message);
     }),
