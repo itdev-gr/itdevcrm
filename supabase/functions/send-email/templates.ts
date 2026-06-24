@@ -125,14 +125,10 @@ export function renderDbTemplate(
 ): Rendered {
   const subject = interpolate(row.subject, data);
   const bodyText = interpolate(row.body, data);
-  let footer = '';
-  let footerText = '';
-  const appUrl = Deno.env.get('APP_URL');
-  if (row.client_facing && data.unsubscribe_token && data.lead_id && appUrl) {
-    const url = `${appUrl}/api/unsubscribe?lead=${data.lead_id}&token=${data.unsubscribe_token}`;
-    footer = `<p style="font-size:11px;color:#94a3b8;margin-top:16px">Αν δεν θέλετε να λαμβάνετε ενημερώσεις από εμάς, <a href="${url}" style="color:#94a3b8">πατήστε εδώ</a>.</p>`;
-    footerText = `\n\nΑπεγγραφή: ${url}`;
-  }
+  // Unsubscribe opt-out footer removed per product decision (2026-06-24): no
+  // emails carry the "…πατήστε εδώ" line anymore.
+  const footer = '';
+  const footerText = '';
   // Transactional emails (e.g. password reset) pass cta_url/cta_label to get
   // a styled action button under the body text. Text version is unchanged —
   // bodies that need a plain link carry it via a {{variable}}.

@@ -57,8 +57,18 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     cc = 'support@itdev.gr';
   } else if (identity === 'accounting') {
     cc = 'accounting@itdev.gr';
-  } else if (templateKey === 'lead_welcome' && typeof data.owner_email === 'string' && data.owner_email) {
-    // Sales welcome: CC the lead's assigned rep (if one is set).
+  } else if (
+    [
+      'lead_welcome',
+      'noanswer_day0', 'noanswer_day2', 'noanswer_day5', 'noanswer_day10',
+      'offer_followup_day2', 'offer_followup_day5', 'offer_followup_day10',
+      'reengage_90d',
+      'scheduled_confirm', 'scheduled_reminder', 'scheduled_noshow',
+    ].includes(templateKey) &&
+    typeof data.owner_email === 'string' &&
+    data.owner_email
+  ) {
+    // Sales emails: CC the lead's assigned rep (if one is set).
     cc = data.owner_email;
   }
 
