@@ -46,6 +46,19 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
   const id = IDENTITIES[identity];
   if (!id) return { status: 'failed', error: `unknown identity ${identity}` };
 
+  // Department routing: technical onboarding emails are SENT FROM support@ and
+  // copied to support@; other accounting-identity emails copy accounting@.
+  let cc: string | undefined;
+  let fromOverride: string | undefined;
+  let replyToOverride: string | undefined;
+  if (templateKey === 'webseo_gsc_access' || templateKey === 'localseo_gbp_access') {
+    fromOverride = 'ITDEV Support <support@itdev.gr>';
+    replyToOverride = 'support@itdev.gr';
+    cc = 'support@itdev.gr';
+  } else if (identity === 'accounting') {
+    cc = 'accounting@itdev.gr';
+  }
+
   let rendered;
   try {
     // Admin-edited templates take precedence; built-ins are the fallback
@@ -81,7 +94,8 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     method: 'POST',
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: id.from, reply_to: id.replyTo, to,
+      from: fromOverride ?? id.from, reply_to: replyToOverride ?? id.replyTo, to,
+      ...(cc ? { cc } : {}),
       subject: rendered.subject, html: rendered.html, text: rendered.text,
       ...(attachments.length > 0 ? { attachments } : {}),
     }),
