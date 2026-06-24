@@ -23,11 +23,8 @@ export function areaForKind(kind: string): ServiceArea | null {
   return (SERVICE_AREA_KINDS as string[]).includes(kind) ? BY_KIND[kind as AreaKind] : null;
 }
 
-export function areasForJob(job: { service_type: string; parent_job_id: string | null }): ServiceArea[] {
-  if (job.parent_job_id != null) return [];
+export function areasForJob(job: { service_type: string }): ServiceArea[] {
   switch (job.service_type) {
-    case 'ai_seo':
-      return [LOCAL_AREA, WEB_AREA];
     case 'local_seo':
       return [LOCAL_AREA];
     case 'web_seo':
@@ -35,6 +32,10 @@ export function areasForJob(job: { service_type: string; parent_job_id: string |
     case 'web_dev':
       return [WEBDEV_AREA];
     default:
+      // The ai_seo PARENT shows no area — its Local/Web files live on the
+      // local_seo / web_seo CHILD jobs (parent_job_id set), which the Local/Web
+      // teams actually open from their boards. Those children match the cases
+      // above by service_type, so they get their area automatically.
       return [];
   }
 }

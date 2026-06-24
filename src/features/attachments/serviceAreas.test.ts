@@ -2,23 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { areasForJob, canUploadArea, LOCAL_AREA, WEB_AREA, WEBDEV_AREA } from './serviceAreas';
 
 describe('areasForJob', () => {
-  it('ai_seo parent → Local + Web', () => {
-    expect(areasForJob({ service_type: 'ai_seo', parent_job_id: null })).toEqual([LOCAL_AREA, WEB_AREA]);
+  it('ai_seo parent → no area (files live on its children)', () => {
+    expect(areasForJob({ service_type: 'ai_seo' })).toEqual([]);
   });
-  it('local_seo → Local', () => {
-    expect(areasForJob({ service_type: 'local_seo', parent_job_id: null })).toEqual([LOCAL_AREA]);
+  it('local_seo (standalone or AI SEO child) → Local', () => {
+    expect(areasForJob({ service_type: 'local_seo' })).toEqual([LOCAL_AREA]);
   });
-  it('web_seo → Web', () => {
-    expect(areasForJob({ service_type: 'web_seo', parent_job_id: null })).toEqual([WEB_AREA]);
+  it('web_seo (standalone or AI SEO child) → Web', () => {
+    expect(areasForJob({ service_type: 'web_seo' })).toEqual([WEB_AREA]);
   });
   it('web_dev → Web Dev', () => {
-    expect(areasForJob({ service_type: 'web_dev', parent_job_id: null })).toEqual([WEBDEV_AREA]);
-  });
-  it('AI SEO child (has parent) → no areas', () => {
-    expect(areasForJob({ service_type: 'local_seo', parent_job_id: 'p1' })).toEqual([]);
+    expect(areasForJob({ service_type: 'web_dev' })).toEqual([WEBDEV_AREA]);
   });
   it('other service → no areas', () => {
-    expect(areasForJob({ service_type: 'hosting', parent_job_id: null })).toEqual([]);
+    expect(areasForJob({ service_type: 'hosting' })).toEqual([]);
   });
 });
 
