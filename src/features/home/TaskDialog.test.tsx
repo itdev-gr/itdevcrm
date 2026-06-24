@@ -5,8 +5,8 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 const upsert = vi.fn().mockResolvedValue('id1');
 vi.mock('./hooks/useUpsertTask', () => ({ useUpsertTask: () => ({ mutateAsync: upsert, isPending: false }) }));
 vi.mock('./hooks/useDeleteTask', () => ({ useDeleteTask: () => ({ mutateAsync: vi.fn(), isPending: false }) }));
-vi.mock('@/features/leads/hooks/useAssignableOwners', () => ({
-  useAssignableOwners: () => ({ data: [{ user_id: 'me', full_name: 'Me', email: 'me@x.gr' }] }),
+vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({
+  useMentionableUsers: () => ({ data: [{ user_id: 'me', full_name: 'Me', email: 'me@x.gr', is_admin: false, group_codes: [] }] }),
 }));
 vi.mock('@/lib/stores/authStore', () => ({ useAuthStore: (sel: (s: unknown) => unknown) => sel({ user: { id: 'me' } }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string, o?: { defaultValue?: string }) => o?.defaultValue ?? k }) }));

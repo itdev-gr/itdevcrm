@@ -5,7 +5,7 @@ import {
   type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
+import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { SegmentedControl } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { useTaskBoardData, isoDaysAgo } from './hooks/useTaskBoardData';
@@ -30,7 +30,9 @@ export function TasksKanbanBoard() {
   const [openCard, setOpenCard] = useState<TaskCard | null>(null);
   const [cutoffIso] = useState(() => isoDaysAgo(RESOLVED_WINDOW_DAYS));
 
-  const { data: owners = [] } = useAssignableOwners();
+  // Resolve assignee names from the full staff directory so service-team
+  // assignees (local_seo/web_seo/…) display, not just sales-only owners.
+  const { data: owners = [] } = useMentionableUsers();
   const nameById = useMemo(() => new Map(owners.map((o) => [o.user_id, o.full_name || o.email])), [owners]);
   const nameFor = (id: string) => nameById.get(id) ?? '—';
 

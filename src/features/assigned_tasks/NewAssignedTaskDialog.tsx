@@ -6,7 +6,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
+import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { useCreateAssignedTask } from './hooks/useCreateAssignedTask';
 import { ImportanceSelect } from '@/features/tasks/ImportanceSelect';
@@ -22,7 +22,9 @@ export function NewAssignedTaskDialog({ open, onOpenChange, source }: Props) {
   const { t, i18n } = useTranslation('jobs');
   const locale: 'en' | 'el' = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const create = useCreateAssignedTask();
-  const { data: owners = [] } = useAssignableOwners();
+  // Task assignees = the full staff directory (incl. service teams like
+  // local_seo/web_seo), NOT the sales-only assignable_owners list.
+  const { data: owners = [] } = useMentionableUsers();
   const { data: groups = [] } = useGroups();
 
   const [title, setTitle] = useState('');

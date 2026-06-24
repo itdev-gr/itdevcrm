@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
+import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { useUpsertTask } from './hooks/useUpsertTask';
 import { useDeleteTask } from './hooks/useDeleteTask';
 import type { UserTaskRow } from './hooks/useUserTasks';
@@ -41,7 +41,8 @@ function toLocalInputValue(d: Date): string {
 export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClient }: Props) {
   const { t } = useTranslation('home');
   const userId = useAuthStore((s) => s.user?.id ?? '');
-  const { data: owners = [] } = useAssignableOwners();
+  // Assign to = full staff directory (incl. service teams), not sales-only owners.
+  const { data: owners = [] } = useMentionableUsers();
   const upsert = useUpsertTask();
   const del = useDeleteTask();
 

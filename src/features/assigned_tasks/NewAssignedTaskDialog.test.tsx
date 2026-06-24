@@ -9,9 +9,9 @@ const mutateAsync = vi.fn().mockResolvedValue('new-id');
 vi.mock('./hooks/useCreateAssignedTask', () => ({
   useCreateAssignedTask: () => ({ mutateAsync, isPending: false }),
 }));
-vi.mock('@/features/leads/hooks/useAssignableOwners', () => ({
-  useAssignableOwners: () => ({
-    data: [{ user_id: 'u1', full_name: 'Mkifokeris', email: 'mk@itdev.gr' }],
+vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({
+  useMentionableUsers: () => ({
+    data: [{ user_id: 'u1', full_name: 'Mkifokeris', email: 'mk@itdev.gr', is_admin: false, group_codes: [] }],
   }),
 }));
 vi.mock('@/features/groups/hooks/useGroups', () => ({

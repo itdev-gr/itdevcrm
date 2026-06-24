@@ -3,11 +3,11 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 const { useTaskBoardData } = vi.hoisted(() => ({ useTaskBoardData: vi.fn() }));
-const { useAssignableOwners } = vi.hoisted(() => ({ useAssignableOwners: vi.fn() }));
+const { useMentionableUsers } = vi.hoisted(() => ({ useMentionableUsers: vi.fn() }));
 const apply = vi.fn();
 vi.mock('./hooks/useTaskBoardData', () => ({ useTaskBoardData, isoDaysAgo: () => '2026-05-23T00:00:00Z' }));
 vi.mock('./hooks/useTaskBoardActions', () => ({ useTaskBoardActions: () => ({ mutate: apply }) }));
-vi.mock('@/features/leads/hooks/useAssignableOwners', () => ({ useAssignableOwners }));
+vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({ useMentionableUsers }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string, o?: Record<string, unknown>) => (o?.name ? `${k}:${o.name}` : k), i18n: { resolvedLanguage: 'en' } }),
 }));
@@ -27,7 +27,7 @@ const assignedRow = (o = {}) => ({
 describe('TasksKanbanBoard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useAssignableOwners.mockReturnValue({ data: [{ user_id: 'colleague', full_name: 'Colleague', email: 'c@x.gr' }] });
+    useMentionableUsers.mockReturnValue({ data: [{ user_id: 'colleague', full_name: 'Colleague', email: 'c@x.gr', is_admin: false, group_codes: [] }] });
   });
 
   it('places my urgent task in the Urgent column and resolves via the button', () => {
