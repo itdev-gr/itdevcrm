@@ -57,6 +57,9 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     cc = 'support@itdev.gr';
   } else if (identity === 'accounting') {
     cc = 'accounting@itdev.gr';
+  } else if (templateKey === 'lead_welcome' && typeof data.owner_email === 'string' && data.owner_email) {
+    // Sales welcome: CC the lead's assigned rep (if one is set).
+    cc = data.owner_email;
   }
 
   let rendered;
