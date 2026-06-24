@@ -169,8 +169,17 @@ export function EmailAutomationsPage() {
   const updateSequence = useUpdateSequence();
   const updateStep = useUpdateSequenceStep();
 
+  const DEPT_KEYS = ['dept_sales', 'dept_accounting', 'dept_technical'];
+  const DEPT_LABELS: Record<string, string> = {
+    dept_sales: t('email_automations.dept_sales'),
+    dept_accounting: t('email_automations.dept_accounting'),
+    dept_technical: t('email_automations.dept_technical'),
+  };
   const globalRow = settings.find((s) => s.key === 'global');
-  const oneShots = settings.filter((s) => s.key !== 'global');
+  const departments = DEPT_KEYS.map((k) => settings.find((s) => s.key === k)).filter(
+    (s): s is NonNullable<typeof s> => Boolean(s),
+  );
+  const oneShots = settings.filter((s) => s.key !== 'global' && !DEPT_KEYS.includes(s.key));
   const templateByKey = new Map(templates.map((tp) => [tp.key, tp]));
 
   return (
@@ -196,6 +205,29 @@ export function EmailAutomationsPage() {
           </label>
         )}
       </PageHeader>
+
+      {departments.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold">{t('email_automations.departments')}</h2>
+          <SettingsCard className="divide-y divide-border/60">
+            {departments.map((s) => (
+              <label
+                key={s.key}
+                className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/25"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{DEPT_LABELS[s.key] ?? s.key}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{s.description}</div>
+                </div>
+                <Toggle
+                  checked={s.enabled}
+                  onChange={(v) => updateSetting.mutate({ key: s.key, enabled: v })}
+                />
+              </label>
+            ))}
+          </SettingsCard>
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">{t('email_automations.one_shots')}</h2>

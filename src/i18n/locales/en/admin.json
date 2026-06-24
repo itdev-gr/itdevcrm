@@ -136,6 +136,10 @@
   "email_automations": {
     "title": "Email automations",
     "global_switch": "Automations active",
+    "departments": "By department",
+    "dept_sales": "Sales",
+    "dept_accounting": "Accounting",
+    "dept_technical": "Technical",
     "one_shots": "Single emails",
     "sequences": "Sequences (cadences)",
     "templates": "Email texts",

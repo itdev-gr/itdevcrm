@@ -136,6 +136,10 @@
   "email_automations": {
     "title": "Αυτοματισμοί email",
     "global_switch": "Αυτοματισμοί ενεργοί",
+    "departments": "Ανά τμήμα",
+    "dept_sales": "Πωλήσεις",
+    "dept_accounting": "Λογιστήριο",
+    "dept_technical": "Τεχνικό",
     "one_shots": "Μεμονωμένα emails",
     "sequences": "Ακολουθίες (cadences)",
     "templates": "Κείμενα email",
