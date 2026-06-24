@@ -1,0 +1,42 @@
+{
+  "admin": {
+    "title": "Ανακοινώσεις",
+    "description": "Δημοσίευσε αναδυόμενη ανακοίνωση σε επιλεγμένες ομάδες ή σε όλους.",
+    "field_title": "Τίτλος",
+    "field_message": "Μήνυμα",
+    "field_severity": "Στυλ",
+    "severity_info": "Πληροφορία",
+    "severity_warning": "Προειδοποίηση",
+    "target": "Παραλήπτες",
+    "target_all": "Όλοι οι χρήστες",
+    "target_groups": "Επιλεγμένες ομάδες",
+    "field_expires": "Λήξη (προαιρετικό)",
+    "publish": "Δημοσίευση",
+    "publishing": "Δημοσίευση…",
+    "published": "Η ανακοίνωση δημοσιεύτηκε.",
+    "list_title": "Δημοσιευμένες ανακοινώσεις",
+    "col_title": "Τίτλος",
+    "col_audience": "Παραλήπτες",
+    "col_status": "Κατάσταση",
+    "col_created": "Δημιουργία",
+    "status_active": "Ενεργή",
+    "status_inactive": "Ανενεργή",
+    "status_expired": "Έληξε",
+    "deactivate": "Απενεργοποίηση",
+    "reactivate": "Επανενεργοποίηση",
+    "delete": "Διαγραφή",
+    "delete_confirm": "Διαγραφή της ανακοίνωσης; Δεν αναιρείται.",
+    "empty": "Δεν υπάρχουν ανακοινώσεις.",
+    "errors": {
+      "missing_title": "Συμπλήρωσε τίτλο.",
+      "missing_body": "Συμπλήρωσε μήνυμα.",
+      "missing_target": "Διάλεξε τουλάχιστον μία ομάδα ή «Όλοι οι χρήστες».",
+      "not_authorized": "Δεν έχεις δικαίωμα δημοσίευσης ανακοινώσεων.",
+      "invalid_severity": "Μη έγκυρο στυλ.",
+      "create_failed": "Αδυναμία δημοσίευσης. Δοκίμασε ξανά."
+    }
+  },
+  "popup": {
+    "got_it": "Εντάξει"
+  }
+}

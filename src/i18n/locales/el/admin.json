@@ -8,7 +8,8 @@
     "service_packages": "Πακέτα υπηρεσιών",
     "permissions_test": "Δοκιμή δικαιωμάτων",
     "email_automations": "Αυτοματισμοί email",
-    "contract_templates": "Πρότυπα συμβάσεων"
+    "contract_templates": "Πρότυπα συμβάσεων",
+    "announcements": "Ανακοινώσεις"
   },
   "settings": {
     "title": "Ρυθμίσεις"

@@ -1,0 +1,42 @@
+{
+  "admin": {
+    "title": "Announcements",
+    "description": "Publish a pop-up announcement to selected groups or everyone.",
+    "field_title": "Title",
+    "field_message": "Message",
+    "field_severity": "Style",
+    "severity_info": "Info",
+    "severity_warning": "Warning",
+    "target": "Audience",
+    "target_all": "All users",
+    "target_groups": "Selected groups",
+    "field_expires": "Expires (optional)",
+    "publish": "Publish",
+    "publishing": "Publishing…",
+    "published": "Announcement published.",
+    "list_title": "Published announcements",
+    "col_title": "Title",
+    "col_audience": "Audience",
+    "col_status": "Status",
+    "col_created": "Created",
+    "status_active": "Active",
+    "status_inactive": "Inactive",
+    "status_expired": "Expired",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "delete": "Delete",
+    "delete_confirm": "Delete this announcement? This cannot be undone.",
+    "empty": "No announcements yet.",
+    "errors": {
+      "missing_title": "Enter a title.",
+      "missing_body": "Enter a message.",
+      "missing_target": "Pick at least one group, or choose All users.",
+      "not_authorized": "You don't have permission to publish announcements.",
+      "invalid_severity": "Invalid style.",
+      "create_failed": "Could not publish. Try again."
+    }
+  },
+  "popup": {
+    "got_it": "Got it"
+  }
+}

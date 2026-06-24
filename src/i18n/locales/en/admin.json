@@ -8,7 +8,8 @@
     "service_packages": "Service packages",
     "permissions_test": "Permissions test page",
     "email_automations": "Email automations",
-    "contract_templates": "Contract templates"
+    "contract_templates": "Contract templates",
+    "announcements": "Announcements"
   },
   "settings": {
     "title": "Settings"
