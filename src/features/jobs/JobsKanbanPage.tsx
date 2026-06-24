@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/page-shell';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
-import { groupJobsForBoard, hasBlockedColumn, aiSeoTargetCode } from './kanbanGrouping';
+import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
 import { stageCompletesJob } from './stageCompletion';
 
 const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
@@ -86,22 +86,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     const job = jobs.find((j) => j.id === jobId);
     if (!job) return;
 
-    // ai_seo jobs canonically live on the Web SEO board. When dragged on a
-    // non-web-seo kanban (i.e. /tech/local-seo), translate the target column
-    // to the matching web_seo stage so the job stays visible on both boards.
-    let targetStageId = stageId;
-    if (job.service_type === 'ai_seo' && serviceType !== 'web_seo') {
-      const targetStage = stageById.get(stageId);
-      if (!targetStage) return;
-      const targetCode =
-        serviceType === 'local_seo' ? aiSeoTargetCode(targetStage.code) : targetStage.code;
-      if (!targetCode) return; // column has no web_seo equivalent
-      const webSeoStage = stages.find(
-        (s) => s.board === 'web_seo' && s.code === targetCode && !s.archived,
-      );
-      if (!webSeoStage) return;
-      targetStageId = webSeoStage.id;
-    }
+    const targetStageId = stageId;
     if (job.stage_id === targetStageId) return;
     const resolved = stageById.get(targetStageId);
     try {

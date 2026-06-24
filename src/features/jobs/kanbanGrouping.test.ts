@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupJobsForBoard, hasBlockedColumn, aiSeoTargetCode } from './kanbanGrouping';
+import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
 import type { JobRow } from './hooks/useJobs';
 
 type StageLite = { id: string; board: string; code: string; archived: boolean; position: number };
@@ -57,18 +57,6 @@ describe('groupJobsForBoard', () => {
     expect(byColumn.get('wd-brief')?.map((j) => j.id)).toEqual(['a']);
     expect(blocked).toEqual([]);
   });
-
-  it('maps ai_seo jobs (web_seo stages) onto local_seo columns', () => {
-    const jobs = [
-      job({ id: 'a', service_type: 'ai_seo', stage_id: 'ws-new' }), // new_project → new_project
-      job({ id: 'b', service_type: 'ai_seo', stage_id: 'ws-content' }), // content → optimize
-    ];
-    const { byColumn } = groupJobsForBoard({
-      board: 'local_seo', jobs, boardStages: localStages, stageById,
-    });
-    expect(byColumn.get('ls-new')?.map((j) => j.id)).toEqual(['a']);
-    expect(byColumn.get('ls-opt')?.map((j) => j.id)).toEqual(['b']);
-  });
 });
 
 describe('hasBlockedColumn', () => {
@@ -76,13 +64,5 @@ describe('hasBlockedColumn', () => {
     expect(hasBlockedColumn('local_seo')).toBe(true);
     expect(hasBlockedColumn('web_seo')).toBe(true);
     expect(hasBlockedColumn('web_dev')).toBe(false);
-  });
-});
-
-describe('aiSeoTargetCode', () => {
-  it('translates local_seo columns back to web_seo stages, null when no equivalent', () => {
-    expect(aiSeoTargetCode('new_project')).toBe('new_project');
-    expect(aiSeoTargetCode('optimize')).toBe('content');
-    expect(aiSeoTargetCode('rank_tracking')).toBeNull();
   });
 });

@@ -5,50 +5,13 @@ type StageLite = { id: string; board: string; code: string };
 /**
  * Boards that render a virtual "Blocked" column: blocked jobs are shown there
  * instead of their stage column. stage_id is untouched, so unblocking returns
- * the card to exactly where it was. ai_seo jobs have no board of their own —
- * they surface on web_seo and local_seo, so both carry the column.
+ * the card to exactly where it was. Both SEO boards (web_seo and local_seo)
+ * carry the column.
  */
 const BLOCKED_COLUMN_BOARDS = new Set(['local_seo', 'web_seo']);
 
 export function hasBlockedColumn(board: string): boolean {
   return BLOCKED_COLUMN_BOARDS.has(board);
-}
-
-/**
- * AI SEO jobs canonically live on web_seo stages but are also shown on the
- * Local SEO board. The boards no longer share stage codes, so map explicitly.
- */
-const AI_SEO_TO_LOCAL_SEO: Record<string, string> = {
-  new_project: 'new_project',
-  no_response: 'called_no_response',
-  renewal: 'renewal',
-  gsc_ga4_setup: 'optimize',
-  sitemap_schema: 'optimize',
-  performance_audit: 'optimize',
-  technical_crawl: 'optimize',
-  keyword_research: 'optimize',
-  metadata: 'optimize',
-  content: 'optimize',
-  internal_links: 'optimize',
-  backlink_cleanup: 'optimize',
-  blogs: 'optimize',
-  results_review: 'optimize',
-  stuck: 'suspended',
-  done: 'done',
-};
-
-/** Reverse direction for drags; columns without an equivalent return null. */
-const LOCAL_SEO_TO_AI_SEO: Record<string, string> = {
-  new_project: 'new_project',
-  renewal: 'renewal',
-  called_no_response: 'no_response',
-  optimize: 'content',
-  suspended: 'stuck',
-  done: 'done',
-};
-
-export function aiSeoTargetCode(localSeoColumnCode: string): string | null {
-  return LOCAL_SEO_TO_AI_SEO[localSeoColumnCode] ?? null;
 }
 
 export function groupJobsForBoard(args: {
@@ -70,10 +33,7 @@ export function groupJobsForBoard(args: {
       blocked.push(j);
       continue;
     }
-    const code =
-      j.service_type === 'ai_seo' && args.board === 'local_seo'
-        ? (AI_SEO_TO_LOCAL_SEO[jobStage.code] ?? '')
-        : jobStage.code;
+    const code = jobStage.code;
     const col = colByCode.get(code);
     if (!col) continue;
     byColumn.get(col.id)?.push(j);
