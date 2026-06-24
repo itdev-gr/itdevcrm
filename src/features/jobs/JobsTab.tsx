@@ -6,6 +6,8 @@ import { useJobsForDeal } from './hooks/useJobsForDeal';
 import { useJobsForClient } from './hooks/useJobsForClient';
 import { relativeFromNow } from '@/lib/datetime';
 import { jobAmountLabel } from './jobAmount';
+import { canViewJobPricing } from './permissions';
+import { useAuthStore } from '@/lib/stores/authStore';
 import type { JobRow, ServiceType } from './hooks/useJobs';
 
 const SERVICE_TO_KANBAN: Record<ServiceType, string> = {
@@ -54,6 +56,9 @@ type Scope =
 export function JobsTab(props: Scope) {
   const { i18n } = useTranslation();
   const lang: 'en' | 'el' = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const showPricing = canViewJobPricing(isAdmin, groupCodes);
 
   const isDeal = 'dealId' in props;
   const dealQuery = useJobsForDeal(isDeal ? props.dealId : '');
@@ -85,8 +90,12 @@ export function JobsTab(props: Scope) {
         <thead className="border-b border-border/60 bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Υπηρεσία' : 'Service'}</th>
-            <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Χρέωση' : 'Billing'}</th>
-            <th className="px-4 py-3 text-right font-medium">{lang === 'el' ? 'Ποσό' : 'Amount'}</th>
+            {showPricing && (
+              <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Χρέωση' : 'Billing'}</th>
+            )}
+            {showPricing && (
+              <th className="px-4 py-3 text-right font-medium">{lang === 'el' ? 'Ποσό' : 'Amount'}</th>
+            )}
             <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Στάδιο' : 'Stage'}</th>
             <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Κατάσταση' : 'Status'}</th>
             {!isDeal && (
@@ -113,10 +122,14 @@ export function JobsTab(props: Scope) {
                     <ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">{billingLabel}</td>
-                <td className="px-4 py-3 text-right tabular-nums">
-                  {j.parent_job_id == null ? amount : '—'}
-                </td>
+                {showPricing && (
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{billingLabel}</td>
+                )}
+                {showPricing && (
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {j.parent_job_id == null ? amount : '—'}
+                  </td>
+                )}
                 <td className="px-4 py-3">
                   <StageBadge job={j} lang={lang} />
                 </td>

@@ -10,6 +10,8 @@ import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
+import { canViewJobPricing } from './permissions';
+import { useAuthStore } from '@/lib/stores/authStore';
 import type { JobRow } from './hooks/useJobs';
 
 export function JobsKanbanCard({
@@ -44,6 +46,9 @@ export function JobsKanbanCard({
     .join(' · ');
   const amountLabel = jobAmountLabel(job.billing_type, job.amount_net, lang);
   const displayCode = job.code ?? job.deal?.code ?? null;
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
@@ -91,7 +96,7 @@ export function JobsKanbanCard({
 
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
 
-          {amountLabel !== '—' && job.parent_job_id == null && (
+          {canViewPricing && amountLabel !== '—' && job.parent_job_id == null && (
             <span className="inline-flex rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
               {amountLabel}
             </span>

@@ -38,6 +38,7 @@ import { useJobBillingRefCount } from './hooks/useJobBillingRefCount';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
+import { canViewJobPricing } from './permissions';
 import type { ServiceType } from './hooks/useJobs';
 
 const JOB_STATUS_STYLES: Record<string, string> = {
@@ -62,6 +63,7 @@ export function JobDetailPage() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canBlockJob = isAdmin || groupCodes.includes('accounting');
+  const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
   const navigate = useNavigate();
   const del = useDeleteJobs();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -274,7 +276,7 @@ export function JobDetailPage() {
                       </span>
                     </dd>
                   </div>
-                  {job.parent_job_id == null && Number(job.amount_net ?? 0) > 0 && (
+                  {canViewPricing && job.parent_job_id == null && Number(job.amount_net ?? 0) > 0 && (
                     <div>
                       <dt className="text-[11px] text-muted-foreground">
                         {job.billing_type === 'recurring_monthly'
