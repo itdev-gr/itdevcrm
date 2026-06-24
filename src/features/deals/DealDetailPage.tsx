@@ -10,7 +10,9 @@ import { cn } from '@/lib/utils';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
 import { useMoveAccountingStage } from '@/features/accounting/hooks/useMoveAccountingStage';
-import { useCompleteAccounting } from '@/features/accounting/hooks/useCompleteAccounting';
+import { useMarkPaidInFull } from '@/features/accounting/hooks/useMarkPaidInFull';
+import { CloseDealDialog } from '@/features/accounting/CloseDealDialog';
+import { classifyAccountingStageMove } from './accountingStageMove';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
@@ -52,7 +54,7 @@ export function DealDetailPage() {
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: deal, isLoading, error } = useDeal(dealId);
   const moveAccounting = useMoveAccountingStage();
-  const complete = useCompleteAccounting();
+  const markPaid = useMarkPaidInFull();
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -62,6 +64,7 @@ export function DealDetailPage() {
     ? owners.find((o) => o.user_id === deal.won_by_user_id)
     : null;
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
 
   if (isLoading) return <div className="px-4 py-6 sm:px-6 lg:px-8">…</div>;
   if (error || !deal) {
@@ -76,7 +79,6 @@ export function DealDetailPage() {
 
   const wonWelcomeDraft = buildWonDraft(deal.client?.name ?? '');
   const completed = !!deal.accounting_completed_at;
-  const onAccountingKanban = !!deal.accounting_stage_id && !completed;
   const dealServices: PlannedService[] = Array.isArray(deal.services_planned)
     ? (deal.services_planned as unknown as PlannedService[])
     : [];
@@ -86,6 +88,7 @@ export function DealDetailPage() {
     .filter((s) => s.board === 'accounting_onboarding' && !s.archived)
     .sort((a, b) => a.position - b.position);
   const paidStage = accStages.find((s) => s.code === 'paid_in_full');
+  const closedStage = accStages.find((s) => s.code === 'closed');
 
   async function onChangeOwner(newOwnerId: string) {
     if (!deal) return;
@@ -107,14 +110,27 @@ export function DealDetailPage() {
   }
 
   async function onChangeAccountingStage(targetStageId: string) {
-    if (!deal || !targetStageId || targetStageId === deal.accounting_stage_id) return;
+    if (!deal) return;
+    const action = classifyAccountingStageMove({
+      targetStageId,
+      currentStageId: deal.accounting_stage_id ?? null,
+      paidStageId: paidStage?.id,
+      closedStageId: closedStage?.id,
+    });
+    if (action === 'noop') return;
+    // Moving to Closed → same confirmation dialog as the Accounting board
+    // (marks the jobs done + moves them to their close lanes, then closes the deal).
+    if (action === 'close') {
+      setCloseOpen(true);
+      return;
+    }
     if (!deal.payment_method) {
       alert(tAccounting('kanban.move_errors.payment_method_required'));
       return;
     }
-    if (paidStage && targetStageId === paidStage.id) {
+    if (action === 'paid') {
       try {
-        await complete.mutateAsync(dealId);
+        await markPaid.mutateAsync(dealId);
       } catch (err) {
         const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
         alert(
@@ -224,7 +240,7 @@ export function DealDetailPage() {
               ))}
             </FilterSelect>
           </div>
-          {onAccountingKanban && accStages.length > 0 && (
+          {deal.accounting_stage_id && accStages.length > 0 && (
             <div className="flex items-center gap-1.5">
               <Label htmlFor="acc-stage" className="text-[11px] font-medium text-muted-foreground">
                 {tLeads('actions.move_to')}
@@ -233,7 +249,7 @@ export function DealDetailPage() {
                 id="acc-stage"
                 value={deal.accounting_stage_id ?? ''}
                 onChange={(e) => onChangeAccountingStage(e.target.value)}
-                disabled={moveAccounting.isPending || complete.isPending}
+                disabled={moveAccounting.isPending || markPaid.isPending}
                 className="h-8 min-w-[150px] px-2 text-xs"
               >
                 {accStages.map((s) => (
@@ -255,6 +271,12 @@ export function DealDetailPage() {
         body={wonWelcomeDraft.body}
         dedupeKey={`won:${deal.id}`}
         onClose={() => setWelcomeOpen(false)}
+      />
+
+      <CloseDealDialog
+        dealId={closeOpen ? dealId : null}
+        dealLabel={deal.client?.name ?? deal.title ?? ''}
+        onClose={() => setCloseOpen(false)}
       />
 
       <Tabs defaultValue="overview" className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
