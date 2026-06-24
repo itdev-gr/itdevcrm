@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { BillingType, JobDepartment } from '@/lib/rpc';
+import { filterBillingJobs } from './filterBillingJobs';
 
 /** A non-archived job of the deal with its billing fields. */
 export type JobBillingRow = {
@@ -20,6 +21,8 @@ export type JobBillingRow = {
   status: string;
   is_custom: boolean | null;
   description: string | null;
+  /** Set on €0 AI SEO work-card children; top-level billing rows are null. */
+  parent_job_id: string | null;
 };
 
 /** A single billed line of a payment, scoped to one job. */
@@ -93,7 +96,7 @@ export function useJobsBilling(dealId: string) {
       const jobsRes = await supabase
         .from('jobs')
         .select(
-          'id, title, service_type, billing_type, installment_plan, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description',
+          'id, title, service_type, billing_type, installment_plan, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id',
         )
         .eq('deal_id', dealId)
         .eq('archived', false)
@@ -117,6 +120,7 @@ export function useJobsBilling(dealId: string) {
         status: (j.status as string) ?? 'active',
         is_custom: (j.is_custom as boolean | null) ?? null,
         description: (j.description as string | null) ?? null,
+        parent_job_id: (j.parent_job_id as string | null) ?? null,
       }));
 
       // 2. Payment headers (with totals) for the deal.
@@ -177,7 +181,10 @@ export function useJobsBilling(dealId: string) {
         lines: linesByPayment.get(h.id as string) ?? [],
       }));
 
-      return { jobs, payments };
+      // Hide €0 AI SEO work-card children (parent_job_id set) from the billing
+      // list; they show on their own kanban boards. Only the jobs list is
+      // filtered — payments are untouched.
+      return { jobs: filterBillingJobs(jobs), payments };
     },
     enabled: !!dealId,
   });

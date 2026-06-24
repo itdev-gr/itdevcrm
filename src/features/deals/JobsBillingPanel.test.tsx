@@ -47,6 +47,7 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     status: 'active',
     is_custom: true,
     description: null,
+    parent_job_id: null,
     ...over,
   };
 }
