@@ -22,6 +22,11 @@ describe('mapHeader', () => {
     expect(mapHeader('work_phone_number')).toBe('phone');
     expect(mapHeader('Work Phone Number')).toBe('phone');
   });
+
+  it('matches the ClickUp/website-form Greek email header "Διεύθυνση email"', () => {
+    expect(mapHeader('Διεύθυνση email')).toBe('email');
+    expect(mapHeader('διευθυνση email')).toBe('email');
+  });
 });
 
 describe('mapRowsToLeads', () => {
@@ -50,6 +55,14 @@ describe('mapRowsToLeads', () => {
       { Name: 'Art Filatov', email: 'art@x.gr', work_phone_number: 'p:306977270071' },
     ]);
     expect(rows[0]?.phone).toBe('306977270071');
+  });
+
+  it('maps the website-form "Διεύθυνση email" column into email, not source_data', () => {
+    const { rows } = mapRowsToLeads([
+      { 'Φόρμα': '🌐 WEBSITE LEAD FORM', 'Διεύθυνση email': 'kyranak30@gmail.com', 'Κανάλι': 'Email' },
+    ]);
+    expect(rows[0]?.email).toBe('kyranak30@gmail.com');
+    expect(rows[0]?.source_data).not.toHaveProperty('Διεύθυνση email');
   });
 
   it('skips rows with no name, email, or phone', () => {

@@ -17,7 +17,9 @@ type LeadField = Exclude<keyof ImportedLeadRow, 'source_data'>;
 
 const FIELD_ALIASES: Record<LeadField, string[]> = {
   full_name: ['name', 'full name', 'fullname', 'όνομα', 'ονοματεπώνυμο', 'ονοματεπωνυμο'],
-  email: ['email', 'e-mail', 'mail', 'ηλεκτρονικό ταχυδρομείο', 'ηλεκτρονικο ταχυδρομειο'],
+  // incl. the ClickUp/website-form Greek label "Διεύθυνση email" (email address) —
+  // previously stranded in source_data, which defeated email-based dedup on import.
+  email: ['email', 'e-mail', 'mail', 'ηλεκτρονικό ταχυδρομείο', 'ηλεκτρονικο ταχυδρομειο', 'διεύθυνση email', 'διευθυνση email', 'διεύθυνση e-mail', 'διευθυνση e-mail'],
   // incl. the Meta lead-form Greek label "αριθμός τηλεφώνου" (phone number) and the
   // website-form English field "work_phone_number" (underscores → spaces via norm()).
   phone: ['phone', 'phone number', 'tel', 'telephone', 'mobile', 'mobile number', 'work phone number', 'τηλέφωνο', 'τηλεφωνο', 'κινητό', 'κινητο', 'αριθμός τηλεφώνου', 'αριθμος τηλεφωνου'],
