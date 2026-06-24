@@ -5,7 +5,7 @@ describe('SERVICE_INFO_FIELDS', () => {
   it('ai_seo combines local + web seo with distinct keys', () => {
     const keys = SERVICE_INFO_FIELDS.ai_seo.map((f) => f.key);
     expect(keys).toEqual([
-      'profile_url', 'local_report_url', 'local_notes',
+      'profile_url', 'business_profile', 'local_report_url', 'local_notes',
       'website_username', 'website_password', 'website_path', 'web_report_url', 'seo_notes',
     ]);
     expect(new Set(keys).size).toBe(keys.length);

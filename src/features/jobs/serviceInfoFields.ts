@@ -10,6 +10,7 @@ export type InfoField = {
 
 const LOCAL: InfoField[] = [
   { key: 'profile_url', labelEn: 'Profile URL', labelEl: 'URL Προφίλ', type: 'url' },
+  { key: 'business_profile', labelEn: 'Business profile', labelEl: 'Προφίλ επιχείρησης', type: 'text' },
   { key: 'local_report_url', labelEn: 'Report URL', labelEl: 'URL Report', type: 'url', sharedWithDeal: true },
   { key: 'local_notes', labelEn: 'Local SEO Notes', labelEl: 'Σημειώσεις Local SEO', type: 'textarea', sharedWithDeal: true },
 ];
