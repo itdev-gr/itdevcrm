@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useLeadIntakeCount } from '@/features/leads/hooks/useLeadIntake';
+import { useTaskBadgeCounts } from '@/features/tasks/hooks/useTaskBadgeCounts';
 import { sidebarLinkClass, sidebarSectionClass } from './sidebar-nav-styles';
 
 function LeadIntakeBadge() {
@@ -30,6 +31,27 @@ function LeadIntakeBadge() {
   return (
     <span className="ml-auto rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
       {data}
+    </span>
+  );
+}
+
+// Two pills next to "Tasks": yellow = arrived since you last opened the page,
+// green = your total open tasks.
+function TasksBadges() {
+  const { total, newCount } = useTaskBadgeCounts();
+  if (total === 0 && newCount === 0) return null;
+  return (
+    <span className="ml-auto flex items-center gap-1">
+      {newCount > 0 && (
+        <span className="rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
+          {newCount}
+        </span>
+      )}
+      {total > 0 && (
+        <span className="rounded-full bg-emerald-600 px-1.5 text-xs font-semibold text-white">
+          {total}
+        </span>
+      )}
     </span>
   );
 }
@@ -100,6 +122,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       <NavLink to="/tasks" className={({ isActive }) => sidebarLinkClass(isActive)}>
         <ListChecks className="size-4 shrink-0 opacity-80" />
         {t('nav.tasks')}
+        <TasksBadges />
       </NavLink>
 
       {isAdmin && (
