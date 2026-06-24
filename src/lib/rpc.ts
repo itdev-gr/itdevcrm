@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { ImportedLeadRow } from '@/features/leads/leadImport';
 import type { CreateDealParams } from '@/features/accounting/newDeal';
+import type { CreateAnnouncementParams } from '@/features/announcements/announcement';
 
 export type LockDealResult = { ok: true; deal_id: string } | { ok: false; errors: string[] };
 
@@ -395,4 +396,57 @@ export async function accountingCreateDeal(
   const r = data as { ok: boolean; deal_id?: string; code?: string; errors?: string[] };
   if (!r.ok || !r.deal_id) return { ok: false, errors: r.errors ?? ['create_failed'] };
   return { ok: true, deal_id: r.deal_id, code: r.code ?? '' };
+}
+
+// --- Announcements -----------------------------------------------------------
+export type AnnouncementActionResult = { ok: true } | { ok: false; errors: string[] };
+export type CreateAnnouncementResult =
+  | { ok: true; announcement_id: string }
+  | { ok: false; errors: string[] };
+export type MyAnnouncementRow = {
+  id: string;
+  title: string;
+  body: string;
+  severity: 'info' | 'warning';
+  created_at: string;
+};
+
+export async function createAnnouncement(
+  params: CreateAnnouncementParams,
+): Promise<CreateAnnouncementResult> {
+  const { data, error } = await rpcCall('create_announcement', params);
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; announcement_id?: string; errors?: string[] };
+  if (!r.ok || !r.announcement_id) return { ok: false, errors: r.errors ?? ['create_failed'] };
+  return { ok: true, announcement_id: r.announcement_id };
+}
+
+export async function dismissAnnouncement(id: string): Promise<AnnouncementActionResult> {
+  const { data, error } = await rpcCall('dismiss_announcement', { p_id: id });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; errors?: string[] };
+  return r.ok ? { ok: true } : { ok: false, errors: r.errors ?? ['dismiss_failed'] };
+}
+
+export async function setAnnouncementActive(
+  id: string,
+  active: boolean,
+): Promise<AnnouncementActionResult> {
+  const { data, error } = await rpcCall('set_announcement_active', { p_id: id, p_active: active });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; errors?: string[] };
+  return r.ok ? { ok: true } : { ok: false, errors: r.errors ?? ['update_failed'] };
+}
+
+export async function deleteAnnouncement(id: string): Promise<AnnouncementActionResult> {
+  const { data, error } = await rpcCall('delete_announcement', { p_id: id });
+  if (error) return { ok: false, errors: [error.message] };
+  const r = data as { ok: boolean; errors?: string[] };
+  return r.ok ? { ok: true } : { ok: false, errors: r.errors ?? ['delete_failed'] };
+}
+
+export async function getMyAnnouncements(): Promise<MyAnnouncementRow[]> {
+  const { data, error } = await rpcCall('get_my_announcements', {});
+  if (error) throw new Error(error.message);
+  return (data as MyAnnouncementRow[] | null) ?? [];
 }

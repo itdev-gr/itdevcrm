@@ -23,6 +23,8 @@ export const queryKeys = {
     ['attachments', parentType, parentId] as const,
   activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
   notifications: () => ['notifications'] as const,
+  announcements: () => ['announcements'] as const,
+  myAnnouncements: () => ['my-announcements'] as const,
   assignedTasksOpen: (assigneeId: string | null) =>
     ['assigned-tasks', 'open', assigneeId ?? 'all'] as const,
   assignedTaskDetail: (taskId: string) => ['assigned-task', taskId] as const,
