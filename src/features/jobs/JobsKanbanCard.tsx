@@ -60,7 +60,7 @@ export function JobsKanbanCard({
             <div className="min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 {displayCode && <CopyableCode code={displayCode} className="text-[10px]" />}
-                {job.service_type === 'ai_seo' && (
+                {job.parent_job_id != null && (
                   <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-semibold text-violet-800 dark:bg-violet-950/50 dark:text-violet-200">
                     AI SEO
                   </span>

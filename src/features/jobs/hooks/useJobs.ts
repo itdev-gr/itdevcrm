@@ -24,6 +24,7 @@ export type JobRow = JobBase & {
   deal?: { id: string; code: string | null; title: string | null } | null;
   stage?: { id: string; code: string; board: string; display_names: unknown } | null;
   details?: Record<string, unknown> | null;
+  parent_job_id: string | null;
 };
 
 // Web SEO and Local SEO kanbans also surface ai_seo jobs (AI SEO has no
@@ -43,7 +44,7 @@ export function useJobs(serviceType: ServiceType) {
       const { data, error } = await supabase
         .from('jobs')
         .select(
-          '*, client:clients(id, name, contact_first_name, contact_last_name, industry), deal:deals(id, code, title), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
+          '*, parent_job_id, client:clients(id, name, contact_first_name, contact_last_name, industry), deal:deals(id, code, title), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
         )
         .in('service_type', serviceTypesForBoard(serviceType))
         .eq('archived', false)
