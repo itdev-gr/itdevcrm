@@ -1,4 +1,6 @@
 {
+  "part_of_ai_seo": "Part of AI SEO {{code}} · €{{amount}}",
+  "view_billing_record": "View billing record",
   "delete": {
     "button": "Delete",
     "title": "Delete this job?",

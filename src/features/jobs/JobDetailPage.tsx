@@ -49,6 +49,7 @@ export function JobDetailPage() {
   const { t, i18n } = useTranslation('jobs');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: job, isLoading, error } = useJob(jobId);
+  const { data: parentJob } = useJob(job?.parent_job_id ?? '');
   const { data: owners = [] } = useMentionableUsers();
   const { data: stages = [] } = usePipelineStages();
 
@@ -171,6 +172,18 @@ export function JobDetailPage() {
             )}
           </div>
         </div>
+
+        {job.parent_job_id && (
+          <div className="mt-2.5 rounded-md bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
+            {t('part_of_ai_seo', {
+              code: parentJob?.code ?? '',
+              amount: parentJob?.amount_net != null ? Number(parentJob.amount_net).toFixed(2) : '',
+            })}{' '}
+            <Link to={`/jobs/${job.parent_job_id}`} className="font-semibold underline">
+              {t('view_billing_record')}
+            </Link>
+          </div>
+        )}
 
         <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-muted/25 p-2">
           {boardStages.length > 0 && (

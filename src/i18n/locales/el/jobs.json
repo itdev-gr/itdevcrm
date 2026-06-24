@@ -1,4 +1,6 @@
 {
+  "part_of_ai_seo": "Μέρος του AI SEO {{code}} · €{{amount}}",
+  "view_billing_record": "Προβολή χρέωσης",
   "delete": {
     "button": "Διαγραφή",
     "title": "Διαγραφή αυτής της εργασίας;",
