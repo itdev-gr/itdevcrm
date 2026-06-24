@@ -146,6 +146,11 @@
     "reset": "Επαναφορά",
     "step_day": "Ημέρα",
     "step_email": "Email",
-    "step_enabled": "Ενεργό"
+    "step_enabled": "Ενεργό",
+    "edit_email": "Στοιχεία email",
+    "when_sent": "Πότε αποστέλλεται",
+    "client_facing": "Αποστολή σε πελάτες",
+    "internal": "Μόνο εσωτερικό",
+    "close": "Κλείσιμο"
   }
 }

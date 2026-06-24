@@ -146,6 +146,11 @@
     "reset": "Reset",
     "step_day": "Day",
     "step_email": "Email",
-    "step_enabled": "Active"
+    "step_enabled": "Active",
+    "edit_email": "Email details",
+    "when_sent": "When it's sent",
+    "client_facing": "Sent to clients",
+    "internal": "Internal only",
+    "close": "Close"
   }
 }

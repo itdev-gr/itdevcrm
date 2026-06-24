@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mail, Power } from 'lucide-react';
+import { Mail, Pencil, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   PageHeader,
   SettingsCard,
@@ -47,73 +54,109 @@ function TemplateEditor({ tpl }: { tpl: EmailTemplateRow }) {
   const [body, setBody] = useState(tpl.body);
   const dirty = subject !== tpl.subject || body !== tpl.body;
 
+  // Reset the draft to the current template each time the popup opens.
+  function openDialog() {
+    setSubject(tpl.subject);
+    setBody(tpl.body);
+    setOpen(true);
+  }
+
   return (
-    <SettingsCard className="overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/35"
-      >
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium">{tpl.subject}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {tpl.description} · <code className="text-[10px]">{tpl.key}</code>
+    <>
+      <SettingsCard className="overflow-hidden">
+        <button
+          type="button"
+          onClick={openDialog}
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/35"
+        >
+          <div className="min-w-0">
+            <div className="truncate text-sm font-medium">{tpl.subject}</div>
+            <div className="mt-0.5 truncate text-xs text-muted-foreground">
+              {tpl.description} · <code className="text-[10px]">{tpl.key}</code>
+            </div>
           </div>
-        </div>
-        <span className="ml-3 shrink-0 text-xs text-muted-foreground">{open ? '▲' : '▼'}</span>
-      </button>
-      {open && (
-        <div className="space-y-3 border-t border-border/60 p-4">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">
-              {t('email_automations.subject')}
-            </label>
-            <Input className="mt-1.5" value={subject} onChange={(e) => setSubject(e.target.value)} />
+          <Pencil className="ml-3 size-4 shrink-0 text-muted-foreground" />
+        </button>
+      </SettingsCard>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('email_automations.edit_email')}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {/* When it's sent (trigger/timing) + sender info */}
+            <div className="rounded-lg border border-border/60 bg-muted/25 p-3">
+              <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t('email_automations.when_sent')}
+              </div>
+              <div className="mt-1 text-sm">{tpl.description}</div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <code className="rounded bg-muted px-1">{tpl.key}</code>
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 font-medium',
+                    tpl.client_facing
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+                      : 'bg-muted text-muted-foreground',
+                  )}
+                >
+                  {tpl.client_facing
+                    ? t('email_automations.client_facing')
+                    : t('email_automations.internal')}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">
+                {t('email_automations.subject')}
+              </label>
+              <Input className="mt-1.5" value={subject} onChange={(e) => setSubject(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">
+                {t('email_automations.body')}
+              </label>
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={12}
+                className="mt-1.5 block w-full rounded-lg border border-input/80 bg-background px-3 py-2 font-mono text-xs shadow-sm focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
+              />
+            </div>
+            {tpl.variables && (
+              <p className="text-xs text-muted-foreground">
+                {t('email_automations.variables')}:{' '}
+                {tpl.variables.split(',').map((v) => (
+                  <code key={v} className="mr-1 rounded bg-muted px-1">
+                    {`{{${v.trim()}}}`}
+                  </code>
+                ))}
+              </p>
+            )}
           </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">
-              {t('email_automations.body')}
-            </label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={9}
-              className="mt-1.5 block w-full rounded-lg border border-input/80 bg-background px-3 py-2 font-mono text-xs shadow-sm focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
-            />
-          </div>
-          {tpl.variables && (
-            <p className="text-xs text-muted-foreground">
-              {t('email_automations.variables')}:{' '}
-              {tpl.variables.split(',').map((v) => (
-                <code key={v} className="mr-1 rounded bg-muted px-1">
-                  {`{{${v.trim()}}}`}
-                </code>
-              ))}
-            </p>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={!dirty}
-              onClick={() => {
-                setSubject(tpl.subject);
-                setBody(tpl.body);
-              }}
-            >
+
+          <DialogFooter>
+            <Button variant="ghost" disabled={!dirty} onClick={openDialog}>
               {t('email_automations.reset')}
             </Button>
             <Button
-              size="sm"
               disabled={!dirty || update.isPending}
-              onClick={() => update.mutate({ key: tpl.key, subject, body })}
+              onClick={() =>
+                update.mutate(
+                  { key: tpl.key, subject, body },
+                  { onSuccess: () => setOpen(false) },
+                )
+              }
             >
               {t('email_automations.save')}
             </Button>
-          </div>
-        </div>
-      )}
-    </SettingsCard>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
