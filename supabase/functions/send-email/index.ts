@@ -124,18 +124,22 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
 }
 
 async function drain(): Promise<{ processed: number; sent: number; failed: number }> {
-  const { data: rows } = await admin
-    .from('email_outbox').select('*').eq('status', 'pending').lt('attempts', 5)
-    .order('created_at', { ascending: true }).limit(50);
+  // Recover any rows a prior drain claimed but never finished (e.g. crash mid-send).
+  await admin.rpc('recover_stale_email_claims');
+  // Atomically claim pending rows (status -> 'sending', FOR UPDATE SKIP LOCKED) so the
+  // instant-send pulse and the cron can drain concurrently without double-sending.
+  const { data: rows } = await admin.rpc('claim_email_outbox', { p_limit: 50 });
   let sent = 0, failed = 0;
-  for (const r of rows ?? []) {
+  for (const r of (rows ?? []) as any[]) {
     const result = await sendOne({ identity: r.identity, to: r.to_email, templateKey: r.template_key, data: r.data, dedupeKey: r.dedupe_key });
     if (result.status === 'failed') {
       failed++;
-      await admin.from('email_outbox').update({ attempts: r.attempts + 1, last_error: result.error ?? null }).eq('id', r.id);
+      // Release back to 'pending' for retry (attempts was already incremented at claim time).
+      await admin.from('email_outbox').update({ status: 'pending', last_error: result.error ?? null }).eq('id', r.id);
     } else {
+      // 'sent' or 'skipped' (already-sent dedupe) both leave the queue as sent.
       sent++;
-      await admin.from('email_outbox').update({ status: 'sent', sent_at: new Date().toISOString(), attempts: r.attempts + 1 }).eq('id', r.id);
+      await admin.from('email_outbox').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', r.id);
     }
   }
   const nowIso = new Date().toISOString();
