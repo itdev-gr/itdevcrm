@@ -14,13 +14,19 @@ import {
   commentsPanelShellClass,
   detailHeaderBannerClass,
   detailHeaderCardClass,
+  detailHeaderChipClass,
   detailHeaderControlGroupClass,
   detailHeaderActionsClass,
+  detailHeaderActionButtonClass,
   detailHeaderLabelClass,
   detailHeaderMainClass,
   detailHeaderMetaClass,
+  detailHeaderOwnerClass,
+  detailHeaderRecordBadgeClass,
   detailHeaderRowClass,
   detailHeaderSelectClass,
+  detailHeaderStatusBadgeClass,
+  detailHeaderTitleClass,
   detailOverviewWithCommentsGridClass,
   detailTabTriggerClass,
 } from '@/components/layout/page-shell';
@@ -118,14 +124,22 @@ export function JobDetailPage() {
       <div className={detailHeaderCardClass}>
         <div className={detailHeaderRowClass}>
           <div className={detailHeaderMainClass}>
-            <h1 className="text-base font-bold tracking-tight sm:text-lg">{fullName}</h1>
-            <span className="rounded-full bg-primary/10 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wider text-primary dark:text-[#7ad4d4]">
+            <h1 className={detailHeaderTitleClass}>{fullName}</h1>
+            <span
+              className={cn(
+                detailHeaderRecordBadgeClass,
+                'bg-primary/10 text-primary dark:text-[#7ad4d4]',
+              )}
+            >
               Job
             </span>
-            {job.code && <CopyableCode code={job.code} className="text-[10px]" />}
+            {job.code && <CopyableCode code={job.code} className="text-[11px]" />}
             {job.is_blocked && (
               <span
-                className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300"
+                className={cn(
+                  detailHeaderStatusBadgeClass,
+                  'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300',
+                )}
                 title={job.blocked_reason ?? undefined}
               >
                 <Lock className="size-2.5" />
@@ -134,14 +148,12 @@ export function JobDetailPage() {
               </span>
             )}
             <span
-              className="hidden h-3 w-px shrink-0 bg-border/50 sm:inline-block"
+              className="hidden h-3.5 w-px shrink-0 bg-border/50 sm:inline-block"
               aria-hidden="true"
             />
-            <span className="inline-flex rounded-full bg-muted/60 px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
-              {job.service_type.replace(/_/g, ' ')}
-            </span>
+            <span className={detailHeaderChipClass}>{job.service_type.replace(/_/g, ' ')}</span>
             <span className={detailHeaderMetaClass}>
-              <Calendar className="size-2.5 opacity-70" />
+              <Calendar className="size-3 opacity-70" />
               {formatDate(job.created_at)}
               <span className="opacity-60">·</span>
               {relativeFromNow(job.created_at)}
@@ -169,10 +181,7 @@ export function JobDetailPage() {
             {owner && (
               <div className={detailHeaderControlGroupClass}>
                 <Label className={detailHeaderLabelClass}>Owner</Label>
-                <span
-                  className="inline-flex h-6 max-w-[180px] items-center truncate rounded-md border border-input/80 bg-background px-1.5 text-[10px] text-foreground"
-                  title={owner.full_name || owner.email}
-                >
+                <span className={detailHeaderOwnerClass} title={owner.full_name || owner.email}>
                   {owner.full_name || owner.email}
                 </span>
               </div>
@@ -193,7 +202,7 @@ export function JobDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 px-2 text-[11px]"
+                  className={detailHeaderActionButtonClass}
                   onClick={() => unblock.mutate()}
                   disabled={unblock.isPending}
                 >
@@ -203,7 +212,7 @@ export function JobDetailPage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  className="h-6 px-2 text-[11px]"
+                  className={detailHeaderActionButtonClass}
                   onClick={() => block.mutate({ reason: 'manual' })}
                   disabled={block.isPending}
                 >
@@ -214,7 +223,7 @@ export function JobDetailPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                className="h-6 px-2 text-[11px]"
+                className={detailHeaderActionButtonClass}
                 onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="size-3" />

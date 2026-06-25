@@ -6,7 +6,7 @@ import { Calendar, Trash2, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRowClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
+import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRecordBadgeClass, detailHeaderRowClass, detailHeaderSelectClass, detailHeaderStatusBadgeClass, detailHeaderTitleClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { LeadForm } from './LeadForm';
 import { useLead } from './hooks/useLead';
@@ -157,17 +157,17 @@ export function LeadDetailPage() {
       <div className={detailHeaderCardClass}>
         <div className={detailHeaderRowClass}>
           <div className={detailHeaderMainClass}>
-            <h1 className="text-base font-bold tracking-tight sm:text-lg">{lead.title}</h1>
-            <span className="rounded-full bg-primary/10 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wider text-primary">
+            <h1 className={detailHeaderTitleClass}>{lead.title}</h1>
+            <span className={cn(detailHeaderRecordBadgeClass, 'bg-primary/10 text-primary')}>
               Lead
             </span>
-            {lead.code && <CopyableCode code={lead.code} className="text-[10px]" />}
+            {lead.code && <CopyableCode code={lead.code} className="text-[11px]" />}
             <span
-              className="hidden h-3 w-px shrink-0 bg-border/50 sm:inline-block"
+              className="hidden h-3.5 w-px shrink-0 bg-border/50 sm:inline-block"
               aria-hidden="true"
             />
             <span className={detailHeaderMetaClass}>
-              <Calendar className="size-2.5 opacity-70" />
+              <Calendar className="size-3 opacity-70" />
               {formatDate(lead.created_at)}
               <span className="opacity-60">·</span>
               {relativeFromNow(lead.created_at)}
@@ -175,7 +175,7 @@ export function LeadDetailPage() {
                 <>
                   <span className="opacity-60">·</span>
                   <span className="inline-flex items-center gap-0.5">
-                    <Trophy className="size-2.5 text-amber-600 dark:text-amber-400" />
+                    <Trophy className="size-3 text-amber-600 dark:text-amber-400" />
                     {(() => {
                       const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
                       return winner ? winner.full_name || winner.email : lead.won_by_user_id;

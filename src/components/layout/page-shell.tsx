@@ -187,29 +187,45 @@ export const detailOverviewWithCommentsGridClass =
   'grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)] xl:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)]';
 
 export const detailHeaderCardClass =
-  'rounded-xl border border-border/60 bg-card px-2.5 py-1.5 shadow-sm sm:px-3 sm:py-2';
+  'rounded-xl border border-border/60 bg-card px-3 py-2 shadow-sm sm:py-2.5';
 
 export const detailHeaderRowClass =
-  'flex flex-wrap items-center justify-between gap-x-2 gap-y-1';
+  'flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5';
 
 export const detailHeaderMainClass =
-  'flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5';
+  'flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1';
 
-export const detailHeaderActionsClass = 'flex shrink-0 items-center gap-1';
+export const detailHeaderActionsClass = 'flex shrink-0 items-center gap-1.5';
 
 export const detailHeaderControlsClass =
-  'flex flex-wrap items-center gap-x-1.5 gap-y-0.5';
+  'flex flex-wrap items-center gap-x-2 gap-y-1';
 
-export const detailHeaderControlGroupClass = 'flex items-center gap-0.5';
+export const detailHeaderControlGroupClass = 'flex items-center gap-1';
 
-export const detailHeaderLabelClass = 'text-[9px] font-medium uppercase tracking-wide text-muted-foreground';
+export const detailHeaderTitleClass = 'text-lg font-bold tracking-tight sm:text-xl';
 
-export const detailHeaderSelectClass = 'h-6 min-w-[118px] px-1.5 text-[11px]';
+export const detailHeaderRecordBadgeClass =
+  'rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider';
 
-export const detailHeaderMetaClass = 'inline-flex items-center gap-1 text-[10px] text-muted-foreground';
+export const detailHeaderChipClass =
+  'inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground';
+
+export const detailHeaderOwnerClass =
+  'inline-flex h-7 max-w-[200px] items-center truncate rounded-md border border-input/80 bg-background px-2 text-xs text-foreground';
+
+export const detailHeaderStatusBadgeClass =
+  'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide';
+
+export const detailHeaderLabelClass = 'text-[10px] font-medium uppercase tracking-wide text-muted-foreground';
+
+export const detailHeaderSelectClass = 'h-7 min-w-[128px] px-2 text-xs';
+
+export const detailHeaderMetaClass = 'inline-flex items-center gap-1 text-xs text-muted-foreground';
 
 export const detailHeaderBannerClass =
-  'inline-flex max-w-full items-center gap-0.5 rounded-full bg-violet-50 px-1.5 py-px text-[9px] font-medium text-violet-800 dark:bg-violet-950/40 dark:text-violet-200';
+  'inline-flex max-w-full items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-800 dark:bg-violet-950/40 dark:text-violet-200';
+
+export const detailHeaderActionButtonClass = 'h-7 px-2.5 text-xs';
 
 export const commentsPanelShellClass =
   'flex max-h-[calc(100vh-6.5rem)] min-h-[18rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm lg:max-h-none';

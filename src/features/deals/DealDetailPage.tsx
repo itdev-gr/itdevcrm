@@ -5,7 +5,7 @@ import { Calendar, Lock, Mail } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRowClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
+import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRecordBadgeClass, detailHeaderRowClass, detailHeaderSelectClass, detailHeaderStatusBadgeClass, detailHeaderTitleClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
@@ -152,23 +152,33 @@ export function DealDetailPage() {
       <div className={detailHeaderCardClass}>
         <div className={detailHeaderRowClass}>
           <div className={detailHeaderMainClass}>
-            <h1 className="text-base font-bold tracking-tight sm:text-lg">{deal.title}</h1>
-            <span className="rounded-full bg-violet-500/10 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+            <h1 className={detailHeaderTitleClass}>{deal.title}</h1>
+            <span
+              className={cn(
+                detailHeaderRecordBadgeClass,
+                'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+              )}
+            >
               Deal
             </span>
-            {deal.code && <CopyableCode code={deal.code} className="text-[10px]" />}
+            {deal.code && <CopyableCode code={deal.code} className="text-[11px]" />}
             {clientStatus === 'blocked' && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300">
+              <span
+                className={cn(
+                  detailHeaderStatusBadgeClass,
+                  'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300',
+                )}
+              >
                 <Lock className="size-2.5" />
                 {tClients('status.blocked')}
               </span>
             )}
             <span
-              className="hidden h-3 w-px shrink-0 bg-border/50 sm:inline-block"
+              className="hidden h-3.5 w-px shrink-0 bg-border/50 sm:inline-block"
               aria-hidden="true"
             />
             <span className={detailHeaderMetaClass}>
-              <Calendar className="size-2.5 opacity-70" />
+              <Calendar className="size-3 opacity-70" />
               {formatDate(deal.created_at)}
               <span className="opacity-60">·</span>
               {relativeFromNow(deal.created_at)}
