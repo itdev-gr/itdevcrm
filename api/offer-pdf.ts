@@ -24,6 +24,44 @@ type OfferTotals = {
 
 export const config = { maxDuration: 60 };
 
+type RecipientSource = {
+  // clients use `name`; leads use `company_name` — accept either.
+  name?: string | null;
+  company_name?: string | null;
+  email: string | null;
+  contact_first_name: string | null;
+  contact_last_name: string | null;
+} | null;
+
+type OfferRecipient = {
+  clientName: string;
+  companyName: string | null;
+  email: string | null;
+};
+
+/**
+ * Resolve the name/company/email printed at the top of the offer PDF.
+ * Prefer a linked client; otherwise fall back to the originating lead — most
+ * offers are drafted from a lead that has not been converted to a client yet,
+ * so without this fallback the PDF header printed the literal word "Client".
+ */
+export function resolveOfferRecipient(
+  client: RecipientSource,
+  lead: RecipientSource,
+): OfferRecipient {
+  const source = client ?? lead;
+  if (!source) return { clientName: 'Client', companyName: null, email: null };
+  const contact = [source.contact_first_name, source.contact_last_name]
+    .filter(Boolean)
+    .join(' ');
+  const company = source.name ?? source.company_name ?? null;
+  return {
+    clientName: contact || company || 'Client',
+    companyName: company,
+    email: source.email ?? null,
+  };
+}
+
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   try {
     await runHandler(req, res);
@@ -83,20 +121,25 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     return;
   }
 
-  let clientName = 'Client';
-  let companyName: string | null = null;
-  let email: string | null = null;
+  // Resolve the recipient printed at the top of the PDF. Prefer a linked
+  // client; otherwise fall back to the originating lead — most offers are
+  // drafted from an un-converted lead (no client_id), and without this the
+  // header printed the literal word "Client".
+  let client: RecipientSource = null;
   if (offer.client_id) {
-    const { data: client } = await userClient
+    const { data } = await userClient
       .from('clients').select('name, email, contact_first_name, contact_last_name')
       .eq('id', offer.client_id).single();
-    if (client) {
-      const contact = [client.contact_first_name, client.contact_last_name].filter(Boolean).join(' ');
-      clientName = contact || client.name || 'Client';
-      companyName = client.name ?? null;
-      email = client.email ?? null;
-    }
+    client = data;
   }
+  let lead: RecipientSource = null;
+  if (!client && offer.lead_id) {
+    const { data } = await userClient
+      .from('leads').select('company_name, email, contact_first_name, contact_last_name')
+      .eq('id', offer.lead_id).single();
+    lead = data;
+  }
+  const { clientName, companyName, email } = resolveOfferRecipient(client, lead);
 
   const html = renderOfferHtml({
     offerId: offer.id,
