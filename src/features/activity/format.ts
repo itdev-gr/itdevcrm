@@ -299,3 +299,121 @@ export function describeActor(row: {
   if (email) return email;
   return row.user_id ? 'Unknown user' : 'System';
 }
+
+export type ActivityCategory =
+  | 'payment' | 'job' | 'deal' | 'client' | 'attachment' | 'task' | 'email' | 'comment' | 'other';
+
+const CATEGORY_BY_ENTITY: Record<string, ActivityCategory> = {
+  deal_payments: 'payment',
+  jobs: 'job',
+  deals: 'deal',
+  clients: 'client',
+  attachments: 'attachment',
+  user_tasks: 'task',
+  assigned_tasks: 'task',
+  email_log: 'email',
+  comments: 'comment',
+};
+
+export function categoryOf(entityType: string): ActivityCategory {
+  return CATEGORY_BY_ENTITY[entityType] ?? 'other';
+}
+
+export type EventView = {
+  category: ActivityCategory;
+  summary: string;
+  lines: { key: string; label: string; text: string }[];
+};
+
+type RawEvent = { entity_type: string; action: 'insert' | 'update' | 'delete'; changes: unknown };
+
+/** Current snapshot: flat object for insert/delete, the `new` side for update. */
+function currentOf(changes: unknown): Record<string, unknown> {
+  if (!changes || typeof changes !== 'object') return {};
+  const c = changes as Record<string, unknown>;
+  if (c.new && typeof c.new === 'object') return c.new as Record<string, unknown>;
+  return c;
+}
+/** Previous snapshot: the `old` side for update, else empty. */
+function previousOf(changes: unknown): Record<string, unknown> {
+  if (!changes || typeof changes !== 'object') return {};
+  const c = changes as Record<string, unknown>;
+  if (c.old && typeof c.old === 'object') return c.old as Record<string, unknown>;
+  return {};
+}
+
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: 'pending', paid: 'paid', awaiting: 'awaiting', overdue: 'overdue', cancelled: 'cancelled',
+};
+function paymentStatus(s: unknown): string {
+  const key = String(s ?? '');
+  return PAYMENT_STATUS_LABELS[key] ?? key;
+}
+function paymentAmount(row: Record<string, unknown>): unknown {
+  return row.amount_net ?? row.amount;
+}
+
+const NOUNS: Record<string, string> = { clients: 'client', deals: 'deal', jobs: 'job', leads: 'lead' };
+function nounFor(entityType: string): string {
+  return NOUNS[entityType] ?? entityType.replace(/s$/, '');
+}
+
+/** Turn one activity row into a feed entry: category + summary + detail lines. */
+export function describeEvent(row: RawEvent, resolver: Resolver): EventView {
+  const category = categoryOf(row.entity_type);
+  const cur = currentOf(row.changes);
+  const prev = previousOf(row.changes);
+
+  if (category === 'payment') {
+    const amount = formatMoney(paymentAmount(cur) ?? paymentAmount(prev));
+    if (row.action === 'insert')
+      return { category, summary: `Payment of ${amount} created (${paymentStatus(cur.status)})`, lines: [] };
+    if (row.action === 'delete')
+      return { category, summary: `Payment of ${amount} deleted`, lines: [] };
+    const oldStatus = String(prev.status ?? '');
+    const newStatus = String(cur.status ?? '');
+    if (oldStatus !== newStatus) {
+      if (newStatus === 'paid') return { category, summary: `Payment of ${amount} marked paid`, lines: [] };
+      if (newStatus === 'pending') return { category, summary: `Payment of ${amount} set back to pending`, lines: [] };
+      return { category, summary: `Payment of ${amount} set to ${paymentStatus(newStatus)}`, lines: [] };
+    }
+    if (JSON.stringify(paymentAmount(prev)) !== JSON.stringify(paymentAmount(cur)))
+      return { category, summary: `Payment amount changed ${formatMoney(paymentAmount(prev))} → ${amount}`, lines: [] };
+    return { category, summary: `Payment of ${amount} updated`, lines: [] };
+  }
+
+  if (category === 'task') {
+    const title = String(cur.title ?? prev.title ?? 'task');
+    if (row.action === 'insert') return { category, summary: `Task “${title}” created`, lines: [] };
+    if (row.action === 'delete') return { category, summary: `Task “${title}” deleted`, lines: [] };
+    const becameDone =
+      (!prev.completed_at && !!cur.completed_at) ||
+      (prev.status !== 'resolved' && cur.status === 'resolved');
+    return { category, summary: becameDone ? `Task “${title}” completed` : `Task “${title}” updated`, lines: [] };
+  }
+
+  if (category === 'attachment') {
+    const file = String(cur.file_name ?? prev.file_name ?? 'file');
+    if (row.action === 'insert') return { category, summary: `Uploaded ${file}`, lines: [] };
+    if (row.action === 'delete') return { category, summary: `Deleted ${file}`, lines: [] };
+    if (!prev.archived && !!cur.archived) return { category, summary: `Removed ${file}`, lines: [] };
+    return { category, summary: `Updated ${file}`, lines: [] };
+  }
+
+  // Generic: client / deal / job / lead / other — same rendering as ActivityPanel.
+  const noun = nounFor(row.entity_type);
+  if (row.action === 'insert') {
+    const lines = snapshotFields(row.changes).slice(0, 6)
+      .map((f) => ({ key: f.field, label: labelFor(f.field), text: formatValue(f.value, f.field, resolver) }))
+      .filter((l) => l.text !== '—');
+    return { category, summary: `Created the ${noun}`, lines };
+  }
+  if (row.action === 'delete') return { category, summary: `Deleted the ${noun}`, lines: [] };
+  const diffs = diffOf(row.changes);
+  if (diffs.length === 0) return { category, summary: `Saved the ${noun} (no changes)`, lines: [] };
+  const lines = diffs.slice(0, 12).map((d) => ({
+    key: d.field, label: labelFor(d.field),
+    text: `${formatValue(d.before, d.field, resolver)} → ${formatValue(d.after, d.field, resolver)}`,
+  }));
+  return { category, summary: `Updated the ${noun}:`, lines };
+}
