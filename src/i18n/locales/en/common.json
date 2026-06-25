@@ -53,7 +53,18 @@
     "archive_empty": "You haven't resolved any tasks yet.",
     "resolved_on": "Resolved {{date}}",
     "show_more": "Show more",
-    "new_task": "New task"
+    "new_task": "New task",
+    "started_button": "Started working",
+    "started_badge": "Started {{date}}",
+    "started_short": "Started",
+    "status_open": "Open",
+    "status_started": "Started",
+    "status_resolved": "Resolved",
+    "assignee_label": "Assignee",
+    "comments_title": "Comments",
+    "comment_placeholder": "Write a comment…",
+    "comment_post": "Post",
+    "comments_empty": "No comments yet."
   },
   "client_picker": {
     "label": "Client (optional)",

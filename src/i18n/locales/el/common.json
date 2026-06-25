@@ -53,7 +53,18 @@
     "archive_empty": "Δεν έχετε επιλύσει καμία εργασία ακόμη.",
     "resolved_on": "Επιλύθηκε {{date}}",
     "show_more": "Περισσότερα",
-    "new_task": "Νέα εργασία"
+    "new_task": "Νέα εργασία",
+    "started_button": "Ξεκίνησα την εργασία",
+    "started_badge": "Ξεκίνησε {{date}}",
+    "started_short": "Σε εξέλιξη",
+    "status_open": "Ανοιχτή",
+    "status_started": "Σε εξέλιξη",
+    "status_resolved": "Επιλύθηκε",
+    "assignee_label": "Ανατέθηκε σε",
+    "comments_title": "Σχόλια",
+    "comment_placeholder": "Γράψτε ένα σχόλιο…",
+    "comment_post": "Αποστολή",
+    "comments_empty": "Δεν υπάρχουν σχόλια ακόμη."
   },
   "client_picker": {
     "label": "Πελάτης (προαιρετικά)",
