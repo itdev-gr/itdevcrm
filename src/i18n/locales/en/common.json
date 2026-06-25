@@ -3,6 +3,14 @@
   "app_subtitle": "CRM Platform",
   "back": "Back",
   "tagline": "Multi-department CRM",
+  "record_type": {
+    "lead": "Lead",
+    "deal": "Deal",
+    "job": "Job",
+    "client": "Client",
+    "offer": "Offer",
+    "contract": "Contract"
+  },
   "nav": {
     "home": "Home",
     "tasks": "Tasks",

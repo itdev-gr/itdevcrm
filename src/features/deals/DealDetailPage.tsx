@@ -22,6 +22,7 @@ import type { PlannedService } from './ServicesPlannedField';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
+import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
@@ -66,6 +67,14 @@ export function DealDetailPage() {
     : null;
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
+
+  useDocumentTitle(
+    formatPageTitle(
+      deal?.client?.name || deal?.title,
+      t('record_type.deal', { ns: 'common' }),
+      deal?.code,
+    ),
+  );
 
   if (isLoading) return <div className="px-4 py-6 sm:px-6 lg:px-8">…</div>;
   if (error || !deal) {

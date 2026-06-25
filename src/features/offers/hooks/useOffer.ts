@@ -8,7 +8,7 @@ export function useOffer(offerId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('offers')
-        .select('*')
+        .select('*, client:clients(name)')
         .eq('id', offerId)
         .single();
       if (error || !data) throw new Error(error?.message ?? 'Not found');

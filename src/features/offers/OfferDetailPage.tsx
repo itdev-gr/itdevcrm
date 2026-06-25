@@ -1,7 +1,9 @@
 import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { CopyableCode } from '@/components/CopyableCode';
+import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
 import { useDownloadOfferPdf } from './hooks/useDownloadOfferPdf';
@@ -22,9 +24,14 @@ const STATUS_CLASS: Record<Status, string> = {
 
 export function OfferDetailPage() {
   const { offerId = '' } = useParams<{ offerId: string }>();
+  const { t } = useTranslation('common');
   const { data: offer, isLoading, error } = useOffer(offerId);
   const updateStatus = useUpdateOfferStatus(offerId);
   const download = useDownloadOfferPdf();
+
+  useDocumentTitle(
+    formatPageTitle(offer?.client?.name, t('record_type.offer'), offer?.offer_number),
+  );
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !offer)

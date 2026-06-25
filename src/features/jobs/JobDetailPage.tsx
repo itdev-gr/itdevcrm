@@ -51,6 +51,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDeleteJobs } from './hooks/useDeleteJobs';
 import { useJobBillingRefCount } from './hooks/useJobBillingRefCount';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
+import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
@@ -83,6 +84,14 @@ export function JobDetailPage() {
   const del = useDeleteJobs();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const billingRefs = useJobBillingRefCount(jobId, confirmDelete);
+
+  useDocumentTitle(
+    formatPageTitle(
+      job?.client?.name || job?.deal?.title,
+      t('record_type.job', { ns: 'common' }),
+      job?.code,
+    ),
+  );
 
   if (isLoading) return <div className="px-4 py-6 sm:px-6 lg:px-8 text-sm text-muted-foreground">…</div>;
   if (error || !job) {

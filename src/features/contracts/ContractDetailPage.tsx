@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatDate } from '@/lib/datetime';
+import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useContract } from './hooks/useContracts';
 import { useUpdateContract } from './hooks/useUpdateContract';
 import { useDownloadContractPdf } from './hooks/useDownloadContractPdf';
@@ -22,6 +23,10 @@ export function ContractDetailPage() {
   const send = useSendContract();
   const [title, setTitle] = useState<string | null>(null);
   const [body, setBody] = useState<string | null>(null);
+
+  useDocumentTitle(
+    formatPageTitle(contract?.clients?.name, t('record_type.contract', { ns: 'common' })),
+  );
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !contract)

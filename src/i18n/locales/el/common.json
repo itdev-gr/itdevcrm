@@ -3,6 +3,14 @@
   "app_subtitle": "CRM Platform",
   "back": "Πίσω",
   "tagline": "CRM πολλαπλών τμημάτων",
+  "record_type": {
+    "lead": "Lead",
+    "deal": "Συμφωνία",
+    "job": "Εργασία",
+    "client": "Πελάτης",
+    "offer": "Προσφορά",
+    "contract": "Σύμβαση"
+  },
   "nav": {
     "home": "Αρχική",
     "tasks": "Εργασίες",

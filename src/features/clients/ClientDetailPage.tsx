@@ -20,6 +20,7 @@ import { useUnblockClient } from '@/features/client_blocks/hooks/useUnblockClien
 import { BlockBadge } from '@/features/client_blocks/BlockBadge';
 import { BlockClientDialog } from '@/features/client_blocks/BlockClientDialog';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
+import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { supabase } from '@/lib/supabase';
 
 export function ClientDetailPage() {
@@ -33,6 +34,8 @@ export function ClientDetailPage() {
   const { data: block } = useClientBlock(clientId);
   const unblock = useUnblockClient();
   const [blockOpen, setBlockOpen] = useState(false);
+
+  useDocumentTitle(formatPageTitle(client?.name, t('record_type.client', { ns: 'common' })));
 
   if (isLoading || dealsLoading) return <div className="p-8">…</div>;
   if (error || !client)

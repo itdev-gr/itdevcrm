@@ -23,6 +23,7 @@ import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
+import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
@@ -101,6 +102,14 @@ export function LeadDetailPage() {
     enabled: !!leadId,
     staleTime: 30_000,
   });
+
+  useDocumentTitle(
+    formatPageTitle(
+      lead?.contact_first_name || lead?.company_name,
+      t('record_type.lead', { ns: 'common' }),
+      lead?.code,
+    ),
+  );
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !lead)
