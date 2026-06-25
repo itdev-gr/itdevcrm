@@ -353,6 +353,27 @@ function paymentAmount(row: Record<string, unknown>): unknown {
   return row.amount_net ?? row.amount;
 }
 
+const EMAIL_TEMPLATE_LABELS: Record<string, string> = {
+  won_welcome: 'Welcome email',
+  lead_welcome: 'Lead welcome email',
+  webseo_gsc_access: 'Web SEO – GSC access request',
+  localseo_gbp_access: 'Local SEO – GBP access request',
+  contract_send: 'Contract',
+  payment_due_soon: 'Payment reminder',
+  payment_overdue: 'Payment reminder',
+  payment_reminder: 'Payment reminder',
+  reengage_90d: 'Re-engagement email',
+  noanswer_day0: 'No-answer follow-up', noanswer_day2: 'No-answer follow-up',
+  noanswer_day5: 'No-answer follow-up', noanswer_day10: 'No-answer follow-up',
+  offer_followup_day2: 'Offer follow-up', offer_followup_day5: 'Offer follow-up', offer_followup_day10: 'Offer follow-up',
+  custom: 'Email',
+};
+function emailTemplateLabel(key: string): string {
+  if (EMAIL_TEMPLATE_LABELS[key]) return EMAIL_TEMPLATE_LABELS[key]!;
+  const s = key.replace(/_/g, ' ').trim();
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Email';
+}
+
 const NOUNS: Record<string, string> = { clients: 'client', deals: 'deal', jobs: 'job', leads: 'lead' };
 function nounFor(entityType: string): string {
   return NOUNS[entityType] ?? entityType.replace(/s$/, '');
@@ -398,6 +419,19 @@ export function describeEvent(row: RawEvent, resolver: Resolver): EventView {
     if (row.action === 'delete') return { category, summary: `Deleted ${file}`, lines: [] };
     if (!prev.archived && !!cur.archived) return { category, summary: `Removed ${file}`, lines: [] };
     return { category, summary: `Updated ${file}`, lines: [] };
+  }
+
+  if (category === 'email') {
+    const tpl = emailTemplateLabel(String(cur.template_key ?? prev.template_key ?? ''));
+    const to = String(cur.to_email ?? prev.to_email ?? '');
+    const lines = to ? [{ key: 'to', label: 'To', text: to }] : [];
+    const status = String(cur.status ?? '');
+    if (row.action === 'insert')
+      return { category, summary: status === 'failed' ? `Email failed: ${tpl}` : `Email sent: ${tpl}`, lines };
+    if (status === 'delivered') return { category, summary: `Email delivered: ${tpl}`, lines };
+    if (status === 'bounced') return { category, summary: `Email bounced: ${tpl}`, lines };
+    if (status === 'complained') return { category, summary: `Spam complaint: ${tpl}`, lines };
+    return { category, summary: `Email ${status}: ${tpl}`, lines };
   }
 
   // Generic: client / deal / job / lead / other — same rendering as ActivityPanel.

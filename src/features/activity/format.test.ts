@@ -213,3 +213,41 @@ describe('describeEvent — generic deal/job', () => {
     expect(v.summary).toBe('Created the job');
   });
 });
+
+describe('describeEvent — emails', () => {
+  it('describes a sent email with a friendly template name + recipient', () => {
+    const v = describeEvent(
+      { entity_type: 'email_log', action: 'insert',
+        changes: { template_key: 'won_welcome', to_email: 'a@b.gr', status: 'sent' } },
+      resolver,
+    );
+    expect(v.category).toBe('email');
+    expect(v.summary).toBe('Email sent: Welcome email');
+    expect(v.lines[0]).toEqual({ key: 'to', label: 'To', text: 'a@b.gr' });
+  });
+  it('describes a delivered email', () => {
+    const v = describeEvent(
+      { entity_type: 'email_log', action: 'update',
+        changes: { old: { template_key: 'won_welcome', to_email: 'a@b.gr', status: 'sent' },
+                   new: { template_key: 'won_welcome', to_email: 'a@b.gr', status: 'delivered' } } },
+      resolver,
+    );
+    expect(v.summary).toBe('Email delivered: Welcome email');
+  });
+  it('describes a bounced email', () => {
+    const v = describeEvent(
+      { entity_type: 'email_log', action: 'update',
+        changes: { old: { template_key: 'payment_overdue', to_email: 'a@b.gr', status: 'sent' },
+                   new: { template_key: 'payment_overdue', to_email: 'a@b.gr', status: 'bounced' } } },
+      resolver,
+    );
+    expect(v.summary).toBe('Email bounced: Payment reminder');
+  });
+  it('humanizes unknown template keys', () => {
+    const v = describeEvent(
+      { entity_type: 'email_log', action: 'insert', changes: { template_key: 'some_new_thing', to_email: 'a@b.gr', status: 'sent' } },
+      resolver,
+    );
+    expect(v.summary).toBe('Email sent: Some new thing');
+  });
+});
