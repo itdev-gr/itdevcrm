@@ -27,7 +27,9 @@ export function TasksKanbanBoard() {
   const [allTeam, setAllTeam] = useState(false);
   const [filter, setFilter] = useState<BoardFilter>('to_me');
   const [activeCard, setActiveCard] = useState<TaskCard | null>(null);
-  const [openCard, setOpenCard] = useState<TaskCard | null>(null);
+  // Track the open dialog by key, not a frozen snapshot, so the detail dialog
+  // reflects live changes (e.g. started_at) after the board query refetches.
+  const [openKey, setOpenKey] = useState<string | null>(null);
   const [cutoffIso] = useState(() => isoDaysAgo(RESOLVED_WINDOW_DAYS));
 
   // Resolve assignee names from the full staff directory so service-team
@@ -39,13 +41,21 @@ export function TasksKanbanBoard() {
   const { userRows, assignedRows, isLoading } = useTaskBoardData({ meId, allTeam: isAdmin && allTeam, cutoffIso });
   const apply = useTaskBoardActions();
 
+  const cards = useMemo(
+    () => buildBoardCards(userRows, assignedRows, meId),
+    [userRows, assignedRows, meId],
+  );
+
   const byColumn = useMemo(() => {
     const map = new Map<ColumnKey, TaskCard[]>(BOARD_COLUMNS.map((c) => [c, []]));
-    for (const card of buildBoardCards(userRows, assignedRows, meId)) {
+    for (const card of cards) {
       if (matchesFilter(card, filter)) map.get(columnOf(card))!.push(card);
     }
     return map;
-  }, [userRows, assignedRows, meId, filter]);
+  }, [cards, filter]);
+
+  // Live card behind the open dialog (re-derived each render from fresh rows).
+  const openCard = openKey ? (cards.find((c) => c.key === openKey) ?? null) : null;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -111,7 +121,7 @@ export function TasksKanbanBoard() {
                 cards={byColumn.get(c) ?? []}
                 nameFor={nameFor}
                 onAction={fire}
-                onOpen={setOpenCard}
+                onOpen={(card) => setOpenKey(card.key)}
               />
             ))}
           </div>
@@ -125,13 +135,13 @@ export function TasksKanbanBoard() {
         </DndContext>
       )}
       {openCard?.kind === 'assigned' && (
-        <AssignedTaskDetailDialog taskId={openCard.id} onOpenChange={(o) => !o && setOpenCard(null)} />
+        <AssignedTaskDetailDialog taskId={openCard.id} onOpenChange={(o) => !o && setOpenKey(null)} />
       )}
       {openCard?.kind === 'user' && (
         <UserTaskDetailDialog
           card={openCard}
           creatorName={openCard.creatorId ? nameFor(openCard.creatorId) : null}
-          onOpenChange={(o) => !o && setOpenCard(null)}
+          onOpenChange={(o) => !o && setOpenKey(null)}
         />
       )}
     </div>

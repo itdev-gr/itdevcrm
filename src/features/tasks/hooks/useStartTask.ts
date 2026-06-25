@@ -24,6 +24,7 @@ export function useStartTask() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['user-tasks'] });
       void qc.invalidateQueries({ queryKey: ['assigned-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['assigned-task'] }); // singular detail key
       void qc.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
