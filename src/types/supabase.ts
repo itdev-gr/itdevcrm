@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           action: string
           changes: Json | null
+          client_id: string | null
           created_at: string
           entity_id: string
           entity_type: string
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           action: string
           changes?: Json | null
+          client_id?: string | null
           created_at?: string
           entity_id: string
           entity_type: string
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           action?: string
           changes?: Json | null
+          client_id?: string | null
           created_at?: string
           entity_id?: string
           entity_type?: string

@@ -24,6 +24,7 @@ export const queryKeys = {
   attachments: (parentType: string, parentId: string) =>
     ['attachments', parentType, parentId] as const,
   activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
+  clientActivity: (clientId: string) => ['activity', 'client', clientId] as const,
   notifications: () => ['notifications'] as const,
   announcements: () => ['announcements'] as const,
   myAnnouncements: () => ['my-announcements'] as const,
