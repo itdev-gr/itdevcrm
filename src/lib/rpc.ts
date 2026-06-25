@@ -131,7 +131,9 @@ export type JobBillingResult = { ok: true; job_id: string } | { ok: false; error
 
 export type BillingType = 'one_time' | 'recurring_monthly' | 'recurring_yearly';
 /** Installment plan for one-time web_dev jobs (see features/deals/installmentSplit). */
-export type InstallmentPlan = 'none' | '50_50' | '50_25_25';
+export type InstallmentPlan = 'none' | '50_50' | '50_25_25' | 'custom';
+/** One row of a custom payment schedule (web_dev one-time only). */
+export type ScheduleRow = { amount_net: number; due_date: string | null };
 export type JobDepartment =
   | 'web_seo'
   | 'local_seo'
@@ -154,6 +156,10 @@ export type CreateCustomJobInput = {
   billingOnly?: boolean;
   /** Only honored for web_dev one-time jobs; defaults to 'none'. */
   installmentPlan?: InstallmentPlan;
+  /** Required when installmentPlan === 'custom'. Parts must sum to amountNet. */
+  installmentSchedule?: ScheduleRow[] | null;
+  /** Override the one-web_dev-job-per-deal guardrail. */
+  force?: boolean;
 };
 
 export async function createCustomJob(input: CreateCustomJobInput): Promise<JobBillingResult> {
@@ -168,6 +174,8 @@ export async function createCustomJob(input: CreateCustomJobInput): Promise<JobB
     p_setup_fee: input.setupFee ?? 0,
     p_billing_only: input.billingOnly ?? false,
     p_installment_plan: input.installmentPlan ?? 'none',
+    p_installment_schedule: input.installmentSchedule ?? null,
+    p_force: input.force ?? false,
   });
   if (error) return { ok: false, errors: [error.message] };
   return data as JobBillingResult;
@@ -184,6 +192,8 @@ export type UpdateJobBillingInput = {
   clearGroup?: boolean;
   /** Only honored for web_dev one-time jobs; null leaves it unchanged. */
   installmentPlan?: InstallmentPlan | null;
+  /** Required when installmentPlan === 'custom'; null leaves it unchanged. */
+  installmentSchedule?: ScheduleRow[] | null;
 };
 
 export async function updateJobBilling(input: UpdateJobBillingInput): Promise<JobBillingResult> {
@@ -197,6 +207,7 @@ export async function updateJobBilling(input: UpdateJobBillingInput): Promise<Jo
     p_billing_group_id: input.billingGroupId ?? null,
     p_clear_group: input.clearGroup ?? false,
     p_installment_plan: input.installmentPlan ?? null,
+    p_installment_schedule: input.installmentSchedule ?? null,
   });
   if (error) return { ok: false, errors: [error.message] };
   return data as JobBillingResult;
