@@ -9,7 +9,7 @@ const card = {
   importance: 'high' as const, relation: 'mine' as const, resolved: false,
   assigneeId: 'me', creatorId: 'me', createdAtIso: '2025-12-20T08:30:00Z',
   dueAt: '2026-07-01T09:00:00Z',
-  resolvedAt: null, sourceCode: null, link: null,
+  resolvedAt: null, startedAtIso: null, sourceCode: null, link: null,
   notes: 'ring after lunch', clientName: 'ACME',
 };
 

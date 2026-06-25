@@ -22,6 +22,7 @@ export type TaskCard = {
   createdAtIso: string | null;
   dueAt: string | null;
   resolvedAt: string | null;
+  startedAtIso: string | null;
   sourceCode: string | null;
   link: string | null;    // deal/job link, or null for personal
   notes: string | null;
@@ -49,6 +50,7 @@ export function userTaskToCard(row: UserTaskRow, meId: string): TaskCard {
     createdAtIso: row.created_at ?? null,
     dueAt: row.due_at ?? null,
     resolvedAt: row.completed_at ?? null,
+    startedAtIso: row.started_at ?? null,
     sourceCode: null,
     link: null,
     notes: row.notes ?? null,
@@ -71,6 +73,7 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
     createdAtIso: row.created_at ?? null,
     dueAt: null,
     resolvedAt: row.resolved_at ?? null,
+    startedAtIso: row.started_at ?? null,
     sourceCode: row.source_code,
     link,
     notes: row.description ?? null,
