@@ -12,6 +12,11 @@ import {
   commentsPanelBodyClass,
   commentsPanelHeaderClass,
   commentsPanelShellClass,
+  detailHeaderCardClass,
+  detailHeaderControlGroupClass,
+  detailHeaderControlsClass,
+  detailHeaderLabelClass,
+  detailHeaderSelectClass,
   detailOverviewWithCommentsGridClass,
   detailTabTriggerClass,
 } from '@/components/layout/page-shell';
@@ -106,9 +111,9 @@ export function JobDetailPage() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <div className="rounded-xl border border-border/60 bg-card p-3.5 shadow-sm">
+      <div className={detailHeaderCardClass}>
         <div className="flex flex-wrap items-start justify-between gap-2.5">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary dark:text-[#7ad4d4]">
                 Job
@@ -126,18 +131,48 @@ export function JobDetailPage() {
               )}
             </div>
             <h1 className="mt-1 text-lg font-bold tracking-tight sm:text-xl">{fullName}</h1>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
-              <span className="inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                {job.service_type.replace(/_/g, ' ')}
-              </span>
-              <span>·</span>
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="size-3 opacity-70" />
-                {formatDate(job.created_at)}
-              </span>
-              <span>·</span>
-              <span>{relativeFromNow(job.created_at)}</span>
-            </p>
+            <div className={cn(detailHeaderControlsClass, 'mt-1.5')}>
+              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+                <span className="inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                  {job.service_type.replace(/_/g, ' ')}
+                </span>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="size-3 opacity-70" />
+                  {formatDate(job.created_at)}
+                </span>
+                <span>·</span>
+                <span>{relativeFromNow(job.created_at)}</span>
+              </p>
+              {boardStages.length > 0 && (
+                <div className={detailHeaderControlGroupClass}>
+                  <Label htmlFor="job-stage" className={detailHeaderLabelClass}>
+                    Stage
+                  </Label>
+                  <FilterSelect
+                    id="job-stage"
+                    value={job.stage_id ?? ''}
+                    onChange={(e) => onChangeStage(e.target.value)}
+                    disabled={moveStage.isPending}
+                    className={detailHeaderSelectClass}
+                  >
+                    {boardStages.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {(s.display_names as { en: string; el: string })[lang]}
+                      </option>
+                    ))}
+                  </FilterSelect>
+                </div>
+              )}
+              {owner && (
+                <div className={detailHeaderControlGroupClass}>
+                  <Label className={detailHeaderLabelClass}>Owner</Label>
+                  <span className="inline-flex h-8 max-w-[220px] items-center truncate rounded-lg border border-input/80 bg-background px-2.5 text-xs text-foreground">
+                    {owner.full_name || owner.email}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
@@ -178,7 +213,7 @@ export function JobDetailPage() {
         </div>
 
         {job.parent_job_id && (
-          <div className="mt-2.5 rounded-md bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
+          <div className="mt-2 rounded-md bg-violet-50 px-3 py-1.5 text-xs text-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
             {t('part_of_ai_seo', {
               code: parentJob?.code ?? '',
             })}{' '}
@@ -187,37 +222,6 @@ export function JobDetailPage() {
             </Link>
           </div>
         )}
-
-        <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-muted/25 p-2">
-          {boardStages.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <Label htmlFor="job-stage" className="text-[11px] font-medium text-muted-foreground">
-                Stage
-              </Label>
-              <FilterSelect
-                id="job-stage"
-                value={job.stage_id ?? ''}
-                onChange={(e) => onChangeStage(e.target.value)}
-                disabled={moveStage.isPending}
-                className="h-8 min-w-[150px] px-2 text-xs"
-              >
-                {boardStages.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {(s.display_names as { en: string; el: string })[lang]}
-                  </option>
-                ))}
-              </FilterSelect>
-            </div>
-          )}
-          {owner && (
-            <div className="flex items-center gap-1.5">
-              <Label className="text-[11px] font-medium text-muted-foreground">Owner</Label>
-              <span className="inline-flex h-8 items-center rounded-lg border border-input/80 bg-background px-2.5 text-xs text-foreground">
-                {owner.full_name || owner.email}
-              </span>
-            </div>
-          )}
-        </div>
       </div>
 
       <Tabs defaultValue="overview" className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
@@ -241,7 +245,7 @@ export function JobDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-3 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent value="overview" className="mt-2 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               {job.billing_type === 'recurring_monthly' && infoFieldsFor(job.service_type).length === 0 && (
@@ -321,7 +325,7 @@ export function JobDetailPage() {
             </div>
 
             <aside className="min-w-0 lg:h-full lg:min-h-0">
-              <div className={cn(commentsPanelShellClass, 'min-h-[20rem] lg:h-full lg:max-h-none lg:min-h-0')}>
+              <div className={cn(commentsPanelShellClass, 'lg:h-full lg:min-h-0')}>
                 <div className={commentsPanelHeaderClass}>
                   <h2 className="text-sm font-semibold">Comments</h2>
                 </div>

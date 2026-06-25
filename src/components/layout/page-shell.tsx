@@ -184,16 +184,28 @@ export const detailTabTriggerClass =
 
 /** Side-by-side overview + comments column on detail pages. */
 export const detailOverviewWithCommentsGridClass =
-  'grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)] xl:grid-cols-[minmax(0,1fr)_minmax(28rem,34rem)]';
+  'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)] xl:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)]';
+
+export const detailHeaderCardClass =
+  'rounded-xl border border-border/60 bg-card p-3 shadow-sm sm:p-3.5';
+
+export const detailHeaderControlsClass =
+  'flex flex-wrap items-center gap-x-3 gap-y-2';
+
+export const detailHeaderControlGroupClass = 'flex items-center gap-1.5';
+
+export const detailHeaderLabelClass = 'text-[11px] font-medium text-muted-foreground';
+
+export const detailHeaderSelectClass = 'h-8 min-w-[140px] px-2 text-xs';
 
 export const commentsPanelShellClass =
-  'flex max-h-[calc(100vh-6rem)] min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm';
+  'flex max-h-[calc(100vh-9rem)] min-h-[22rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm lg:max-h-none';
 
 export const commentsPanelHeaderClass =
-  'shrink-0 border-b border-border/60 px-5 py-3.5';
+  'shrink-0 border-b border-border/60 px-4 py-2';
 
 export const commentsPanelBodyClass =
-  'flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-5 pt-4';
+  'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-3 pt-3';
 
 export function DetailTabsList({
   children,

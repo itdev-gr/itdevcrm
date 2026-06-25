@@ -5,7 +5,7 @@ import { Calendar, Lock, Mail } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass } from '@/components/layout/page-shell';
+import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderControlsClass, detailHeaderLabelClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
@@ -149,9 +149,9 @@ export function DealDetailPage() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <div className="rounded-xl border border-border/60 bg-card p-3.5 shadow-sm">
+      <div className={detailHeaderCardClass}>
         <div className="flex flex-wrap items-start justify-between gap-2.5">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
                 Deal
@@ -165,20 +165,78 @@ export function DealDetailPage() {
               )}
             </div>
             <h1 className="mt-1 text-lg font-bold tracking-tight sm:text-xl">{deal.title}</h1>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="size-3 opacity-70" />
-                {formatDate(deal.created_at)}
-              </span>
-              <span>·</span>
-              <span>{relativeFromNow(deal.created_at)}</span>
-              {wonBy && (
-                <>
-                  <span>·</span>
-                  <span>{wonBy.full_name || wonBy.email}</span>
-                </>
+            <div className={cn(detailHeaderControlsClass, 'mt-1.5')}>
+              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="size-3 opacity-70" />
+                  {formatDate(deal.created_at)}
+                </span>
+                <span>·</span>
+                <span>{relativeFromNow(deal.created_at)}</span>
+                {wonBy && (
+                  <>
+                    <span>·</span>
+                    <span>{wonBy.full_name || wonBy.email}</span>
+                  </>
+                )}
+              </p>
+              <div className={detailHeaderControlGroupClass}>
+                <Label htmlFor="client-status" className={detailHeaderLabelClass}>
+                  {tClients('status.label')}
+                </Label>
+                <FilterSelect
+                  id="client-status"
+                  value={clientStatus}
+                  onChange={(e) => onChangeClientStatus(e.target.value)}
+                  className={cn(detailHeaderSelectClass, CLIENT_STATUS_STYLES[clientStatus])}
+                >
+                  <option value="new">{tClients('status.new')}</option>
+                  <option value="active">{tClients('status.active')}</option>
+                  <option value="blocked">{tClients('status.blocked')}</option>
+                  <option value="done">{tClients('status.done')}</option>
+                </FilterSelect>
+              </div>
+              <div className={detailHeaderControlGroupClass}>
+                <Label htmlFor="owner" className={detailHeaderLabelClass}>
+                  {tLeads('owner.label')}
+                </Label>
+                <FilterSelect
+                  id="owner"
+                  value={deal.owner_user_id ?? UNASSIGNED}
+                  onChange={(e) => onChangeOwner(e.target.value)}
+                  disabled={completed}
+                  className={detailHeaderSelectClass}
+                >
+                  <option value={UNASSIGNED}>{tLeads('owner.unassigned')}</option>
+                  {owners.map((o) => (
+                    <option key={o.user_id} value={o.user_id}>
+                      {o.full_name || o.email}
+                      {o.is_admin ? ' · admin' : ''}
+                    </option>
+                  ))}
+                </FilterSelect>
+              </div>
+              {deal.accounting_stage_id && accStages.length > 0 && (
+                <div className={detailHeaderControlGroupClass}>
+                  <Label htmlFor="acc-stage" className={detailHeaderLabelClass}>
+                    {tLeads('actions.move_to')}
+                  </Label>
+                  <FilterSelect
+                    id="acc-stage"
+                    value={deal.accounting_stage_id ?? ''}
+                    onChange={(e) => onChangeAccountingStage(e.target.value)}
+                    disabled={moveAccounting.isPending || markPaid.isPending}
+                    className={detailHeaderSelectClass}
+                  >
+                    {accStages.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
+                      </option>
+                    ))}
+                  </FilterSelect>
+                </div>
               )}
-            </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {deal.won_by_user_id && (
@@ -202,65 +260,6 @@ export function DealDetailPage() {
               </span>
             )}
           </div>
-        </div>
-
-        <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-muted/25 p-2">
-          <div className="flex items-center gap-1.5">
-            <Label htmlFor="client-status" className="text-[11px] font-medium text-muted-foreground">
-              {tClients('status.label')}
-            </Label>
-            <FilterSelect
-              id="client-status"
-              value={clientStatus}
-              onChange={(e) => onChangeClientStatus(e.target.value)}
-              className={cn('h-8 min-w-[120px] px-2 text-xs', CLIENT_STATUS_STYLES[clientStatus])}
-            >
-              <option value="new">{tClients('status.new')}</option>
-              <option value="active">{tClients('status.active')}</option>
-              <option value="blocked">{tClients('status.blocked')}</option>
-              <option value="done">{tClients('status.done')}</option>
-            </FilterSelect>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Label htmlFor="owner" className="text-[11px] font-medium text-muted-foreground">
-              {tLeads('owner.label')}
-            </Label>
-            <FilterSelect
-              id="owner"
-              value={deal.owner_user_id ?? UNASSIGNED}
-              onChange={(e) => onChangeOwner(e.target.value)}
-              disabled={completed}
-              className="h-8 min-w-[150px] px-2 text-xs"
-            >
-              <option value={UNASSIGNED}>{tLeads('owner.unassigned')}</option>
-              {owners.map((o) => (
-                <option key={o.user_id} value={o.user_id}>
-                  {o.full_name || o.email}
-                  {o.is_admin ? ' · admin' : ''}
-                </option>
-              ))}
-            </FilterSelect>
-          </div>
-          {deal.accounting_stage_id && accStages.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <Label htmlFor="acc-stage" className="text-[11px] font-medium text-muted-foreground">
-                {tLeads('actions.move_to')}
-              </Label>
-              <FilterSelect
-                id="acc-stage"
-                value={deal.accounting_stage_id ?? ''}
-                onChange={(e) => onChangeAccountingStage(e.target.value)}
-                disabled={moveAccounting.isPending || markPaid.isPending}
-                className="h-8 min-w-[150px] px-2 text-xs"
-              >
-                {accStages.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
-                  </option>
-                ))}
-              </FilterSelect>
-            </div>
-          )}
         </div>
       </div>
 
@@ -308,7 +307,7 @@ export function DealDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-3 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent value="overview" className="mt-2 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <DealForm initial={deal} />
@@ -325,7 +324,7 @@ export function DealDetailPage() {
               </section>
             </div>
             <aside className="min-w-0 lg:h-full lg:min-h-0">
-              <div className={cn(commentsPanelShellClass, 'min-h-[20rem] lg:h-full lg:max-h-none lg:min-h-0')}>
+              <div className={cn(commentsPanelShellClass, 'lg:h-full lg:min-h-0')}>
                 <div className={commentsPanelHeaderClass}>
                   <h2 className="text-sm font-semibold">{tLeads('tabs.comments')}</h2>
                 </div>

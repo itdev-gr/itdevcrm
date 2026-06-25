@@ -6,7 +6,7 @@ import { Calendar, Trash2, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass } from '@/components/layout/page-shell';
+import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderControlsClass, detailHeaderLabelClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { LeadForm } from './LeadForm';
 import { useLead } from './hooks/useLead';
@@ -153,41 +153,83 @@ export function LeadDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+      <div className={detailHeaderCardClass}>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary">
                 Lead
               </span>
-              {lead.code && <CopyableCode code={lead.code} className="text-xs" />}
+              {lead.code && <CopyableCode code={lead.code} className="text-[11px]" />}
             </div>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight">{lead.title}</h1>
-            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="size-3.5 opacity-70" />
-                {formatDate(lead.created_at)}
-              </span>
-              <span>·</span>
-              <span>{relativeFromNow(lead.created_at)}</span>
-              {isAdmin && lead.won_by_user_id && (
-                <>
-                  <span>·</span>
-                  <span className="inline-flex items-center gap-1">
-                    <Trophy className="size-3.5 text-amber-600 dark:text-amber-400" />
-                    {(() => {
-                      const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
-                      return winner ? winner.full_name || winner.email : lead.won_by_user_id;
-                    })()}
-                  </span>
-                </>
+            <h1 className="mt-1 text-lg font-bold tracking-tight sm:text-xl">{lead.title}</h1>
+            <div className={cn(detailHeaderControlsClass, 'mt-1.5')}>
+              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="size-3 opacity-70" />
+                  {formatDate(lead.created_at)}
+                </span>
+                <span>·</span>
+                <span>{relativeFromNow(lead.created_at)}</span>
+                {isAdmin && lead.won_by_user_id && (
+                  <>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Trophy className="size-3 text-amber-600 dark:text-amber-400" />
+                      {(() => {
+                        const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
+                        return winner ? winner.full_name || winner.email : lead.won_by_user_id;
+                      })()}
+                    </span>
+                  </>
+                )}
+              </p>
+              <div className={detailHeaderControlGroupClass}>
+                <Label htmlFor="owner" className={detailHeaderLabelClass}>
+                  {t('owner.label')}
+                </Label>
+                <FilterSelect
+                  id="owner"
+                  value={lead.owner_user_id ?? UNASSIGNED}
+                  onChange={(e) => onChangeOwner(e.target.value)}
+                  disabled={readOnly || update.isPending}
+                  className={detailHeaderSelectClass}
+                >
+                  <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
+                  {owners.map((o) => (
+                    <option key={o.user_id} value={o.user_id}>
+                      {o.full_name || o.email}
+                      {o.is_admin ? ' · admin' : ''}
+                    </option>
+                  ))}
+                </FilterSelect>
+              </div>
+              {!lead.converted_at && (
+                <div className={detailHeaderControlGroupClass}>
+                  <Label htmlFor="stage" className={detailHeaderLabelClass}>
+                    {t('actions.move_to')}
+                  </Label>
+                  <FilterSelect
+                    id="stage"
+                    value={lead.stage_id ?? ''}
+                    onChange={(e) => onChangeStage(e.target.value)}
+                    disabled={convert.isPending || moveStage.isPending}
+                    className={detailHeaderSelectClass}
+                  >
+                    {salesStages.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
+                      </option>
+                    ))}
+                  </FilterSelect>
+                </div>
               )}
-            </p>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {currentStageCode === 'offer_sent' && (
-              <Button variant="outline" size="sm" onClick={() => setOfferEmailOpen(true)}>
+              <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setOfferEmailOpen(true)}>
                 {t('offer_email.send')}
               </Button>
             )}
@@ -204,7 +246,7 @@ export function LeadDetailPage() {
                 {t('automations.opted_out')}
               </span>
             ) : (
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-1.5 text-sm text-muted-foreground">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground">
                 <input
                   type="checkbox"
                   checked={lead.automations_enabled}
@@ -219,6 +261,7 @@ export function LeadDetailPage() {
             <Button
               variant="outline"
               size="sm"
+              className="h-7 px-2.5 text-xs"
               onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
               disabled={!nextNewLead.data || nextNewLead.isLoading}
             >
@@ -230,55 +273,12 @@ export function LeadDetailPage() {
             </Button>
             {isAdmin &&
               isLeadDeletable({ converted_at: lead.converted_at, stage: { code: currentStageCode ?? null } }) && (
-                <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
-                  <Trash2 className="size-3.5" />
+                <Button variant="destructive" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="size-3" />
                   {t('delete.button')}
                 </Button>
               )}
           </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-border/50 bg-muted/25 p-3">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="owner" className="text-xs font-medium text-muted-foreground">
-              {t('owner.label')}
-            </Label>
-            <FilterSelect
-              id="owner"
-              value={lead.owner_user_id ?? UNASSIGNED}
-              onChange={(e) => onChangeOwner(e.target.value)}
-              disabled={readOnly || update.isPending}
-              className="min-w-[180px]"
-            >
-              <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
-              {owners.map((o) => (
-                <option key={o.user_id} value={o.user_id}>
-                  {o.full_name || o.email}
-                  {o.is_admin ? ' · admin' : ''}
-                </option>
-              ))}
-            </FilterSelect>
-          </div>
-          {!lead.converted_at && (
-            <div className="flex items-center gap-2">
-              <Label htmlFor="stage" className="text-xs font-medium text-muted-foreground">
-                {t('actions.move_to')}
-              </Label>
-              <FilterSelect
-                id="stage"
-                value={lead.stage_id ?? ''}
-                onChange={(e) => onChangeStage(e.target.value)}
-                disabled={convert.isPending || moveStage.isPending}
-                className="min-w-[180px]"
-              >
-                {salesStages.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
-                  </option>
-                ))}
-              </FilterSelect>
-            </div>
-          )}
         </div>
       </div>
 
@@ -298,9 +298,9 @@ export function LeadDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-3 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent value="overview" className="mt-2 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
-            <div className="min-w-0 space-y-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+            <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <LeadForm lead={lead} />
               {lead.intake_log ? (
                 <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
@@ -320,7 +320,7 @@ export function LeadDetailPage() {
               </section>
             </div>
             <aside className="min-w-0 lg:h-full lg:min-h-0">
-              <div className={cn(commentsPanelShellClass, 'min-h-[20rem] lg:h-full lg:max-h-none lg:min-h-0')}>
+              <div className={cn(commentsPanelShellClass, 'lg:h-full lg:min-h-0')}>
                 <div className={commentsPanelHeaderClass}>
                   <h2 className="text-sm font-semibold">{t('tabs.comments')}</h2>
                 </div>

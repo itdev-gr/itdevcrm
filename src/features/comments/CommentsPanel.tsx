@@ -49,7 +49,7 @@ export function CommentsPanel({ parentType, parentId }: Props) {
   }
 
   return (
-    <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-4 overflow-hidden">
+    <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-3 overflow-hidden">
       <div
         ref={scrollRef}
         className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain scroll-smooth pr-1.5 [scrollbar-gutter:stable]"
@@ -65,8 +65,8 @@ export function CommentsPanel({ parentType, parentId }: Props) {
         </div>
       </div>
 
-      <div className="shrink-0 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-        <p className="mb-3 text-sm font-medium text-foreground">
+      <div className="shrink-0 rounded-xl border border-border/60 bg-card p-3 shadow-sm">
+        <p className="mb-2 text-sm font-medium text-foreground">
           {t('comments.new_comment', { defaultValue: 'New comment' })}
         </p>
         <CommentForm parentType={parentType} parentId={parentId} />
