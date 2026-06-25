@@ -21,12 +21,14 @@ import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
 import { splitInstallments, type InstallmentPlan } from './installmentSplit';
+import { CustomScheduleEditor } from './CustomScheduleEditor';
+import { validateCustomSchedule, type ScheduleRow } from './customSchedule';
 import type { BillingType } from '@/lib/rpc';
 
 /** Billing-term options offered per job, in display order. */
 const TERMS: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];
 /** Installment plans offered for one-time web_dev jobs. */
-const PLANS: InstallmentPlan[] = ['none', '50_50', '50_25_25'];
+const PLANS: InstallmentPlan[] = ['none', '50_50', '50_25_25', 'custom'];
 
 const SEPARATE = '__separate__';
 /** Prefix for "pair with job X" options whose value encodes the target job id. */
@@ -93,6 +95,7 @@ function JobRow({
     job.amount_net != null ? Number(job.amount_net).toFixed(2) : '',
   );
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<ScheduleRow[] | null>(null);
 
   const ended = job.status === 'ended' || job.billing_active === false;
   const department = job.billing_only
@@ -145,11 +148,27 @@ function JobRow({
 
   async function onPlanChange(value: string) {
     if (value === currentPlan) return;
+    if (value === 'custom') {
+      setEditingSchedule([{ amount_net: Number(job.amount_net ?? 0), due_date: null }]);
+      return;
+    }
     try {
       await update.mutateAsync({ jobId: job.id, installmentPlan: value as InstallmentPlan });
     } catch (err) {
       // Translate known billing error codes (e.g. cannot_replan_paid_installment).
       const code = (err as Error & { errors?: string[] }).errors?.[0] ?? (err as Error).message;
+      alert(t(`jobs_billing.billing_errors.${code}`, { defaultValue: code }));
+    }
+  }
+  async function saveSchedule() {
+    if (!editingSchedule) return;
+    const err = validateCustomSchedule(editingSchedule, Number(job.amount_net ?? 0));
+    if (err) { alert(t(`jobs_billing.billing_errors.${err}`, { defaultValue: err })); return; }
+    try {
+      await update.mutateAsync({ jobId: job.id, installmentPlan: 'custom', installmentSchedule: editingSchedule });
+      setEditingSchedule(null);
+    } catch (e) {
+      const code = (e as Error & { errors?: string[] }).errors?.[0] ?? (e as Error).message;
       alert(t(`jobs_billing.billing_errors.${code}`, { defaultValue: code }));
     }
   }
@@ -275,7 +294,7 @@ function JobRow({
                 </Select>
               )}
             </div>
-            {planEligible && currentPlan !== 'none' && job.amount_net != null && (
+            {planEligible && currentPlan !== 'none' && currentPlan !== 'custom' && job.amount_net != null && (
               <p className="text-[10px] text-muted-foreground">
                 {t('jobs_billing.plan_preview', {
                   parts: splitInstallments(Number(job.amount_net || 0), currentPlan)
@@ -283,6 +302,19 @@ function JobRow({
                     .join(' + '),
                 })}
               </p>
+            )}
+            {editingSchedule && (
+              <div className="space-y-1">
+                <CustomScheduleEditor rows={editingSchedule} onChange={setEditingSchedule} total={Number(job.amount_net ?? 0)} />
+                <div className="flex gap-1">
+                  <Button type="button" size="sm" className="h-7 px-2 text-[11px]" onClick={saveSchedule} disabled={update.isPending}>
+                    {t('jobs_billing.schedule.save')}
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => setEditingSchedule(null)}>
+                    {t('jobs_billing.schedule.cancel')}
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         )}
