@@ -58,6 +58,8 @@ describe('AddCustomJobForm', () => {
       setupFee: 0,
       billingOnly: false,
       installmentPlan: 'none', // default = no split
+      installmentSchedule: null, // no custom schedule on a 'none' plan
+      force: false, // guardrail not overridden
     });
   });
 
