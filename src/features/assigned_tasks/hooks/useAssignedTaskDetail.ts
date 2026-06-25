@@ -33,9 +33,12 @@ export type AssignedTaskDetail = {
   resolved_at: string | null;
   resolved_by_user_id: string | null;
   created_at: string;
+  importance: string;
+  started_at: string | null;
   department_group_id: string;
   client: AssignedTaskClientEssentials | null;
   creator: AssignedTaskCreator | null;
+  assignee: AssignedTaskCreator | null;
   department: AssignedTaskDepartment | null;
 };
 
@@ -43,13 +46,14 @@ const SELECT = `
   id, title, description,
   deal_id, job_id, client_id, source_code,
   assignee_user_id, created_by_user_id,
-  status, resolved_at, resolved_by_user_id, created_at,
+  status, resolved_at, resolved_by_user_id, created_at, importance, started_at,
   department_group_id,
   client:client_id (
     id, name, industry,
     contact_first_name, contact_last_name, email, phone
   ),
   creator:created_by_user_id ( user_id, full_name, email ),
+  assignee:assignee_user_id ( user_id, full_name, email ),
   department:department_group_id ( id, code, display_names, position )
 `;
 

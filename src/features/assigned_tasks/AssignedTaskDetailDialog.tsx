@@ -9,6 +9,11 @@ import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
 import { DepartmentChip } from './DepartmentChip';
 import { industryLabel } from '@/lib/industries';
 import { CallLink } from '@/components/CallLink';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { ImportanceBadge } from '@/features/tasks/ImportanceBadge';
+import { importanceOf } from '@/features/tasks/importance';
+import { StartTaskButton } from '@/features/tasks/StartTaskButton';
+import { TaskComments } from '@/features/tasks/TaskComments';
 
 type Props = {
   taskId: string | null;
@@ -23,6 +28,7 @@ function contactName(c: { contact_first_name: string | null; contact_last_name: 
 export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const { t, i18n } = useTranslation('home');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
+  const meId = useAuthStore((s) => s.user?.id ?? '');
   const { data: task, isLoading, error } = useAssignedTaskDetail(taskId);
   const resolve = useResolveAssignedTask();
 
@@ -47,10 +53,28 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
         {task && (
           <div className="space-y-4">
             <div>
-              <h3 className="text-base font-semibold">{task.title}</h3>
+              <h3 className="flex items-center gap-2 text-base font-semibold">
+                {task.title} <ImportanceBadge importance={importanceOf(task)} />
+              </h3>
               <div className="mt-1">
                 <DepartmentChip department={task.department} />
               </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                {t('tasks_page.assignee_label', { ns: 'common' })}:{' '}
+                <span className="text-foreground">
+                  {task.assignee?.full_name || task.assignee?.email || '—'}
+                </span>
+              </span>
+              <StartTaskButton
+                kind="assigned"
+                id={task.id}
+                isAssignee={task.assignee_user_id === meId}
+                resolved={task.status === 'resolved'}
+                startedAt={task.started_at}
+                locale={locale}
+              />
             </div>
             <div className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{task.status}</span>
@@ -99,6 +123,7 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                 </div>
               </section>
             )}
+            <TaskComments kind="assigned" taskId={task.id} locale={locale} />
             <DialogFooter className="gap-2">
               {task.status === 'open' && (
                 <Button type="button" onClick={onResolve} disabled={resolve.isPending}>
