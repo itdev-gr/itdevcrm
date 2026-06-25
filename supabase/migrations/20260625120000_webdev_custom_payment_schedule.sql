@@ -4,13 +4,24 @@
 --
 -- ROLLBACK (manual):
 --   alter table public.jobs drop column if exists installment_schedule;
---   then restore the prior bodies of create_custom_job / update_job_billing /
---   generate_payments_for_deal from migration history (the 'custom' branch and
---   p_force / p_installment_schedule params must be dropped to match callers).
+--   alter table public.jobs drop constraint if exists jobs_installment_plan_check;
+--   alter table public.jobs add constraint jobs_installment_plan_check
+--     check (installment_plan in ('none','50_50','50_25_25'));
+--   drop the 12-arg create_custom_job / 10-arg update_job_billing overloads, then
+--   restore the prior 10-arg / 9-arg bodies of create_custom_job / update_job_billing
+--   (and generate_payments_for_deal) from migration history.
 
 alter table public.jobs add column if not exists installment_schedule jsonb;
 
+-- Allow the new 'custom' plan value (the existing CHECK only permits the 3 fixed plans).
+alter table public.jobs drop constraint if exists jobs_installment_plan_check;
+alter table public.jobs add constraint jobs_installment_plan_check
+  check (installment_plan in ('none','50_50','50_25_25','custom'));
+
 -- 1) create_custom_job: + p_installment_schedule, + p_force, + 'custom' plan, + guardrail
+-- Adding trailing params CHANGES the signature, so `create or replace` would create
+-- a NEW overload beside the old one — drop the prior 10-arg signature first.
+drop function if exists public.create_custom_job(uuid,text,text,text,text,numeric,numeric,numeric,boolean,text);
 create or replace function public.create_custom_job(
   p_deal_id uuid, p_title text, p_description text, p_department text,
   p_billing_type text, p_amount_net numeric, p_vat_rate numeric,
@@ -252,6 +263,8 @@ begin
 end $function$;
 
 -- 3) update_job_billing: + p_installment_schedule, + 'custom' plan, regen on schedule change
+-- Drop the prior 9-arg signature first (same overload reason as create_custom_job).
+drop function if exists public.update_job_billing(uuid,text,text,numeric,numeric,text,uuid,boolean,text);
 create or replace function public.update_job_billing(
   p_job_id uuid, p_title text default null, p_description text default null,
   p_amount_net numeric default null, p_vat_rate numeric default null,
@@ -337,3 +350,10 @@ begin
 
   return jsonb_build_object('ok', true, 'job_id', p_job_id);
 end $function$;
+
+-- Re-grant EXECUTE on the new signatures (matches the codebase pattern; required
+-- after the DROP above re-creates the functions fresh).
+grant execute on function public.create_custom_job(
+  uuid,text,text,text,text,numeric,numeric,numeric,boolean,text,jsonb,boolean) to authenticated;
+grant execute on function public.update_job_billing(
+  uuid,text,text,numeric,numeric,text,uuid,boolean,text,jsonb) to authenticated;
