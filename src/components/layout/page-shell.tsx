@@ -180,35 +180,45 @@ export function SettingsNav({
 }
 
 export const detailTabTriggerClass =
-  'relative z-[1] shrink-0 rounded-lg border-0 bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-none transition-[color,font-weight] duration-200 ease-out after:hidden hover:text-foreground data-active:bg-transparent data-active:font-semibold data-active:text-primary data-active:shadow-none dark:data-active:bg-transparent dark:data-active:text-[#7ad4d4] sm:px-3.5 sm:text-sm';
+  'relative z-[1] shrink-0 rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-none transition-[color,font-weight] duration-200 ease-out after:hidden hover:text-foreground data-active:bg-transparent data-active:font-semibold data-active:text-primary data-active:shadow-none dark:data-active:bg-transparent dark:data-active:text-[#7ad4d4] sm:px-3 sm:text-sm';
 
 /** Side-by-side overview + comments column on detail pages. */
 export const detailOverviewWithCommentsGridClass =
   'grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)] xl:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)]';
 
 export const detailHeaderCardClass =
-  'rounded-xl border border-border/60 bg-card p-2.5 shadow-sm sm:p-3';
+  'rounded-xl border border-border/60 bg-card px-2.5 py-1.5 shadow-sm sm:px-3 sm:py-2';
+
+export const detailHeaderRowClass =
+  'flex flex-wrap items-center justify-between gap-x-2 gap-y-1';
+
+export const detailHeaderMainClass =
+  'flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5';
+
+export const detailHeaderActionsClass = 'flex shrink-0 items-center gap-1';
 
 export const detailHeaderControlsClass =
-  'flex flex-wrap items-center gap-x-2 gap-y-1.5';
+  'flex flex-wrap items-center gap-x-1.5 gap-y-0.5';
 
-export const detailHeaderControlGroupClass = 'flex items-center gap-1';
+export const detailHeaderControlGroupClass = 'flex items-center gap-0.5';
 
-export const detailHeaderLabelClass = 'text-[10px] font-medium uppercase tracking-wide text-muted-foreground';
+export const detailHeaderLabelClass = 'text-[9px] font-medium uppercase tracking-wide text-muted-foreground';
 
-export const detailHeaderSelectClass = 'h-7 min-w-[132px] px-2 text-xs';
+export const detailHeaderSelectClass = 'h-6 min-w-[118px] px-1.5 text-[11px]';
+
+export const detailHeaderMetaClass = 'inline-flex items-center gap-1 text-[10px] text-muted-foreground';
 
 export const detailHeaderBannerClass =
-  'inline-flex max-w-full items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-800 dark:bg-violet-950/40 dark:text-violet-200';
+  'inline-flex max-w-full items-center gap-0.5 rounded-full bg-violet-50 px-1.5 py-px text-[9px] font-medium text-violet-800 dark:bg-violet-950/40 dark:text-violet-200';
 
 export const commentsPanelShellClass =
-  'flex max-h-[calc(100vh-8rem)] min-h-[20rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm lg:max-h-none';
+  'flex max-h-[calc(100vh-6.5rem)] min-h-[18rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm lg:max-h-none';
 
 export const commentsPanelHeaderClass =
-  'shrink-0 border-b border-border/60 px-3 py-1.5';
+  'shrink-0 border-b border-border/60 px-3 py-1';
 
 export const commentsPanelBodyClass =
-  'flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-2 pt-2';
+  'flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-1.5 pt-1.5';
 
 export function DetailTabsList({
   children,

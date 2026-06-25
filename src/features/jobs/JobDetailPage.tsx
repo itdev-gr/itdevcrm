@@ -15,8 +15,11 @@ import {
   detailHeaderBannerClass,
   detailHeaderCardClass,
   detailHeaderControlGroupClass,
-  detailHeaderControlsClass,
+  detailHeaderActionsClass,
   detailHeaderLabelClass,
+  detailHeaderMainClass,
+  detailHeaderMetaClass,
+  detailHeaderRowClass,
   detailHeaderSelectClass,
   detailOverviewWithCommentsGridClass,
   detailTabTriggerClass,
@@ -111,83 +114,86 @@ export function JobDetailPage() {
   const fullName = contactName || job.client?.name || job.deal?.title || '—';
 
   return (
-    <div className="flex min-h-full flex-col gap-2 px-4 py-3 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col gap-1.5 px-4 py-2 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className={detailHeaderCardClass}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h1 className="text-lg font-bold tracking-tight sm:text-xl">{fullName}</h1>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary dark:text-[#7ad4d4]">
-                Job
+        <div className={detailHeaderRowClass}>
+          <div className={detailHeaderMainClass}>
+            <h1 className="text-base font-bold tracking-tight sm:text-lg">{fullName}</h1>
+            <span className="rounded-full bg-primary/10 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wider text-primary dark:text-[#7ad4d4]">
+              Job
+            </span>
+            {job.code && <CopyableCode code={job.code} className="text-[10px]" />}
+            {job.is_blocked && (
+              <span
+                className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300"
+                title={job.blocked_reason ?? undefined}
+              >
+                <Lock className="size-2.5" />
+                Blocked
+                {job.blocked_reason ? ` · ${job.blocked_reason.replace(/_/g, ' ')}` : ''}
               </span>
-              {job.code && <CopyableCode code={job.code} className="text-[11px]" />}
-              {job.is_blocked && (
-                <span
-                  className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300"
-                  title={job.blocked_reason ?? undefined}
+            )}
+            <span
+              className="hidden h-3 w-px shrink-0 bg-border/50 sm:inline-block"
+              aria-hidden="true"
+            />
+            <span className="inline-flex rounded-full bg-muted/60 px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+              {job.service_type.replace(/_/g, ' ')}
+            </span>
+            <span className={detailHeaderMetaClass}>
+              <Calendar className="size-2.5 opacity-70" />
+              {formatDate(job.created_at)}
+              <span className="opacity-60">·</span>
+              {relativeFromNow(job.created_at)}
+            </span>
+            {boardStages.length > 0 && (
+              <div className={detailHeaderControlGroupClass}>
+                <Label htmlFor="job-stage" className={detailHeaderLabelClass}>
+                  Stage
+                </Label>
+                <FilterSelect
+                  id="job-stage"
+                  value={job.stage_id ?? ''}
+                  onChange={(e) => onChangeStage(e.target.value)}
+                  disabled={moveStage.isPending}
+                  className={detailHeaderSelectClass}
                 >
-                  <Lock className="size-2.5" />
-                  Blocked
-                  {job.blocked_reason ? ` · ${job.blocked_reason.replace(/_/g, ' ')}` : ''}
+                  {boardStages.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {(s.display_names as { en: string; el: string })[lang]}
+                    </option>
+                  ))}
+                </FilterSelect>
+              </div>
+            )}
+            {owner && (
+              <div className={detailHeaderControlGroupClass}>
+                <Label className={detailHeaderLabelClass}>Owner</Label>
+                <span
+                  className="inline-flex h-6 max-w-[180px] items-center truncate rounded-md border border-input/80 bg-background px-1.5 text-[10px] text-foreground"
+                  title={owner.full_name || owner.email}
+                >
+                  {owner.full_name || owner.email}
                 </span>
-              )}
-            </div>
-            <div className={cn(detailHeaderControlsClass, 'mt-1')}>
-              <span className="inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                {job.service_type.replace(/_/g, ' ')}
+              </div>
+            )}
+            {job.parent_job_id && (
+              <span className={detailHeaderBannerClass}>
+                {t('part_of_ai_seo', { code: parentJob?.code ?? '' })}{' '}
+                <Link to={`/jobs/${job.parent_job_id}`} className="underline underline-offset-2">
+                  {t('view_billing_record')}
+                </Link>
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Calendar className="size-3 opacity-70" />
-                {formatDate(job.created_at)}
-                <span className="opacity-60">·</span>
-                {relativeFromNow(job.created_at)}
-              </span>
-              {boardStages.length > 0 && (
-                <div className={detailHeaderControlGroupClass}>
-                  <Label htmlFor="job-stage" className={detailHeaderLabelClass}>
-                    Stage
-                  </Label>
-                  <FilterSelect
-                    id="job-stage"
-                    value={job.stage_id ?? ''}
-                    onChange={(e) => onChangeStage(e.target.value)}
-                    disabled={moveStage.isPending}
-                    className={detailHeaderSelectClass}
-                  >
-                    {boardStages.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {(s.display_names as { en: string; el: string })[lang]}
-                      </option>
-                    ))}
-                  </FilterSelect>
-                </div>
-              )}
-              {owner && (
-                <div className={detailHeaderControlGroupClass}>
-                  <Label className={detailHeaderLabelClass}>Owner</Label>
-                  <span className="inline-flex h-7 max-w-[200px] items-center truncate rounded-lg border border-input/80 bg-background px-2 text-[11px] text-foreground">
-                    {owner.full_name || owner.email}
-                  </span>
-                </div>
-              )}
-              {job.parent_job_id && (
-                <span className={detailHeaderBannerClass}>
-                  {t('part_of_ai_seo', { code: parentJob?.code ?? '' })}{' '}
-                  <Link to={`/jobs/${job.parent_job_id}`} className="underline underline-offset-2">
-                    {t('view_billing_record')}
-                  </Link>
-                </span>
-              )}
-            </div>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className={detailHeaderActionsClass}>
             {canBlockJob &&
               (job.is_blocked ? (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-6 px-2 text-[11px]"
                   onClick={() => unblock.mutate()}
                   disabled={unblock.isPending}
                 >
@@ -197,7 +203,7 @@ export function JobDetailPage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-6 px-2 text-[11px]"
                   onClick={() => block.mutate({ reason: 'manual' })}
                   disabled={block.isPending}
                 >
@@ -208,7 +214,7 @@ export function JobDetailPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                className="h-7 px-2.5 text-xs"
+                className="h-6 px-2 text-[11px]"
                 onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="size-3" />
@@ -240,7 +246,7 @@ export function JobDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-2 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               {job.billing_type === 'recurring_monthly' && infoFieldsFor(job.service_type).length === 0 && (

@@ -6,7 +6,7 @@ import { Calendar, Trash2, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderControlsClass, detailHeaderLabelClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
+import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRowClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { LeadForm } from './LeadForm';
 import { useLead } from './hooks/useLead';
@@ -153,79 +153,79 @@ export function LeadDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-2 px-4 py-3 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col gap-1.5 px-4 py-2 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className={detailHeaderCardClass}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h1 className="text-lg font-bold tracking-tight sm:text-xl">{lead.title}</h1>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary">
-                Lead
-              </span>
-              {lead.code && <CopyableCode code={lead.code} className="text-[11px]" />}
+        <div className={detailHeaderRowClass}>
+          <div className={detailHeaderMainClass}>
+            <h1 className="text-base font-bold tracking-tight sm:text-lg">{lead.title}</h1>
+            <span className="rounded-full bg-primary/10 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wider text-primary">
+              Lead
+            </span>
+            {lead.code && <CopyableCode code={lead.code} className="text-[10px]" />}
+            <span
+              className="hidden h-3 w-px shrink-0 bg-border/50 sm:inline-block"
+              aria-hidden="true"
+            />
+            <span className={detailHeaderMetaClass}>
+              <Calendar className="size-2.5 opacity-70" />
+              {formatDate(lead.created_at)}
+              <span className="opacity-60">·</span>
+              {relativeFromNow(lead.created_at)}
+              {isAdmin && lead.won_by_user_id && (
+                <>
+                  <span className="opacity-60">·</span>
+                  <span className="inline-flex items-center gap-0.5">
+                    <Trophy className="size-2.5 text-amber-600 dark:text-amber-400" />
+                    {(() => {
+                      const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
+                      return winner ? winner.full_name || winner.email : lead.won_by_user_id;
+                    })()}
+                  </span>
+                </>
+              )}
+            </span>
+            <div className={detailHeaderControlGroupClass}>
+              <Label htmlFor="owner" className={detailHeaderLabelClass}>
+                {t('owner.label')}
+              </Label>
+              <FilterSelect
+                id="owner"
+                value={lead.owner_user_id ?? UNASSIGNED}
+                onChange={(e) => onChangeOwner(e.target.value)}
+                disabled={readOnly || update.isPending}
+                className={detailHeaderSelectClass}
+              >
+                <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
+                {owners.map((o) => (
+                  <option key={o.user_id} value={o.user_id}>
+                    {o.full_name || o.email}
+                    {o.is_admin ? ' · admin' : ''}
+                  </option>
+                ))}
+              </FilterSelect>
             </div>
-            <div className={cn(detailHeaderControlsClass, 'mt-1')}>
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Calendar className="size-3 opacity-70" />
-                {formatDate(lead.created_at)}
-                <span className="opacity-60">·</span>
-                {relativeFromNow(lead.created_at)}
-                {isAdmin && lead.won_by_user_id && (
-                  <>
-                    <span className="opacity-60">·</span>
-                    <span className="inline-flex items-center gap-1">
-                      <Trophy className="size-3 text-amber-600 dark:text-amber-400" />
-                      {(() => {
-                        const winner = owners.find((o) => o.user_id === lead.won_by_user_id);
-                        return winner ? winner.full_name || winner.email : lead.won_by_user_id;
-                      })()}
-                    </span>
-                  </>
-                )}
-              </span>
+            {!lead.converted_at && (
               <div className={detailHeaderControlGroupClass}>
-                <Label htmlFor="owner" className={detailHeaderLabelClass}>
-                  {t('owner.label')}
+                <Label htmlFor="stage" className={detailHeaderLabelClass}>
+                  {t('actions.move_to')}
                 </Label>
                 <FilterSelect
-                  id="owner"
-                  value={lead.owner_user_id ?? UNASSIGNED}
-                  onChange={(e) => onChangeOwner(e.target.value)}
-                  disabled={readOnly || update.isPending}
+                  id="stage"
+                  value={lead.stage_id ?? ''}
+                  onChange={(e) => onChangeStage(e.target.value)}
+                  disabled={convert.isPending || moveStage.isPending}
                   className={detailHeaderSelectClass}
                 >
-                  <option value={UNASSIGNED}>{t('owner.unassigned')}</option>
-                  {owners.map((o) => (
-                    <option key={o.user_id} value={o.user_id}>
-                      {o.full_name || o.email}
-                      {o.is_admin ? ' · admin' : ''}
+                  {salesStages.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
                     </option>
                   ))}
                 </FilterSelect>
               </div>
-              {!lead.converted_at && (
-                <div className={detailHeaderControlGroupClass}>
-                  <Label htmlFor="stage" className={detailHeaderLabelClass}>
-                    {t('actions.move_to')}
-                  </Label>
-                  <FilterSelect
-                    id="stage"
-                    value={lead.stage_id ?? ''}
-                    onChange={(e) => onChangeStage(e.target.value)}
-                    disabled={convert.isPending || moveStage.isPending}
-                    className={detailHeaderSelectClass}
-                  >
-                    {salesStages.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
-                      </option>
-                    ))}
-                  </FilterSelect>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className={detailHeaderActionsClass}>
             {currentStageCode === 'offer_sent' && (
               <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setOfferEmailOpen(true)}>
                 {t('offer_email.send')}
@@ -296,7 +296,7 @@ export function LeadDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-2 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <LeadForm lead={lead} />

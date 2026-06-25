@@ -5,7 +5,7 @@ import { Calendar, Lock, Mail } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderControlsClass, detailHeaderLabelClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
+import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRowClass, detailHeaderSelectClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
@@ -148,95 +148,95 @@ export function DealDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-2 px-4 py-3 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col gap-1.5 px-4 py-2 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className={detailHeaderCardClass}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h1 className="text-lg font-bold tracking-tight sm:text-xl">{deal.title}</h1>
-              <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
-                Deal
+        <div className={detailHeaderRowClass}>
+          <div className={detailHeaderMainClass}>
+            <h1 className="text-base font-bold tracking-tight sm:text-lg">{deal.title}</h1>
+            <span className="rounded-full bg-violet-500/10 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+              Deal
+            </span>
+            {deal.code && <CopyableCode code={deal.code} className="text-[10px]" />}
+            {clientStatus === 'blocked' && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-px text-[8px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300">
+                <Lock className="size-2.5" />
+                {tClients('status.blocked')}
               </span>
-              {deal.code && <CopyableCode code={deal.code} className="text-[11px]" />}
-              {clientStatus === 'blocked' && (
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-800 dark:bg-red-950/50 dark:text-red-300">
-                  <Lock className="size-2.5" />
-                  {tClients('status.blocked')}
-                </span>
+            )}
+            <span
+              className="hidden h-3 w-px shrink-0 bg-border/50 sm:inline-block"
+              aria-hidden="true"
+            />
+            <span className={detailHeaderMetaClass}>
+              <Calendar className="size-2.5 opacity-70" />
+              {formatDate(deal.created_at)}
+              <span className="opacity-60">·</span>
+              {relativeFromNow(deal.created_at)}
+              {wonBy && (
+                <>
+                  <span className="opacity-60">·</span>
+                  <span>{wonBy.full_name || wonBy.email}</span>
+                </>
               )}
+            </span>
+            <div className={detailHeaderControlGroupClass}>
+              <Label htmlFor="client-status" className={detailHeaderLabelClass}>
+                {tClients('status.label')}
+              </Label>
+              <FilterSelect
+                id="client-status"
+                value={clientStatus}
+                onChange={(e) => onChangeClientStatus(e.target.value)}
+                className={cn(detailHeaderSelectClass, CLIENT_STATUS_STYLES[clientStatus])}
+              >
+                <option value="new">{tClients('status.new')}</option>
+                <option value="active">{tClients('status.active')}</option>
+                <option value="blocked">{tClients('status.blocked')}</option>
+                <option value="done">{tClients('status.done')}</option>
+              </FilterSelect>
             </div>
-            <div className={cn(detailHeaderControlsClass, 'mt-1')}>
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Calendar className="size-3 opacity-70" />
-                {formatDate(deal.created_at)}
-                <span className="opacity-60">·</span>
-                {relativeFromNow(deal.created_at)}
-                {wonBy && (
-                  <>
-                    <span className="opacity-60">·</span>
-                    <span>{wonBy.full_name || wonBy.email}</span>
-                  </>
-                )}
-              </span>
+            <div className={detailHeaderControlGroupClass}>
+              <Label htmlFor="owner" className={detailHeaderLabelClass}>
+                {tLeads('owner.label')}
+              </Label>
+              <FilterSelect
+                id="owner"
+                value={deal.owner_user_id ?? UNASSIGNED}
+                onChange={(e) => onChangeOwner(e.target.value)}
+                disabled={completed}
+                className={detailHeaderSelectClass}
+              >
+                <option value={UNASSIGNED}>{tLeads('owner.unassigned')}</option>
+                {owners.map((o) => (
+                  <option key={o.user_id} value={o.user_id}>
+                    {o.full_name || o.email}
+                    {o.is_admin ? ' · admin' : ''}
+                  </option>
+                ))}
+              </FilterSelect>
+            </div>
+            {deal.accounting_stage_id && accStages.length > 0 && (
               <div className={detailHeaderControlGroupClass}>
-                <Label htmlFor="client-status" className={detailHeaderLabelClass}>
-                  {tClients('status.label')}
+                <Label htmlFor="acc-stage" className={detailHeaderLabelClass}>
+                  {tLeads('actions.move_to')}
                 </Label>
                 <FilterSelect
-                  id="client-status"
-                  value={clientStatus}
-                  onChange={(e) => onChangeClientStatus(e.target.value)}
-                  className={cn(detailHeaderSelectClass, CLIENT_STATUS_STYLES[clientStatus])}
-                >
-                  <option value="new">{tClients('status.new')}</option>
-                  <option value="active">{tClients('status.active')}</option>
-                  <option value="blocked">{tClients('status.blocked')}</option>
-                  <option value="done">{tClients('status.done')}</option>
-                </FilterSelect>
-              </div>
-              <div className={detailHeaderControlGroupClass}>
-                <Label htmlFor="owner" className={detailHeaderLabelClass}>
-                  {tLeads('owner.label')}
-                </Label>
-                <FilterSelect
-                  id="owner"
-                  value={deal.owner_user_id ?? UNASSIGNED}
-                  onChange={(e) => onChangeOwner(e.target.value)}
-                  disabled={completed}
+                  id="acc-stage"
+                  value={deal.accounting_stage_id ?? ''}
+                  onChange={(e) => onChangeAccountingStage(e.target.value)}
+                  disabled={moveAccounting.isPending || markPaid.isPending}
                   className={detailHeaderSelectClass}
                 >
-                  <option value={UNASSIGNED}>{tLeads('owner.unassigned')}</option>
-                  {owners.map((o) => (
-                    <option key={o.user_id} value={o.user_id}>
-                      {o.full_name || o.email}
-                      {o.is_admin ? ' · admin' : ''}
+                  {accStages.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
                     </option>
                   ))}
                 </FilterSelect>
               </div>
-              {deal.accounting_stage_id && accStages.length > 0 && (
-                <div className={detailHeaderControlGroupClass}>
-                  <Label htmlFor="acc-stage" className={detailHeaderLabelClass}>
-                    {tLeads('actions.move_to')}
-                  </Label>
-                  <FilterSelect
-                    id="acc-stage"
-                    value={deal.accounting_stage_id ?? ''}
-                    onChange={(e) => onChangeAccountingStage(e.target.value)}
-                    disabled={moveAccounting.isPending || markPaid.isPending}
-                    className={detailHeaderSelectClass}
-                  >
-                    {accStages.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {(s.display_names as { en?: string; el?: string })[lang] ?? s.code}
-                      </option>
-                    ))}
-                  </FilterSelect>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className={detailHeaderActionsClass}>
             {deal.won_by_user_id && (
               <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setWelcomeOpen(true)}>
                 <Mail className="size-3" />
@@ -305,7 +305,7 @@ export function DealDetailPage() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-2 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <DealForm initial={deal} />
