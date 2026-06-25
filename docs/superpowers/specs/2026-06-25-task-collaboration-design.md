@@ -24,9 +24,11 @@ full picture (who's assigned, status, started/resolved stamps). Users want:
   *involved* parties (creator + assignee + admin) must see every field — **not**
   that all staff can see all tasks. No SELECT-RLS opening on the task tables.
 - **"Started" is a lightweight flag** — a button + badge + timestamp. No new
-  kanban column, and starting does **not** send a notification.
-- **Notifications are in-app only** (no email). Only *comments* notify; the
-  *started* event does not.
+  kanban column.
+- **Notifications are in-app only** (no email). Both *comments* and the
+  *started* event notify: a comment pings the other party; starting pings the
+  creator once (skipped when creator == assignee). This completes the lifecycle
+  the creator already gets pinged for (assigned → started → resolved).
 
 ### Key architectural decision: dedicated `task_comments` table
 
@@ -53,6 +55,15 @@ One migration adds the columns and the new table.
 `started_at` **persists** once set: resolving the task keeps it (history), and it
 is **not** cleared on reopen. The "Started" badge only renders while the task is
 open and not resolved; once resolved the resolved state takes visual precedence.
+
+### Started-notify triggers
+`user_tasks_notify_started` and `assigned_tasks_notify_started`
+(AFTER UPDATE, when `started_at` transitions NULL → set): insert a
+`notifications` row of type **`task_started`** for the task **creator**
+(`created_by` / `created_by_user_id`). Skipped when creator == assignee or the
+creator is `auth.uid()` (the actor). Payload mirrors the other task
+notifications: `{ task_kind, task_id, parent_type, parent_id, author_id, title,
+source_code? }`.
 
 (`started_by` is intentionally omitted — only the assignee can start a task, so
 it is always the assignee; storing it would be redundant. The assignee is
@@ -103,7 +114,8 @@ author_id, title, snippet, source_code? }` so the bell can render and route it.
 1. **Create task** (existing flows) → assignee notified (`task_assigned`, existing).
 2. **Assignee opens task detail → "Started working"** (button shown only to the
    assignee while task is open and `started_at IS NULL`) → sets `started_at`.
-   Button is replaced by a **"Started · <date>"** badge. No notification.
+   Button is replaced by a **"Started · <date>"** badge, and the **creator** is
+   notified in-app (`task_started`; skipped when creator == assignee).
 3. **Either party posts a comment** in the embedded thread → `task_comments`
    insert → trigger notifies the **other** party in-app → realtime updates the
    open thread for both.
@@ -141,10 +153,10 @@ the UI (button visibility); no extra DB policy needed.
 - **`TaskKanbanCard.tsx`** — small **"Started"** badge when `started_at` is set
   and the task is not resolved.
 - **Notification presenters** (`notification-presenters.tsx`) — render the
-  `task_comment` type; `readPath()` routes `user_task` → `/tasks`,
-  `assigned_task` → the linked deal/job page.
+  `task_comment` and `task_started` types; `readPath()` routes `user_task` →
+  `/tasks`, `assigned_task` → the linked deal/job page.
 - **Greek i18n strings** for: "Started working", "Started", "Comments",
-  "Write a comment…", and the notification text.
+  "Write a comment…", and the `task_comment` + `task_started` notification text.
 
 ## "Show all info" + correctness pass
 
@@ -163,7 +175,9 @@ the UI (button visibility); no extra DB policy needed.
   task they're not on; a party can. (Role-switch technique from the attachments
   RLS work.)
 - **Playwright smoke test** on `www.itdevcrm.com` (or local) covering the full
-  lifecycle above, then clean up the smoke rows.
+  lifecycle above, asserting the creator receives a `task_started` notification
+  and the other party receives a `task_comment` notification, then clean up the
+  smoke rows.
 - `npm run build` must pass (stricter than `tsc --noEmit`: assert array indices,
   zero eslint warnings).
 
@@ -178,8 +192,9 @@ the UI (button visibility); no extra DB policy needed.
 ## Changes / Revert
 
 **Changes**
-- New migration: `started_at` on `user_tasks` + `assigned_tasks`; `task_comments`
-  table + indexes + RLS + `is_task_party` helper + notify trigger + realtime.
+- New migration: `started_at` on `user_tasks` + `assigned_tasks` + their
+  `*_notify_started` triggers; `task_comments` table + indexes + RLS +
+  `is_task_party` helper + comment-notify trigger + realtime.
 - New frontend: `TaskComments`, `StartTaskButton`, `useTaskComments`,
   `usePostTaskComment`, `useStartTask`.
 - Edits: `UserTaskDetailDialog`, `AssignedTaskDetailDialog`, `TaskKanbanCard`,
@@ -187,10 +202,10 @@ the UI (button visibility); no extra DB policy needed.
 
 **Revert**
 - The migration includes rollback SQL: `DROP TABLE task_comments CASCADE;`
-  `DROP FUNCTION is_task_party(...);`
-  `ALTER TABLE user_tasks DROP COLUMN started_at;`
+  `DROP FUNCTION is_task_party(...);` drop the `*_notify_started` triggers and
+  their functions; `ALTER TABLE user_tasks DROP COLUMN started_at;`
   `ALTER TABLE assigned_tasks DROP COLUMN started_at;`
-  and removal from the realtime publication.
+  and removal of `task_comments` from the realtime publication.
 - Frontend revert: git revert the feature commits (atomic, one concern each).
 - No data is destroyed by reverting (comments table is additive; `started_at` is
   additive).
