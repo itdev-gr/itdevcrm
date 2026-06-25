@@ -165,20 +165,20 @@ describe('AssignedTasksColumn', () => {
     const user = userEvent.setup();
     render(wrap(<AssignedTasksColumn />));
     await user.click(screen.getByRole('button', { name: /renew domain/i }));
-    expect(screen.getByRole('dialog', { name: /task detail/i })).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('clicking the source-code badge does not also open the dialog', async () => {
     const user = userEvent.setup();
     render(wrap(<AssignedTasksColumn />));
     await user.click(screen.getByRole('link', { name: /000013/i }));
-    expect(screen.queryByRole('dialog', { name: /task detail/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('clicking Resolve does not open the dialog', async () => {
     const user = userEvent.setup();
     render(wrap(<AssignedTasksColumn />));
     await user.click(screen.getByRole('button', { name: /resolve/i }));
-    expect(screen.queryByRole('dialog', { name: /task detail/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

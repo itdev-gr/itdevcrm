@@ -64,7 +64,17 @@
     "comments_title": "Σχόλια",
     "comment_placeholder": "Γράψτε ένα σχόλιο…",
     "comment_post": "Αποστολή",
-    "comments_empty": "Δεν υπάρχουν σχόλια ακόμη."
+    "comments_empty": "Δεν υπάρχουν σχόλια ακόμη.",
+    "status_label": "Κατάσταση",
+    "client_label": "Πελάτης",
+    "due_label": "Προθεσμία",
+    "created_label": "Δημιουργήθηκε",
+    "created_by_label": "Δημιουργήθηκε από",
+    "department_label": "Τμήμα",
+    "source_label": "Σύνδεση με",
+    "description_label": "Περιγραφή",
+    "no_description": "Χωρίς περιγραφή.",
+    "you": "Εσείς"
   },
   "client_picker": {
     "label": "Πελάτης (προαιρετικά)",

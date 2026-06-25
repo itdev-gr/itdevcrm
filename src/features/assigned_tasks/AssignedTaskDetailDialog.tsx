@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useAssignedTaskDetail } from './hooks/useAssignedTaskDetail';
@@ -10,10 +10,11 @@ import { DepartmentChip } from './DepartmentChip';
 import { industryLabel } from '@/lib/industries';
 import { CallLink } from '@/components/CallLink';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { ImportanceBadge } from '@/features/tasks/ImportanceBadge';
 import { importanceOf } from '@/features/tasks/importance';
 import { StartTaskButton } from '@/features/tasks/StartTaskButton';
-import { TaskComments } from '@/features/tasks/TaskComments';
+import {
+  TaskDetailShell, type TaskMetaRow, type TaskStatusTone,
+} from '@/features/tasks/TaskDetailShell';
 
 type Props = {
   taskId: string | null;
@@ -27,6 +28,7 @@ function contactName(c: { contact_first_name: string | null; contact_last_name: 
 
 export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const { t, i18n } = useTranslation('home');
+  const c = (key: string, opts?: Record<string, unknown>) => t(key, { ns: 'common', ...opts });
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
   const meId = useAuthStore((s) => s.user?.id ?? '');
   const { data: task, isLoading, error } = useAssignedTaskDetail(taskId);
@@ -41,32 +43,50 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const sourceHref = task?.deal_id ? `/deals/${task.deal_id}` : task?.job_id ? `/jobs/${task.job_id}` : null;
   const sourceLabel = task?.deal_id ? t('assigned_tasks.open_deal') : t('assigned_tasks.open_job');
 
+  const statusKey = task
+    ? task.status === 'resolved' ? 'resolved' : task.started_at ? 'started' : 'open'
+    : 'open';
+
+  const rows: TaskMetaRow[] = task
+    ? [
+        { label: c('tasks_page.assignee_label'), value: task.assignee?.full_name || task.assignee?.email || '—' },
+        ...(task.creator
+          ? [{ label: c('tasks_page.created_by_label'), value: task.creator.full_name || task.creator.email }]
+          : []),
+        {
+          label: c('tasks_page.created_label'),
+          value: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(task.created_at)),
+        },
+        { label: c('tasks_page.department_label'), value: <DepartmentChip department={task.department} /> },
+        ...(task.source_code
+          ? [{
+              label: c('tasks_page.source_label'),
+              value: sourceHref ? (
+                <Link to={sourceHref} className="font-mono text-xs text-primary hover:underline">
+                  {task.source_code}
+                </Link>
+              ) : task.source_code,
+            }]
+          : []),
+      ]
+    : [];
+
   return (
     <Dialog open={taskId !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t('assigned_tasks.detail_title')}</DialogTitle>
-          <DialogDescription className="sr-only">{t('assigned_tasks.detail_description')}</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl">
+        <DialogDescription className="sr-only">{t('assigned_tasks.detail_description')}</DialogDescription>
+        {/* Shell renders the DialogTitle once loaded; provide a fallback meanwhile. */}
+        {!task && <DialogTitle className="sr-only">{t('assigned_tasks.detail_title')}</DialogTitle>}
         {isLoading && <p className="text-sm text-muted-foreground">{t('assigned_tasks.loading')}</p>}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{t('assigned_tasks.error_loading')}</p>}
         {task && (
-          <div className="space-y-4">
-            <div>
-              <h3 className="flex items-center gap-2 text-base font-semibold">
-                {task.title} <ImportanceBadge importance={importanceOf(task)} />
-              </h3>
-              <div className="mt-1">
-                <DepartmentChip department={task.department} />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span>
-                {t('tasks_page.assignee_label', { ns: 'common' })}:{' '}
-                <span className="text-foreground">
-                  {task.assignee?.full_name || task.assignee?.email || '—'}
-                </span>
-              </span>
+          <TaskDetailShell
+            title={task.title}
+            importance={importanceOf(task)}
+            statusTone={statusKey as TaskStatusTone}
+            statusLabel={c(`tasks_page.status_${statusKey}`)}
+            metaRows={rows}
+            action={
               <StartTaskButton
                 kind="assigned"
                 id={task.id}
@@ -75,26 +95,40 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                 startedAt={task.started_at}
                 locale={locale}
               />
-            </div>
-            <div className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{task.status}</span>
-              {task.creator && (
-                <>
-                  {' · '}
-                  {t('assigned_tasks.created_by_label')}: {task.creator.full_name || task.creator.email}
-                </>
-              )}
-              {' · '}
-              {t('assigned_tasks.created_label')}: {new Intl.DateTimeFormat(locale, {
-                dateStyle: 'medium', timeStyle: 'short',
-              }).format(new Date(task.created_at))}
-            </div>
-            {task.description && (
-              <p className="whitespace-pre-wrap text-sm text-foreground">{task.description}</p>
+            }
+            commentsKind="assigned"
+            commentsTaskId={task.id}
+            locale={locale}
+            footer={
+              <div className="flex flex-wrap justify-end gap-2">
+                {task.status === 'open' && (
+                  <Button type="button" onClick={onResolve} disabled={resolve.isPending}>
+                    {c('tasks_page.resolve')}
+                  </Button>
+                )}
+                {sourceHref && (
+                  <Button asChild variant="outline">
+                    <Link to={sourceHref}>
+                      {sourceLabel} {task.source_code ?? ''}
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            }
+          >
+            {task.description ? (
+              <div className="space-y-1">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {c('tasks_page.description_label')}
+                </h4>
+                <p className="whitespace-pre-wrap text-sm text-foreground">{task.description}</p>
+              </div>
+            ) : (
+              <p className="text-sm italic text-muted-foreground">{c('tasks_page.no_description')}</p>
             )}
             {task.client && (
-              <section className="rounded-md border bg-muted p-3">
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <section className="rounded-lg border border-border/60 bg-muted/40 p-3">
+                <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   {t('assigned_tasks.client_section')}
                 </h4>
                 <p className="text-sm font-medium text-foreground">
@@ -123,22 +157,7 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                 </div>
               </section>
             )}
-            <TaskComments kind="assigned" taskId={task.id} locale={locale} />
-            <DialogFooter className="gap-2">
-              {task.status === 'open' && (
-                <Button type="button" onClick={onResolve} disabled={resolve.isPending}>
-                  Resolve
-                </Button>
-              )}
-              {sourceHref && (
-                <Button asChild variant="outline">
-                  <Link to={sourceHref}>
-                    {sourceLabel} {task.source_code ?? ''}
-                  </Link>
-                </Button>
-              )}
-            </DialogFooter>
-          </div>
+          </TaskDetailShell>
         )}
       </DialogContent>
     </Dialog>

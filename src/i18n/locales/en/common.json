@@ -64,7 +64,17 @@
     "comments_title": "Comments",
     "comment_placeholder": "Write a comment…",
     "comment_post": "Post",
-    "comments_empty": "No comments yet."
+    "comments_empty": "No comments yet.",
+    "status_label": "Status",
+    "client_label": "Client",
+    "due_label": "Due",
+    "created_label": "Created",
+    "created_by_label": "Created by",
+    "department_label": "Department",
+    "source_label": "Linked to",
+    "description_label": "Description",
+    "no_description": "No description.",
+    "you": "You"
   },
   "client_picker": {
     "label": "Client (optional)",
