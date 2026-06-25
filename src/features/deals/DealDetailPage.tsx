@@ -20,7 +20,7 @@ import { PaymentsPanel } from './PaymentsPanel';
 import { JobsBillingPanel } from './JobsBillingPanel';
 import type { PlannedService } from './ServicesPlannedField';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
-import { ActivityPanel } from '@/features/activity/ActivityPanel';
+import { ClientActivityPanel } from '@/features/activity/ClientActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -391,7 +391,7 @@ export function DealDetailPage() {
         </TabsContent>
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <ActivityPanel entityType="deals" entityId={dealId} />
+            {deal.client_id && <ClientActivityPanel clientId={deal.client_id} />}
           </div>
         </TabsContent>
         <TabsContent value="offers" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
