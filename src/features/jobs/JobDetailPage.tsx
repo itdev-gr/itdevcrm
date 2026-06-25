@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Lock, Trash2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Archive, Calendar, Lock, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CopyableCode } from '@/components/CopyableCode';
 import {
   DetailTabsList,
@@ -55,6 +57,10 @@ import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
+import { JobBillingEditCard } from './JobBillingEditCard';
+import { supabase } from '@/lib/supabase';
+import { queryKeys } from '@/lib/queryKeys';
+import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
 import type { ServiceType } from './hooks/useJobs';
 
 const JOB_STATUS_STYLES: Record<string, string> = {
@@ -79,10 +85,16 @@ export function JobDetailPage() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canBlockJob = isAdmin || groupCodes.includes('accounting');
+  const canEditBilling = isAdmin || groupCodes.includes('accounting');
   const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const del = useDeleteJobs();
+  const updateBilling = useUpdateJobBilling(job?.deal_id ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  // null = not edited yet → fall back to the loaded job.title.
+  const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const billingRefs = useJobBillingRefCount(jobId, confirmDelete);
 
   useDocumentTitle(
@@ -121,6 +133,50 @@ export function JobDetailPage() {
     } catch (err) {
       alert((err as Error).message);
     }
+  }
+
+  async function onChangeOwner(value: string) {
+    if (!job || (job.owner_user_id ?? '') === value) return;
+    const { error: ownerError } = await supabase
+      .from('jobs')
+      .update({ owner_user_id: value || null })
+      .eq('id', job.id);
+    if (ownerError) {
+      alert(ownerError.message);
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.job(job.id) });
+  }
+
+  async function commitTitle() {
+    if (!job || titleDraft === null) return;
+    const next = titleDraft.trim();
+    if (next === (job.title ?? '')) return;
+    try {
+      await updateBilling.mutateAsync({ jobId: job.id, title: next });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.job(job.id) });
+    } catch (err) {
+      const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
+      alert(errors.join('\n'));
+    }
+  }
+
+  async function onArchive() {
+    if (!job) return;
+    const { error: archiveError } = await supabase
+      .from('jobs')
+      .update({
+        archived: true,
+        archived_at: new Date().toISOString(),
+        archived_reason: 'accounting_archive',
+      })
+      .eq('id', job.id);
+    if (archiveError) {
+      alert(archiveError.message);
+      return;
+    }
+    setConfirmArchive(false);
+    navigate(-1);
   }
 
   const contactName = [job.client?.contact_first_name, job.client?.contact_last_name]
@@ -187,13 +243,34 @@ export function JobDetailPage() {
                 </FilterSelect>
               </div>
             )}
-            {owner && (
+            {canEditBilling ? (
               <div className={detailHeaderControlGroupClass}>
-                <Label className={detailHeaderLabelClass}>Owner</Label>
-                <span className={detailHeaderOwnerClass} title={owner.full_name || owner.email}>
-                  {owner.full_name || owner.email}
-                </span>
+                <Label htmlFor="job-owner" className={detailHeaderLabelClass}>
+                  Owner
+                </Label>
+                <FilterSelect
+                  id="job-owner"
+                  value={job.owner_user_id ?? ''}
+                  onChange={(e) => onChangeOwner(e.target.value)}
+                  className={detailHeaderSelectClass}
+                >
+                  <option value="">Unassigned</option>
+                  {owners.map((o) => (
+                    <option key={o.user_id} value={o.user_id}>
+                      {o.full_name || o.email}
+                    </option>
+                  ))}
+                </FilterSelect>
               </div>
+            ) : (
+              owner && (
+                <div className={detailHeaderControlGroupClass}>
+                  <Label className={detailHeaderLabelClass}>Owner</Label>
+                  <span className={detailHeaderOwnerClass} title={owner.full_name || owner.email}>
+                    {owner.full_name || owner.email}
+                  </span>
+                </div>
+              )
             )}
             {job.parent_job_id && (
               <span className={detailHeaderBannerClass}>
@@ -228,6 +305,17 @@ export function JobDetailPage() {
                   Block
                 </Button>
               ))}
+            {canEditBilling && !job.archived && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={detailHeaderActionButtonClass}
+                onClick={() => setConfirmArchive(true)}
+              >
+                <Archive className="size-3" />
+                Archive
+              </Button>
+            )}
             {isAdmin && (
               <Button
                 variant="destructive"
@@ -280,6 +368,24 @@ export function JobDetailPage() {
                   Project info
                 </h2>
                 <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {canEditBilling && (
+                    <div className="sm:col-span-2">
+                      <label
+                        htmlFor="job-title"
+                        className="text-[11px] text-muted-foreground"
+                      >
+                        Job title
+                      </label>
+                      <Input
+                        id="job-title"
+                        value={titleDraft ?? job.title ?? ''}
+                        onChange={(e) => setTitleDraft(e.target.value)}
+                        onBlur={commitTitle}
+                        disabled={updateBilling.isPending}
+                        className="mt-0.5 h-8 text-sm"
+                      />
+                    </div>
+                  )}
                   <div>
                     <dt className="text-[11px] text-muted-foreground">Service</dt>
                     <dd className="mt-0.5 text-sm font-medium capitalize">
@@ -341,6 +447,19 @@ export function JobDetailPage() {
                   )}
                 </dl>
               </section>
+              {canEditBilling && job.parent_job_id == null && (
+                <JobBillingEditCard
+                  job={{
+                    id: job.id,
+                    deal_id: job.deal_id,
+                    amount_net: job.amount_net,
+                    vat_rate: job.vat_rate,
+                    billing_type: job.billing_type,
+                    installment_plan: job.installment_plan,
+                    service_type: job.service_type,
+                  }}
+                />
+              )}
             </div>
 
             <aside className="min-w-0 lg:h-full lg:min-h-0">
@@ -419,6 +538,15 @@ export function JobDetailPage() {
             alert((e as Error).message);
           }
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmArchive}
+        onOpenChange={setConfirmArchive}
+        title="Archive job"
+        description="Archive this job? It will be removed from boards and billing. You can unarchive later."
+        confirmLabel="Archive"
+        onConfirm={onArchive}
       />
     </div>
   );
