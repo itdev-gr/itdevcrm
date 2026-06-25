@@ -202,12 +202,31 @@
     "plan_options": {
       "none": "Full (1 payment)",
       "50_50": "50 / 50 (2 payments)",
-      "50_25_25": "50 / 25 / 25 (3 payments)"
+      "50_25_25": "50 / 25 / 25 (3 payments)",
+      "custom": "Custom (choose payments)"
     },
     "plan_preview": "Splits to {{parts}}",
     "billing_errors": {
       "cannot_replan_paid_installment": "Can't change the plan — an installment is already paid or invoiced.",
-      "installment_plan_web_dev_one_time_only": "Installment plans apply only to one-time Web Dev jobs."
+      "installment_plan_web_dev_one_time_only": "Installment plans apply only to one-time Web Dev jobs.",
+      "web_dev_job_exists": "This deal already has a Web Dev job.",
+      "schedule_required": "Add at least one payment.",
+      "schedule_amount_positive": "Each payment must be greater than €0.",
+      "schedule_total_mismatch": "Payments must add up to the job price."
+    },
+    "schedule": {
+      "label": "Payments",
+      "amount": "Amount",
+      "due_date": "Due date",
+      "add_payment": "+ Payment",
+      "running_total": "{{sum}} of {{total}}",
+      "save": "Save schedule",
+      "cancel": "Cancel"
+    },
+    "dup_confirm": {
+      "title": "Add a second Web Dev job?",
+      "body": "This deal already has a Web Dev job. A website should be ONE job — add payments to the existing job instead. Only add another if this is a genuinely separate website/add-on.",
+      "confirm": "Add anyway"
     },
     "payment": {
       "due_date": "Due",
