@@ -67,6 +67,7 @@ export type Database = {
           resolved_at: string | null
           resolved_by_user_id: string | null
           source_code: string | null
+          started_at: string | null
           status: string
           title: string
           updated_at: string
@@ -85,6 +86,7 @@ export type Database = {
           resolved_at?: string | null
           resolved_by_user_id?: string | null
           source_code?: string | null
+          started_at?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -103,6 +105,7 @@ export type Database = {
           resolved_at?: string | null
           resolved_by_user_id?: string | null
           source_code?: string | null
+          started_at?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -3190,6 +3193,55 @@ export type Database = {
           },
         ]
       }
+      task_comments: {
+        Row: {
+          assigned_task_id: string | null
+          author_user_id: string
+          body: string
+          created_at: string
+          id: string
+          user_task_id: string | null
+        }
+        Insert: {
+          assigned_task_id?: string | null
+          author_user_id: string
+          body: string
+          created_at?: string
+          id?: string
+          user_task_id?: string | null
+        }
+        Update: {
+          assigned_task_id?: string | null
+          author_user_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          user_task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_assigned_task_id_fkey"
+            columns: ["assigned_task_id"]
+            isOneToOne: false
+            referencedRelation: "assigned_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "task_comments_user_task_id_fkey"
+            columns: ["user_task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_tasks: {
         Row: {
           completed_at: string | null
@@ -3200,6 +3252,7 @@ export type Database = {
           id: string
           importance: string
           notes: string | null
+          started_at: string | null
           title: string
           updated_at: string
           user_id: string
@@ -3213,6 +3266,7 @@ export type Database = {
           id?: string
           importance?: string
           notes?: string | null
+          started_at?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -3226,6 +3280,7 @@ export type Database = {
           id?: string
           importance?: string
           notes?: string | null
+          started_at?: string | null
           title?: string
           updated_at?: string
           user_id?: string

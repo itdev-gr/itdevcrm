@@ -19,6 +19,8 @@ export const queryKeys = {
   deal: (id: string) => ['deal', id] as const,
   jobsForClient: (clientId: string) => ['jobs', 'client', clientId] as const,
   comments: (parentType: string, parentId: string) => ['comments', parentType, parentId] as const,
+  taskComments: (kind: 'user' | 'assigned', taskId: string) =>
+    ['task-comments', kind, taskId] as const,
   attachments: (parentType: string, parentId: string) =>
     ['attachments', parentType, parentId] as const,
   activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
