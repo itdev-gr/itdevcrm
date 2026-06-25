@@ -6,6 +6,7 @@ import { CheckCircle2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ImportanceBadge } from './ImportanceBadge';
+import { startedBadgeVisible } from './taskStarted';
 import { isDraggable, type TaskCard, type DragAction } from './taskCard';
 
 export function TaskKanbanCard({
@@ -58,6 +59,11 @@ export function TaskKanbanCard({
         {card.relation === 'delegated' && (
           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
             {t('tasks_page.assigned_to', { name: assigneeName })}
+          </span>
+        )}
+        {startedBadgeVisible({ resolved: card.resolved, startedAt: card.startedAtIso }) && (
+          <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-medium text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200">
+            {t('tasks_page.started_short')}
           </span>
         )}
       </div>
