@@ -153,28 +153,26 @@ export function LeadDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col gap-2 px-4 py-3 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className={detailHeaderCardClass}>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h1 className="text-lg font-bold tracking-tight sm:text-xl">{lead.title}</h1>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary">
                 Lead
               </span>
               {lead.code && <CopyableCode code={lead.code} className="text-[11px]" />}
             </div>
-            <h1 className="mt-1 text-lg font-bold tracking-tight sm:text-xl">{lead.title}</h1>
-            <div className={cn(detailHeaderControlsClass, 'mt-1.5')}>
-              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="size-3 opacity-70" />
-                  {formatDate(lead.created_at)}
-                </span>
-                <span>·</span>
-                <span>{relativeFromNow(lead.created_at)}</span>
+            <div className={cn(detailHeaderControlsClass, 'mt-1')}>
+              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Calendar className="size-3 opacity-70" />
+                {formatDate(lead.created_at)}
+                <span className="opacity-60">·</span>
+                {relativeFromNow(lead.created_at)}
                 {isAdmin && lead.won_by_user_id && (
                   <>
-                    <span>·</span>
+                    <span className="opacity-60">·</span>
                     <span className="inline-flex items-center gap-1">
                       <Trophy className="size-3 text-amber-600 dark:text-amber-400" />
                       {(() => {
@@ -184,7 +182,7 @@ export function LeadDetailPage() {
                     </span>
                   </>
                 )}
-              </p>
+              </span>
               <div className={detailHeaderControlGroupClass}>
                 <Label htmlFor="owner" className={detailHeaderLabelClass}>
                   {t('owner.label')}
@@ -322,7 +320,9 @@ export function LeadDetailPage() {
             <aside className="min-w-0 lg:h-full lg:min-h-0">
               <div className={cn(commentsPanelShellClass, 'lg:h-full lg:min-h-0')}>
                 <div className={commentsPanelHeaderClass}>
-                  <h2 className="text-sm font-semibold">{t('tabs.comments')}</h2>
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('tabs.comments')}
+                  </h2>
                 </div>
                 <div className={commentsPanelBodyClass}>
                   <CommentsPanel parentType="lead" parentId={leadId} />

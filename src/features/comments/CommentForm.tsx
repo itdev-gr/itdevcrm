@@ -152,7 +152,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
           />
         )}
 
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <textarea
             ref={taRef}
             value={body}
@@ -160,7 +160,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
             onKeyDown={onKeyDown}
             placeholder={t('comments.placeholder')}
             rows={replyToId ? 2 : 2}
-            className="block w-full resize-none rounded-xl border border-input/80 bg-background px-4 py-3.5 text-[15px] shadow-sm transition-colors placeholder:text-muted-foreground/80 focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
+            className="block w-full resize-none rounded-lg border border-input/80 bg-background px-3 py-2.5 text-sm shadow-sm transition-colors placeholder:text-muted-foreground/80 focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
           />
 
           {query != null && matches.length > 0 && (

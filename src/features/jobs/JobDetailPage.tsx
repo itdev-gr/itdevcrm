@@ -12,6 +12,7 @@ import {
   commentsPanelBodyClass,
   commentsPanelHeaderClass,
   commentsPanelShellClass,
+  detailHeaderBannerClass,
   detailHeaderCardClass,
   detailHeaderControlGroupClass,
   detailHeaderControlsClass,
@@ -110,11 +111,12 @@ export function JobDetailPage() {
   const fullName = contactName || job.client?.name || job.deal?.title || '—';
 
   return (
-    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col gap-2 px-4 py-3 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className={detailHeaderCardClass}>
-        <div className="flex flex-wrap items-start justify-between gap-2.5">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h1 className="text-lg font-bold tracking-tight sm:text-xl">{fullName}</h1>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary dark:text-[#7ad4d4]">
                 Job
               </span>
@@ -130,20 +132,16 @@ export function JobDetailPage() {
                 </span>
               )}
             </div>
-            <h1 className="mt-1 text-lg font-bold tracking-tight sm:text-xl">{fullName}</h1>
-            <div className={cn(detailHeaderControlsClass, 'mt-1.5')}>
-              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
-                <span className="inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                  {job.service_type.replace(/_/g, ' ')}
-                </span>
-                <span>·</span>
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="size-3 opacity-70" />
-                  {formatDate(job.created_at)}
-                </span>
-                <span>·</span>
-                <span>{relativeFromNow(job.created_at)}</span>
-              </p>
+            <div className={cn(detailHeaderControlsClass, 'mt-1')}>
+              <span className="inline-flex rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                {job.service_type.replace(/_/g, ' ')}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Calendar className="size-3 opacity-70" />
+                {formatDate(job.created_at)}
+                <span className="opacity-60">·</span>
+                {relativeFromNow(job.created_at)}
+              </span>
               {boardStages.length > 0 && (
                 <div className={detailHeaderControlGroupClass}>
                   <Label htmlFor="job-stage" className={detailHeaderLabelClass}>
@@ -167,10 +165,18 @@ export function JobDetailPage() {
               {owner && (
                 <div className={detailHeaderControlGroupClass}>
                   <Label className={detailHeaderLabelClass}>Owner</Label>
-                  <span className="inline-flex h-8 max-w-[220px] items-center truncate rounded-lg border border-input/80 bg-background px-2.5 text-xs text-foreground">
+                  <span className="inline-flex h-7 max-w-[200px] items-center truncate rounded-lg border border-input/80 bg-background px-2 text-[11px] text-foreground">
                     {owner.full_name || owner.email}
                   </span>
                 </div>
+              )}
+              {job.parent_job_id && (
+                <span className={detailHeaderBannerClass}>
+                  {t('part_of_ai_seo', { code: parentJob?.code ?? '' })}{' '}
+                  <Link to={`/jobs/${job.parent_job_id}`} className="underline underline-offset-2">
+                    {t('view_billing_record')}
+                  </Link>
+                </span>
               )}
             </div>
           </div>
@@ -211,17 +217,6 @@ export function JobDetailPage() {
             )}
           </div>
         </div>
-
-        {job.parent_job_id && (
-          <div className="mt-2 rounded-md bg-violet-50 px-3 py-1.5 text-xs text-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
-            {t('part_of_ai_seo', {
-              code: parentJob?.code ?? '',
-            })}{' '}
-            <Link to={`/jobs/${job.parent_job_id}`} className="font-semibold underline">
-              {t('view_billing_record')}
-            </Link>
-          </div>
-        )}
       </div>
 
       <Tabs defaultValue="overview" className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
@@ -327,7 +322,9 @@ export function JobDetailPage() {
             <aside className="min-w-0 lg:h-full lg:min-h-0">
               <div className={cn(commentsPanelShellClass, 'lg:h-full lg:min-h-0')}>
                 <div className={commentsPanelHeaderClass}>
-                  <h2 className="text-sm font-semibold">Comments</h2>
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Comments
+                  </h2>
                 </div>
                 <div className={commentsPanelBodyClass}>
                   <CommentsPanel parentType="job" parentId={job.id} />

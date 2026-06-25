@@ -49,12 +49,12 @@ export function CommentsPanel({ parentType, parentId }: Props) {
   }
 
   return (
-    <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-3 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div
         ref={scrollRef}
-        className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain scroll-smooth pr-1.5 [scrollbar-gutter:stable]"
+        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain scroll-smooth pr-1 [scrollbar-gutter:stable]"
       >
-        <div className="space-y-4 pb-24 pt-0.5">
+        <div className="space-y-3 pb-1 pt-0.5">
           {tops.length === 0 ? (
             <CommentEmptyState>{t('comments.empty')}</CommentEmptyState>
           ) : (
@@ -65,8 +65,8 @@ export function CommentsPanel({ parentType, parentId }: Props) {
         </div>
       </div>
 
-      <div className="shrink-0 rounded-xl border border-border/60 bg-card p-3 shadow-sm">
-        <p className="mb-2 text-sm font-medium text-foreground">
+      <div className="shrink-0 border-t border-border/60 pt-2">
+        <p className="mb-1.5 text-xs font-medium text-muted-foreground">
           {t('comments.new_comment', { defaultValue: 'New comment' })}
         </p>
         <CommentForm parentType={parentType} parentId={parentId} />

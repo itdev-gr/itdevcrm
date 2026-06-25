@@ -184,28 +184,31 @@ export const detailTabTriggerClass =
 
 /** Side-by-side overview + comments column on detail pages. */
 export const detailOverviewWithCommentsGridClass =
-  'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)] xl:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)]';
+  'grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)] xl:grid-cols-[minmax(0,1fr)_minmax(26rem,32rem)]';
 
 export const detailHeaderCardClass =
-  'rounded-xl border border-border/60 bg-card p-3 shadow-sm sm:p-3.5';
+  'rounded-xl border border-border/60 bg-card p-2.5 shadow-sm sm:p-3';
 
 export const detailHeaderControlsClass =
-  'flex flex-wrap items-center gap-x-3 gap-y-2';
+  'flex flex-wrap items-center gap-x-2 gap-y-1.5';
 
-export const detailHeaderControlGroupClass = 'flex items-center gap-1.5';
+export const detailHeaderControlGroupClass = 'flex items-center gap-1';
 
-export const detailHeaderLabelClass = 'text-[11px] font-medium text-muted-foreground';
+export const detailHeaderLabelClass = 'text-[10px] font-medium uppercase tracking-wide text-muted-foreground';
 
-export const detailHeaderSelectClass = 'h-8 min-w-[140px] px-2 text-xs';
+export const detailHeaderSelectClass = 'h-7 min-w-[132px] px-2 text-xs';
+
+export const detailHeaderBannerClass =
+  'inline-flex max-w-full items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-800 dark:bg-violet-950/40 dark:text-violet-200';
 
 export const commentsPanelShellClass =
-  'flex max-h-[calc(100vh-9rem)] min-h-[22rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm lg:max-h-none';
+  'flex max-h-[calc(100vh-8rem)] min-h-[20rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm lg:max-h-none';
 
 export const commentsPanelHeaderClass =
-  'shrink-0 border-b border-border/60 px-4 py-2';
+  'shrink-0 border-b border-border/60 px-3 py-1.5';
 
 export const commentsPanelBodyClass =
-  'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-3 pt-3';
+  'flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-2 pt-2';
 
 export function DetailTabsList({
   children,

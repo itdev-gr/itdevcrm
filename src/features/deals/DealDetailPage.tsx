@@ -148,11 +148,12 @@ export function DealDetailPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col gap-2 px-4 py-3 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className={detailHeaderCardClass}>
-        <div className="flex flex-wrap items-start justify-between gap-2.5">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h1 className="text-lg font-bold tracking-tight sm:text-xl">{deal.title}</h1>
               <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">
                 Deal
               </span>
@@ -164,22 +165,19 @@ export function DealDetailPage() {
                 </span>
               )}
             </div>
-            <h1 className="mt-1 text-lg font-bold tracking-tight sm:text-xl">{deal.title}</h1>
-            <div className={cn(detailHeaderControlsClass, 'mt-1.5')}>
-              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="size-3 opacity-70" />
-                  {formatDate(deal.created_at)}
-                </span>
-                <span>·</span>
-                <span>{relativeFromNow(deal.created_at)}</span>
+            <div className={cn(detailHeaderControlsClass, 'mt-1')}>
+              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Calendar className="size-3 opacity-70" />
+                {formatDate(deal.created_at)}
+                <span className="opacity-60">·</span>
+                {relativeFromNow(deal.created_at)}
                 {wonBy && (
                   <>
-                    <span>·</span>
+                    <span className="opacity-60">·</span>
                     <span>{wonBy.full_name || wonBy.email}</span>
                   </>
                 )}
-              </p>
+              </span>
               <div className={detailHeaderControlGroupClass}>
                 <Label htmlFor="client-status" className={detailHeaderLabelClass}>
                   {tClients('status.label')}
@@ -326,7 +324,9 @@ export function DealDetailPage() {
             <aside className="min-w-0 lg:h-full lg:min-h-0">
               <div className={cn(commentsPanelShellClass, 'lg:h-full lg:min-h-0')}>
                 <div className={commentsPanelHeaderClass}>
-                  <h2 className="text-sm font-semibold">{tLeads('tabs.comments')}</h2>
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {tLeads('tabs.comments')}
+                  </h2>
                 </div>
                 <div className={commentsPanelBodyClass}>
                   <CommentsPanel parentType="deal" parentId={dealId} />
