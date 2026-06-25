@@ -48,6 +48,7 @@
   "transaction_drawer": {
     "title": "Transactions",
     "close": "Close",
+    "count": "{{count}} transactions",
     "date": "Date",
     "counterparty": "Counterparty",
     "billing_type": "Billing",

@@ -48,6 +48,7 @@
   "transaction_drawer": {
     "title": "Συναλλαγές",
     "close": "Κλείσιμο",
+    "count": "{{count}} συναλλαγές",
     "date": "Ημ/νία",
     "counterparty": "Αντισυμβαλλόμενος",
     "billing_type": "Χρέωση",
