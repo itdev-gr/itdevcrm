@@ -73,7 +73,7 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
 
   return (
     <Dialog open={taskId !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogDescription className="sr-only">{t('assigned_tasks.detail_description')}</DialogDescription>
         {/* Shell renders the DialogTitle once loaded; provide a fallback meanwhile. */}
         {!task && <DialogTitle className="sr-only">{t('assigned_tasks.detail_title')}</DialogTitle>}

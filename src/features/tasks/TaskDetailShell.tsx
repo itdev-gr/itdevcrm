@@ -51,7 +51,7 @@ export function TaskDetailShell({
 }) {
   return (
     <div className="flex max-h-[82vh] flex-col">
-      <header className="flex items-start justify-between gap-3 border-b border-border/60 pb-3">
+      <header className="flex items-start justify-between gap-3 border-b border-border/60 pb-3 pr-7">
         <DialogTitle className="text-lg font-semibold leading-snug text-foreground">{title}</DialogTitle>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
           <ImportanceBadge importance={importance} />

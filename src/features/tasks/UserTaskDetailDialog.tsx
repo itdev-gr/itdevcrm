@@ -34,7 +34,7 @@ export function UserTaskDetailDialog({
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogDescription className="sr-only">{t('task.dialog_description')}</DialogDescription>
         <TaskDetailShell
           title={card.title}
