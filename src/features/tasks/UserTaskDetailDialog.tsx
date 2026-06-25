@@ -3,6 +3,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { ImportanceBadge } from './ImportanceBadge';
+import { StartTaskButton } from './StartTaskButton';
+import { TaskComments } from './TaskComments';
 import type { TaskCard } from './taskCard';
 
 export function UserTaskDetailDialog({
@@ -55,6 +57,24 @@ export function UserTaskDetailDialog({
               )}
             </p>
           )}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">
+              {card.resolved
+                ? t('tasks_page.status_resolved', { ns: 'common' })
+                : card.startedAtIso
+                  ? t('tasks_page.status_started', { ns: 'common' })
+                  : t('tasks_page.status_open', { ns: 'common' })}
+            </span>
+            <StartTaskButton
+              kind="user"
+              id={card.id}
+              isAssignee={card.relation === 'mine'}
+              resolved={card.resolved}
+              startedAt={card.startedAtIso}
+              locale={locale}
+            />
+          </div>
+          <TaskComments kind="user" taskId={card.id} locale={locale} />
         </div>
       </DialogContent>
     </Dialog>
