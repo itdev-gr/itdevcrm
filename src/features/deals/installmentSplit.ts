@@ -1,16 +1,25 @@
 /** Installment plans offered for one-time web_dev jobs. */
-export type InstallmentPlan = 'none' | '50_50' | '50_25_25';
+export type InstallmentPlan = 'none' | '50_50' | '50_25_25' | 'custom';
 
-/** Per-installment ratios for each plan, in payment order. */
-const RATIOS: Record<InstallmentPlan, number[]> = {
+/**
+ * Per-installment ratios for each ratio-split plan, in payment order.
+ * 'custom' is intentionally absent — its parts come from the editor, not a
+ * ratio split, so splitInstallments/planCount are never called for it.
+ */
+const RATIOS: Record<Exclude<InstallmentPlan, 'custom'>, number[]> = {
   none: [1],
   '50_50': [0.5, 0.5],
   '50_25_25': [0.5, 0.25, 0.25],
 };
 
+/** Ratios for a plan, falling back to a single full payment (covers 'custom'). */
+function ratiosFor(plan: InstallmentPlan): number[] {
+  return plan === 'custom' ? [1] : RATIOS[plan];
+}
+
 /** How many payments a plan produces (1 = no split). */
 export function planCount(plan: InstallmentPlan): number {
-  return RATIOS[plan].length;
+  return ratiosFor(plan).length;
 }
 
 /**
@@ -22,7 +31,7 @@ export function planCount(plan: InstallmentPlan): number {
  * remainder, guaranteeing the parts sum exactly to the original amount.
  */
 export function splitInstallments(amountNet: number, plan: InstallmentPlan): number[] {
-  const ratios = RATIOS[plan];
+  const ratios = ratiosFor(plan);
   const totalCents = Math.round((amountNet || 0) * 100);
   const parts: number[] = [];
   let allocated = 0;
