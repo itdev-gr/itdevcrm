@@ -13,7 +13,7 @@ import { commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyCla
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { ContractsTab } from '@/features/contracts/ContractsTab';
-import { ActivityPanel } from '@/features/activity/ActivityPanel';
+import { ClientActivityPanel } from '@/features/activity/ClientActivityPanel';
 import { ClientTasksTab } from './ClientTasksTab';
 import { useClientBlock } from '@/features/client_blocks/hooks/useClientBlock';
 import { useUnblockClient } from '@/features/client_blocks/hooks/useUnblockClient';
@@ -145,7 +145,7 @@ export function ClientDetailPage() {
           <ContractsTab clientId={clientId} />
         </TabsContent>
         <TabsContent value="activity" className="pt-4">
-          <ActivityPanel entityType="clients" entityId={clientId} />
+          <ClientActivityPanel clientId={clientId} />
         </TabsContent>
       </Tabs>
     </div>
