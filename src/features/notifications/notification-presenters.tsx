@@ -1,4 +1,4 @@
-import { AlertTriangle, AtSign, Bell, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, AtSign, Bell, CheckCircle2, MessageSquare, PlayCircle } from 'lucide-react';
 import { relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +36,10 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
     case 'task_assigned':
     case 'task_resolved':
       return <CheckCircle2 className={cn(iconClass, 'text-emerald-600 dark:text-emerald-400')} />;
+    case 'task_comment':
+      return <MessageSquare className={cn(iconClass, 'text-blue-600 dark:text-blue-400')} />;
+    case 'task_started':
+      return <PlayCircle className={cn(iconClass, 'text-cyan-600 dark:text-cyan-400')} />;
     case 'payment_overdue':
       return <AlertTriangle className={cn(iconClass, 'text-red-600 dark:text-red-400')} />;
     default:
@@ -115,6 +119,46 @@ export function CompactNotificationContent({
     return (
       <>
         <p className={cn('min-w-0', titleClass)}>Task resolved</p>
+        {title && <p className="mt-0.5 truncate text-muted-foreground">{title}</p>}
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'task_comment') {
+    const title = readString(payload, 'title');
+    const snippet = readString(payload, 'snippet');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          New comment
+          {title && (
+            <>
+              {' '}
+              on <span className="font-semibold">{title}</span>
+            </>
+          )}
+        </p>
+        {snippet && <p className="mt-0.5 truncate text-muted-foreground italic">&ldquo;{snippet}&rdquo;</p>}
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'task_started') {
+    const title = readString(payload, 'title');
+    const code = readString(payload, 'source_code');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          Started working
+          {code && (
+            <>
+              {' '}
+              <span className="rounded bg-muted px-1 py-px font-mono text-[10px]">{code}</span>
+            </>
+          )}
+        </p>
         {title && <p className="mt-0.5 truncate text-muted-foreground">{title}</p>}
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
