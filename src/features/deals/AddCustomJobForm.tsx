@@ -10,12 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCreateCustomJob } from './hooks/useCustomJobMutations';
 import { splitInstallments, type InstallmentPlan } from './installmentSplit';
+import { CustomScheduleEditor } from './CustomScheduleEditor';
+import { validateCustomSchedule, type ScheduleRow } from './customSchedule';
 import { formatEur } from '@/lib/countries';
 import type { BillingType, JobDepartment } from '@/lib/rpc';
 
-const PLANS: InstallmentPlan[] = ['none', '50_50', '50_25_25'];
+const PLANS: InstallmentPlan[] = ['none', '50_50', '50_25_25', 'custom'];
 
 const DEPARTMENTS: JobDepartment[] = [
   'web_seo',
@@ -49,6 +52,8 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   const [plan, setPlan] = useState<InstallmentPlan>('none');
   const [description, setDescription] = useState('');
   const [setupFee, setSetupFee] = useState('');
+  const [schedule, setSchedule] = useState<ScheduleRow[]>([{ amount_net: 0, due_date: null }]);
+  const [dupConfirm, setDupConfirm] = useState(false);
 
   // Hosting is billed yearly only.
   const cadences: BillingType[] = department === 'hosting' ? ['recurring_yearly'] : CADENCES;
@@ -59,33 +64,45 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
 
   const canSubmit = title.trim().length > 0 && priceNet.trim().length > 0;
 
+  async function doCreate(force: boolean) {
+    const billingOnly = department === BILLING_ONLY;
+    const isCustom = effectivePlan === 'custom';
+    if (isCustom) {
+      const err = validateCustomSchedule(schedule, Number(priceNet || 0));
+      if (err) { alert(t(`jobs_billing.billing_errors.${err}`, { defaultValue: err })); return; }
+    }
+    await create.mutateAsync({
+      title: title.trim(),
+      description: description.trim() || null,
+      department: billingOnly ? 'web_dev' : department,
+      billingType: cadence,
+      amountNet: Number(priceNet),
+      vatRate: Number(vatRate || 0),
+      setupFee: setupFee ? Number(setupFee) : 0,
+      billingOnly,
+      installmentPlan: effectivePlan,
+      installmentSchedule: isCustom ? schedule : null,
+      force,
+    });
+  }
+
   async function submit() {
     if (!canSubmit) return;
-    const billingOnly = department === BILLING_ONLY;
     try {
-      await create.mutateAsync({
-        title: title.trim(),
-        description: description.trim() || null,
-        department: billingOnly ? 'web_dev' : department,
-        billingType: cadence,
-        amountNet: Number(priceNet),
-        vatRate: Number(vatRate || 0),
-        setupFee: setupFee ? Number(setupFee) : 0,
-        billingOnly,
-        installmentPlan: effectivePlan,
-      });
-      setTitle('');
-      setPriceNet('');
-      setVatRate(String(defaultVatRate));
-      setCadence('one_time');
-      setPlan('none');
-      setDescription('');
-      setSetupFee('');
+      await doCreate(false);
+      resetForm();
       onDone?.();
     } catch (err) {
-      const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-      alert(errors.join('\n'));
+      const code = (err as Error & { errors?: string[] }).errors?.[0] ?? (err as Error).message;
+      if (code === 'web_dev_job_exists') { setDupConfirm(true); return; }
+      alert(t(`jobs_billing.billing_errors.${code}`, { defaultValue: code }));
     }
+  }
+
+  function resetForm() {
+    setTitle(''); setPriceNet(''); setVatRate(String(defaultVatRate));
+    setCadence('one_time'); setPlan('none'); setDescription(''); setSetupFee('');
+    setSchedule([{ amount_net: 0, due_date: null }]);
   }
 
   return (
@@ -161,7 +178,7 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
               ))}
             </SelectContent>
           </Select>
-          {effectivePlan !== 'none' && priceNet.trim() !== '' && (
+          {effectivePlan !== 'none' && effectivePlan !== 'custom' && priceNet.trim() !== '' && (
             <p className="mt-1 text-[10px] text-muted-foreground">
               {t('jobs_billing.plan_preview', {
                 parts: splitInstallments(Number(priceNet || 0), effectivePlan)
@@ -171,6 +188,9 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
             </p>
           )}
         </div>
+      )}
+      {planEligible && effectivePlan === 'custom' && (
+        <CustomScheduleEditor rows={schedule} onChange={setSchedule} total={Number(priceNet || 0)} />
       )}
       <div>
         <Label htmlFor="cj-price" className="text-xs">
@@ -231,6 +251,20 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
           {create.isPending ? t('jobs_billing.form.submitting') : t('jobs_billing.form.submit')}
         </Button>
       </div>
+      <ConfirmDialog
+        open={dupConfirm}
+        onOpenChange={setDupConfirm}
+        title={t('jobs_billing.dup_confirm.title')}
+        description={t('jobs_billing.dup_confirm.body')}
+        confirmLabel={t('jobs_billing.dup_confirm.confirm')}
+        onConfirm={async () => {
+          try { await doCreate(true); resetForm(); setDupConfirm(false); onDone?.(); }
+          catch (err) {
+            const code = (err as Error & { errors?: string[] }).errors?.[0] ?? (err as Error).message;
+            alert(t(`jobs_billing.billing_errors.${code}`, { defaultValue: code }));
+          }
+        }}
+      />
     </div>
   );
 }

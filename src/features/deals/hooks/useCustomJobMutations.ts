@@ -30,6 +30,8 @@ function throwOnFailure(result: { ok: true; job_id: string } | { ok: false; erro
 
 export function useCreateCustomJob(dealId: string) {
   const qc = useQueryClient();
+  // `force` (override the one-web_dev-job-per-deal guardrail) and
+  // `installmentSchedule` (custom plan) flow through via the input spread below.
   return useMutation<string, DefaultError, Omit<CreateCustomJobInput, 'dealId'>>({
     mutationFn: captureMutation('jobs', 'create_custom_job', async (input) => {
       const result = await createCustomJob({ ...input, dealId });
