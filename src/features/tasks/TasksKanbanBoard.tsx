@@ -10,6 +10,8 @@ import { SegmentedControl } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { useTaskBoardData, isoDaysAgo } from './hooks/useTaskBoardData';
 import { useTaskBoardActions } from './hooks/useTaskBoardActions';
+import { useTasksSeenStore } from './tasksSeenStore';
+import { isTaskHighlighted, HIGHLIGHT_WINDOW_DAYS } from './taskHighlight';
 import { TasksKanbanColumn } from './TasksKanbanColumn';
 import { AssignedTaskDetailDialog } from '@/features/assigned_tasks/AssignedTaskDetailDialog';
 import { UserTaskDetailDialog } from './UserTaskDetailDialog';
@@ -19,6 +21,7 @@ import {
 } from './taskCard';
 
 const RESOLVED_WINDOW_DAYS = 30;
+const EMPTY_OPENED: Record<string, true> = {};
 
 export function TasksKanbanBoard() {
   const { t } = useTranslation('common');
@@ -31,6 +34,13 @@ export function TasksKanbanBoard() {
   // reflects live changes (e.g. started_at) after the board query refetches.
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [cutoffIso] = useState(() => isoDaysAgo(RESOLVED_WINDOW_DAYS));
+
+  // New-task highlight: a task stays highlighted until the viewer opens it.
+  const opened = useTasksSeenStore((s) => s.openedByUser[meId] ?? EMPTY_OPENED);
+  const markOpened = useTasksSeenStore((s) => s.markOpened);
+  const [highlightCutoffMs] = useState(() => Date.now() - HIGHLIGHT_WINDOW_DAYS * 86_400_000);
+  const isNew = (card: TaskCard) =>
+    isTaskHighlighted({ createdAtIso: card.createdAtIso, opened: !!opened[card.id], cutoffMs: highlightCutoffMs });
 
   // Resolve assignee names from the full staff directory so service-team
   // assignees (local_seo/web_seo/…) display, not just sales-only owners.
@@ -121,7 +131,11 @@ export function TasksKanbanBoard() {
                 cards={byColumn.get(c) ?? []}
                 nameFor={nameFor}
                 onAction={fire}
-                onOpen={(card) => setOpenKey(card.key)}
+                onOpen={(card) => {
+                  if (meId) markOpened(meId, card.id);
+                  setOpenKey(card.key);
+                }}
+                isNew={isNew}
               />
             ))}
           </div>

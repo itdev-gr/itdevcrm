@@ -7,15 +7,17 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ImportanceBadge } from './ImportanceBadge';
 import { startedBadgeVisible } from './taskStarted';
+import { NEW_TASK_RING, NewTaskDot } from './taskHighlightStyle';
 import { isDraggable, type TaskCard, type DragAction } from './taskCard';
 
 export function TaskKanbanCard({
-  card, assigneeName, onAction, onOpen,
+  card, assigneeName, onAction, onOpen, highlight = false,
 }: {
   card: TaskCard;
   assigneeName: string;
   onAction: (action: DragAction) => void;
   onOpen: (card: TaskCard) => void;
+  highlight?: boolean;
 }) {
   const { t } = useTranslation('common');
   const draggable = isDraggable(card);
@@ -42,9 +44,11 @@ export function TaskKanbanCard({
       className={cn(
         'rounded-lg border border-border/60 bg-background px-3 py-2.5 shadow-sm',
         draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default',
+        highlight && NEW_TASK_RING,
       )}
     >
       <div className="flex flex-wrap items-center gap-1.5">
+        {highlight && <NewTaskDot />}
         <span className="truncate text-sm font-medium">{card.title}</span>
         <ImportanceBadge importance={card.importance} />
       </div>
