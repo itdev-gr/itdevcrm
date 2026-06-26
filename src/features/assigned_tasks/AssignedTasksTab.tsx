@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { cn } from '@/lib/utils';
 import { relativeFromNow } from '@/lib/datetime';
 import { useAssignedTasksForSource } from './hooks/useAssignedTasksForSource';
 import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
@@ -10,7 +11,12 @@ import { NewAssignedTaskDialog } from './NewAssignedTaskDialog';
 import { canCreateAssignedTask } from './canCreateAssignedTask';
 import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
+import { useTasksSeenStore } from '@/features/tasks/tasksSeenStore';
+import { isTaskHighlighted, HIGHLIGHT_WINDOW_DAYS } from '@/features/tasks/taskHighlight';
+import { NEW_TASK_ROW, NewTaskDot } from '@/features/tasks/taskHighlightStyle';
 import type { AssignedTaskRow } from './hooks/useAssignedTasksOpen';
+
+const EMPTY_OPENED: Record<string, true> = {};
 
 type Props = {
   source: { kind: 'deal' | 'job'; id: string };
@@ -21,10 +27,12 @@ function TaskRow({
   task,
   onOpen,
   fromDeal = false,
+  isNew = false,
 }: {
   task: AssignedTaskRow;
   onOpen: (id: string) => void;
   fromDeal?: boolean;
+  isNew?: boolean;
 }) {
   const { t } = useTranslation('jobs');
   const userId = useAuthStore((s) => s.user?.id ?? '');
@@ -34,7 +42,7 @@ function TaskRow({
   const canResolve = task.status === 'open' && (isAssignee || isAdmin);
 
   return (
-    <li className="border-t first:border-t-0">
+    <li className={cn('border-t first:border-t-0', isNew && NEW_TASK_ROW)}>
       <button
         type="button"
         aria-label={task.title}
@@ -43,6 +51,7 @@ function TaskRow({
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
+            {isNew && <NewTaskDot />}
             <span className="text-sm font-medium">{task.title}</span>
             <DepartmentChip department={task.department} />
             {fromDeal && (
@@ -95,6 +104,17 @@ export function AssignedTasksTab({ source, deptMatch }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
+  const userId = useAuthStore((s) => s.user?.id ?? '');
+  const opened = useTasksSeenStore((s) => s.openedByUser[userId] ?? EMPTY_OPENED);
+  const markOpened = useTasksSeenStore((s) => s.markOpened);
+  const [highlightCutoffMs] = useState(() => Date.now() - HIGHLIGHT_WINDOW_DAYS * 86_400_000);
+  const newFor = (task: AssignedTaskRow) =>
+    isTaskHighlighted({ createdAtIso: task.created_at, opened: !!opened[task.id], cutoffMs: highlightCutoffMs });
+  const handleOpen = (id: string) => {
+    if (userId) markOpened(userId, id);
+    setOpenTaskId(id);
+  };
+
   const { data: tasks = [], isLoading, error } = useAssignedTasksForSource(source, deptMatch);
 
   if (isLoading) return <div className="text-sm text-muted-foreground">…</div>;
@@ -124,8 +144,9 @@ export function AssignedTasksTab({ source, deptMatch }: Props) {
             <TaskRow
               key={task.id}
               task={task}
-              onOpen={setOpenTaskId}
+              onOpen={handleOpen}
               fromDeal={source.kind === 'job' && task.job_id == null}
+              isNew={newFor(task)}
             />
           ))}
         </ul>
@@ -140,8 +161,9 @@ export function AssignedTasksTab({ source, deptMatch }: Props) {
             <TaskRow
               key={task.id}
               task={task}
-              onOpen={setOpenTaskId}
+              onOpen={handleOpen}
               fromDeal={source.kind === 'job' && task.job_id == null}
+              isNew={newFor(task)}
             />
           ))}
         </ul>
