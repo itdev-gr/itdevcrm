@@ -11,6 +11,7 @@ import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
+import { RequestGbpAccessButton } from './RequestGbpAccessButton';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { JobRow } from './hooks/useJobs';
 
@@ -102,11 +103,14 @@ export function JobsKanbanCard({
             </span>
           )}
 
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <User className="size-3.5 shrink-0 opacity-70" />
-            <span className="truncate">
-              {owner ? owner.full_name || owner.email : 'Unassigned'}
-            </span>
+          <div className="flex items-center justify-between gap-1.5 text-[11px] text-muted-foreground">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <User className="size-3.5 shrink-0 opacity-70" />
+              <span className="truncate">
+                {owner ? owner.full_name || owner.email : 'Unassigned'}
+              </span>
+            </div>
+            <RequestGbpAccessButton job={job} />
           </div>
 
           <div
