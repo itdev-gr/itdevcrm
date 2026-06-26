@@ -76,15 +76,18 @@
     "no_description": "Χωρίς περιγραφή.",
     "you": "Εσείς"
   },
-  "gbp_access": {
-    "request_title": "Αίτημα πρόσβασης στο Google Business Profile",
-    "sent_title": "Ζητήθηκε πρόσβαση {{date}} · κλικ για επαναποστολή",
+  "seo_access": {
     "no_email": "Δεν υπάρχει email πελάτη",
-    "confirm_title": "Αίτημα πρόσβασης GBP",
-    "confirm_body": "Αποστολή του email αιτήματος πρόσβασης στο Google Business Profile στο {{email}};",
+    "sent_title": "Ζητήθηκε πρόσβαση {{date}} · κλικ για επαναποστολή",
     "send": "Αποστολή",
     "cancel": "Άκυρο",
-    "error": "Δεν ήταν δυνατή η αποστολή του email."
+    "error": "Δεν ήταν δυνατή η αποστολή του email.",
+    "gbp_request": "Αίτημα πρόσβασης στο Google Business Profile",
+    "gbp_confirm_title": "Αίτημα πρόσβασης GBP",
+    "gbp_confirm_body": "Αποστολή του email αιτήματος πρόσβασης στο Google Business Profile στο {{email}};",
+    "gsc_request": "Αίτημα πρόσβασης στο Google Search Console",
+    "gsc_confirm_title": "Αίτημα πρόσβασης GSC",
+    "gsc_confirm_body": "Αποστολή του email αιτήματος πρόσβασης στο Google Search Console στο {{email}};"
   },
   "client_picker": {
     "label": "Πελάτης (προαιρετικά)",

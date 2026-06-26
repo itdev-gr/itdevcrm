@@ -76,15 +76,18 @@
     "no_description": "No description.",
     "you": "You"
   },
-  "gbp_access": {
-    "request_title": "Request Google Business Profile access",
-    "sent_title": "Access requested {{date}} · click to resend",
+  "seo_access": {
     "no_email": "No client email on file",
-    "confirm_title": "Request GBP access",
-    "confirm_body": "Send the Google Business Profile access request email to {{email}}?",
+    "sent_title": "Access requested {{date}} · click to resend",
     "send": "Send",
     "cancel": "Cancel",
-    "error": "Could not send the email."
+    "error": "Could not send the email.",
+    "gbp_request": "Request Google Business Profile access",
+    "gbp_confirm_title": "Request GBP access",
+    "gbp_confirm_body": "Send the Google Business Profile access request email to {{email}}?",
+    "gsc_request": "Request Google Search Console access",
+    "gsc_confirm_title": "Request GSC access",
+    "gsc_confirm_body": "Send the Google Search Console access request email to {{email}}?"
   },
   "client_picker": {
     "label": "Client (optional)",

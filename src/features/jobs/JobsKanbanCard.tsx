@@ -11,7 +11,7 @@ import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
-import { RequestGbpAccessButton } from './RequestGbpAccessButton';
+import { RequestSeoAccessButton } from './RequestSeoAccessButton';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { JobRow } from './hooks/useJobs';
 
@@ -110,7 +110,7 @@ export function JobsKanbanCard({
                 {owner ? owner.full_name || owner.email : 'Unassigned'}
               </span>
             </div>
-            <RequestGbpAccessButton job={job} />
+            <RequestSeoAccessButton job={job} />
           </div>
 
           <div
