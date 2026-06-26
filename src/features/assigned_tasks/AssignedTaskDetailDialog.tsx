@@ -12,6 +12,8 @@ import { CallLink } from '@/components/CallLink';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { importanceOf } from '@/features/tasks/importance';
 import { StartTaskButton } from '@/features/tasks/StartTaskButton';
+import { resolveTaskOpenLink } from './taskOpenLink';
+import { useDealServiceJob } from './hooks/useDealServiceJob';
 import {
   TaskDetailShell, type TaskMetaRow, type TaskStatusTone,
 } from '@/features/tasks/TaskDetailShell';
@@ -31,8 +33,20 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const c = (key: string, opts?: Record<string, unknown>) => t(key, { ns: 'common', ...opts });
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
   const meId = useAuthStore((s) => s.user?.id ?? '');
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const canOpenDeal = isAdmin || groupCodes.includes('accounting') || groupCodes.includes('sales');
   const { data: task, isLoading, error } = useAssignedTaskDetail(taskId);
   const resolve = useResolveAssignedTask();
+
+  // Technical groups can't open the deal page; for a deal-scoped task, point them at
+  // the deal's matching service job instead.
+  const needJobLink = !!task?.deal_id && !task?.job_id && !canOpenDeal;
+  const { data: matchingJob } = useDealServiceJob(
+    task?.deal_id ?? null,
+    task?.department?.code ?? null,
+    needJobLink,
+  );
 
   async function onResolve() {
     if (!task) return;
@@ -40,8 +54,15 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
     onOpenChange(false);
   }
 
-  const sourceHref = task?.deal_id ? `/deals/${task.deal_id}` : task?.job_id ? `/jobs/${task.job_id}` : null;
-  const sourceLabel = task?.deal_id ? t('assigned_tasks.open_deal') : t('assigned_tasks.open_job');
+  const openLink = task
+    ? resolveTaskOpenLink({
+        dealId: task.deal_id,
+        jobId: task.job_id,
+        sourceCode: task.source_code,
+        canOpenDeal,
+        matchingJob: matchingJob ?? null,
+      })
+    : null;
 
   const statusKey = task
     ? task.status === 'resolved' ? 'resolved' : task.started_at ? 'started' : 'open'
@@ -58,16 +79,18 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
           value: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(task.created_at)),
         },
         { label: c('tasks_page.department_label'), value: <DepartmentChip department={task.department} /> },
-        ...(task.source_code
+        ...(openLink
           ? [{
               label: c('tasks_page.source_label'),
-              value: sourceHref ? (
-                <Link to={sourceHref} className="font-mono text-xs text-primary hover:underline">
-                  {task.source_code}
+              value: (
+                <Link to={openLink.href} className="font-mono text-xs text-primary hover:underline">
+                  {openLink.code || task.source_code}
                 </Link>
-              ) : task.source_code,
+              ),
             }]
-          : []),
+          : task.source_code
+            ? [{ label: c('tasks_page.source_label'), value: task.source_code }]
+            : []),
       ]
     : [];
 
@@ -106,10 +129,10 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                     {c('tasks_page.resolve')}
                   </Button>
                 )}
-                {sourceHref && (
+                {openLink && (
                   <Button asChild variant="outline">
-                    <Link to={sourceHref}>
-                      {sourceLabel} {task.source_code ?? ''}
+                    <Link to={openLink.href}>
+                      {t(`assigned_tasks.${openLink.labelKey}`)} {openLink.code}
                     </Link>
                   </Button>
                 )}
