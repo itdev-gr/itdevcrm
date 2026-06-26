@@ -76,6 +76,16 @@
     "no_description": "No description.",
     "you": "You"
   },
+  "gbp_access": {
+    "request_title": "Request Google Business Profile access",
+    "sent_title": "Access requested {{date}} · click to resend",
+    "no_email": "No client email on file",
+    "confirm_title": "Request GBP access",
+    "confirm_body": "Send the Google Business Profile access request email to {{email}}?",
+    "send": "Send",
+    "cancel": "Cancel",
+    "error": "Could not send the email."
+  },
   "client_picker": {
     "label": "Client (optional)",
     "search_placeholder": "Search client…",

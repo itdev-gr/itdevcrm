@@ -76,6 +76,16 @@
     "no_description": "Χωρίς περιγραφή.",
     "you": "Εσείς"
   },
+  "gbp_access": {
+    "request_title": "Αίτημα πρόσβασης στο Google Business Profile",
+    "sent_title": "Ζητήθηκε πρόσβαση {{date}} · κλικ για επαναποστολή",
+    "no_email": "Δεν υπάρχει email πελάτη",
+    "confirm_title": "Αίτημα πρόσβασης GBP",
+    "confirm_body": "Αποστολή του email αιτήματος πρόσβασης στο Google Business Profile στο {{email}};",
+    "send": "Αποστολή",
+    "cancel": "Άκυρο",
+    "error": "Δεν ήταν δυνατή η αποστολή του email."
+  },
   "client_picker": {
     "label": "Πελάτης (προαιρετικά)",
     "search_placeholder": "Αναζήτηση πελάτη…",
