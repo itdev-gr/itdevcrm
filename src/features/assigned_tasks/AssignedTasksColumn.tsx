@@ -13,7 +13,12 @@ import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 import { TaskDialog } from '@/features/home/TaskDialog';
 import { useOpenUserTasks } from '@/features/home/hooks/useOpenUserTasks';
 import { useToggleTaskComplete } from '@/features/home/hooks/useDeleteTask';
+import { useTasksSeenStore } from '@/features/tasks/tasksSeenStore';
+import { isTaskHighlighted, HIGHLIGHT_WINDOW_DAYS } from '@/features/tasks/taskHighlight';
+import { NEW_TASK_ROW, NewTaskDot } from '@/features/tasks/taskHighlightStyle';
 import type { UserTaskRow } from '@/features/home/hooks/useUserTasks';
+
+const EMPTY_OPENED: Record<string, true> = {};
 
 function sourceHref(task: AssignedTaskRow): string {
   if (task.deal_id) return `/deals/${task.deal_id}`;
@@ -34,11 +39,12 @@ function formatDue(dueIso: string, locale: string): string {
 
 /** A deal/job-scoped assigned task (from the `assigned_tasks` table). */
 function Row({
-  task, canResolve, onOpen,
+  task, canResolve, onOpen, isNew = false,
 }: {
   task: AssignedTaskRow;
   canResolve: boolean;
   onOpen: (id: string) => void;
+  isNew?: boolean;
 }) {
   const { t } = useTranslation('home');
   const resolve = useResolveAssignedTask();
@@ -48,10 +54,14 @@ function Row({
         type="button"
         aria-label={task.title}
         onClick={() => onOpen(task.id)}
-        className="flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
+        className={cn(
+          'flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5',
+          isNew && NEW_TASK_ROW,
+        )}
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
+            {isNew && <NewTaskDot />}
             <span className="truncate text-sm font-medium">{task.title}</span>
             <DepartmentChip department={task.department} />
             <Link
@@ -92,11 +102,12 @@ function Row({
 
 /** A personal/calendar task (from the `user_tasks` table). */
 function PersonalRow({
-  task, canResolve, onOpen,
+  task, canResolve, onOpen, isNew = false,
 }: {
   task: UserTaskRow;
   canResolve: boolean;
   onOpen: (task: UserTaskRow) => void;
+  isNew?: boolean;
 }) {
   const { t, i18n } = useTranslation('home');
   const complete = useToggleTaskComplete();
@@ -109,10 +120,14 @@ function PersonalRow({
         type="button"
         aria-label={task.title}
         onClick={() => onOpen(task)}
-        className="flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
+        className={cn(
+          'flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5',
+          isNew && NEW_TASK_ROW,
+        )}
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
+            {isNew && <NewTaskDot />}
             <span className="truncate text-sm font-medium">{task.title}</span>
             <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
               {t('assigned_tasks.personal')}
@@ -177,6 +192,12 @@ export function AssignedTasksColumn() {
     ...assignedTasks.map((task) => ({ kind: 'assigned' as const, task })),
   ];
 
+  const opened = useTasksSeenStore((s) => s.openedByUser[userId] ?? EMPTY_OPENED);
+  const markOpened = useTasksSeenStore((s) => s.markOpened);
+  const [highlightCutoffMs] = useState(() => Date.now() - HIGHLIGHT_WINDOW_DAYS * 86_400_000);
+  const newForId = (id: string, createdAt: string) =>
+    isTaskHighlighted({ createdAtIso: createdAt, opened: !!opened[id], cutoffMs: highlightCutoffMs });
+
   function openNewTask() {
     setEditingPersonal(null);
     setTaskDialogOpen(true);
@@ -184,6 +205,14 @@ export function AssignedTasksColumn() {
   function openEditTask(task: UserTaskRow) {
     setEditingPersonal(task);
     setTaskDialogOpen(true);
+  }
+  function openAssigned(id: string) {
+    if (userId) markOpened(userId, id);
+    setOpenTaskId(id);
+  }
+  function openPersonal(task: UserTaskRow) {
+    if (userId) markOpened(userId, task.id);
+    openEditTask(task);
   }
 
   const title = showAllAdmin ? t('assigned_tasks.all_team_title') : t('assigned_tasks.title');
@@ -231,14 +260,16 @@ export function AssignedTasksColumn() {
                   key={`a-${item.task.id}`}
                   task={item.task}
                   canResolve={isAdmin || item.task.assignee_user_id === userId}
-                  onOpen={setOpenTaskId}
+                  onOpen={openAssigned}
+                  isNew={newForId(item.task.id, item.task.created_at)}
                 />
               ) : (
                 <PersonalRow
                   key={`p-${item.task.id}`}
                   task={item.task}
                   canResolve={isAdmin || item.task.user_id === userId}
-                  onOpen={openEditTask}
+                  onOpen={openPersonal}
+                  isNew={newForId(item.task.id, item.task.created_at)}
                 />
               ),
             )}
