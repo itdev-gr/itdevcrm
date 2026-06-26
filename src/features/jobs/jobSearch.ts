@@ -31,3 +31,11 @@ export function matchesJobSearch(job: JobRow, query: string): boolean {
   if (!q) return true;
   return jobSearchHaystack(job).includes(q);
 }
+
+/** When an active search narrows the board to a single job, the id to scroll
+ *  into view. Null when the search is empty or there isn't exactly one match. */
+export function boardFocusJobId(jobs: JobRow[], search: string): string | null {
+  if (search.trim() === '') return null;
+  if (jobs.length !== 1) return null;
+  return jobs[0]?.id ?? null;
+}

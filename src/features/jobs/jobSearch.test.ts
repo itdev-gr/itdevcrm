@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchesJobSearch } from './jobSearch';
+import { matchesJobSearch, boardFocusJobId } from './jobSearch';
 import type { JobRow } from './hooks/useJobs';
 
 // The matcher only reads a handful of fields, so a partial object is enough.
@@ -73,5 +73,27 @@ describe('matchesJobSearch', () => {
   it('does not false-positive across field boundaries', () => {
     // "house2101" would only match if name+phone were concatenated without a separator.
     expect(matchesJobSearch(full, 'house2101')).toBe(false);
+  });
+});
+
+describe('boardFocusJobId', () => {
+  const a = job({ id: 'job-a' });
+  const b = job({ id: 'job-b' });
+
+  it('returns the single job id when searching and exactly one matches', () => {
+    expect(boardFocusJobId([a], 'something')).toBe('job-a');
+  });
+
+  it('returns null when the search box is empty (no auto-focus)', () => {
+    expect(boardFocusJobId([a], '')).toBeNull();
+    expect(boardFocusJobId([a], '   ')).toBeNull();
+  });
+
+  it('returns null when more than one job matches', () => {
+    expect(boardFocusJobId([a, b], 'x')).toBeNull();
+  });
+
+  it('returns null when nothing matches', () => {
+    expect(boardFocusJobId([], 'x')).toBeNull();
   });
 });

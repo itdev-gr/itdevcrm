@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -19,7 +19,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/page-shell';
 import { Input } from '@/components/ui/input';
-import { matchesJobSearch } from './jobSearch';
+import { boardFocusJobId, matchesJobSearch } from './jobSearch';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
@@ -56,6 +56,23 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   // Admins always see every job in the department — the Only-mine filter
   // is a per-tech-user convenience, not a permissions boundary.
   const onlyMine = !isAdmin && searchParams.get('mine') !== '0';
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  const scopedJobs =
+    onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
+  const filteredJobs = scopedJobs.filter((j) => matchesJobSearch(j, search));
+
+  // When a search narrows the board to a single card, scroll it into view.
+  const focusJobId = boardFocusJobId(filteredJobs, search);
+  useEffect(() => {
+    if (!focusJobId) return;
+    const el = boardRef.current?.querySelector<HTMLElement>(`[data-job-card="${focusJobId}"]`);
+    if (!el) return;
+    const raf = window.requestAnimationFrame(() =>
+      el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }),
+    );
+    return () => window.cancelAnimationFrame(raf);
+  }, [focusJobId]);
 
   const activeJob = activeId ? (jobs.find((j) => j.id === activeId) ?? null) : null;
 
@@ -65,10 +82,6 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const boardStages = stages
     .filter((s) => s.board === serviceType && !s.archived)
     .sort((a, b) => a.position - b.position);
-
-  const scopedJobs =
-    onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
-  const filteredJobs = scopedJobs.filter((j) => matchesJobSearch(j, search));
 
   const { byColumn: jobsByStage, blocked: blockedJobs } = groupJobsForBoard({
     board: serviceType,
@@ -151,7 +164,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
         onDragEnd={onDragEnd}
         onDragCancel={() => setActiveId(null)}
       >
-        <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-3">
+        <div ref={boardRef} className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-3">
           {boardStages.map((s, index) => (
             <JobsKanbanColumn
               key={s.id}

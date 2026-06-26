@@ -51,7 +51,7 @@ export function JobsKanbanCard({
   const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} data-job-card={job.id}>
       <Card
         size="sm"
         className={cn(
