@@ -44,7 +44,7 @@ export function useJobs(serviceType: ServiceType) {
       const { data, error } = await supabase
         .from('jobs')
         .select(
-          '*, parent_job_id, client:clients(id, name, contact_first_name, contact_last_name, industry), deal:deals(id, code, title), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
+          '*, parent_job_id, client:clients(id, name, contact_first_name, contact_last_name, industry, email, phone), deal:deals(id, code, title), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
         )
         .in('service_type', serviceTypesForBoard(serviceType))
         .eq('archived', false)
