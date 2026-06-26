@@ -56,6 +56,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
     parseAdditionalContacts(lead.additional_contacts),
   );
   const [website, setWebsite] = useState(lead.website ?? '');
+  const [businessProfileUrl, setBusinessProfileUrl] = useState(lead.business_profile_url ?? '');
   const [companyName, setCompanyName] = useState(lead.company_name ?? '');
   const [industry, setIndustry] = useState(lead.industry ?? '');
   const [country, setCountry] = useState(lead.country ?? '');
@@ -100,6 +101,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       contact_info: contactInfo.trim() || null,
       additional_contacts: additionalContacts,
       website: website.trim() || null,
+      business_profile_url: businessProfileUrl.trim() || null,
       company_name: companyName.trim() || null,
       industry: industry.trim() || null,
       country: country.trim() || null,
@@ -124,6 +126,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       contactInfo,
       additionalContacts,
       website,
+      businessProfileUrl,
       companyName,
       industry,
       country,
@@ -230,6 +233,17 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 placeholder="https://"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="bpurl">{t('form.business_profile_url')}</Label>
+              <Input
+                id="bpurl"
+                type="url"
+                placeholder="https://"
+                value={businessProfileUrl}
+                onChange={(e) => setBusinessProfileUrl(e.target.value)}
                 className="mt-1.5"
               />
             </div>

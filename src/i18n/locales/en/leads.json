@@ -171,7 +171,8 @@
       "online": "Online payment"
     },
     "scheduled_for": "Scheduled for",
-    "scheduled_for_hint": "Picking a date moves the lead to Scheduled and adds it to the home calendar."
+    "scheduled_for_hint": "Picking a date moves the lead to Scheduled and adds it to the home calendar.",
+    "business_profile_url": "Business Profile URL"
   },
   "tabs": {
     "overview": "Overview",
