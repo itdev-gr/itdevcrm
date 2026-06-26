@@ -18,6 +18,8 @@ import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/page-shell';
+import { Input } from '@/components/ui/input';
+import { matchesJobSearch } from './jobSearch';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
@@ -33,11 +35,17 @@ const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   ads: { en: 'Ads', el: 'Διαφημίσεις' },
 };
 
+const SEARCH_PLACEHOLDER: { en: string; el: string } = {
+  en: 'Search this board…',
+  el: 'Αναζήτηση σε αυτόν τον πίνακα…',
+};
+
 export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   useJobsRealtime(serviceType);
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const { data: jobs = [], isLoading } = useJobs(serviceType);
   const { data: stages = [] } = usePipelineStages();
   const moveStage = useMoveJobStage(serviceType);
@@ -58,8 +66,9 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     .filter((s) => s.board === serviceType && !s.archived)
     .sort((a, b) => a.position - b.position);
 
-  const filteredJobs =
+  const scopedJobs =
     onlyMine && userId ? jobs.filter((j) => j.owner_user_id === userId) : jobs;
+  const filteredJobs = scopedJobs.filter((j) => matchesJobSearch(j, search));
 
   const { byColumn: jobsByStage, blocked: blockedJobs } = groupJobsForBoard({
     board: serviceType,
@@ -105,6 +114,16 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={SERVICE_LABELS[serviceType][lang]}>
+        {serviceType === 'local_seo' && (
+          <Input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={SEARCH_PLACEHOLDER[lang]}
+            aria-label={SEARCH_PLACEHOLDER[lang]}
+            className="h-9 w-48 rounded-lg border-input/80 shadow-sm sm:w-64"
+          />
+        )}
         {isAdmin ? (
           <span className="rounded-full border border-amber-300/80 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
             Admin view · {filteredJobs.length}
