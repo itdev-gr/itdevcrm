@@ -63,14 +63,20 @@ That is the entire backend behaviour change. All three reminder types flow throu
 loop, so the single predicate covers all of them. The function is `security definer`, so
 there are no RLS concerns reading the column.
 
-### 3. Frontend toggle (`src/features/deals/DealForm.tsx`)
+### 3. Frontend toggle (dedicated component in the deal Payment tab)
 
-- A `Switch` placed in the billing area, labelled in Greek:
+- A focused new component `src/features/deals/PaymentRemindersToggle.tsx`, rendered at the
+  top of the **Payment tab** in `DealDetailPage.tsx` (the billing area, where
+  `canManageBilling` already exists and where accounting manages payments).
+- Uses the app's existing toggle idiom — the shadcn **`Checkbox`** (as used in
+  `EmailAutomationsPage`), not a new `Switch` primitive — labelled in Greek:
   **"Παύση υπενθυμίσεων πληρωμής"** with helper text
   *"Δεν θα αποστέλλονται emails υπενθύμισης πληρωμής στον πελάτη για αυτή τη συμφωνία."*
-- Reads current state from the deal row.
-- Writes through the existing `useAutoSave` → `dealPatch` →
-  `supabase.from('deals').update(...)` flow — no new mutation plumbing.
+- Reads current state from the deal row (`useDeal` selects `*`, so the new column flows
+  through automatically).
+- Writes through the project's `useAutoSave` pattern →
+  `supabase.from('deals').update({ suppress_payment_reminders })` → invalidates the
+  `deal` / `deals` / `accountingDeals` query keys.
 - `disabled={!canManageBilling}` where
   `canManageBilling = isAdmin || groupCodes.includes('accounting')` (already defined),
   so everyone sees it but only accounting + admins can flip it.
