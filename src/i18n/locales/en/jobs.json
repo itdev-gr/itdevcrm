@@ -36,6 +36,7 @@
     "department_hint": "Pick one",
     "create": "Create task",
     "resolve": "Resolve",
+    "from_deal": "deal",
     "empty": "No tasks yet for this deal.",
     "empty_job": "No tasks yet for this job.",
     "created_by": "by",

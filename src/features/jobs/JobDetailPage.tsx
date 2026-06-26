@@ -42,6 +42,8 @@ import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
 import { infoFieldsFor } from './serviceInfoFields';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
+import { useGroups } from '@/features/groups/hooks/useGroups';
+import { groupIdForServiceType } from './serviceTaskMatch';
 import { ContactsCard } from './ContactsCard';
 import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
@@ -77,6 +79,7 @@ export function JobDetailPage() {
   const { data: parentJob } = useJob(job?.parent_job_id ?? '');
   const { data: owners = [] } = useMentionableUsers();
   const { data: stages = [] } = usePipelineStages();
+  const { data: groups = [] } = useGroups();
 
   const serviceType = (job?.service_type ?? '') as ServiceType;
   const moveStage = useMoveJobStage(serviceType);
@@ -499,7 +502,17 @@ export function JobDetailPage() {
         )}
         <TabsContent value="tasks" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-            <AssignedTasksTab source={{ kind: 'job', id: job.id }} />
+            <AssignedTasksTab
+              source={{ kind: 'job', id: job.id }}
+              {...(groupIdForServiceType(groups, job.service_type)
+                ? {
+                    deptMatch: {
+                      dealId: job.deal_id,
+                      departmentGroupId: groupIdForServiceType(groups, job.service_type)!,
+                    },
+                  }
+                : {})}
+            />
           </div>
         </TabsContent>
         <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">

@@ -12,14 +12,19 @@ import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 import type { AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 
-type Props = { source: { kind: 'deal' | 'job'; id: string } };
+type Props = {
+  source: { kind: 'deal' | 'job'; id: string };
+  deptMatch?: { dealId: string; departmentGroupId: string };
+};
 
 function TaskRow({
   task,
   onOpen,
+  fromDeal = false,
 }: {
   task: AssignedTaskRow;
   onOpen: (id: string) => void;
+  fromDeal?: boolean;
 }) {
   const { t } = useTranslation('jobs');
   const userId = useAuthStore((s) => s.user?.id ?? '');
@@ -40,6 +45,11 @@ function TaskRow({
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{task.title}</span>
             <DepartmentChip department={task.department} />
+            {fromDeal && (
+              <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
+                {t('assigned_tasks.from_deal')}
+              </span>
+            )}
             {task.source_code && (
               <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 {task.source_code}
@@ -76,7 +86,7 @@ function TaskRow({
   );
 }
 
-export function AssignedTasksTab({ source }: Props) {
+export function AssignedTasksTab({ source, deptMatch }: Props) {
   const { t } = useTranslation('jobs');
   useAssignedTasksRealtime();
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -85,7 +95,7 @@ export function AssignedTasksTab({ source }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
-  const { data: tasks = [], isLoading, error } = useAssignedTasksForSource(source);
+  const { data: tasks = [], isLoading, error } = useAssignedTasksForSource(source, deptMatch);
 
   if (isLoading) return <div className="text-sm text-muted-foreground">…</div>;
   if (error) return <div className="text-sm text-red-600 dark:text-red-400">{(error as Error).message}</div>;
@@ -110,7 +120,14 @@ export function AssignedTasksTab({ source }: Props) {
         <p className="rounded-md border bg-muted p-4 text-sm text-muted-foreground">{t(emptyKey)}</p>
       ) : (
         <ul className="rounded-md border bg-card">
-          {open.map((task) => <TaskRow key={task.id} task={task} onOpen={setOpenTaskId} />)}
+          {open.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              onOpen={setOpenTaskId}
+              fromDeal={source.kind === 'job' && task.job_id == null}
+            />
+          ))}
         </ul>
       )}
 
@@ -119,7 +136,14 @@ export function AssignedTasksTab({ source }: Props) {
       </h2>
       {resolved.length > 0 && (
         <ul className="rounded-md border bg-card opacity-70">
-          {resolved.map((task) => <TaskRow key={task.id} task={task} onOpen={setOpenTaskId} />)}
+          {resolved.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              onOpen={setOpenTaskId}
+              fromDeal={source.kind === 'job' && task.job_id == null}
+            />
+          ))}
         </ul>
       )}
 
