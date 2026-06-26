@@ -1,6 +1,10 @@
 {
   "title": "Deals",
   "new_deal": "New deal",
+  "reminders": {
+    "suppress_label": "Pause payment reminders",
+    "suppress_hint": "No payment-reminder emails will be sent to the client for this deal."
+  },
   "form": {
     "title": "Title",
     "description": "Description",

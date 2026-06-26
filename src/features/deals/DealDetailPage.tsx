@@ -35,6 +35,7 @@ import { buildWonDraft } from '@/features/email/buildDraft';
 import { DealServiceInfo } from './DealServiceInfo';
 import { DealServiceAttachments } from './DealServiceAttachments';
 import { DealNotesArea } from './DealNotesArea';
+import { PaymentRemindersToggle } from './PaymentRemindersToggle';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -356,6 +357,13 @@ export function DealDetailPage() {
         </TabsContent>
 
         <TabsContent value="payment" className="mt-3 space-y-4 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <PaymentRemindersToggle
+              dealId={dealId}
+              initial={!!deal.suppress_payment_reminders}
+              canEdit={canManageBilling}
+            />
+          </div>
           {canManageBilling && (
             <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
               <JobsBillingPanel
