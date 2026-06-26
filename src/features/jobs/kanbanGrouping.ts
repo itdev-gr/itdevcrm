@@ -5,10 +5,16 @@ type StageLite = { id: string; board: string; code: string };
 /**
  * Boards that render a virtual "Blocked" column: blocked jobs are shown there
  * instead of their stage column. stage_id is untouched, so unblocking returns
- * the card to exactly where it was. Both SEO boards (web_seo and local_seo)
- * carry the column.
+ * the card to exactly where it was. Every board whose jobs can be auto-held when
+ * the deal goes On-Hold carries the column — i.e. all services except the website
+ * (web_dev) and hosting, which are never blocked.
  */
-const BLOCKED_COLUMN_BOARDS = new Set(['local_seo', 'web_seo']);
+export const BLOCKED_COLUMN_BOARDS = new Set([
+  'local_seo',
+  'web_seo',
+  'social_media',
+  'ads',
+]);
 
 export function hasBlockedColumn(board: string): boolean {
   return BLOCKED_COLUMN_BOARDS.has(board);

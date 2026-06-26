@@ -60,9 +60,15 @@ describe('groupJobsForBoard', () => {
 });
 
 describe('hasBlockedColumn', () => {
-  it('is on for local_seo and web_seo (the SEO boards), off elsewhere', () => {
+  it('is on for every board whose jobs can be auto-held (SEO + social + ads)', () => {
     expect(hasBlockedColumn('local_seo')).toBe(true);
     expect(hasBlockedColumn('web_seo')).toBe(true);
+    expect(hasBlockedColumn('social_media')).toBe(true);
+    expect(hasBlockedColumn('ads')).toBe(true);
+  });
+
+  it('is off for the website and hosting, which are never blocked', () => {
     expect(hasBlockedColumn('web_dev')).toBe(false);
+    expect(hasBlockedColumn('hosting')).toBe(false);
   });
 });
