@@ -15,6 +15,12 @@ describe('SERVICE_INFO_FIELDS', () => {
       'webdev_notes', 'hosting', 'supabase_name', 'temp_url', 'live_url', 'email',
     ]);
   });
+  it('ads has a single notes field shared with the deal', () => {
+    const fields = infoFieldsFor('ads');
+    expect(fields.map((f) => f.key)).toEqual(['ads_notes']);
+    expect(fields[0]?.type).toBe('textarea');
+    expect(fields[0]?.sharedWithDeal).toBe(true);
+  });
   it('returns [] for a service without an Info tab', () => {
     expect(infoFieldsFor('social_media')).toEqual([]);
   });
@@ -30,5 +36,10 @@ describe('sharedDealFields', () => {
   });
   it('skips empty values', () => {
     expect(sharedDealFields('local_seo', { local_notes: '' })).toEqual([]);
+  });
+  it('flows ads notes through to the deal', () => {
+    expect(sharedDealFields('ads', { ads_notes: 'campaign paused' }).map((f) => f.key)).toEqual([
+      'ads_notes',
+    ]);
   });
 });
