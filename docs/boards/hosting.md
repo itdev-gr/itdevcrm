@@ -15,7 +15,10 @@ which is where the real hosting workflow lives today.
 - Jobs are created normally on **Partial Payment** (🔒 blocked until Paid In
   Full) and carry their yearly/monthly amounts into the recurring revenue
   views.
-- Blocking/unblocking works like everywhere else.
+- **Hosting is never blocked for non-payment.** When a client doesn't pay and
+  accounting's deal goes **On Hold**, their other services are blocked but the
+  hosting job keeps running (we don't take a server offline over an unpaid
+  invoice). Accounting can still manually block/unblock it if needed.
 
 ## If the team wants a kanban later
 

@@ -30,6 +30,10 @@ when one is set; otherwise it spawns unassigned.
 
 - Web Dev is the **only** service that spawns **unblocked** on partial payment —
   build starts on the deposit.
+- **The website is never blocked for non-payment.** When a client doesn't pay and
+  accounting's deal goes **On Hold**, their other services are blocked but the
+  Web Dev job (the website) keeps running — and a closed deal never moves into a
+  monthly Renewal/Done cycle (Web Dev is a one-time build, not a subscription).
 - Accounting can still **manually block** the job (e.g. an overdue balance
   before launch); the 🔒 badge then shows in place (this board has no separate
   Blocked column).

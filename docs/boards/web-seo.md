@@ -11,13 +11,18 @@ A deal containing a Web SEO (or AI SEO) service reaches **Partial Payment** →
 the job spawns in **New Project**, 🔒 blocked until **Paid In Full**.
 Auto-assigned to the Web SEO team lead when one is set.
 
+**The client is emailed automatically.** When a Web SEO job lands in **New
+Project**, the CRM sends the client the **Google Search Console access-request
+email** for you — so the access ask is already on its way before you make first
+contact.
+
 ## Stages
 
 | #   | Stage                  | Greek                  | What it means / what the team does                                                                                          |
 | --- | ---------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **New Project**        | Νέο Έργο               | Entry column. A new Web SEO/AI SEO client just landed. Review the deal, goals, and notes from sales, and plan first contact. |
 | 2   | **No Response**        | Χωρίς Απάντηση         | We tried to reach the client (for access/details) and got no answer. Follow up until contact is made.                       |
-| 3   | **Renewal**            | Ανανέωση               | An existing client whose subscription renewed for another period. Restart the cycle here; review last period and plan next. |
+| 3   | **Renewal**            | Ανανέωση               | An existing client whose subscription renewed for another period. **Cards land here automatically every time the client pays** — restart the cycle, review last period and plan next. |
 | 4   | **GSC & GA4 Setup**    | Ρύθμιση GSC & GA4      | Mandatory access & setup: Google Search Console + GA4 analytics, plus site/CMS credentials.                                 |
 | 5   | **Sitemap & Schema**   | Sitemap & Schema       | Put sitemap.xml, robots.txt, and schema markup in place.                                                                     |
 | 6   | **Performance Audit**  | Έλεγχος Απόδοσης       | Performance & technical-quality check — speed, Core Web Vitals, technical health.                                            |
@@ -30,10 +35,24 @@ Auto-assigned to the Web SEO team lead when one is set.
 | 13  | **Blogs**              | Μπλογκ                 | Blog/article production for topical coverage and freshness.                                                                 |
 | 14  | **Results Review**     | Έλεγχος Αποτελεσμάτων  | Review performance via GSC & Semrush; measure impact and iterate (often loops back to the audit/crawl steps).               |
 | 15  | **Stuck**              | Κολλημένο              | Blocked on something (client input, access, a dependency). Park here, flag the blocker, resume when it clears.              |
-| 16  | **Done** ✅            | Ολοκληρώθηκε           | Terminal (outcome **completed**). One-time project finished or subscription ended cleanly. Dropping a card here stamps it completed (✓); dragging out clears it. |
+| 16  | **Done**               | Ολοκληρώθηκε           | **A monthly rest, not the end.** Use it for "this period's work is finished, waiting for the client to renew." It is **not** terminal — the next payment automatically restarts the job in **Renewal**. (To end the engagement for good, accounting **Closes** the deal, which sends the job to **Closed**.) |
 
 ## Automations & rules
 
+- **Onboarding email:** a job arriving in **New Project** triggers the **Google
+  Search Console access-request email** to the client automatically.
+- **Paid → Renewal:** every time the client pays, the job automatically moves to
+  **Renewal** to start the new cycle — from wherever it was (Active, Done, or
+  blocked).
+- **Done = monthly rest:** Done is *not* the end of the job, just "finished for
+  this period, waiting for renewal." The next payment restarts it in Renewal.
+- **On Hold = work paused for non-payment:** if the client doesn't pay by the due
+  date, accounting's deal goes On Hold and this job is **blocked** (shown with the
+  🔒 badge). AI SEO blocks together (its Web SEO + Local SEO parts pause as one).
+  Jobs already in **Done** are left alone. The website and hosting are never
+  blocked.
+- **Deal Closed → Closed:** when accounting closes the deal, the job moves to
+  **Done/Closed** as the permanent end of the work.
 - Blocked jobs show the 🔒 badge **in place** (this board has no separate
   Blocked column).
 - **AI SEO** jobs share these stages and also mirror onto the Local SEO board

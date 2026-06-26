@@ -35,8 +35,11 @@ accounting releases it. The flow, end to end:
    except Web Dev). When you mark it **Paid In Full**, accounting is completed
    and **every job is unlocked** and visible to the teams.
 5. **Ongoing.** Recurring subscriptions renew their payment rows automatically.
-   Overdue invoices are flagged daily and can push a client **On Hold**, which
-   pauses their SEO work until they pay.
+   Overdue invoices are flagged daily and can push a deal **On Hold**, which
+   blocks the client's open work (everything except their website and hosting)
+   until they pay. Each time the client pays, their renewable services (Web SEO,
+   Local SEO, Ads, Social) automatically restart in their board's **Renewal**
+   column.
 
 ### The lifecycle at a glance (lead won → first recurring payment)
 
@@ -86,7 +89,8 @@ accounting releases it. The flow, end to end:
   dashed path); Web Dev is the only service that starts on a deposit.
 - **Recurring renews itself:** the first month's row is seeded at creation, then
   the nightly job rolls it forward each period (today it copies the same amount
-  forward). Client reminder emails are currently switched off.
+  forward). Clients also get automatic payment-reminder emails (−7d / +1d / +7d),
+  which accounting can pause per deal — see §9.
 
 ### Where everything lives
 
@@ -147,7 +151,7 @@ next** as the real-world situation changes.
 | --- | --- | --- |
 | **New** | Νέο | Just won. Review the deal — services, amounts, VAT, client details. Cards start here and stay until you move them. |
 | **Awaiting Payment** | Αναμονή Πληρωμής | Invoice is out and outstanding. The CRM auto-moves a deal here when its first payment row is created. Chase the client before the due date. |
-| **On Hold** | Σε Αναμονή | Billing paused (dispute, missing data, or an overdue invoice). Moving here **blocks the client's SEO jobs** and marks the client **Blocked**. (See §7.) |
+| **On Hold** | Σε Αναμονή | Billing paused (dispute, missing data, or an overdue invoice). Moving here **blocks the client's open jobs** — everything **except their website (Web Dev) and hosting**, which keep running — and marks the client **Blocked**. (See §7.) |
 | **Documents Verified** | Έγγραφα Επιβεβαιωμένα | Client documents (VAT number, company data) checked and correct. |
 | **Invoice Issued** | Τιμολόγιο Εκδόθηκε | The invoice has gone out. |
 | **Partial Payment** | Μερική Πληρωμή | First money in. **The jobs now appear on the technical boards** — 🔒 locked for every service **except Web Dev**, which can start on the deposit. |
@@ -174,8 +178,8 @@ the close-out dialog instead of a plain move.)
 | Move to… | What the system does |
 | --- | --- |
 | **Partial Payment** | Releases the deal's jobs onto the tech boards. Everything **except Web Dev** is **locked** (🔒) until paid in full; Web Dev starts right away. Re-entering the stage never duplicates jobs. |
-| **Paid In Full** | Runs "complete accounting": releases any jobs not yet spawned (unlocked), clears the partial-payment locks, stamps the deal **✓ Complete**, sets the client **Active**, and notifies the deal owner. |
-| **On Hold** | Marks the client **Blocked** and **locks the client's SEO jobs** (Web SEO, Local SEO, AI SEO only — Web Dev, Hosting, Social, Ads keep running). Leaving On Hold releases those locks. |
+| **Paid In Full** | Runs "complete accounting": releases any jobs not yet spawned (unlocked), clears the partial-payment locks, stamps the deal **✓ Complete**, sets the client **Active**, and notifies the deal owner. **Every renewable job (Web SEO, Local SEO, Ads, Social) also moves to its board's Renewal column** to start the new cycle — see §3.5. |
+| **On Hold** | Marks the client **Blocked** and **blocks the client's open jobs** — everything **except the website (Web Dev) and hosting**, which keep running. AI SEO blocks together (the Web SEO + Local SEO parts pause as one). Jobs already in their board's **Done** column (finished for the month) are left alone. Leaving On Hold, or the client paying, releases the blocks. |
 | **Done** | Marks the client **Done** and **archives the deal** (the card leaves the board). |
 | **Closed** | Opens the close-out dialog (see §3.4); does **not** change the client status; the card stays on the board in the Closed column. |
 | New, Documents Verified, Invoice Issued, Awaiting Payment | No side effects — just records where the deal is. |
@@ -211,6 +215,27 @@ deal in the **Closed** column (still visible, client status unchanged).
 > **Done vs Closed in one line:** **Closed** = "finish the work and tidy the
 > boards, keep the record." **Done** = "this client is finished — take the deal
 > off my board."
+
+### 3.5 What payment, On Hold and closing do to the work boards
+
+You don't move jobs around the technical boards yourself — paying, holding and
+closing the deal does it automatically. Three things worth knowing:
+
+- **Every time the client pays, their work restarts in Renewal.** When a deal is
+  marked **Paid In Full**, all of the client's renewable services — **Web SEO,
+  Local SEO, Ads, Social** — automatically move to their board's **Renewal**
+  column to begin the new cycle (wherever they were before). The website and
+  hosting aren't affected. So "client paid" always means "the teams see the work
+  back in Renewal, ready to go again."
+- **"Done" on a tech board is not the end — it's a monthly rest.** For the
+  recurring services (Web SEO, Local SEO, Ads, Social), a team dropping a job in
+  **Done** means *"this month's work is finished, waiting for the next renewal."*
+  It is **not** finished forever — the next payment restarts it in Renewal (see
+  above). Jobs sitting in Done are also left alone when the deal goes On Hold
+  (there's nothing to pause).
+- **Closing the deal closes all its work.** When you drag a deal to **Closed**
+  (or use the close-out dialog), **every one of its jobs automatically moves to
+  its board's "Closed" column** — this is the real, permanent end of the work.
 
 ---
 
@@ -337,8 +362,11 @@ Some blocks happen automatically:
 
 - At **Partial Payment**, every non-Web-Dev job is blocked until **Paid In Full**.
 - At **Paid In Full**, those blocks are cleared.
-- Moving a deal **On Hold** blocks the client's **SEO jobs only** (Web SEO, Local
-  SEO, AI SEO); leaving On Hold releases them.
+- Moving a deal **On Hold** blocks the client's **open jobs** — everything
+  **except their website (Web Dev) and hosting**, which keep running. AI SEO
+  blocks together (its Web SEO + Local SEO parts pause as one). Jobs already in
+  their board's **Done** column are left alone. Leaving On Hold, or the client
+  paying, releases the blocks.
 
 ### Client-level block
 
@@ -376,14 +404,16 @@ These run on a schedule (times shown in **Athens time**, summer):
 | --- | --- |
 | **05:00** | **Renew recurring invoices** — create the next period for subscriptions ending within 7 days. |
 | **05:05** | **Renew recurring expenses** (same idea, for costs). |
-| **05:05** | **Move overdue deals On Hold** — any deal with a payment whose due date has passed is pushed to **On Hold** (which blocks SEO jobs and marks the client Blocked). |
+| **05:05** | **Move overdue deals On Hold** — any deal with a payment whose due date has passed is pushed to **On Hold** (which blocks the client's open work, except website + hosting, and marks the client Blocked). |
 | **05:15** | **Mark overdue payments** — flip unpaid rows past their end date to **Overdue**, and send an in-app notification to accounting + admins. |
 
-> **Reminder emails to clients are currently switched OFF.** The CRM *can* email
-> clients a payment reminder (−7 days before due, +1 day after, and a +7-day
-> final notice), but that automatic emailer is **disabled right now** — so don't
-> assume clients are being chased by email automatically. Tell us if you want it
-> turned back on.
+> **Clients are reminded by email automatically.** The CRM emails the client a
+> payment reminder **7 days before the due date**, **1 day after**, and **7 days
+> after** (a final notice) — so unpaid invoices are chased without you doing
+> anything. If you don't want a particular client chased (e.g. a known-late
+> account you're handling personally), open the deal's **Payment** tab and switch
+> on **"Pause payment reminders"** — that deal stops getting the automatic
+> emails until you turn it back off.
 
 ---
 
@@ -469,9 +499,12 @@ are written exactly as they appear on screen, in **"quotes"**.
 
 **Put a deal On Hold**
 1. Drag the card to **On Hold**.
-2. The client is marked **Blocked** and their **SEO jobs** (Web SEO, Local SEO,
-   AI SEO) are locked. Web Dev, Hosting, Social, and Ads keep running.
-3. To release: drag the card out of **On Hold** — the SEO jobs unlock again.
+2. The client is marked **Blocked** and their **open jobs are blocked** —
+   everything **except the website (Web Dev) and hosting**, which keep running.
+   AI SEO blocks together; jobs already in their board's **Done** column are left
+   alone.
+3. To release: drag the card out of **On Hold** (or mark the deal Paid In Full) —
+   the blocked jobs unlock again.
 
 **Mark a deal Done (take it off the board)**
 1. Drag the card to **Done**.
@@ -577,9 +610,16 @@ object. Rows are generated from the jobs; you can also add and edit them by hand
 
 **Delete a payment row** — click the row's **×**, then confirm.
 
+**Pause the automatic reminder emails for this deal**
+1. Open the deal → **Payment** tab.
+2. Switch on **"Pause payment reminders"**.
+3. That deal stops receiving the automatic −7d / +1d / +7d reminder emails until
+   you turn the toggle back off. (Use it for accounts you're chasing personally.)
+
 > A daily job automatically flips an unpaid row to **Overdue** once its end date
 > passes. When jobs are grouped (see C), they appear as **one** payment row with
-> several lines underneath.
+> several lines underneath. Clients are reminded by email **7 days before due,
+> 1 day after, and 7 days after** unless you've paused reminders for the deal.
 
 ### E. Blocking work until it's paid
 
@@ -679,7 +719,12 @@ breakdown to open the transaction list for that group.
 - **Release / spawn** — putting a deal's jobs onto the technical teams' boards
   (happens at Partial Payment and Paid In Full).
 - **Block / On Hold** — pausing work until paid. Job-level (one job), or
-  client-level / On Hold (the whole client's SEO work).
+  client-level / On Hold (all the client's open work except their website and
+  hosting).
+- **Renewal** — the column each recurring service restarts in every time the
+  client pays (Web SEO, Local SEO, Ads, Social).
+- **Done (tech board)** — "this month's work finished, waiting for renewal" — a
+  monthly rest, not the end. The next payment restarts it in Renewal.
 - **MRR** — monthly recurring revenue (contracted vs collected).
 - **Complete accounting** — what happens at **Paid In Full**: jobs unlocked,
   deal stamped ✓, client Active.
