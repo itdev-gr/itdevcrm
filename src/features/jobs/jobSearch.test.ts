@@ -96,12 +96,21 @@ describe('matchesJobSearch', () => {
   });
 
   it('matches the client website', () => {
-    expect(matchesJobSearch(full, 'orthohouse.gr')).toBe(true);
+    // Use the scheme prefix so this isolates the website field from the email
+    // (hello@orthohouse.gr also contains "orthohouse.gr").
+    expect(matchesJobSearch(full, 'https://orthohouse.gr')).toBe(true);
   });
 
   it('matches a digits-only phone query via phone_normalized', () => {
     // client.phone is stored with spaces; the digits-only query must still match.
     expect(matchesJobSearch(full, '2101234567')).toBe(true);
+  });
+
+  it('matches a Web SEO job code and an AI-SEO web-child code (both via job.code)', () => {
+    const webJob = job({ code: '000013-WEBSEO' });
+    const aiChild = job({ code: '000013-AISEOWEB' });
+    expect(matchesJobSearch(webJob, '000013-webseo')).toBe(true);
+    expect(matchesJobSearch(aiChild, 'aiseoweb')).toBe(true);
   });
 });
 
