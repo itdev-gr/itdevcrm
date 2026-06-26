@@ -127,7 +127,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={SERVICE_LABELS[serviceType][lang]}>
-        {serviceType === 'local_seo' && (
+        {(serviceType === 'local_seo' || serviceType === 'web_seo') && (
           <Input
             type="search"
             value={search}
