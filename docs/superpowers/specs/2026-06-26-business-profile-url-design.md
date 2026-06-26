@@ -48,25 +48,43 @@ the existing deal-edit pattern (same edit permission as the other deal Overview
 controls). Visible immediately after conversion (deal-level value, independent of any
 job). The `deals` types gain the column.
 
-## 4. Local SEO job population (spawn copy)
+## 4. Local SEO job population — BEFORE INSERT trigger on `jobs`
 
-When a `local_seo` job is spawned from the deal, set its `details` to
-`jsonb_build_object('profile_url', d.business_profile_url)` **only when**
-`d.business_profile_url is not null and <> ''`. Because the AI-SEO **local child** job
-is itself `service_type = 'local_seo'`, it is covered by the same edit.
+There are **multiple** job-spawn paths (`release_billing_jobs_for_deal` = off-board
+billing jobs with `stage_id null`; `release_jobs_for_deal` = on-board + AI-SEO trio;
+`create_custom_job`; the AI-SEO split). Rather than patch each insert (fragile), add
+**one** `BEFORE INSERT` trigger on `public.jobs` that covers every path:
 
-Live spawn functions to patch (confirmed via `pg_get_functiondef` at build time —
-both read `services_planned` and insert jobs):
+```sql
+create or replace function public.jobs_seed_local_profile_url()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v_url text;
+begin
+  if new.service_type = 'local_seo'
+     and new.deal_id is not null
+     and nullif(trim(coalesce(new.details->>'profile_url','')), '') is null then
+    select nullif(trim(coalesce(business_profile_url,'')), '')
+      into v_url from public.deals where id = new.deal_id;
+    if v_url is not null then
+      new.details := coalesce(new.details, '{}'::jsonb)
+                     || jsonb_build_object('profile_url', v_url);
+    end if;
+  end if;
+  return new;
+end $$;
 
-- `public.release_jobs_for_deal`
-- `public.release_billing_jobs_for_deal`
+create trigger jobs_seed_local_profile_url
+  before insert on public.jobs
+  for each row execute function public.jobs_seed_local_profile_url();
+```
 
-(Identify which one(s) the current paid-in-full / `complete_accounting` path actually
-invokes, and patch the `local_seo` `insert into public.jobs` to set `details`. Patch
-both if both are reachable. `create or replace` in a new migration.)
+Because the AI-SEO **local child** is itself `service_type = 'local_seo'` with a
+`deal_id`, it is covered automatically. The convert RPC change is unrelated to this
+trigger; the trigger just reads `deals.business_profile_url`, which exists by the time
+any job spawns (set at conversion).
 
-**Semantics:** copy-at-spawn. The job's `profile_url` is set once at creation. Later
-manual edits to the job's Info tab are not overwritten; editing the deal's
+**Semantics:** copy-at-create, **only when the job has no `profile_url` yet**. Manual
+edits to a job's Info tab are never overwritten; editing the deal's
 `business_profile_url` after a job already exists does NOT retro-update that job.
 
 ## Deal display vs job field (decision)
@@ -100,8 +118,10 @@ shows the job's `profile_url` (pre-filled from the deal at spawn).
 Files:
 
 - migration `…_business_profile_url.sql` (add 2 columns + `create or replace`
-  convert_lead_to_client + `create or replace` the spawn fn(s)) — includes rollback
-  SQL (drop columns; restore prior fn bodies).
+  convert_lead_to_client with the deal-insert column added + new
+  `jobs_seed_local_profile_url` trigger fn + trigger) — includes rollback SQL (drop
+  columns; drop trigger+fn; restore prior convert_lead_to_client body — captured in
+  the migration's rollback section).
 - `src/features/leads/LeadForm.tsx` (new field)
 - `src/features/deals/DealDetailPage.tsx` (new editable field) + any small deal-edit
   hook reuse
