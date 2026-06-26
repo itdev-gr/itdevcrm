@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
@@ -27,16 +28,20 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
   const { data: jobs = [] } = useDealJobs(deal.id);
 
   const [salesNote, setSalesNote] = useState(deal.sales_note ?? '');
+  const [businessProfileUrl, setBusinessProfileUrl] = useState(deal.business_profile_url ?? '');
 
   const webSeo = noteFrom(jobs, ['web_seo', 'ai_seo'], 'seo_notes');
   const local = noteFrom(jobs, ['local_seo', 'ai_seo'], 'local_notes');
   const website = noteFrom(jobs, ['web_dev'], 'webdev_notes');
 
-  const patch = useMemo(() => ({ sales_note: salesNote.trim() || null }), [salesNote]);
+  const patch = useMemo(
+    () => ({ sales_note: salesNote.trim() || null, business_profile_url: businessProfileUrl.trim() || null }),
+    [salesNote, businessProfileUrl],
+  );
   const status = useAutoSave(patch, async (next) => {
     const { error } = await supabase
       .from('deals')
-      .update({ sales_note: next.sales_note })
+      .update({ sales_note: next.sales_note, business_profile_url: next.business_profile_url })
       .eq('id', deal.id);
     if (error) throw new Error(error.message);
     void qc.invalidateQueries({ queryKey: queryKeys.deal(deal.id) });
@@ -54,6 +59,17 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
   return (
     <section className="mt-4 space-y-4 rounded-xl border border-border/60 bg-card p-5 shadow-sm">
       <h2 className="text-sm font-semibold">{t('notes_area.title')}</h2>
+      <div>
+        <Label htmlFor="deal-bpurl">{t('notes_area.business_profile_url')}</Label>
+        <Input
+          id="deal-bpurl"
+          type="url"
+          placeholder="https://"
+          value={businessProfileUrl}
+          onChange={(e) => setBusinessProfileUrl(e.target.value)}
+          className="mt-1.5"
+        />
+      </div>
       <div>
         <Label htmlFor="sales-note">{t('notes_area.sales_note')}</Label>
         <textarea

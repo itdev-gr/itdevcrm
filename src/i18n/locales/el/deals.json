@@ -24,6 +24,7 @@
   },
   "notes_area": {
     "title": "Σημειώσεις",
+    "business_profile_url": "URL Προφίλ Επιχείρησης",
     "sales_note": "Σημείωση πωλήσεων",
     "sales_note_hint": "Σημαντικές πληροφορίες που οι πωλήσεις περνούν στο λογιστήριο.",
     "web_seo_notes": "Σημειώσεις Web SEO",
