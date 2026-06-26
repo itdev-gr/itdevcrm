@@ -2,15 +2,18 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, CheckCircle2, Lock, User } from 'lucide-react';
+import { Calendar, CheckCircle2, ListChecks, Lock, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyableCode } from '@/components/CopyableCode';
 import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
+import { useGroups } from '@/features/groups/hooks/useGroups';
 import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
+import { groupIdForServiceType } from './serviceTaskMatch';
+import { useServiceTaskCounts } from './hooks/useServiceTaskCounts';
 import { RequestSeoAccessButton } from './RequestSeoAccessButton';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { JobRow } from './hooks/useJobs';
@@ -28,6 +31,12 @@ export function JobsKanbanCard({
   // (e.g. local_seo), who are not in the sales-only assignable_owners list.
   const { data: owners = [] } = useMentionableUsers();
   const owner = job.owner_user_id ? owners.find((o) => o.user_id === job.owner_user_id) : null;
+
+  // Open-task count for this job: job-scoped + deal tasks tagged with this service's
+  // department (one cached query per board).
+  const { data: groups = [] } = useGroups();
+  const taskCounts = useServiceTaskCounts(groupIdForServiceType(groups, job.service_type));
+  const openTaskCount = (taskCounts.byDeal[job.deal_id] ?? 0) + (taskCounts.byJob[job.id] ?? 0);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: job.id,
@@ -80,6 +89,15 @@ export function JobsKanbanCard({
               </Link>
             </div>
             <div className="flex shrink-0 items-center gap-1">
+              {openTaskCount > 0 && (
+                <span
+                  className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
+                  title={lang === 'el' ? `${openTaskCount} ανοιχτές εργασίες` : `${openTaskCount} open tasks`}
+                >
+                  <ListChecks className="size-3" />
+                  {openTaskCount}
+                </span>
+              )}
               {job.is_blocked && (
                 <span
                   className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200"
