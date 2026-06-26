@@ -1,7 +1,7 @@
 {
   "close": {
     "title": "Close deal",
-    "description": "Mark these jobs done and move them to their board's close lane. Uncheck any you want to keep open.",
+    "description": "All of this deal's jobs will be moved to their Closed column.",
     "no_jobs": "This deal has no jobs.",
     "website_to": "Website to",
     "webdev_choice": {
