@@ -81,6 +81,12 @@ describe('matchesJobSearch', () => {
     expect(matchesJobSearch(full, 'house2101')).toBe(false);
   });
 
+  it('does not match a multi-word query spanning two different fields', () => {
+    // "ortho" (name) + "4567" (phone) live in separate fields; substring matching
+    // must not match across them. (A token-AND matcher would wrongly return true.)
+    expect(matchesJobSearch(full, 'ortho 4567')).toBe(false);
+  });
+
   it('matches the client code (Client ID)', () => {
     expect(matchesJobSearch(full, 'cl-000013')).toBe(true);
   });

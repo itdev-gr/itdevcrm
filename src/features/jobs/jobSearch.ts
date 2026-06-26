@@ -16,8 +16,9 @@ export function jobSearchHaystack(job: JobRow): string {
     job.deal?.code,
     job.client?.code,
     job.client?.name,
-    job.client?.contact_first_name,
-    job.client?.contact_last_name,
+    // Full contact name as one field so a "First Last" query matches contiguously
+    // (kept on a single line; cross-field queries still can't match — see boundary test).
+    [job.client?.contact_first_name, job.client?.contact_last_name].filter(Boolean).join(' '),
     job.client?.email,
     job.client?.phone,
     job.client?.phone_normalized,
@@ -31,14 +32,11 @@ export function jobSearchHaystack(job: JobRow): string {
 }
 
 /** Case-insensitive substring match across all searchable fields.
- *  An empty/whitespace query matches every job (no filtering).
- *  Space-separated tokens are ANDed: each token must appear somewhere in the
- *  haystack, but they don't need to be in the same field. */
+ *  An empty/whitespace query matches every job (no filtering). */
 export function matchesJobSearch(job: JobRow, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  const haystack = jobSearchHaystack(job);
-  return q.split(/\s+/).every(token => haystack.includes(token));
+  return jobSearchHaystack(job).includes(q);
 }
 
 /** When an active search narrows the board to a single job, the id to scroll
