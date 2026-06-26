@@ -9,7 +9,8 @@
     "permissions_test": "Δοκιμή δικαιωμάτων",
     "email_automations": "Αυτοματισμοί email",
     "contract_templates": "Πρότυπα συμβάσεων",
-    "announcements": "Ανακοινώσεις"
+    "announcements": "Ανακοινώσεις",
+    "documentation": "Τεκμηρίωση"
   },
   "settings": {
     "title": "Ρυθμίσεις"

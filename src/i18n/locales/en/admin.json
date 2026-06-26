@@ -9,7 +9,8 @@
     "permissions_test": "Permissions test page",
     "email_automations": "Email automations",
     "contract_templates": "Contract templates",
-    "announcements": "Announcements"
+    "announcements": "Announcements",
+    "documentation": "Documentation"
   },
   "settings": {
     "title": "Settings"

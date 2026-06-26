@@ -52,6 +52,10 @@ const AnnouncementsAdminPage = lazyPage(
   () => import('@/features/announcements/AnnouncementsAdminPage'),
   'AnnouncementsAdminPage',
 );
+const DocumentationPage = lazyPage(
+  () => import('@/features/documentation/DocumentationPage'),
+  'DocumentationPage',
+);
 const PermissionsTestPage = lazyPage(
   () => import('@/features/permissions/PermissionsTestPage'),
   'PermissionsTestPage',
@@ -192,6 +196,7 @@ export const router = createBrowserRouter([
               { path: 'email-automations', element: <EmailAutomationsPage /> },
               { path: 'contract-templates', element: <ContractTemplatesPage /> },
               { path: 'announcements', element: <AnnouncementsAdminPage /> },
+              { path: 'documentation', element: <DocumentationPage /> },
             ],
           },
           {
