@@ -1,4 +1,4 @@
-# Web SEO Kanban — Scoped Search Bar (Design)
+# Web SEO Kanban — Search Bar (Design)
 
 **Date:** 2026-06-26
 **Status:** Approved (design) — ready for implementation plan
@@ -6,162 +6,144 @@
 
 ## Goal
 
-Add a search bar on the **Web SEO kanban** page (`/tech/web-seo`) that lets the Web
-SEO team find any client/job on **their** board. It must **NOT** be a global search:
-it only searches the data already on the Web SEO board (web_seo jobs + the ai_seo
-parent + AI-SEO web children that surface there).
+Give the **Web SEO kanban** (`/tech/web-seo`) the same search box that the **Local
+SEO** board already has, with searchable fields that fit Web SEO. It must **NOT** be
+a global search: it only filters the data already on the board (web_seo jobs + the
+ai_seo parent + AI-SEO web children that surface there).
 
-The box is a single "smart" search that matches across all of:
+Searchable "Web SEO criteria":
 
 - **Web SEO ID** — `jobs.code` for a `web_seo` job (e.g. `000013-WEBSEO`)
 - **AI Web SEO ID** — `jobs.code` for the AI-SEO web child (e.g. `000013-AISEOWEB`)
 - **Client ID** — `clients.code`
 - **Name** — `clients.name` + contact first/last name
 - **Email** — `clients.email`
-- **Phone** — `clients.phone` / `clients.phone_normalized` (digits-only compare)
+- **Phone** — `clients.phone` / `clients.phone_normalized`
 - **Website** — `clients.website`
-- Also: `jobs.title`, `deals.code`
+- Also already covered: `jobs.title`, `deals.code`
 
-## Chosen approach
+## Chosen approach — reuse the Local SEO search
 
-**Client-side filter of the already-loaded board data.**
+The board already has a working, tested **filter-in-place** search (commit
+`3dea48c`), currently gated to `serviceType === 'local_seo'`:
 
-The board already fetches **all** of its jobs client-side via `useJobs('web_seo')`
-(`src/features/jobs/hooks/useJobs.ts`) — service types `['web_seo', 'ai_seo']`,
-`archived = false`, no pagination. So we filter that in-memory set and render a
-results dropdown. No new RPC, no migration; the search is instant and is naturally
-RLS-scoped (it can only ever see rows the user is already allowed to load).
+- UI: an inline `<Input type="search">` in the `PageHeader` of
+  `src/features/jobs/JobsKanbanPage.tsx` bound to a `search` state.
+- Logic: `matchesJobSearch(job, query)` / `jobSearchHaystack(job)` in
+  `src/features/jobs/jobSearch.ts` (pure, unit-tested in `jobSearch.test.ts`).
+- Effect: `scopedJobs.filter((j) => matchesJobSearch(j, search))` → the kanban
+  columns shrink to matching cards; an empty query shows everything.
 
-The only data work: the current `useJobs` select pulls `client(id, name,
-contact_first_name, contact_last_name, industry)` — it does **not** include
-email/phone/website/client-code. We expand the sub-select so those fields are
-available to search.
+We **reuse all of it** for Web SEO. Three small changes:
 
-Alternatives rejected:
+1. **Enable the box on Web SEO** — widen the render gate from
+   `serviceType === 'local_seo'` to also include `'web_seo'`.
+2. **Enrich the shared matcher** — `jobSearchHaystack` currently covers
+   `title, code, deal.code, client.name, client.email, client.phone,
+   details.profile_url, details.business_profile`. Add the missing Web SEO
+   criteria: `client.code`, contact first/last name, `client.website`,
+   `client.phone_normalized`. The matcher is shared, so Local SEO gains these too
+   (a free, consistent improvement). The board never matches sensitive job-detail
+   fields (e.g. the web_seo `website_password`).
+3. **Expand the data load** — the `useJobs` client sub-select must include the new
+   columns so they are present to search.
 
-- **Server-side `web_seo_search(q)` RPC** — a board-scoped clone of `global_search`.
-  Overkill: the board already holds every row in memory, so an RPC only adds a
-  migration + security-definer maintenance for no benefit at this data size.
-- **Reuse `global_search`, filter to web_seo** — it is cross-entity and global by
-  design; the requirement is explicitly *not* global.
+Rejected: building a separate dropdown / new search components — the user chose to
+reuse the existing Local SEO pattern for consistency and minimal code.
 
-## Architecture / components
+## Data change — `useJobs` select + `JobRow` type
 
-Three small, independently-testable units:
+`src/features/jobs/hooks/useJobs.ts`:
 
-### 1. `src/features/jobs/search/webSeoSearchMatch.ts` (pure logic)
+- Expand the client sub-select to:
+  ```
+  client:clients(id, code, name, contact_first_name, contact_last_name,
+                 email, phone, phone_normalized, website, industry)
+  ```
+- Add to the `JobRow.client` type: `code?: string | null`,
+  `phone_normalized?: string | null`, `website?: string | null`.
+  (`email?` / `phone?` are already declared; contact names already selected.)
 
-```ts
-export function searchJobs(jobs: JobRow[], query: string): JobRow[]
+RLS is row-level: the technical team already loads these client rows for the board,
+so selecting more columns of the same row is free and needs no policy change.
+
+## Matcher change — `jobSearch.ts`
+
+`jobSearchHaystack(job)` adds these to the joined, lowercased haystack (each on its
+own line so a query can't match across field boundaries):
+
+- `job.client?.code`
+- `job.client?.contact_first_name` + `job.client?.contact_last_name`
+- `job.client?.website`
+- `job.client?.phone_normalized`
+
+`matchesJobSearch` is unchanged (empty/whitespace query still matches every job →
+no filtering).
+
+## UI change — `JobsKanbanPage.tsx`
+
+The search `<Input>` render gate changes from:
+
+```tsx
+{serviceType === 'local_seo' && ( … )}
 ```
 
-- Pure, no React, no Supabase → unit-tested with TDD.
-- Returns `[]` for an empty/whitespace/`< 2 char` query.
-- Case-insensitive substring match. For phone, strip all non-digits from both the
-  query and `phone`/`phone_normalized` before comparing (so `69 12 34` matches
-  `6912 34...`); only attempt phone matching when the query contains digits.
-- **Fields matched per job:** `job.code`, `job.title`, `deal.code`, `client.code`,
-  `client.name`, `client.contact_first_name + ' ' + contact_last_name`,
-  `client.email`, `client.website`, `client.phone`, `client.phone_normalized`.
-- **Ranking:** code prefix-match first (job.code / client.code / deal.code that
-  *starts with* the query), then any other match, stable thereafter. Cap at 15
-  results.
+to:
 
-### 2. `src/features/jobs/search/WebSeoSearch.tsx` (presentational)
-
-- Props: `{ jobs: JobRow[] }` — the full board set the user can see.
-- Local state: query string, debounced query (250 ms), open/closed, active index.
-- Calls `searchJobs(jobs, debounced)`; renders a dropdown of `<Link to="/jobs/:id">`
-  rows, styled to match `src/features/search/GlobalSearch.tsx`.
-- Keyboard nav (↑ / ↓ / Enter / Esc) and click-outside-to-close, mirroring
-  `GlobalSearch`.
-- Each result row: mono **code** badge · **client name** · **stage label** · an
-  **"AI SEO"** tag when `job.parent_job_id` is set.
-- Bilingual placeholder / empty-state text (el / en) following the page's existing
-  `lang` pattern.
-
-### 3. Wire-up in `src/features/jobs/JobsKanbanPage.tsx`
-
-- Render `<WebSeoSearch jobs={jobs} />` in the `PageHeader` children area, next to
-  the existing Only-mine / Admin badge.
-- **Gate to `serviceType === 'web_seo'`** so it appears only on the Web SEO board.
-  (Trivially extendable to other boards later by removing the gate.)
-- Pass the **full** `jobs` array (pre-`onlyMine` filter) so search covers "all the
-  clients in their kanban" regardless of the Only-mine toggle state.
-
-### 4. Data change — `useJobs` select + `JobRow` type
-
-Expand the client sub-select in `useJobs`:
-
-```ts
-client:clients(id, code, name, contact_first_name, contact_last_name,
-               email, phone, phone_normalized, website, industry)
+```tsx
+{(serviceType === 'local_seo' || serviceType === 'web_seo') && ( … )}
 ```
 
-Add `code: string | null`, `website?: string | null`, `phone_normalized?: string |
-null` to the `client` shape in the `JobRow` type. (`email`/`phone` are already
-declared optional on the type.) RLS is row-level: the technical team already loads
-these client rows for the board, so selecting more columns of the same row is free
-and requires no policy change.
+No other UI change. The box keeps its existing placeholder (`Search this board…` /
+`Αναζήτηση σε αυτόν τον πίνακα…`), styling, and position next to the
+Only-mine / Admin badge. It filters `scopedJobs` (post Only-mine), matching the
+existing Local SEO behavior exactly.
 
-## Data flow
+## Data flow (unchanged shape)
 
 ```
-useJobs('web_seo')  ──>  jobs: JobRow[]  ──┬─>  groupJobsForBoard ──> columns (unchanged)
-                                           └─>  <WebSeoSearch jobs={jobs} />
-                                                     │ debounce(query)
-                                                     ▼
-                                                searchJobs(jobs, q) ──> ranked rows
-                                                     │ click / Enter
-                                                     ▼
-                                                Link to /jobs/:id
+useJobs(serviceType) ─> jobs ─> scopedJobs (Only-mine) ─> filter(matchesJobSearch(j, search))
+                                                              ─> groupJobsForBoard ─> columns
 ```
 
 ## Error handling / edge cases
 
-- Empty / `< 2 char` query → no dropdown results (show "type to search" hint).
-- No matches → "no results" message in the dropdown.
-- Missing optional fields (null email/phone/website/code) → simply not matched; no
-  crash.
-- A client with multiple jobs on the board (e.g. a web_seo job **and** an AI-SEO web
-  child) yields one result row **per job** — that is intended (each is a distinct
-  card / code).
-- Phone formatting differences handled by digits-only comparison.
+- Empty / whitespace query → no filtering (all cards shown). Existing behavior.
+- Missing optional fields (null code/website/phone_normalized/contact) → not
+  matched; no crash (haystack coerces null → '').
+- AI-SEO web child and ai_seo parent are in the loaded set; their codes match via
+  `job.code`.
+- Phone formatting differences: a digits-only query matches `phone_normalized`.
 
 ## Testing
 
-TDD on `webSeoSearchMatch.searchJobs` (Vitest), covering:
+Extend `src/features/jobs/jobSearch.test.ts` (Vitest, TDD), adding cases:
 
-- match by `job.code` (Web SEO ID) and by AI-SEO child code (`…-AISEOWEB`)
-- match by `client.code` (Client ID), `deal.code`
-- match by client name and by contact first/last name
-- match by email, by website
-- match by phone with formatting differences (spaces, dashes) via digits-only compare
-- case-insensitivity
-- empty / whitespace / 1-char query → `[]`
-- ranking: a code prefix-match sorts before a mid-string name match
-- result cap (≤ 15)
+- matches `client.code` (Client ID)
+- matches contact first/last name
+- matches `client.website`
+- matches `client.phone_normalized` when `client.phone` is stored with formatting
+- existing tests stay green
 
-Frontend build must pass `npm run build` (stricter than `tsc --noEmit`:
-`noUncheckedIndexedAccess` + `eslint --max-warnings=0`).
+Then `npm run build` (stricter than `tsc --noEmit`: `noUncheckedIndexedAccess` +
+`eslint --max-warnings=0`) and `npm run test:run`.
 
 ## Changes / Revert
 
 Frontend-only; **no migration**.
 
-Files added/changed:
+Files changed:
 
-- `src/features/jobs/search/webSeoSearchMatch.ts` (new)
-- `src/features/jobs/search/webSeoSearchMatch.test.ts` (new)
-- `src/features/jobs/search/WebSeoSearch.tsx` (new)
-- `src/features/jobs/JobsKanbanPage.tsx` (mount the search, gated to web_seo)
+- `src/features/jobs/jobSearch.ts` (enrich haystack)
+- `src/features/jobs/jobSearch.test.ts` (new cases)
 - `src/features/jobs/hooks/useJobs.ts` (expand client sub-select + `JobRow` type)
+- `src/features/jobs/JobsKanbanPage.tsx` (widen search-box gate to web_seo)
 
 Revert: revert the above commits. No DB state to roll back.
 
 ## Out of scope (YAGNI)
 
-- Structured per-field filter dropdowns (stage/owner) — the box already covers it.
-- Filtering the kanban columns in place (user chose the dropdown-results behavior).
-- Enabling the search on other boards (gate makes it web_seo-only for now).
-- A server-side RPC.
+- A dropdown results list (user chose to reuse the filter-in-place box).
+- Searching sensitive job-detail fields (creds/passwords).
+- Enabling the box on non-SEO boards (web_dev/social/hosting/ads stay without it).
+- Any server-side RPC.
