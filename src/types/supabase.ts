@@ -886,6 +886,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           archived_reason: string | null
+          business_profile_url: string | null
           client_id: string
           code: string | null
           created_at: string
@@ -921,6 +922,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          business_profile_url?: string | null
           client_id: string
           code?: string | null
           created_at?: string
@@ -956,6 +958,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           archived_reason?: string | null
+          business_profile_url?: string | null
           client_id?: string
           code?: string | null
           created_at?: string
@@ -2081,6 +2084,7 @@ export type Database = {
           archived_by: string | null
           archived_reason: string | null
           automations_enabled: boolean
+          business_profile_url: string | null
           code: string
           company_name: string | null
           contact_first_name: string | null
@@ -2131,6 +2135,7 @@ export type Database = {
           archived_by?: string | null
           archived_reason?: string | null
           automations_enabled?: boolean
+          business_profile_url?: string | null
           code?: string
           company_name?: string | null
           contact_first_name?: string | null
@@ -2181,6 +2186,7 @@ export type Database = {
           archived_by?: string | null
           archived_reason?: string | null
           automations_enabled?: boolean
+          business_profile_url?: string | null
           code?: string
           company_name?: string | null
           contact_first_name?: string | null

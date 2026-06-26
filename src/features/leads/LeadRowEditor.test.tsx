@@ -34,6 +34,7 @@ const baseLead: LeadRow = {
   archived_at: null,
   archived_by: null,
   archived_reason: null,
+  business_profile_url: null,
   additional_contacts: [],
   additional_notes: null,
   address: null,
