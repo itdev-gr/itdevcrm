@@ -11,6 +11,13 @@ vi.mock('./hooks/useResolveAssignedTask', () => ({
   useResolveAssignedTask: () => ({ mutateAsync: resolveMutate, isPending: false }),
 }));
 
+// Admin viewer → can open the deal, so a deal-scoped task keeps the "Open deal" link.
+// (The technical-user → "Open job" branch is covered by taskOpenLink.test.ts.)
+vi.mock('@/lib/stores/authStore', () => ({
+  useAuthStore: (sel: (s: { user: { id: string } | null; isAdmin: boolean; groupCodes: string[] }) => unknown) =>
+    sel({ user: { id: 'u-me' }, isAdmin: true, groupCodes: [] }),
+}));
+
 const detail = {
   id: 't1', title: 'TEST — smoke', description: 'desc',
   deal_id: 'd1', job_id: null, client_id: 'c1', source_code: '000017',
