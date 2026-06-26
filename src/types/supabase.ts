@@ -906,6 +906,7 @@ export type Database = {
           services_planned: Json
           source_data: Json | null
           stage_id: string
+          suppress_payment_reminders: boolean
           temp_deal_amount: string | null
           title: string
           updated_at: string
@@ -940,6 +941,7 @@ export type Database = {
           services_planned?: Json
           source_data?: Json | null
           stage_id: string
+          suppress_payment_reminders?: boolean
           temp_deal_amount?: string | null
           title: string
           updated_at?: string
@@ -974,6 +976,7 @@ export type Database = {
           services_planned?: Json
           source_data?: Json | null
           stage_id?: string
+          suppress_payment_reminders?: boolean
           temp_deal_amount?: string | null
           title?: string
           updated_at?: string
