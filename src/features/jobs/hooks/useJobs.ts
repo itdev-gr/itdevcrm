@@ -11,11 +11,14 @@ export type JobRow = JobBase & {
   client?: {
     id: string;
     name: string;
+    code?: string | null;
     contact_first_name: string | null;
     contact_last_name: string | null;
     industry: string | null;
     email?: string | null;
     phone?: string | null;
+    phone_normalized?: string | null;
+    website?: string | null;
     contact_info?: string | null;
     additional_contacts?:
       | { full_name?: string | null; email?: string | null; phone?: string | null; info?: string | null }[]
@@ -44,7 +47,7 @@ export function useJobs(serviceType: ServiceType) {
       const { data, error } = await supabase
         .from('jobs')
         .select(
-          '*, parent_job_id, client:clients(id, name, contact_first_name, contact_last_name, industry, email, phone), deal:deals(id, code, title), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
+          '*, parent_job_id, client:clients(id, code, name, contact_first_name, contact_last_name, email, phone, phone_normalized, website, industry), deal:deals(id, code, title), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
         )
         .in('service_type', serviceTypesForBoard(serviceType))
         .eq('archived', false)
