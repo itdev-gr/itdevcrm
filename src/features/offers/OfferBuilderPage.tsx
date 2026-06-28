@@ -84,8 +84,6 @@ export function OfferBuilderPage() {
   const [customPriceByItem, setCustomPriceByItem] = useState<Record<string, number>>({});
 
   // ── Form state ──────────────────────────────────────────────────────────────
-  const [clientNameOverride, setClientNameOverride] = useState('');
-  const [emailOverride, setEmailOverride] = useState('');
   const [currency, setCurrency] = useState('EUR');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [vatPercent, setVatPercent] = useState(24);
@@ -96,15 +94,9 @@ export function OfferBuilderPage() {
   // country dictates — Greece 24%, Cyprus 0%, fallback 24%. The user can
   // still override the field manually.
   const vatSeededRef = useRef(false);
-   
+
   useEffect(() => {
     if (!lead) return;
-    const name =
-      [lead.contact_first_name, lead.contact_last_name].filter(Boolean).join(' ') ||
-      lead.company_name ||
-      '';
-    if (name) setClientNameOverride(name);
-    if (lead.email) setEmailOverride(lead.email);
     if (!vatSeededRef.current) {
       const rate = vatRateFor(lead.country);
       setVatPercent(Math.round(rate * 100));
@@ -538,27 +530,6 @@ export function OfferBuilderPage() {
           <CardTitle>Offer details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="clientName">Client name</Label>
-              <Input
-                id="clientName"
-                value={clientNameOverride}
-                onChange={(e) => setClientNameOverride(e.target.value)}
-                placeholder="Full name"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={emailOverride}
-                onChange={(e) => setEmailOverride(e.target.value)}
-                placeholder="client@example.com"
-              />
-            </div>
-          </div>
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="currency">Currency</Label>
