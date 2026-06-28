@@ -29,64 +29,78 @@ function eur(n: number): string {
 }
 
 export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Rendered> = {
-  // Editable one-click emails pass their own subject/html/text.
-  custom: (d) => ({
-    subject: String(d.subject ?? ''),
-    html: shell(String(d.html ?? '')),
-    text: String(d.text ?? String(d.html ?? '').replace(/<[^>]+>/g, '')),
-  }),
+  // Ad-hoc "Send email" dialog. The body is PLAIN TEXT supplied by a staff user,
+  // so escape it (then linkify + newline→<br/>) — never render it as raw HTML.
+  // Prefer the raw `text` field; fall back to stripping tags off any legacy `html`.
+  custom: (d) => {
+    const subject = String(d.subject ?? '').replace(/[\r\n]+/g, ' ');
+    const raw =
+      typeof d.text === 'string' && d.text.length > 0
+        ? String(d.text)
+        : String(d.html ?? '').replace(/<[^>]+>/g, '');
+    const bodyHtml = linkify(escapeHtml(raw)).replace(/\n/g, '<br/>');
+    return { subject, html: shell(bodyHtml), text: raw };
+  },
 
   payment_due_soon: (d) => {
-    const svc = SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? '');
-    const subject = `Υπενθύμιση πληρωμής — λήγει ${d.due_date}`;
+    const svc = escapeHtml(SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? ''));
+    const name = escapeHtml(String(d.client_name ?? ''));
+    const due = escapeHtml(String(d.due_date ?? ''));
+    const subject = `Υπενθύμιση πληρωμής — λήγει ${String(d.due_date ?? '')}`;
     const html = shell(
-      `<p>Αγαπητέ/ή ${d.client_name},</p>
-<p>Σας υπενθυμίζουμε ότι η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> λήγει στις <b>${d.due_date}</b>.</p>
+      `<p>Αγαπητέ/ή ${name},</p>
+<p>Σας υπενθυμίζουμε ότι η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> λήγει στις <b>${due}</b>.</p>
 <p>Ευχαριστούμε για τη συνεργασία.</p>`,
     );
-    return { subject, html, text: `Υπενθύμιση: πληρωμή ${eur(Number(d.amount_gross))} (${svc}) λήγει ${d.due_date}.` };
+    return { subject, html, text: `Υπενθύμιση: πληρωμή ${eur(Number(d.amount_gross))} (${svc}) λήγει ${String(d.due_date ?? '')}.` };
   },
 
   payment_due_today: (d) => {
-    const svc = SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? '');
+    const svc = escapeHtml(SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? ''));
+    const name = escapeHtml(String(d.client_name ?? ''));
+    const due = escapeHtml(String(d.due_date ?? ''));
     const subject = `Η πληρωμή σας λήγει σήμερα`;
     const html = shell(
-      `<p>Αγαπητέ/ή ${d.client_name},</p>
-<p>Η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> λήγει <b>σήμερα</b> (${d.due_date}).</p>`,
+      `<p>Αγαπητέ/ή ${name},</p>
+<p>Η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> λήγει <b>σήμερα</b> (${due}).</p>`,
     );
     return { subject, html, text: `Η πληρωμή ${eur(Number(d.amount_gross))} (${svc}) λήγει σήμερα.` };
   },
 
   payment_overdue: (d) => {
-    const svc = SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? '');
+    const svc = escapeHtml(SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? ''));
+    const name = escapeHtml(String(d.client_name ?? ''));
+    const due = escapeHtml(String(d.due_date ?? ''));
     const subject = `Εκπρόθεσμη πληρωμή`;
     const html = shell(
-      `<p>Αγαπητέ/ή ${d.client_name},</p>
-<p>Η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> με λήξη στις <b>${d.due_date}</b> παραμένει εκκρεμής.</p>
+      `<p>Αγαπητέ/ή ${name},</p>
+<p>Η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> με λήξη στις <b>${due}</b> παραμένει εκκρεμής.</p>
 <p>Παρακαλούμε επικοινωνήστε μαζί μας στο accounting@itdev.gr.</p>`,
     );
-    return { subject, html, text: `Εκπρόθεσμη πληρωμή ${eur(Number(d.amount_gross))} (${svc}), λήξη ${d.due_date}.` };
+    return { subject, html, text: `Εκπρόθεσμη πληρωμή ${eur(Number(d.amount_gross))} (${svc}), λήξη ${String(d.due_date ?? '')}.` };
   },
 
   internal_new_task: (d) => {
-    const link = `${APP_BASE}/deals/${d.deal_id ?? ''}`;
-    const subject = `Νέα εργασία: ${d.title}`;
+    const link = `${APP_BASE}/deals/${encodeURIComponent(String(d.deal_id ?? ''))}`;
+    const title = escapeHtml(String(d.title ?? ''));
+    const subject = `Νέα εργασία: ${String(d.title ?? '')}`;
     const html = shell(
-      `<p>Σου ανατέθηκε νέα εργασία: <b>${d.title}</b>.</p>
+      `<p>Σου ανατέθηκε νέα εργασία: <b>${title}</b>.</p>
 <p><a href="${link}">Άνοιγμα στο CRM</a></p>`,
     );
-    return { subject, html, text: `Νέα εργασία: ${d.title} — ${link}` };
+    return { subject, html, text: `Νέα εργασία: ${String(d.title ?? '')} — ${link}` };
   },
 
   internal_new_job: (d) => {
-    const link = `${APP_BASE}/deals/${d.deal_id ?? ''}`;
-    const svc = SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? '');
-    const subject = `Νέο job: ${svc}`;
+    const link = `${APP_BASE}/deals/${encodeURIComponent(String(d.deal_id ?? ''))}`;
+    const svc = escapeHtml(SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? ''));
+    const name = escapeHtml(String(d.client_name ?? ''));
+    const subject = `Νέο job: ${SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? '')}`;
     const html = shell(
-      `<p>Δημιουργήθηκε νέο job <b>${svc}</b> για τον πελάτη <b>${d.client_name}</b>.</p>
+      `<p>Δημιουργήθηκε νέο job <b>${svc}</b> για τον πελάτη <b>${name}</b>.</p>
 <p><a href="${link}">Άνοιγμα στο CRM</a></p>`,
     );
-    return { subject, html, text: `Νέο job ${svc} για ${d.client_name} — ${link}` };
+    return { subject, html, text: `Νέο job ${svc} για ${name} — ${link}` };
   },
 };
 

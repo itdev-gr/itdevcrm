@@ -48,4 +48,25 @@ describe('email templates', () => {
     const r = renderDbTemplate({ subject: 'S', body: 'Hi', client_facing: false }, {});
     expect(r.html).not.toContain('<a href=');
   });
+
+  it('escapes HTML in a custom email body and converts newlines', () => {
+    const r = renderTemplate('custom', { subject: 'S', text: 'Hi <script>alert(1)</script>\nsecond line' });
+    expect(r.html).not.toContain('<script>');
+    expect(r.html).toContain('&lt;script&gt;');
+    expect(r.html).toContain('second line');
+    expect(r.html).toContain('<br/>');
+  });
+
+  it('strips CR/LF from a custom subject (no header injection)', () => {
+    const r = renderTemplate('custom', { subject: 'Hi\r\nBcc: evil@x.gr', text: 'body' });
+    expect(r.subject).not.toMatch(/[\r\n]/);
+  });
+
+  it('escapes user-controlled fields in built-in payment templates', () => {
+    const r = renderTemplate('payment_overdue', {
+      client_name: '<b>x</b>', service_type: 'web_seo', amount_gross: 10, due_date: '2026-01-01',
+    });
+    expect(r.html).not.toContain('<b>x</b>');
+    expect(r.html).toContain('&lt;b&gt;x&lt;/b&gt;');
+  });
 });

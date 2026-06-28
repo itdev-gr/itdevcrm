@@ -215,14 +215,37 @@ Deno.serve(async (req) => {
     return json({ status: r.status, id: r.id, error: r.error }, r.status === 'failed' ? 502 : 200);
   }
 
-  // Single-send mode: allow service role OR an authenticated admin/staff user.
+  // Single-send mode: allow service role OR an authenticated staff user.
+  if (!body.identity || !body.to || !body.templateKey) return json({ error: 'Missing identity/to/templateKey' }, 400);
   if (!isServiceRole) {
     const caller = createClient(URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const { data: userData } = await caller.auth.getUser();
-    if (!userData?.user) return json({ error: 'Unauthorized' }, 401);
-    // Any authenticated staff member may send; tighten to admin if desired.
+    const uid = userData?.user?.id;
+    if (!uid) return json({ error: 'Unauthorized' }, 401);
+
+    // Reject header injection / multi-recipient fan-out on caller-supplied recipients.
+    if (/[\r\n,;]/.test(body.to) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.to)) {
+      return json({ error: 'invalid_recipient' }, 400);
+    }
+
+    // Ad-hoc `custom` composition: lock the sending identity to the caller's own
+    // department so a rep can't compose mail as another team. Admins may use any
+    // identity; system templates (contract / seo-access / payment) keep their fixed
+    // identity because their content comes from escaped DB/built-in templates.
+    if (String(body.templateKey) === 'custom') {
+      const { data: prof } = await admin.from('profiles').select('is_admin').eq('user_id', uid).maybeSingle();
+      if (!prof?.is_admin) {
+        const { data: grps } = await admin.from('user_groups').select('groups(code)').eq('user_id', uid);
+        const codes = new Set(((grps ?? []) as any[]).map((g) => g.groups?.code).filter(Boolean));
+        const allowed = new Set<string>(['internal']);
+        if (codes.has('sales')) allowed.add('sales');
+        if (codes.has('accounting')) allowed.add('accounting');
+        if (!allowed.has(String(body.identity))) {
+          return json({ error: 'identity_not_allowed' }, 403);
+        }
+      }
+    }
   }
-  if (!body.identity || !body.to || !body.templateKey) return json({ error: 'Missing identity/to/templateKey' }, 400);
   const result = await sendOne(body);
   return json(result, result.status === 'failed' ? 502 : 200);
 });
