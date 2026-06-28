@@ -35,6 +35,11 @@ const SERVICE_OPTIONS: PlannedService['service_type'][] = [
   'ads',
 ];
 
+function reportError(err: unknown) {
+  const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
+  alert(errors.join('\n'));
+}
+
 function PaymentRow({
   row,
   dealId,
@@ -67,19 +72,21 @@ function PaymentRow({
   const vatMismatch = Number(vatRate || 0) !== countryVatRate;
 
   function commit(patch: Record<string, unknown>) {
-    void update.mutateAsync({ id: row.id, patch });
+    update.mutateAsync({ id: row.id, patch }).catch(reportError);
   }
 
   function toggleStatus() {
     // Pending and overdue both flip to paid; paid flips back to pending.
     const next = row.status === 'paid' ? 'pending' : 'paid';
-    void update.mutateAsync({
-      id: row.id,
-      patch: {
-        status: next,
-        paid_at: next === 'paid' ? new Date().toISOString() : null,
-      },
-    });
+    update
+      .mutateAsync({
+        id: row.id,
+        patch: {
+          status: next,
+          paid_at: next === 'paid' ? new Date().toISOString() : null,
+        },
+      })
+      .catch(reportError);
   }
 
   return (
@@ -221,21 +228,27 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
 
   function submitNew() {
     if (!newAmountNet) return;
-    void add.mutateAsync({
-      service_type: newServiceType || null,
-      billing_type: newBilling,
-      label: newLabel || null,
-      amount_net: Number(newAmountNet),
-      vat_rate: Number(newVatRate),
-      start_date: newStart || null,
-      end_date: newEnd || null,
-    });
-    setShowAdd(false);
-    setNewLabel('');
-    setNewAmountNet('');
-    setNewVatRate(String(defaultVatRate));
-    setNewStart('');
-    setNewEnd('');
+    add
+      .mutateAsync({
+        service_type: newServiceType || null,
+        billing_type: newBilling,
+        label: newLabel || null,
+        amount_net: Number(newAmountNet),
+        vat_rate: Number(newVatRate),
+        start_date: newStart || null,
+        end_date: newEnd || null,
+      })
+      .then(() => {
+        // Only close + clear the add-form once the insert actually succeeds, so
+        // a failed insert doesn't look like it worked.
+        setShowAdd(false);
+        setNewLabel('');
+        setNewAmountNet('');
+        setNewVatRate(String(defaultVatRate));
+        setNewStart('');
+        setNewEnd('');
+      })
+      .catch(reportError);
   }
 
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;

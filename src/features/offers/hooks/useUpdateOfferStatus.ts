@@ -13,7 +13,7 @@ export function useUpdateOfferStatus(offerId: string) {
         .from('offers')
         .update({
           status,
-          sent_at: status === 'sent' ? new Date().toISOString() : null,
+          ...(status === 'sent' ? { sent_at: new Date().toISOString() } : {}),
         })
         .eq('id', offerId);
       if (error) {

@@ -70,10 +70,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     console.error('offer-pdf handler error:', e);
     captureApiError('offer-pdf', err);
     if (!res.headersSent) {
-      res.status(500).json({
-        error: e?.message ?? 'unknown error',
-        stack: e?.stack?.split('\n').slice(0, 8).join('\n') ?? null,
-      });
+      res.status(500).json({ error: 'internal_error' });
     }
   }
 }
