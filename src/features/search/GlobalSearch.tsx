@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -31,6 +31,7 @@ const TYPE_LABEL: Record<Hit['entity_type'], string> = {
 
 export function GlobalSearch() {
   const { t, i18n } = useTranslation('leads');
+  const navigate = useNavigate();
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -96,8 +97,11 @@ export function GlobalSearch() {
       if (!pick) return;
       e.preventDefault();
       const path = PATH_BY_TYPE[pick.entity_type](pick.entity_id);
-      // Navigate via location since we're outside any individual Link.
-      window.location.href = path;
+      // Client-side navigation keeps the React Query cache warm (a full
+      // window.location reload would drop it). Mirror the Link onClick which
+      // closes + resets the overlay.
+      dismiss();
+      navigate(path);
     } else if (e.key === 'Escape') {
       setOpen(false);
       inputRef.current?.blur();

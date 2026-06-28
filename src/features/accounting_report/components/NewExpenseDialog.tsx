@@ -15,7 +15,14 @@ function autoEndDate(start: string, billingType: BillingType): string | null {
   const d = new Date(`${start}T00:00:00Z`);
   if (billingType === 'one_time') return start;
   if (billingType === 'recurring_monthly') {
+    const day = d.getUTCDate();
     d.setUTCMonth(d.getUTCMonth() + 1);
+    // Month-end overflow guard: Jan 31 + 1 month rolls into early March. If the
+    // day-of-month changed, the target month is shorter than the start day —
+    // snap back to its last day (day 0 = last day of the previous month).
+    if (d.getUTCDate() !== day) {
+      d.setUTCDate(0);
+    }
   } else {
     d.setUTCFullYear(d.getUTCFullYear() + 1);
   }

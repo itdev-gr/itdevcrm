@@ -65,3 +65,20 @@ describe('NewExpenseDialog — Save & mark paid', () => {
     expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ markPaid: false }));
   });
 });
+
+describe('NewExpenseDialog — monthly auto end-date', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mutateAsync.mockResolvedValue({ id: 'e1' });
+  });
+
+  it('lands on the last day of the target month for a month-end start (no overflow)', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    // Switch to a monthly billing period, then pick a month-end start date.
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
+    fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2026-01-31' } });
+
+    // Jan 31 + 1 month must clamp to Feb 28, not overflow into March.
+    expect((screen.getByLabelText('End date') as HTMLInputElement).value).toBe('2026-02-28');
+  });
+});

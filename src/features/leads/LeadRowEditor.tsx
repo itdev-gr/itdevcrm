@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,16 @@ export function LeadRowEditor({
   const { t } = useTranslation('leads');
   const update = useUpdateLead();
   const [saved, setSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+
+  // Clear the "Saved" fade-out timer on unmount so it never fires setState on
+  // an unmounted row (rows churn as the leads table paginates/filters).
+  useEffect(
+    () => () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    },
+    [],
+  );
 
   const [title, setTitle] = useState(lead.title ?? '');
   const [fullName, setFullName] = useState(
@@ -58,7 +68,8 @@ export function LeadRowEditor({
     try {
       await update.mutateAsync({ id: lead.id, patch });
       setSaved(true);
-      window.setTimeout(() => setSaved(false), 1200);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = window.setTimeout(() => setSaved(false), 1200);
     } catch (err) {
       alert((err as Error).message);
     }

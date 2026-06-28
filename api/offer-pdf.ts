@@ -87,7 +87,8 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !serviceRoleKey || !anonKey) {
     res.status(500).json({ error: 'server not configured' });
     return;
   }
@@ -101,7 +102,10 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
   const admin = createClient(supabaseUrl, serviceRoleKey);
 
   // User client for permission verification — RLS-safe read of the offer.
-  const userClient = createClient(supabaseUrl, serviceRoleKey, {
+  // Uses the ANON key (not service_role): if the Authorization header is ever
+  // dropped, RLS denies the read rather than silently granting full
+  // service-role access. Privileged storage/DB writes go through `admin`.
+  const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false },
   });
