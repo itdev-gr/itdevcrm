@@ -55,7 +55,12 @@ begin
           select 'client', c.id, c.name, 1
             from public.clients c where lower(c.email) = lower(el.to_email)
           union all
-          select 'lead', l.id, coalesce(nullif(trim(l.company_name),''), l.email), 2
+          select 'client', cd.id, cd.name, 2
+            from public.deals d join public.clients cd on cd.id = d.client_id
+           where el.dedupe_key ~ ':[0-9a-fA-F-]{36}$'
+             and d.id = substring(el.dedupe_key from ':([0-9a-fA-F-]{36})$')::uuid
+          union all
+          select 'lead', l.id, coalesce(nullif(trim(l.company_name),''), l.email), 3
             from public.leads l where lower(l.email) = lower(el.to_email)
         ) cand order by pr limit 1
       ) r on true
