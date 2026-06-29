@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -119,6 +120,19 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
           className="mt-1 h-8 text-xs"
         />
       </div>
+      <div className="col-span-2 sm:col-span-3">
+        <Label htmlFor="cj-notes" className="text-xs">
+          {t('jobs_billing.form.notes_label')}
+        </Label>
+        <Textarea
+          id="cj-notes"
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder={t('jobs_billing.form.notes_placeholder')}
+          className="mt-1 text-xs"
+        />
+      </div>
       <div>
         <Label className="text-xs">{t('jobs_billing.form.department')}</Label>
         <Select
@@ -232,17 +246,6 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
           min="0"
           value={setupFee}
           onChange={(e) => setSetupFee(e.target.value)}
-          className="mt-1 h-8 text-xs"
-        />
-      </div>
-      <div className="col-span-2 sm:col-span-3">
-        <Label htmlFor="cj-desc" className="text-xs">
-          {t('jobs_billing.form.description')}
-        </Label>
-        <Input
-          id="cj-desc"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
           className="mt-1 h-8 text-xs"
         />
       </div>

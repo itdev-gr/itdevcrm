@@ -93,4 +93,23 @@ describe('AddCustomJobForm', () => {
     await user.click(await screen.findByRole('option', { name: /monthly/i }));
     expect(screen.queryByRole('combobox', { name: /payment plan/i })).not.toBeInTheDocument();
   });
+
+  it('sends the multi-line "Notes from accounting" value through to create', async () => {
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+
+    await user.type(screen.getByLabelText(/^title$/i), 'New site');
+    await user.type(screen.getByLabelText(/price \(net/i), '1200');
+
+    const notes = screen.getByLabelText(/notes from accounting/i);
+    expect(notes.tagName).toBe('TEXTAREA');
+    await user.type(notes, 'Line 1{enter}Line 2');
+
+    await user.click(screen.getByRole('button', { name: /add job/i }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
+    expect(mutateAsync.mock.calls[0]![0]).toMatchObject({
+      description: 'Line 1\nLine 2',
+    });
+  });
 });
