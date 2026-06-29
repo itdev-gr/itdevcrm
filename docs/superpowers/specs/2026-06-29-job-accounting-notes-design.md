@@ -79,11 +79,13 @@ Overview tab, above the existing service Info panel:
 - Click → inline `<Textarea>` with **Save** / **Cancel** buttons. Save calls
   the existing `useUpdateJobBilling` hook with `{ description: <value> }`.
   Cancel restores the prior value.
-- Display mode renders with `whitespace-pre-wrap` so newlines survive, and
-  passes through the existing URL linkifier (already used by email templates
-  and the lead-info block — extract or import the helper).
-- Permission to edit: anyone who can see the job. The card is hidden for
-  client-portal users (`useIsClient()` or equivalent role check).
+- Display mode renders with `whitespace-pre-wrap` so newlines survive.
+  URL auto-linking is out of scope for v1 (no existing linkify util in this
+  codebase, and copy-paste still works fine; we can add it later if anyone
+  asks).
+- Permission to edit: anyone who can see the job. Access is already gated by
+  the jobs RLS policy — there is no separate client-portal surface to hide
+  from in this CRM.
 
 #### AI SEO children
 
@@ -95,19 +97,12 @@ ai_seo billing parent — they cannot see the parent job directly because RLS
 withholds `ai_seo` rows from their groups. See memory:
 [AI SEO 3-row split](memory project_local_seo_owner).
 
-Service-team RLS withholds `ai_seo` rows from local/web groups, so a plain
-client `SELECT` on the parent will return zero rows. The implementation adds
-a small security-definer RPC `get_parent_job_notes(p_child_job_id uuid)
-returns text` that:
-
-- Looks up the child's `parent_job_id`.
-- Returns the parent's `description`.
-- Returns `NULL` if the child has no parent or the caller cannot see the
-  child itself (re-check the child's RLS inside the function so we don't
-  leak parents).
-
-Migration: `supabase/migrations/2026-06-29-get-parent-job-notes.sql` with a
-paired `DROP FUNCTION` in the file's rollback section.
+The detail page already runs `useJob(job?.parent_job_id ?? '')` to fetch the
+parent (it powers the existing "Part of AI SEO" banner). We piggyback on that
+query — if `parentJob?.description` is non-empty, render it. If the user has
+no read access on the parent row the hook returns null and the subsection is
+simply not rendered (graceful fallback, same as the existing parent-banner
+behavior). No new RPC or migration needed.
 
 ### Deal Overview preview
 
@@ -141,15 +136,12 @@ single-line, muted preview:
 3. **JobDetailPage — edit save** — opening the editor, typing, and clicking
    Save calls `useUpdateJobBilling` once with the new value; UI then shows
    the value.
-4. **JobDetailPage — AI SEO child** — when `job.parent_job_id` is set, the
-   parent note renders as a read-only subsection labeled correctly, and the
-   child note remains independently editable.
-5. **JobDetailPage — client portal** — render with `isClient=true`
-   → notes card is not in the DOM.
-6. **Linkify** — a value containing `https://example.com` renders an
-   anchor pointing at that URL (one integration assertion is enough; the
-   linkify util has its own unit tests).
-7. **JobsBillingPanel** — extends `JobsBillingPanel.test.tsx`: row with a
+4. **JobDetailPage — AI SEO child** — when `job.parent_job_id` is set and
+   `useJob(parent_job_id)` returns a parent with a description, the parent
+   note renders as a read-only subsection labeled correctly, and the child
+   note remains independently editable. When the parent query returns null
+   (no access or no note), the subsection is not rendered.
+5. **JobsBillingPanel** — extends `JobsBillingPanel.test.tsx`: row with a
    note shows the muted preview truncated at 120 chars; row without a note
    has no preview node.
 
@@ -165,11 +157,7 @@ No backend tests (no RPC or schema change).
 - `src/features/deals/JobsBillingPanel.tsx` — add per-row note preview.
 - `src/i18n/locales/{en,el}/deals.json` — new label/placeholder keys, keep
   old `description` key.
-- One security-definer RPC `get_parent_job_notes(uuid) returns text` (see
-  AI SEO children section above). Migration
-  `supabase/migrations/2026-06-29-get-parent-job-notes.sql` with paired
-  `DROP FUNCTION` in the rollback section (per
-  [Track changes for revert](memory feedback_track_changes_for_revert)).
+- No new RPC and no migration (existing `useJob` covers the parent fetch).
 - Tests added/extended as listed above.
 
 ### Revert
