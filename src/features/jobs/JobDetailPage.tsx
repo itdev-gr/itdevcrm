@@ -45,6 +45,7 @@ import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { groupIdForServiceType } from './serviceTaskMatch';
 import { ContactsCard } from './ContactsCard';
+import { JobNotesCard } from './JobNotesCard';
 import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
@@ -358,6 +359,12 @@ export function JobDetailPage() {
         <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+              <JobNotesCard
+                jobId={job.id}
+                dealId={job.deal_id}
+                description={job.description ?? null}
+                parentJobId={job.parent_job_id ?? null}
+              />
               {job.billing_type === 'recurring_monthly' && infoFieldsFor(job.service_type).length === 0 && (
                 <MonthlyTasksPanel
                   jobId={job.id}
