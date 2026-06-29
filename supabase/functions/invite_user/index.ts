@@ -46,11 +46,30 @@ Deno.serve(async (req) => {
   }
 
   const body = (await req.json().catch(() => null)) as InviteUserBody | null;
-  if (!body || !body.email || !body.full_name || !body.temp_password) {
+  if (!body || !body.email || !body.full_name || !body.temp_password || !Array.isArray(body.group_codes)) {
     return new Response('Bad request', { status: 400, headers: corsHeaders });
   }
 
   const admin = createClient(url, serviceKey);
+
+  // Resolve group ids BEFORE creating the auth user, so a malformed payload or a
+  // failed lookup can't leave an orphaned auth user behind (the create is the
+  // hardest step to undo). The unguarded body.group_codes.length / groups query
+  // used to run only after createUser.
+  let groupIds: string[] = [];
+  if (body.group_codes.length > 0) {
+    const { data: groups, error: groupsErr } = await admin
+      .from('groups')
+      .select('id, code')
+      .in('code', body.group_codes);
+    if (groupsErr) {
+      return new Response(
+        JSON.stringify({ error: 'Could not resolve groups' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    groupIds = (groups ?? []).map((g: any) => g.id);
+  }
 
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email: body.email,
@@ -73,15 +92,9 @@ Deno.serve(async (req) => {
     await admin.from('profiles').update({ is_admin: true }).eq('user_id', newUserId);
   }
 
-  if (body.group_codes.length > 0) {
-    const { data: groups } = await admin
-      .from('groups')
-      .select('id, code')
-      .in('code', body.group_codes);
-    const rows = (groups ?? []).map((g: any) => ({ user_id: newUserId, group_id: g.id }));
-    if (rows.length > 0) {
-      await admin.from('user_groups').insert(rows);
-    }
+  if (groupIds.length > 0) {
+    const rows = groupIds.map((group_id) => ({ user_id: newUserId, group_id }));
+    await admin.from('user_groups').insert(rows);
   }
 
   return new Response(JSON.stringify({ user_id: newUserId }), {

@@ -1,5 +1,7 @@
 // Shared Google OAuth + Gmail helpers. Pure/crypto parts are unit-tested under
 // vitest; network parts (exchangeCode/refresh/sendGmail) are exercised in dry-run.
+import { timingSafeEqual } from './timing.ts';
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -25,7 +27,7 @@ export async function signState(payload: Record<string, unknown>, secret: string
 export async function verifyState(state: string, secret: string): Promise<Record<string, unknown> | null> {
   const [p, sig] = state.split('.');
   if (!p || !sig) return null;
-  if ((await hmac(p, secret)) !== sig) return null;
+  if (!timingSafeEqual(await hmac(p, secret), sig)) return null;
   try {
     const body = JSON.parse(dec.decode(b64urlToBytes(p)));
     if (typeof body.exp !== 'number' || body.exp < Math.floor(Date.now() / 1000)) return null;

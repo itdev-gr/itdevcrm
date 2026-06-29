@@ -4,6 +4,7 @@ import { IDENTITIES, type Identity } from './identities.ts';
 import { renderTemplate, renderDbTemplate } from './templates.ts';
 import { validateAttachmentRefs, fetchAttachments, type AttachmentRef, type ResendAttachment } from './attachments.ts';
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
+import { timingSafeEqual } from '../_shared/timing.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -193,7 +194,10 @@ Deno.serve(async (req) => {
 
   const authHeader = req.headers.get('Authorization') ?? '';
   const token = authHeader.replace('Bearer ', '');
-  const isServiceRole = token === SERVICE_KEY || (DRAIN_SECRET !== '' && token === DRAIN_SECRET);
+  // Constant-time compare; guard against empty token matching an unset secret.
+  const isServiceRole =
+    (token !== '' && timingSafeEqual(token, SERVICE_KEY)) ||
+    (DRAIN_SECRET !== '' && timingSafeEqual(token, DRAIN_SECRET));
 
   const body = (await req.json().catch(() => null)) as (SendInput & { drain?: boolean }) | null;
   if (!body) return json({ error: 'Bad request' }, 400);
