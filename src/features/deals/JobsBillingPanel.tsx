@@ -173,7 +173,11 @@ function JobRow({
     }
   }
 
+  const noteText = (job.description ?? '').trim();
+  const notePreview = noteText.length > 120 ? `${noteText.slice(0, 120)}…` : noteText;
+
   return (
+    <>
     <tr className="border-t">
       <td className="px-1.5 py-1.5 text-[11px] text-foreground">
         {job.title || '—'}
@@ -352,6 +356,18 @@ function JobRow({
         )}
       </td>
     </tr>
+    {noteText && (
+      <tr data-testid={`note-preview-${job.id}`} className="border-t-0">
+        <td
+          colSpan={6}
+          title={noteText}
+          className="px-1.5 pb-1.5 pt-0 text-[10px] italic text-muted-foreground truncate"
+        >
+          {notePreview}
+        </td>
+      </tr>
+    )}
+    </>
   );
 }
 

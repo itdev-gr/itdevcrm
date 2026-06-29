@@ -329,3 +329,43 @@ describe('JobsBillingPanel invoiced date', () => {
     expect(screen.getByTestId('jobs-billing-invoiced-date')).toHaveTextContent('—');
   });
 });
+
+describe('JobsBillingPanel note preview', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows a truncated single-line note preview under a job row', () => {
+    const longNote = 'A'.repeat(150);
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Hosting', description: longNote })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const previewRow = screen.getByTestId('note-preview-a');
+    const cell = previewRow.querySelector('td')!;
+    // 120 chars + the ellipsis character is 121 visible chars.
+    expect(cell.textContent!.length).toBeLessThanOrEqual(121);
+    expect(cell.textContent!.startsWith('AAA')).toBe(true);
+    expect(cell.getAttribute('title')).toBe(longNote);
+  });
+
+  it('does not render a preview row when the job has no description', () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'b', title: 'Hosting', description: null })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    expect(screen.queryByTestId('note-preview-b')).toBeNull();
+  });
+
+  it('does not truncate notes shorter than 120 chars and omits the ellipsis', () => {
+    const short = 'Short note';
+    billing.current = {
+      jobs: [makeJob({ id: 'c', title: 'Hosting', description: short })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const cell = screen.getByTestId('note-preview-c').querySelector('td')!;
+    expect(cell.textContent).toBe(short);
+  });
+});
