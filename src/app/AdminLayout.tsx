@@ -10,6 +10,7 @@ const SETTINGS_TABS = [
   { to: '/admin/stages', key: 'stages' },
   { to: '/admin/service-packages', key: 'service_packages' },
   { to: '/admin/email-automations', key: 'email_automations' },
+  { to: '/admin/email-health', key: 'email_health' },
   { to: '/admin/contract-templates', key: 'contract_templates' },
   { to: '/admin/announcements', key: 'announcements' },
   { to: '/admin/documentation', key: 'documentation' },

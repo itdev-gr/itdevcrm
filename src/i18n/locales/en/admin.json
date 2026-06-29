@@ -8,6 +8,7 @@
     "service_packages": "Service packages",
     "permissions_test": "Permissions test page",
     "email_automations": "Email automations",
+    "email_health": "Email health",
     "contract_templates": "Contract templates",
     "announcements": "Announcements",
     "documentation": "Documentation"

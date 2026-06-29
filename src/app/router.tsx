@@ -134,6 +134,10 @@ const EmailAutomationsPage = lazyPage(
   () => import('@/features/email_automations/EmailAutomationsPage'),
   'EmailAutomationsPage',
 );
+const EmailHealthPage = lazyPage(
+  () => import('@/features/system_health/EmailHealthPage'),
+  'EmailHealthPage',
+);
 const OfferBuilderPage = lazyPage(
   () => import('@/features/offers/OfferBuilderPage'),
   'OfferBuilderPage',
@@ -194,6 +198,7 @@ export const router = createBrowserRouter([
               { path: 'stages', element: <StagesListPage /> },
               { path: 'service-packages', element: <ServicePackagesPage /> },
               { path: 'email-automations', element: <EmailAutomationsPage /> },
+              { path: 'email-health', element: <EmailHealthPage /> },
               { path: 'contract-templates', element: <ContractTemplatesPage /> },
               { path: 'announcements', element: <AnnouncementsAdminPage /> },
               { path: 'documentation', element: <DocumentationPage /> },

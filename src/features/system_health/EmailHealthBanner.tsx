@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useEmailHealth } from './useEmailHealth';
 import { emailHealthMessage } from './emailHealth';
@@ -11,8 +12,12 @@ export function EmailHealthBanner() {
   if (!banner) return null;
   const color = banner.severity === 'down' ? 'bg-red-600' : 'bg-amber-500';
   return (
-    <div className={`${color} px-4 py-2 text-center text-sm font-medium text-white`} role="alert">
-      ⚠ {banner.text}
-    </div>
+    <Link
+      to="/admin/email-health"
+      className={`block ${color} px-4 py-2 text-center text-sm font-medium text-white transition hover:brightness-95`}
+      role="alert"
+    >
+      ⚠ {banner.text} — view details
+    </Link>
   );
 }
