@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { Recipient } from './hooks/useEmailOps';
 import {
   PageHeader,
   SettingsCard,
@@ -34,6 +36,30 @@ const STATUS_STYLES: Record<string, string> = {
   bounced: 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300',
   complained: 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300',
 };
+
+function RecipientCell({ r }: { r: Recipient }) {
+  if (!r.recipient_id || !r.recipient_kind) {
+    return <span className="text-muted-foreground/60">—</span>;
+  }
+  const to = r.recipient_kind === 'client' ? `/clients/${r.recipient_id}` : `/leads/${r.recipient_id}`;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className={cn(
+          'rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase',
+          r.recipient_kind === 'client'
+            ? 'bg-primary/10 text-primary dark:text-[#7ad4d4]'
+            : 'bg-muted text-muted-foreground',
+        )}
+      >
+        {r.recipient_kind}
+      </span>
+      <Link to={to} className="truncate font-medium text-foreground hover:text-primary hover:underline">
+        {r.recipient_name ?? r.recipient_id.slice(0, 8)}
+      </Link>
+    </span>
+  );
+}
 
 function StatusBadge({ status }: { status: string }) {
   return (
@@ -100,6 +126,7 @@ export function EmailHealthPage() {
             <thead className={settingsTheadClass}>
               <tr>
                 <th className={settingsThClass}>To</th>
+                <th className={settingsThClass}>Recipient</th>
                 <th className={settingsThClass}>Template</th>
                 <th className={settingsThClass}>Status</th>
                 <th className={settingsThClass}>Attempts</th>
@@ -111,7 +138,7 @@ export function EmailHealthPage() {
             <tbody>
               {queueRows.length === 0 ? (
                 <tr className={settingsTrClass}>
-                  <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={7}>
+                  <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={8}>
                     {queue.isLoading ? 'Loading…' : 'No emails need attention 🎉'}
                   </td>
                 </tr>
@@ -119,6 +146,7 @@ export function EmailHealthPage() {
                 queueRows.map((row) => (
                   <tr key={row.id} className={settingsTrClass}>
                     <td className={cn(settingsTdClass, 'break-all')}>{row.to_email}</td>
+                    <td className={settingsTdClass}><RecipientCell r={row} /></td>
                     <td className={cn(settingsTdClass, 'font-mono text-xs')}>{row.template_key}</td>
                     <td className={settingsTdClass}><StatusBadge status={row.status} /></td>
                     <td className={settingsTdClass}>{row.attempts}</td>
@@ -162,6 +190,7 @@ export function EmailHealthPage() {
             <thead className={settingsTheadClass}>
               <tr>
                 <th className={settingsThClass}>To</th>
+                <th className={settingsThClass}>Recipient</th>
                 <th className={settingsThClass}>Template</th>
                 <th className={settingsThClass}>Status</th>
                 <th className={settingsThClass}>When</th>
@@ -171,7 +200,7 @@ export function EmailHealthPage() {
             <tbody>
               {failureRows.length === 0 ? (
                 <tr className={settingsTrClass}>
-                  <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={5}>
+                  <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={6}>
                     {failures.isLoading ? 'Loading…' : 'No recent failures.'}
                   </td>
                 </tr>
@@ -179,6 +208,7 @@ export function EmailHealthPage() {
                 failureRows.map((row) => (
                   <tr key={row.id} className={settingsTrClass}>
                     <td className={cn(settingsTdClass, 'break-all')}>{row.to_email}</td>
+                    <td className={settingsTdClass}><RecipientCell r={row} /></td>
                     <td className={cn(settingsTdClass, 'font-mono text-xs')}>{row.template_key}</td>
                     <td className={settingsTdClass}><StatusBadge status={row.status} /></td>
                     <td className={cn(settingsTdClass, 'whitespace-nowrap text-muted-foreground')}>

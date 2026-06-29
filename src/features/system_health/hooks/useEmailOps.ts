@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
-export type QueueEmail = {
+// Resolved recipient (client OR lead) for an email, when determinable.
+export type Recipient = {
+  recipient_kind: 'client' | 'lead' | null;
+  recipient_id: string | null;
+  recipient_name: string | null;
+};
+
+export type QueueEmail = Recipient & {
   id: string;
   to_email: string;
   template_key: string;
@@ -11,7 +18,7 @@ export type QueueEmail = {
   created_at: string;
 };
 
-export type FailedEmail = {
+export type FailedEmail = Recipient & {
   id: string;
   to_email: string;
   template_key: string;
@@ -20,17 +27,14 @@ export type FailedEmail = {
   created_at: string;
 };
 
-// Queue: anything not yet successfully delivered (admin-read via RLS).
+// Queue: anything not yet successfully delivered, with its recipient resolved
+// (admin-gated RPC; resolves client by id/email/deal, else lead by email).
 export function useEmailQueue(enabled: boolean) {
   return useQuery({
     queryKey: ['email-queue'] as const,
     enabled,
     queryFn: async (): Promise<QueueEmail[]> => {
-      const { data, error } = await supabase
-        .from('email_outbox')
-        .select('id, to_email, template_key, status, attempts, last_error, created_at')
-        .in('status', ['pending', 'sending', 'failed'])
-        .order('created_at', { ascending: true });
+      const { data, error } = await supabase.rpc('email_queue_rows' as never);
       if (error) throw new Error(error.message);
       return (data ?? []) as QueueEmail[];
     },
@@ -38,20 +42,13 @@ export function useEmailQueue(enabled: boolean) {
   });
 }
 
-// Recent failures & bounces from the audit log (last 7 days).
+// Recent failures & bounces (last 7 days), with recipient resolved.
 export function useEmailFailures(enabled: boolean) {
   return useQuery({
     queryKey: ['email-failures'] as const,
     enabled,
     queryFn: async (): Promise<FailedEmail[]> => {
-      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from('email_log')
-        .select('id, to_email, template_key, status, error, created_at')
-        .in('status', ['failed', 'bounced', 'complained'])
-        .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(200);
+      const { data, error } = await supabase.rpc('email_failure_rows' as never);
       if (error) throw new Error(error.message);
       return (data ?? []) as FailedEmail[];
     },
