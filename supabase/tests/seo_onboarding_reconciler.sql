@@ -14,6 +14,9 @@ begin
   perform set_config('t.deal', v_deal::text, true);
   update public.clients set email='reconcile-test@example.gr' where id=v_client;
   update public.email_automation_settings set enabled=true where key in ('dept_technical','localseo_gbp');
+  -- The reconciler only considers jobs onboarded at/after the cutover; push it into the
+  -- past so this test's "onboarded 2h ago" job qualifies (rolled back with the test).
+  update public.seo_onboarding_config set cutover_at = '2000-01-01';
   delete from public.jobs where deal_id=v_deal and service_type='local_seo';
   delete from public.email_outbox where dedupe_key='localseo_gbp:'||v_deal;
   delete from public.email_log    where dedupe_key='localseo_gbp:'||v_deal;
