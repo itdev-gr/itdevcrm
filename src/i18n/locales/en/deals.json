@@ -194,9 +194,19 @@
       "cadence": "Cadence",
       "plan": "Payment plan",
       "description": "Description",
+      "notes_label": "Notes from accounting",
+      "notes_placeholder": "Pricing context, what was agreed with the client, special instructions…",
       "setup_fee": "Setup fee (€)",
       "submit": "Add job",
       "submitting": "Adding…"
+    },
+    "notes_card": {
+      "title": "Notes from accounting",
+      "empty": "No notes yet",
+      "add_button": "Add note",
+      "save": "Save",
+      "cancel": "Cancel",
+      "parent_title": "Notes from AI SEO parent"
     },
     "cadence_options": {
       "one_time": "One-time",
