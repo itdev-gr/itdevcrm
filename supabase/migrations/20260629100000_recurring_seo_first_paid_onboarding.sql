@@ -38,6 +38,24 @@ begin
     raise warning 'release_deal_jobs: a SEO board is missing its new_project stage; onboarding placement skipped for deal %', p_deal_id;
   end if;
 
+  -- IMPORTANT ORDERING: the renewal move (1c) runs FIRST, before the onboarding
+  -- branches (1a/1b). 1a/1b set onboarded_at=now() in this call; if 1c ran after
+  -- them it would immediately match those just-onboarded rows (onboarded_at not null)
+  -- and bounce them out of New project into Renewal in the same call. Running 1c first
+  -- means it only ever sees rows onboarded in a PRIOR call.
+
+  -- (1c) recurring SEO, already onboarded (in a prior call) -> Renewal (non-terminal) + unblock.
+  update public.jobs j
+     set is_blocked=false, blocked_reason=null, blocked_at=null, blocked_by=null,
+         stage_id=coalesce((select rs.id from public.pipeline_stages rs
+                             where rs.board=j.service_type and rs.code='renewal' and not rs.archived limit 1), j.stage_id)
+    from public.pipeline_stages cur
+   where j.deal_id=p_deal_id and not j.archived
+     and j.service_type in ('web_seo','local_seo')
+     and j.billing_type is distinct from 'one_time'
+     and j.onboarded_at is not null
+     and cur.id=j.stage_id and not cur.is_terminal;
+
   -- (1a) recurring SEO, never onboarded, off-board -> New project + mark + unblock.
   --      null->new_project fires jobs_seo_onboarding_email. Fixes the direct-drag gap.
   update public.jobs j
@@ -62,18 +80,6 @@ begin
      and j.service_type in ('web_seo','local_seo')
      and j.billing_type is distinct from 'one_time'
      and j.onboarded_at is null and j.stage_id is not null;
-
-  -- (1c) recurring SEO, already onboarded -> Renewal (non-terminal) + unblock.
-  update public.jobs j
-     set is_blocked=false, blocked_reason=null, blocked_at=null, blocked_by=null,
-         stage_id=coalesce((select rs.id from public.pipeline_stages rs
-                             where rs.board=j.service_type and rs.code='renewal' and not rs.archived limit 1), j.stage_id)
-    from public.pipeline_stages cur
-   where j.deal_id=p_deal_id and not j.archived
-     and j.service_type in ('web_seo','local_seo')
-     and j.billing_type is distinct from 'one_time'
-     and j.onboarded_at is not null
-     and cur.id=j.stage_id and not cur.is_terminal;
 
   -- (2) UNCHANGED renewal-move: one-time SEO + all ads/social_media -> Renewal (non-terminal) + unblock.
   update public.jobs j

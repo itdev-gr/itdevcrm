@@ -8,7 +8,9 @@ select plan(2);
 do $$
 declare v_deal uuid; v_client uuid; v_paid uuid; v_other uuid;
 begin
-  select id, client_id into v_deal, v_client from public.deals where code is not null limit 1;
+  -- payment_method must be set, else deals_payment_method_required aborts the stage change.
+  select id, client_id into v_deal, v_client
+    from public.deals where code is not null and payment_method is not null limit 1;
   perform set_config('t.deal', v_deal::text, true);
   update public.clients set email='integration-test@example.gr' where id=v_client;
   update public.email_automation_settings set enabled=true where key in ('dept_technical','localseo_gbp');

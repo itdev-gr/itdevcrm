@@ -1,7 +1,7 @@
 -- supabase/tests/release_deal_jobs_onboarding.sql
 -- Run with: supabase test db  (transactional; rolls back)
 begin;
-select plan(13);
+select plan(14);
 
 -- Shared target deal/client + automation toggles on + client has an email.
 do $$
@@ -91,7 +91,7 @@ select is((select ps.code from public.jobs j join public.pipeline_stages ps on p
            where j.deal_id=current_setting('t.deal')::uuid and j.service_type='local_seo'),
           'renewal', '2: one-time local_seo -> Renewal (unchanged)');
 
--- null billing_type treated as recurring -> onboards
+-- recurring_yearly (non-one_time) treated as recurring -> onboards (defensive predicate)
 do $$
 declare v_deal uuid := current_setting('t.deal')::uuid; v_client uuid := current_setting('t.client')::uuid;
 begin
@@ -99,13 +99,13 @@ begin
   delete from public.email_outbox where dedupe_key='localseo_gbp:'||v_deal;
   insert into public.jobs (deal_id, client_id, service_type, billing_type, amount_net, vat_rate,
                            status, stage_id, onboarded_at, archived, started_at, code)
-    values (v_deal, v_client, 'local_seo', null, 240, 24,
+    values (v_deal, v_client, 'local_seo', 'recurring_yearly', 240, 24,
             'active', null, null, false, now(), (select code from public.deals where id=v_deal));
   perform public.release_deal_jobs(v_deal);
 end $$;
 select is((select ps.code from public.jobs j join public.pipeline_stages ps on ps.id=j.stage_id
            where j.deal_id=current_setting('t.deal')::uuid and j.service_type='local_seo'),
-          'new_project', 'null billing_type treated as recurring -> New project');
+          'new_project', 'recurring_yearly treated as recurring -> New project');
 
 -- idempotency: re-running 1a scenario twice queues exactly one email and stays put
 do $$

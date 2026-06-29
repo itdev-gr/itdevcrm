@@ -40,8 +40,8 @@ do $$
 declare v_deal uuid := current_setting('t.deal')::uuid;
 begin
   delete from public.email_outbox where dedupe_key='localseo_gbp:'||v_deal;
-  insert into public.email_log (to_email, template_key, status, dedupe_key, created_at)
-    values ('reconcile-test@example.gr','localseo_gbp_access','delivered','localseo_gbp:'||v_deal, now());
+  insert into public.email_log (identity, to_email, template_key, status, dedupe_key, created_at)
+    values ('accounting','reconcile-test@example.gr','localseo_gbp_access','delivered','localseo_gbp:'||v_deal, now());
 end $$;
 select is((select count(*)::int from public.seo_onboarding_pending_jobs()
            where deal_id=current_setting('t.deal')::uuid),
