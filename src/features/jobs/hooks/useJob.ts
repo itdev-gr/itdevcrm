@@ -10,7 +10,7 @@ export function useJob(jobId: string) {
       const { data, error } = await supabase
         .from('jobs')
         .select(
-          '*, client:clients(id, name, contact_first_name, contact_last_name, industry, email, phone, contact_info, additional_contacts), deal:deals(id, code, title, payment_method), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
+          '*, client:clients(id, name, contact_first_name, contact_last_name, industry, email, phone, website, contact_info, additional_contacts), deal:deals(id, code, title, payment_method), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
         )
         .eq('id', jobId)
         .single();

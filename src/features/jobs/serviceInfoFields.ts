@@ -16,6 +16,7 @@ const LOCAL: InfoField[] = [
 ];
 
 const WEB_SEO: InfoField[] = [
+  { key: 'website', labelEn: 'Website', labelEl: 'Ιστοσελίδα', type: 'url' },
   { key: 'website_username', labelEn: 'Website username', labelEl: 'Username ιστοσελίδας', type: 'text' },
   { key: 'website_password', labelEn: 'Website password', labelEl: 'Password ιστοσελίδας', type: 'password' },
   { key: 'website_path', labelEn: 'Website path', labelEl: 'Διαδρομή ιστοσελίδας', type: 'text' },

@@ -395,6 +395,31 @@ export function JobDetailPage() {
                       {job.service_type.replace(/_/g, ' ')}
                     </dd>
                   </div>
+                  {job.service_type === 'web_seo' &&
+                    (() => {
+                      const details = job.details ?? {};
+                      const fromDetails =
+                        typeof details.website === 'string' ? details.website.trim() : '';
+                      const fromClient = (job.client?.website ?? '').trim();
+                      const raw = fromDetails || fromClient;
+                      if (!raw) return null;
+                      const href = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+                      return (
+                        <div className="sm:col-span-2">
+                          <dt className="text-[11px] text-muted-foreground">Website</dt>
+                          <dd className="mt-0.5">
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="break-all text-sm font-medium text-primary hover:underline"
+                            >
+                              {raw}
+                            </a>
+                          </dd>
+                        </div>
+                      );
+                    })()}
                   <div>
                     <dt className="text-[11px] text-muted-foreground">Status</dt>
                     <dd className="mt-0.5">
