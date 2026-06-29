@@ -57,6 +57,44 @@ describe('groupJobsForBoard', () => {
     expect(byColumn.get('wd-brief')?.map((j) => j.id)).toEqual(['a']);
     expect(blocked).toEqual([]);
   });
+
+  // The reported bug: opening a job then returning to the board reshuffled the
+  // cards. A stable, fixed order (newest-created on top) keeps each card put.
+  it('orders each column by created_at desc, regardless of input order', () => {
+    const jobs = [
+      job({ id: 'b', stage_id: 'ls-opt', created_at: '2026-06-10T00:00:00Z' }),
+      job({ id: 'a', stage_id: 'ls-opt', created_at: '2026-06-20T00:00:00Z' }),
+      job({ id: 'c', stage_id: 'ls-opt', created_at: '2026-06-15T00:00:00Z' }),
+    ];
+    const { byColumn } = groupJobsForBoard({
+      board: 'local_seo', jobs, boardStages: localStages, stageById,
+    });
+    expect(byColumn.get('ls-opt')?.map((j) => j.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('breaks created_at ties by id desc so the order never jitters on refetch', () => {
+    const ts = '2026-06-20T00:00:00Z';
+    const jobs = [
+      job({ id: 'a', stage_id: 'ls-opt', created_at: ts }),
+      job({ id: 'c', stage_id: 'ls-opt', created_at: ts }),
+      job({ id: 'b', stage_id: 'ls-opt', created_at: ts }),
+    ];
+    const { byColumn } = groupJobsForBoard({
+      board: 'local_seo', jobs, boardStages: localStages, stageById,
+    });
+    expect(byColumn.get('ls-opt')?.map((j) => j.id)).toEqual(['c', 'b', 'a']);
+  });
+
+  it('orders the blocked bucket deterministically too', () => {
+    const jobs = [
+      job({ id: 'b', stage_id: 'ls-opt', is_blocked: true, created_at: '2026-06-10T00:00:00Z' }),
+      job({ id: 'a', stage_id: 'ls-opt', is_blocked: true, created_at: '2026-06-20T00:00:00Z' }),
+    ];
+    const { blocked } = groupJobsForBoard({
+      board: 'local_seo', jobs, boardStages: localStages, stageById,
+    });
+    expect(blocked.map((j) => j.id)).toEqual(['a', 'b']);
+  });
 });
 
 describe('hasBlockedColumn', () => {

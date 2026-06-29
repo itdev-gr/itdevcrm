@@ -51,7 +51,11 @@ export function useJobs(serviceType: ServiceType) {
         )
         .in('service_type', serviceTypesForBoard(serviceType))
         .eq('archived', false)
-        .order('updated_at', { ascending: false });
+        // Stable, fixed order so cards never reshuffle when a job is opened or
+        // edited (newest-created on top, id as a deterministic tie-breaker).
+        // The board's visible order is finalised in groupJobsForBoard.
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
       if (error) throw new Error(error.message);
       return (data ?? []) as unknown as JobRow[];
     },

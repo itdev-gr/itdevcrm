@@ -16,7 +16,12 @@ export function useJobsForDeal(dealId: string) {
         )
         .eq('deal_id', dealId)
         .eq('archived', false)
-        .order('service_type');
+        // Group by service, then a stable order within each service so the
+        // deal's job list doesn't reshuffle on edits (newest-created first,
+        // id as tie-breaker).
+        .order('service_type')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
       if (error) throw new Error(error.message);
       return (data ?? []) as unknown as JobRow[];
     },

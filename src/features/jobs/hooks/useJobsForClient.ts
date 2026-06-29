@@ -16,7 +16,10 @@ export function useJobsForClient(clientId: string) {
         )
         .eq('client_id', clientId)
         .eq('archived', false)
-        .order('updated_at', { ascending: false });
+        // Stable, fixed order (newest-created first) so the list doesn't
+        // reshuffle when a job is edited; id breaks created_at ties.
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
       if (error) throw new Error(error.message);
       return (data ?? []) as unknown as JobRow[];
     },
