@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -21,6 +21,7 @@ const EMPTY_OPENED: Record<string, true> = {};
 type Props = {
   source: { kind: 'deal' | 'job'; id: string };
   deptMatch?: { dealId: string; departmentGroupId: string };
+  initialOpenTaskId?: string;
 };
 
 function TaskRow({
@@ -95,7 +96,7 @@ function TaskRow({
   );
 }
 
-export function AssignedTasksTab({ source, deptMatch }: Props) {
+export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId }: Props) {
   const { t } = useTranslation('jobs');
   useAssignedTasksRealtime();
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -107,6 +108,16 @@ export function AssignedTasksTab({ source, deptMatch }: Props) {
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const opened = useTasksSeenStore((s) => s.openedByUser[userId] ?? EMPTY_OPENED);
   const markOpened = useTasksSeenStore((s) => s.markOpened);
+
+  // Deep-link from a notification: open the requested task once on mount.
+  // The page above (JobDetailPage) strips the URL param after handing us
+  // initialOpenTaskId, so this won't re-trigger on the next render.
+  useEffect(() => {
+    if (initialOpenTaskId && userId) {
+      markOpened(userId, initialOpenTaskId);
+      setOpenTaskId(initialOpenTaskId);
+    }
+  }, [initialOpenTaskId, userId, markOpened]);
   const [highlightCutoffMs] = useState(() => Date.now() - HIGHLIGHT_WINDOW_DAYS * 86_400_000);
   const newFor = (task: AssignedTaskRow) =>
     isTaskHighlighted({ createdAtIso: task.created_at, opened: !!opened[task.id], cutoffMs: highlightCutoffMs });

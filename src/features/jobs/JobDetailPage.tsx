@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { Archive, Calendar, Lock, Trash2 } from 'lucide-react';
@@ -101,6 +101,28 @@ export function JobDetailPage() {
   // null = not edited yet → fall back to the loaded job.title.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const billingRefs = useJobBillingRefCount(jobId, confirmDelete);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>(() => searchParams.get('tab') ?? 'overview');
+  const [initialOpenTaskId] = useState<string | undefined>(() => {
+    const raw = searchParams.get('open');
+    if (!raw) return undefined;
+    const parts = raw.split(':');
+    const kind = parts[0];
+    const id = parts[1];
+    if (kind !== 'assigned' || !id) return undefined;
+    return id;
+  });
+
+  // One-shot: strip ?tab + ?open after consuming them so closing the tab
+  // or dialog doesn't bounce the user back to them on the next render.
+  useEffect(() => {
+    if (!searchParams.get('tab') && !searchParams.get('open')) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('tab');
+    next.delete('open');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useDocumentTitle(
     formatPageTitle(
@@ -344,7 +366,11 @@ export function JobDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+      >
         <DetailTabsList>
           <TabsTrigger value="overview" className={detailTabTriggerClass}>
             Overview
@@ -545,6 +571,7 @@ export function JobDetailPage() {
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
             <AssignedTasksTab
               source={{ kind: 'job', id: job.id }}
+              {...(initialOpenTaskId ? { initialOpenTaskId } : {})}
               {...(groupIdForServiceType(groups, job.service_type)
                 ? {
                     deptMatch: {
