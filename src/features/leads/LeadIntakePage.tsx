@@ -6,6 +6,7 @@ import { useReleaseLeadIntake } from './hooks/useReleaseLeadIntake';
 import { useDiscardLeadIntake } from './hooks/useDiscardLeadIntake';
 import { useMergeLeadIntake } from './hooks/useMergeLeadIntake';
 import { useAutoMerge } from './hooks/useAutoMerge';
+import { useAutoRelease } from './hooks/useAutoRelease';
 import { useBulkMergePreview } from './hooks/useBulkMergePreview';
 import { useBulkMergeIntake } from './hooks/useBulkMergeIntake';
 import { useBulkReleasePreview } from './hooks/useBulkReleasePreview';
@@ -93,6 +94,7 @@ export function LeadIntakePage() {
   const discard = useDiscardLeadIntake();
   const merge = useMergeLeadIntake();
   const autoMerge = useAutoMerge();
+  const autoRelease = useAutoRelease();
   const [pickFor, setPickFor] = useState<string | null>(null);
   const bulkPreview = useBulkMergePreview();
   const bulkMerge = useBulkMergeIntake();
@@ -181,6 +183,15 @@ export function LeadIntakePage() {
               onChange={(e) => autoMerge.setEnabled.mutate(e.target.checked)}
             />
             {t('leads:intake.auto_merge_label')}
+          </label>
+          <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm opacity-90">
+            <input
+              type="checkbox"
+              checked={autoRelease.autoEnabled}
+              disabled={autoRelease.isLoading || autoRelease.setEnabled.isPending}
+              onChange={(e) => autoRelease.setEnabled.mutate(e.target.checked)}
+            />
+            {t('leads:intake.auto_release_label')}
           </label>
         </div>
       </div>

@@ -1,0 +1,63 @@
+import type { ReactNode } from 'react';
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { vi, beforeEach, describe, it, expect } from 'vitest';
+
+const { restFrom } = vi.hoisted(() => ({ restFrom: vi.fn() }));
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    rest: { from: restFrom },
+    from(table: string) {
+      return this.rest.from(table);
+    },
+  },
+}));
+
+import { useAutoRelease } from './useAutoRelease';
+
+function builder(enabled: boolean) {
+  return {
+    select: () => ({
+      eq: () => ({
+        single: () =>
+          Promise.resolve({ data: { auto_release_enabled: enabled }, error: null }),
+      }),
+    }),
+    update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+  };
+}
+
+function wrap(client: QueryClient) {
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+}
+
+function makeClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+}
+
+describe('useAutoRelease', () => {
+  beforeEach(() => {
+    restFrom.mockReset();
+    restFrom.mockReturnValue(builder(true));
+  });
+
+  it('reads auto_release_enabled without losing the supabase `this` binding', async () => {
+    const { result } = renderHook(() => useAutoRelease(), { wrapper: wrap(makeClient()) });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.autoEnabled).toBe(true);
+    expect(restFrom).toHaveBeenCalledWith('lead_distribution_state');
+  });
+
+  it('setEnabled persists the toggle', async () => {
+    const { result } = renderHook(() => useAutoRelease(), { wrapper: wrap(makeClient()) });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    restFrom.mockClear();
+    await result.current.setEnabled.mutateAsync(true);
+    expect(restFrom).toHaveBeenCalledWith('lead_distribution_state');
+  });
+});
