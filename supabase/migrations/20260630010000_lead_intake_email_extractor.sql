@@ -79,9 +79,14 @@ begin
     if vs ~ '[/:@a-zA-ZΑ-Ωα-ωΆ-Ώά-ώ]' then return null; end if;
     digits := regexp_replace(vs, '[^0-9+]', '', 'g');
     if digits ~ '^\+[0-9]{8,15}$' then return digits; end if;
+    -- Greek: 10 digits starting 2 (landline) or 6 (mobile), with optional 30/0030 country code.
     if digits ~ '^[26][0-9]{9}$' then return digits; end if;
     if digits ~ '^0030[26][0-9]{9}$' then return digits; end if;
     if digits ~ '^30[26][0-9]{9}$' then return digits; end if;
+    -- Cypriot: 8 digits starting 2 (landline) or 9 (mobile), with optional 357/00357 country code.
+    if digits ~ '^[29][0-9]{7}$' then return digits; end if;
+    if digits ~ '^00357[29][0-9]{7}$' then return digits; end if;
+    if digits ~ '^357[29][0-9]{7}$' then return digits; end if;
     return null;
   end if;
   if jsonb_typeof(p) = 'object' then
