@@ -51,10 +51,13 @@ begin
   return null;
 end $$;
 
--- Returns the first value (recursively) matching a phone regex, or NULL. Only
--- considers strings that look like a phone number after stripping a `p:` prefix
--- (Meta webhook convention) and trimming. Rejects obvious junk: row indexes (too
--- short) and embedded text. Anchored: 8+ digits with optional leading +.
+-- Returns the first value (recursively) matching a phone regex, or NULL.
+-- Tight rules to avoid false positives like dates ("06/22/2026"), times,
+-- and 15-digit Meta ad IDs. Rejects any string that contains a date/time
+-- separator or a letter. Accepts:
+--   - International: leading + and 8-15 digits.
+--   - Greek 10-digit mobile/landline (starts 2 or 6).
+--   - Greek with country code: 0030 or 30 prefix.
 create or replace function public.first_phone_in_jsonb(p jsonb)
 returns text
 language plpgsql immutable parallel safe
@@ -71,14 +74,14 @@ begin
   if jsonb_typeof(p) = 'string' then
     vs := trim(p #>> '{}');
     if vs is null or vs = '' then return null; end if;
-    -- Strip Meta's "p:" prefix and any internal whitespace/dashes.
     if left(vs, 2) = 'p:' then vs := substring(vs from 3); end if;
+    -- Reject if the original string has date/time separators or letters.
+    if vs ~ '[/:@a-zA-ZΑ-Ωα-ωΆ-Ώά-ώ]' then return null; end if;
     digits := regexp_replace(vs, '[^0-9+]', '', 'g');
-    -- Require a leading + or a Greek country/mobile (3- or starting with 2,6),
-    -- and at least 8 digits in total. Rejects "1154" / row indexes.
-    if digits ~ '^\+?[0-9]{8,15}$' then
-      return digits;
-    end if;
+    if digits ~ '^\+[0-9]{8,15}$' then return digits; end if;
+    if digits ~ '^[26][0-9]{9}$' then return digits; end if;
+    if digits ~ '^0030[26][0-9]{9}$' then return digits; end if;
+    if digits ~ '^30[26][0-9]{9}$' then return digits; end if;
     return null;
   end if;
   if jsonb_typeof(p) = 'object' then
