@@ -3,9 +3,9 @@
 **Date:** 2026-06-30
 **Scope:** End-to-end audit of recurring billing, overdue marking, On Hold ↔ Paid In Full lifecycle, and per-period generation.
 
-**Verdict (revised after pulling live prod state):**
+**Verdict (revised after pulling live prod state + owner confirmation):**
 - **Bug #1 (release-from-on-hold trigger) is a FALSE POSITIVE** on prod. The trigger is correctly wired and uses the intended 2026-06-26 logic. The "bug" was an artifact of reading the local repo's migration files, which include a never-applied file (`20260623150000_recurring_due_date_lifecycle.sql`) that *would* have introduced the bug had it been applied.
-- **Bug #2 (€0 recurring amount guard) is real.** 2 active recurring jobs are currently generating €0 invoices every month — listed below.
+- **Bug #2 (no €0 guard) is BY DESIGN.** Owner confirmed €0 active recurring jobs are an intentional goodwill / gift pattern. The listed jobs (Afuera + Παληκύρας) are intended €0 ongoing services, not bugs.
 - A separate **operational risk**: the local migration directory has many files with timestamps that don't match the versions in prod's `schema_migrations`. Running `supabase db push` would attempt to re-apply (or apply for the first time) several function/trigger swaps that are already in prod with different bodies. **Do not run `supabase db push` against prod without an audit first.**
 
 ---
@@ -101,40 +101,19 @@ End result: trigger from 06-23, body from 06-26, both correct.
 
 ---
 
-## 🐛 Bug #2 — No €0 guard on the recurring generator — REAL ON PROD
+## ✅ Bug #2 — No €0 guard on the recurring generator — BY DESIGN
 
-### Confirmation
+### What's there
 
 Live body of `ensure_recurring_payments()` on prod has no amount-net filter — it copies `r.amount_net` forward unconditionally. The DB constraint `deal_payments_amount_net_nonneg` only forbids negative values.
 
-### Current blast radius (live query, 2026-06-30)
+### Resolution
 
-Two active recurring jobs are currently generating €0 invoices every period:
+Owner confirmed (2026-06-30) that **€0 active recurring jobs are an intentional pattern** used to give selected clients ongoing service as a goodwill gift. The cron correctly perpetuates these €0 periods forward; no guard or constraint should be added.
 
-| Job code | Service | Cadence | Client |
-| --- | --- | --- | --- |
-| `000084-LOCALSEO` | local_seo | recurring_monthly | Afuera |
-| `000306-SOCIAL-2` | social_media | recurring_monthly | ΠΑΛΗΚΥΡΑΣ ΚΩΝΣΤΑΝΤΙΝΟΣ ΓΕΡΑΣΙΜΟΣ |
+Two such jobs currently exist on prod (`000084-LOCALSEO` for Afuera, `000306-SOCIAL-2` for Παληκύρας) — both intended. AI SEO child jobs are also intentionally €0 (parent owns billing) and are a separate documented case.
 
-(Excluding AI SEO child jobs, which are intentionally €0 because the parent owns billing.)
-
-### Recommended fix (not applied)
-
-Two layers — pick one or both:
-
-```sql
--- 1) Guard at generation: skip the row if no money would be billed.
--- (Add to the WHERE clause of the candidate set in ensure_recurring_payments.)
-and coalesce(dp.amount_net, 0) > 0
-
--- 2) Constraint: refuse the row at insert time. ONLY add after backfilling
---    the 2 jobs above, otherwise the next cron run will throw.
-alter table public.deal_payments
-  drop constraint if exists deal_payments_amount_net_nonzero,
-  add constraint deal_payments_amount_net_nonzero check (amount_net > 0);
-```
-
-Before applying either, set the correct `amount_net` on the two jobs and any €0 `deal_payments` rows they spawned.
+**Saved to memory as `project_zero_amount_gifts` so future audits don't re-flag this.**
 
 ---
 
@@ -184,14 +163,13 @@ This is out of scope for "fix the recurring bug" — flagging it because I tripp
 
 ---
 
-## Recommended order if you want to act
+## Net summary
 
-1. **Backfill the 2 €0 recurring jobs** (set `jobs.amount_net` and the active `deal_payments.amount_net` rows).
-2. **Add the €0 guard** in `ensure_recurring_payments` (via a new MCP migration — not via the local dir).
-3. (Optional) align the one-time off-by-one in mark/move.
-4. (Operational) decide what to do about the migration-dir drift.
+- **No live recurring-system bugs.** Both Bug #1 (release trigger) and Bug #2 (€0 guard) closed: #1 was a false positive from misleading repo files, #2 is by-design goodwill gifting.
+- Two cosmetic smells (one-time off-by-one, hardcoded VAT) remain — optional polish.
+- The **migration-dir drift between local repo and prod** is the only material risk surfaced by this audit. Recommend not running `supabase db push` until that's reconciled. Out of scope for "fix the recurring bug" but worth raising as a separate item.
 
-I have NOT made any DB changes — this analysis is read-only. Tell me which fixes you want and I'll write the SQL for each as a proper MCP migration.
+No DB changes were made.
 
 ---
 
