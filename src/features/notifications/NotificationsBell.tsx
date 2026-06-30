@@ -54,7 +54,7 @@ export function NotificationsBell() {
             <ul className="space-y-1">
               {list.map((n) => {
                 const payload = (n.payload ?? null) as NotifPayload;
-                const path = readPath(payload?.parent_type, payload?.parent_id);
+                const path = readPath(payload);
                 const parentLabel = readString(payload, 'parent_label');
                 const body = (
                   <CompactNotificationRow

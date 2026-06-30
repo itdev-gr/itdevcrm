@@ -4,9 +4,26 @@ import { cn } from '@/lib/utils';
 
 export type NotifPayload = Record<string, unknown> | null;
 
-export function readPath(parentType: unknown, parentId: unknown): string | null {
+// Route a notification to the page that owns its subject. Task-typed payloads
+// (anything carrying task_id) deep-link into the /tasks board with ?open=...
+// so the existing detail dialog pops — that's the only place a service-team
+// user always has access to, unlike the deal/job behind the task which RLS
+// often hides from them.
+export function readPath(payload: NotifPayload): string | null {
+  if (!payload) return null;
+
+  const taskId = payload['task_id'];
+  if (typeof taskId === 'string') {
+    const kind =
+      payload['task_kind'] === 'user_task' || payload['parent_type'] === 'user_task'
+        ? 'user'
+        : 'assigned';
+    return `/tasks?open=${kind}:${taskId}`;
+  }
+
+  const parentId = payload['parent_id'];
   if (typeof parentId !== 'string') return null;
-  switch (parentType) {
+  switch (payload['parent_type']) {
     case 'lead':
       return `/leads/${parentId}`;
     case 'client':
@@ -16,7 +33,9 @@ export function readPath(parentType: unknown, parentId: unknown): string | null 
     case 'job':
       return `/jobs/${parentId}`;
     case 'user_task':
-      return '/tasks';
+      // Legacy shape: user_task notifications carried parent_id = task id and
+      // no task_id. Treat the parent_id AS the task id so the dialog opens.
+      return `/tasks?open=user:${parentId}`;
     default:
       return null;
   }
