@@ -103,8 +103,10 @@ end $$;
 
 -- ── 2. Triggers ──────────────────────────────────────────────────────────────
 
--- BEFORE INSERT/UPDATE: if email/phone column is null/empty and source_data has a
--- value we can extract, fill the column. Never overwrites a value the caller set.
+-- BEFORE INSERT/UPDATE: if email/phone column is null/empty OR doesn't look like
+-- a valid email/phone shape (e.g. Meta webhook delivered a phone in the email
+-- field because the form's column order shifted), pull a valid value from
+-- source_data. Never overwrites a shape-valid value the caller set.
 create or replace function public.fill_contact_from_source_data()
 returns trigger
 language plpgsql
@@ -113,19 +115,29 @@ as $$
 declare
   extracted_email text;
   extracted_phone text;
+  email_looks_valid boolean;
+  phone_looks_valid boolean;
 begin
   if new.source_data is null or jsonb_typeof(new.source_data) not in ('object','array') then
     return new;
   end if;
 
-  if new.email is null or trim(new.email) = '' then
+  email_looks_valid := new.email is not null
+                       and trim(new.email) <> ''
+                       and lower(trim(new.email)) ~ '^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$';
+  if not email_looks_valid then
     extracted_email := public.first_email_in_jsonb(new.source_data);
     if extracted_email is not null then
       new.email := extracted_email;
     end if;
   end if;
 
-  if new.phone is null or trim(new.phone) = '' then
+  -- Permissive phone shape: digits with optional + / whitespace / parens / dashes.
+  -- Anything else (text like "Eleftheria Sifnaiou") → extract from source_data.
+  phone_looks_valid := new.phone is not null
+                       and trim(new.phone) <> ''
+                       and trim(new.phone) ~ '^[+0-9\s()\-]+$';
+  if not phone_looks_valid then
     extracted_phone := public.first_phone_in_jsonb(new.source_data);
     if extracted_phone is not null then
       new.phone := extracted_phone;
