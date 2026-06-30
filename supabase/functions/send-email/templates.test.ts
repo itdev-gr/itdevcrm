@@ -69,4 +69,25 @@ describe('email templates', () => {
     expect(r.html).not.toContain('<b>x</b>');
     expect(r.html).toContain('&lt;b&gt;x&lt;/b&gt;');
   });
+
+  // Safety net for the "{{code}} - subject" pattern every client-facing
+  // template uses. Without cleanSubject(), a missing data.code would ship
+  // " - Πρόσβαση..." to the recipient (the nikkas1@ incident, 2026-06-30).
+  it('strips a leading " - " when {{code}} interpolates to empty', () => {
+    const r = renderDbTemplate(
+      { subject: '{{code}} - Πρόσβαση στο Google Search Console — ITDev', body: 'b', client_facing: true },
+      {},
+    );
+    expect(r.subject).toBe('Πρόσβαση στο Google Search Console — ITDev');
+    expect(r.subject.startsWith('-')).toBe(false);
+    expect(r.subject.startsWith(' ')).toBe(false);
+  });
+
+  it('keeps the code prefix intact when data.code is supplied', () => {
+    const r = renderDbTemplate(
+      { subject: '{{code}} - Καλώς ήρθατε', body: 'b', client_facing: true },
+      { code: '005467' },
+    );
+    expect(r.subject).toBe('005467 - Καλώς ήρθατε');
+  });
 });

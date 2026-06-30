@@ -132,6 +132,17 @@ function interpolate(tpl: string, data: Record<string, unknown>): string {
   return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => String(data[key] ?? ''));
 }
 
+// Subject-line safety net for the "{{code}} - real subject" pattern used by
+// every client-facing template. When an enqueuer forgets to pass {{code}},
+// `interpolate()` leaves a leading " - " behind that ships to the inbox
+// (the nikkas1@ webseo_gsc_access / localseo_gbp_access incident, 2026-06-30).
+// Strip a single leading "- " (with surrounding whitespace) and collapse
+// double spaces so the subject still reads cleanly. Safe to apply to every
+// rendered subject — a legitimate subject won't start with "-".
+function cleanSubject(s: string): string {
+  return s.replace(/^\s*-\s*/, '').replace(/\s{2,}/g, ' ').trim();
+}
+
 type DbTemplateRow = { subject: string; body: string; client_facing: boolean };
 
 /**
@@ -144,7 +155,7 @@ export function renderDbTemplate(
   row: DbTemplateRow,
   data: Record<string, unknown>,
 ): Rendered {
-  const subject = interpolate(row.subject, data);
+  const subject = cleanSubject(interpolate(row.subject, data));
   const bodyText = interpolate(row.body, data);
   // Unsubscribe opt-out footer removed per product decision (2026-06-24): no
   // emails carry the "…πατήστε εδώ" line anymore.
