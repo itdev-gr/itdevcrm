@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors,
@@ -66,6 +67,22 @@ export function TasksKanbanBoard() {
 
   // Live card behind the open dialog (re-derived each render from fresh rows).
   const openCard = openKey ? (cards.find((c) => c.key === openKey) ?? null) : null;
+
+  // Deep-link: ?open=<kind>:<id> opens the matching card's dialog once. We
+  // strip the param after consuming it so closing the dialog doesn't reopen
+  // it on the next render. Notifications use this to land service-team users
+  // directly on their task without crashing through the deal/job page (which
+  // RLS may hide from them).
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const raw = searchParams.get('open');
+    if (!raw) return;
+    if (!cards.some((c) => c.key === raw)) return;
+    setOpenKey(raw);
+    const next = new URLSearchParams(searchParams);
+    next.delete('open');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, cards, setSearchParams]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 

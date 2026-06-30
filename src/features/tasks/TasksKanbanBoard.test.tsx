@@ -11,7 +11,10 @@ vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({ useMentionable
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string, o?: Record<string, unknown>) => (o?.name ? `${k}:${o.name}` : k), i18n: { resolvedLanguage: 'en' } }),
 }));
-vi.mock('react-router-dom', () => ({ Link: ({ children }: { children: ReactNode }) => <a>{children}</a> }));
+vi.mock('react-router-dom', () => ({
+  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  useSearchParams: () => [new URLSearchParams(), () => {}] as const,
+}));
 vi.mock('@/lib/stores/authStore', () => ({
   useAuthStore: (sel: (s: unknown) => unknown) => sel({ isAdmin: false, user: { id: 'me' } }),
 }));
