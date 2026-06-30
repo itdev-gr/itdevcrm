@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { notAccessibleError } from '@/lib/notAccessibleError';
 import type { JobRow } from './useJobs';
 
 export function useJob(jobId: string) {
@@ -13,8 +14,9 @@ export function useJob(jobId: string) {
           '*, client:clients(id, name, contact_first_name, contact_last_name, industry, email, phone, website, contact_info, additional_contacts), deal:deals(id, code, title, payment_method), stage:pipeline_stages!jobs_stage_id_fkey(id, code, board, display_names)',
         )
         .eq('id', jobId)
-        .single();
-      if (error || !data) throw new Error(error?.message ?? 'Not found');
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw notAccessibleError();
       return data as unknown as JobRow;
     },
     enabled: !!jobId,

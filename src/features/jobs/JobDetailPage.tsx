@@ -58,6 +58,7 @@ import { useJobBillingRefCount } from './hooks/useJobBillingRefCount';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { cn } from '@/lib/utils';
+import { isNotAccessible } from '@/lib/notAccessibleError';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
 import { JobBillingEditCard } from './JobBillingEditCard';
@@ -111,10 +112,18 @@ export function JobDetailPage() {
 
   if (isLoading) return <div className="px-4 py-6 sm:px-6 lg:px-8 text-sm text-muted-foreground">…</div>;
   if (error || !job) {
+    const denied = isNotAccessible(error);
     return (
       <div className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-          {error?.message ?? 'Not found'}
+        <div
+          className={cn(
+            'rounded-xl border px-4 py-3 text-sm',
+            denied
+              ? 'border-border bg-muted/30 text-muted-foreground'
+              : 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300',
+          )}
+        >
+          {denied ? "You don't have access to this job." : (error?.message ?? 'Not found')}
         </div>
       </div>
     );

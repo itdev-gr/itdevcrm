@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { notAccessibleError } from '@/lib/notAccessibleError';
 import type { DealRow } from './useDeals';
 
 export function useDeal(dealId: string) {
@@ -13,8 +14,9 @@ export function useDeal(dealId: string) {
           '*, client:clients(id, name, status, contact_first_name, contact_last_name, email, phone, website, industry, country, address, vat_number), stage:pipeline_stages!deals_stage_id_fkey(id, code, board, display_names), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board, display_names)',
         )
         .eq('id', dealId)
-        .single();
-      if (error || !data) throw new Error(error?.message ?? 'Not found');
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw notAccessibleError();
       return data as unknown as DealRow;
     },
     enabled: !!dealId,

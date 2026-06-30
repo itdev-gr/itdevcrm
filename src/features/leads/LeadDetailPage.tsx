@@ -17,6 +17,7 @@ import { useAssignableOwners } from './hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
 import { useDeleteLeads } from './hooks/useDeleteLeads';
+import { isNotAccessible } from '@/lib/notAccessibleError';
 import { isLeadDeletable } from './leadDeletable';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
@@ -112,8 +113,14 @@ export function LeadDetailPage() {
   );
 
   if (isLoading) return <div className="p-8">…</div>;
-  if (error || !lead)
-    return <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>;
+  if (error || !lead) {
+    const denied = isNotAccessible(error);
+    return denied ? (
+      <div className="p-8 text-sm text-muted-foreground">You don't have access to this lead.</div>
+    ) : (
+      <div className="p-8 text-red-600">{error?.message ?? 'Not found'}</div>
+    );
+  }
 
   const readOnly = !!lead.converted_at;
 

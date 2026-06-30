@@ -9,6 +9,7 @@ import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWith
 import { cn } from '@/lib/utils';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
+import { isNotAccessible } from '@/lib/notAccessibleError';
 import { useMoveAccountingStage } from '@/features/accounting/hooks/useMoveAccountingStage';
 import { useMarkPaidInFull } from '@/features/accounting/hooks/useMarkPaidInFull';
 import { CloseDealDialog } from '@/features/accounting/CloseDealDialog';
@@ -79,10 +80,18 @@ export function DealDetailPage() {
 
   if (isLoading) return <div className="px-4 py-6 sm:px-6 lg:px-8">…</div>;
   if (error || !deal) {
+    const denied = isNotAccessible(error);
     return (
       <div className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-          {error?.message ?? 'Not found'}
+        <div
+          className={cn(
+            'rounded-xl border px-4 py-3 text-sm',
+            denied
+              ? 'border-border bg-muted/30 text-muted-foreground'
+              : 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300',
+          )}
+        >
+          {denied ? "You don't have access to this deal." : (error?.message ?? 'Not found')}
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { notAccessibleError } from '@/lib/notAccessibleError';
 import type { LeadRow } from './useLeads';
 
 export function useLead(leadId: string) {
@@ -11,8 +12,9 @@ export function useLead(leadId: string) {
         .from('leads')
         .select('*, stage:pipeline_stages(id, code, board, display_names)')
         .eq('id', leadId)
-        .single();
-      if (error || !data) throw new Error(error?.message ?? 'Not found');
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw notAccessibleError();
       return data as unknown as LeadRow;
     },
     enabled: !!leadId,
