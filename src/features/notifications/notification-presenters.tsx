@@ -4,11 +4,11 @@ import { cn } from '@/lib/utils';
 
 export type NotifPayload = Record<string, unknown> | null;
 
-// Route a notification to the page that owns its subject. Task-typed payloads
-// (anything carrying task_id) deep-link into the /tasks board with ?open=...
-// so the existing detail dialog pops — that's the only place a service-team
-// user always has access to, unlike the deal/job behind the task which RLS
-// often hides from them.
+// Route a notification to where the recipient can actually open it. Task
+// payloads with a target_job_id deep-link into /jobs/<id>?tab=tasks&open=…
+// so dept users (who lack RLS on the parent deal) can open the task on
+// their service job; otherwise fall back to /tasks?open=… which is
+// RLS-safe for the assignee.
 export function readPath(payload: NotifPayload): string | null {
   if (!payload) return null;
 
@@ -18,6 +18,13 @@ export function readPath(payload: NotifPayload): string | null {
       payload['task_kind'] === 'user_task' || payload['parent_type'] === 'user_task'
         ? 'user'
         : 'assigned';
+    const targetJobId = payload['target_job_id'];
+    if (typeof targetJobId === 'string') {
+      // Dept-tagged tasks: dept users lack RLS on the parent deal, so route
+      // them to the matching service job that they DO have access to.
+      // ?tab=tasks + ?open=<kind>:<id> mirrors the /tasks deep-link contract.
+      return `/jobs/${targetJobId}?tab=tasks&open=${kind}:${taskId}`;
+    }
     return `/tasks?open=${kind}:${taskId}`;
   }
 

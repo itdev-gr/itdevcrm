@@ -62,4 +62,45 @@ describe('readPath — task routing', () => {
       readPath({ task_id: null, parent_type: 'deal', parent_id: 'd6' }),
     ).toBe('/deals/d6');
   });
+  it('routes a task with target_job_id to /jobs/<id>?tab=tasks&open=assigned:<task_id>', () => {
+    // The DB trigger fills target_job_id on dept-tagged deal tasks so dept users
+    // (no RLS on the deal) can still open the task on their service job page.
+    expect(
+      readPath({
+        task_id: 't10',
+        parent_type: 'deal',
+        parent_id: 'd10',
+        target_job_id: 'j10',
+      }),
+    ).toBe('/jobs/j10?tab=tasks&open=assigned:t10');
+  });
+  it('prefers target_job_id over the /tasks fallback even when parent is a job', () => {
+    expect(
+      readPath({
+        task_id: 't11',
+        parent_type: 'job',
+        parent_id: 'j11',
+        target_job_id: 'j11',
+      }),
+    ).toBe('/jobs/j11?tab=tasks&open=assigned:t11');
+  });
+  it('uses user kind in the open key when target_job_id + task_kind=user_task (defensive — should not happen in practice)', () => {
+    expect(
+      readPath({
+        task_id: 't12',
+        task_kind: 'user_task',
+        target_job_id: 'j12',
+      }),
+    ).toBe('/jobs/j12?tab=tasks&open=user:t12');
+  });
+  it('ignores a non-string target_job_id and falls back to the /tasks deep link', () => {
+    expect(
+      readPath({
+        task_id: 't13',
+        parent_type: 'deal',
+        parent_id: 'd13',
+        target_job_id: null,
+      }),
+    ).toBe('/tasks?open=assigned:t13');
+  });
 });
