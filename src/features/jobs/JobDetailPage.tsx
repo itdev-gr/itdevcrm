@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -116,14 +116,18 @@ export function JobDetailPage() {
 
   // One-shot: strip ?tab + ?open after consuming them so closing the tab
   // or dialog doesn't bounce the user back to them on the next render.
+  // initialOpenTaskId state is cleared later via handleInitialOpenConsumed,
+  // once AssignedTasksTab actually mounts and reads it (the loading-state
+  // render fires this effect before the child mounts).
   useEffect(() => {
     if (!searchParams.get('tab') && !searchParams.get('open')) return;
     const next = new URLSearchParams(searchParams);
     next.delete('tab');
     next.delete('open');
     setSearchParams(next, { replace: true });
-    setInitialOpenTaskId(undefined);
   }, [searchParams, setSearchParams]);
+
+  const handleInitialOpenConsumed = useCallback(() => setInitialOpenTaskId(undefined), []);
 
   useDocumentTitle(
     formatPageTitle(
@@ -573,6 +577,7 @@ export function JobDetailPage() {
             <AssignedTasksTab
               source={{ kind: 'job', id: job.id }}
               {...(initialOpenTaskId ? { initialOpenTaskId } : {})}
+              onInitialOpenConsumed={handleInitialOpenConsumed}
               {...(groupIdForServiceType(groups, job.service_type)
                 ? {
                     deptMatch: {

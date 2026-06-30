@@ -22,6 +22,7 @@ type Props = {
   source: { kind: 'deal' | 'job'; id: string };
   deptMatch?: { dealId: string; departmentGroupId: string };
   initialOpenTaskId?: string;
+  onInitialOpenConsumed?: () => void;
 };
 
 function TaskRow({
@@ -96,7 +97,7 @@ function TaskRow({
   );
 }
 
-export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId }: Props) {
+export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId, onInitialOpenConsumed }: Props) {
   const { t } = useTranslation('jobs');
   useAssignedTasksRealtime();
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -109,15 +110,16 @@ export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId }: Props
   const opened = useTasksSeenStore((s) => s.openedByUser[userId] ?? EMPTY_OPENED);
   const markOpened = useTasksSeenStore((s) => s.markOpened);
 
-  // Deep-link from a notification: open the requested task once on mount.
-  // The page above (JobDetailPage) strips the URL param after handing us
-  // initialOpenTaskId, so this won't re-trigger on the next render.
+  // Deep-link from a notification: open the requested task once, then tell
+  // the parent we've consumed it so a later tab-switch remount doesn't
+  // re-fire (Radix Tabs.Content unmounts inactive panels).
   useEffect(() => {
     if (initialOpenTaskId && userId) {
       markOpened(userId, initialOpenTaskId);
       setOpenTaskId(initialOpenTaskId);
+      onInitialOpenConsumed?.();
     }
-  }, [initialOpenTaskId, userId, markOpened]);
+  }, [initialOpenTaskId, userId, markOpened, onInitialOpenConsumed]);
   const [highlightCutoffMs] = useState(() => Date.now() - HIGHLIGHT_WINDOW_DAYS * 86_400_000);
   const newFor = (task: AssignedTaskRow) =>
     isTaskHighlighted({ createdAtIso: task.created_at, opened: !!opened[task.id], cutoffMs: highlightCutoffMs });
