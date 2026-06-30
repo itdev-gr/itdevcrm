@@ -81,7 +81,14 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
   },
 
   internal_new_task: (d) => {
-    const link = `${APP_BASE}/deals/${encodeURIComponent(String(d.deal_id ?? ''))}`;
+    // Link target = the /tasks dialog (every staff user can reach it),
+    // NOT the deal/job behind the task (RLS often hides those from the
+    // service-team assignee). Mirrors readPath() in the in-app bell.
+    const taskId = String(d.task_id ?? '');
+    const kind = String(d.kind ?? 'assigned') === 'user' ? 'user' : 'assigned';
+    const link = taskId
+      ? `${APP_BASE}/tasks?open=${kind}:${encodeURIComponent(taskId)}`
+      : `${APP_BASE}/tasks`;
     const title = escapeHtml(String(d.title ?? ''));
     const subject = `Νέα εργασία: ${String(d.title ?? '')}`;
     const html = shell(
