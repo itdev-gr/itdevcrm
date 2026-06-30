@@ -104,7 +104,7 @@ export function JobDetailPage() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>(() => searchParams.get('tab') ?? 'overview');
-  const [initialOpenTaskId] = useState<string | undefined>(() => {
+  const [initialOpenTaskId, setInitialOpenTaskId] = useState<string | undefined>(() => {
     const raw = searchParams.get('open');
     if (!raw) return undefined;
     const parts = raw.split(':');
@@ -122,6 +122,7 @@ export function JobDetailPage() {
     next.delete('tab');
     next.delete('open');
     setSearchParams(next, { replace: true });
+    setInitialOpenTaskId(undefined);
   }, [searchParams, setSearchParams]);
 
   useDocumentTitle(
