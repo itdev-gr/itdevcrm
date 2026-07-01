@@ -44,6 +44,25 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
       .from('email_log').select('id').eq('dedupe_key', dedupeKey).eq('status', 'sent').limit(1);
     if (prior && prior.length > 0) return { status: 'skipped' };
   }
+  // Closed-client guard: never email a client whose engagement is finished.
+  // `internal` identity goes to staff distribution lists, not client mailboxes,
+  // so it stays exempt. Anything else that matches a `done` client is skipped
+  // and logged so admins can see it in Email Health.
+  if (identity !== 'internal' && typeof to === 'string' && to) {
+    const { data: closed } = await admin
+      .from('clients')
+      .select('id')
+      .eq('status', 'done')
+      .ilike('email', to)
+      .limit(1);
+    if (closed && closed.length > 0) {
+      await admin.from('email_log').insert({
+        identity, to_email: to, template_key: templateKey, status: 'failed',
+        dedupe_key: dedupeKey, error: 'blocked: client closed (status=done)',
+      });
+      return { status: 'skipped' };
+    }
+  }
   const id = IDENTITIES[identity];
   if (!id) return { status: 'failed', error: `unknown identity ${identity}` };
 
