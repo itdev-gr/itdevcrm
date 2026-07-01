@@ -246,7 +246,11 @@ export function JobDetailPage() {
                   detailHeaderStatusBadgeClass,
                   'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300',
                 )}
-                title={job.blocked_reason ?? undefined}
+                title={
+                  job.blocked_reason === 'billing_paused'
+                    ? 'Billing paused'
+                    : (job.blocked_reason ?? undefined)
+                }
               >
                 <Lock className="size-2.5" />
                 Blocked
