@@ -170,14 +170,18 @@ function PaymentRow({
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
               : row.status === 'overdue'
                 ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
-                : 'bg-muted text-muted-foreground'
+                : row.status === 'cancelled'
+                  ? 'bg-muted text-muted-foreground line-through'
+                  : 'bg-muted text-muted-foreground'
           }`}
         >
           {row.status === 'paid'
             ? t('payments.status_paid')
             : row.status === 'overdue'
               ? t('payments.status_overdue', { defaultValue: 'Overdue' })
-              : t('payments.status_pending')}
+              : row.status === 'cancelled'
+                ? t('payments.status_cancelled', { defaultValue: 'Cancelled' })
+                : t('payments.status_pending')}
         </button>
       </td>
       <td className="px-2 py-2">

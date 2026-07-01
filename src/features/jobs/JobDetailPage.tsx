@@ -250,7 +250,9 @@ export function JobDetailPage() {
               >
                 <Lock className="size-2.5" />
                 Blocked
-                {job.blocked_reason ? ` · ${job.blocked_reason.replace(/_/g, ' ')}` : ''}
+                {job.blocked_reason
+                  ? ` · ${job.blocked_reason === 'billing_paused' ? 'Billing paused' : job.blocked_reason.replace(/_/g, ' ')}`
+                  : ''}
               </span>
             )}
             <span

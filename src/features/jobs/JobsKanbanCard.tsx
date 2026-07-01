@@ -122,7 +122,11 @@ export function JobsKanbanCard({
               {job.is_blocked && (
                 <span
                   className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200"
-                  title={job.blocked_reason ?? undefined}
+                  title={
+                    job.blocked_reason === 'billing_paused'
+                      ? 'Billing paused'
+                      : (job.blocked_reason ?? undefined)
+                  }
                 >
                   <Lock className="size-3" />
                   Blocked

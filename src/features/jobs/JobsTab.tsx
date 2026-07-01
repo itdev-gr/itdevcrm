@@ -38,7 +38,10 @@ function StageBadge({ job, lang }: { job: JobRow; lang: 'en' | 'el' }) {
 }
 
 function BlockedBadge({ reason }: { reason: string | null }) {
-  const label = reason?.replace(/_/g, ' ') ?? 'blocked';
+  const label =
+    reason === 'billing_paused'
+      ? 'Billing paused'
+      : (reason?.replace(/_/g, ' ') ?? 'blocked');
   return (
     <span
       className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700 dark:bg-red-950/50 dark:text-red-300"
