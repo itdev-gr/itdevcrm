@@ -220,3 +220,128 @@ drop trigger if exists deal_payments_created_at_immutable on public.deal_payment
 create trigger deal_payments_created_at_immutable
   before update on public.deal_payments
   for each row execute function public.deal_payments_created_at_immutable();
+
+
+-- =========================================================================
+-- Section 8: REVERT SQL (documentation only — do NOT run automatically)
+-- =========================================================================
+-- To roll back this migration, run the following in order. All statements
+-- are idempotent; re-running is safe.
+--
+-- Step 1: Drop new trigger + function from S5 (created_at guard).
+--   drop trigger if exists deal_payments_created_at_immutable on public.deal_payments;
+--   drop function if exists public.deal_payments_created_at_immutable();
+--
+-- Step 2: Drop UNIQUE partial index from S4.
+--   drop index if exists public.deal_payments_recurring_period_key_unique;
+--
+-- Step 3: Restore the 2 deleted duplicate rows from backup (S4 cleanup).
+--   -- Use explicit column list (deal_payments has generated columns
+--   -- vat_amount/amount_gross not in the backup).
+--   insert into public.deal_payments
+--     (id, deal_id, service_type, service_index, billing_type, label,
+--      amount, start_date, end_date, status, invoice_number, paid_at,
+--      created_at, updated_at, amount_net, vat_rate)
+--   select id, deal_id, service_type, service_index, billing_type, label,
+--          amount, start_date, end_date, status, invoice_number, paid_at,
+--          created_at, updated_at, amount_net, vat_rate
+--     from public.deal_payments_flipflop_backup_20260701
+--    where id in (
+--      '983b922e-406e-4ca8-8cdd-ad4b812619cf',  -- Cluster A newer paid
+--      'd267cecc-eaf1-460c-9390-c7e3d0516139'   -- Cluster B newer overdue
+--    )
+--    on conflict (id) do nothing;
+--
+-- Step 4: Re-open the resolved data_integrity_alerts.
+--   update public.data_integrity_alerts
+--      set resolved_at = null
+--    where kind = 'duplicate_period';  -- adjust if other kinds were resolved concurrently
+--
+-- Step 5: Restore prior ensure_recurring_payments body (before S1+S2+S6).
+--   -- Verbatim from prod pg_get_functiondef 2026-07-02 pre-migration.
+--   CREATE OR REPLACE FUNCTION public.ensure_recurring_payments()
+--    RETURNS integer
+--    LANGUAGE plpgsql
+--    SECURITY DEFINER
+--    SET search_path TO 'public'
+--   AS $function$
+--   declare
+--     r record; next_start date; next_end date; created int := 0; v_payment_id uuid;
+--   begin
+--     perform pg_advisory_xact_lock(hashtext('ensure_recurring_payments')::bigint);
+--     for r in
+--       select dp.*
+--         from public.deal_payments dp
+--         join public.deals d on d.id = dp.deal_id
+--        where dp.billing_type in ('recurring_monthly','recurring_yearly')
+--          and dp.end_date is not null
+--          and dp.end_date <= current_date + interval '7 days'
+--          and d.archived = false
+--          and coalesce((select ps.code from public.pipeline_stages ps
+--                         where ps.id = d.accounting_stage_id), '') <> 'closed'
+--          and (
+--               not exists (select 1 from public.jobs j
+--                            where j.deal_id = dp.deal_id and j.service_type = dp.service_type
+--                              and not j.archived)
+--            or exists (select 1 from public.jobs j
+--                            where j.deal_id = dp.deal_id and j.service_type = dp.service_type
+--                              and not j.archived and j.billing_active)
+--          )
+--          and not exists (
+--            select 1 from public.deal_payments dp2
+--             where dp2.deal_id = dp.deal_id
+--               and dp2.service_type = dp.service_type
+--               and dp2.billing_type = dp.billing_type
+--               and dp2.start_date is not null
+--               and dp2.start_date >= dp.end_date
+--          )
+--     loop
+--       next_start := r.end_date;
+--       if r.billing_type = 'recurring_monthly' then
+--         next_end := next_start + interval '1 month';
+--       else
+--         next_end := next_start + interval '1 year';
+--       end if;
+--       insert into public.deal_payments
+--         (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date)
+--         values (r.deal_id, r.service_type, r.service_index, r.billing_type, r.amount_net, r.vat_rate, next_start, next_end)
+--         returning id into v_payment_id;
+--       insert into public.deal_payment_lines (payment_id, job_id, label, amount_net, vat_rate)
+--         values (v_payment_id,
+--           (select j.id from public.jobs j
+--             where j.deal_id = r.deal_id and j.service_type = r.service_type and not j.archived
+--             order by j.created_at limit 1),
+--           coalesce(r.label, r.service_type), r.amount_net, r.vat_rate);
+--       created := created + 1;
+--     end loop;
+--     return created;
+--   end $function$;
+--
+-- Step 6: Restore prior deal_payments_move_to_awaiting body (before S3).
+--   CREATE OR REPLACE FUNCTION public.deal_payments_move_to_awaiting()
+--    RETURNS trigger
+--    LANGUAGE plpgsql
+--    SECURITY DEFINER
+--    SET search_path TO 'public'
+--   AS $function$
+--   declare awaiting_id uuid; d record; current_stage_code text;
+--   begin
+--     if new.billing_type = 'recurring_test_2min' then return new; end if;
+--     select id into awaiting_id from public.pipeline_stages
+--       where board = 'accounting_onboarding' and code = 'awaiting_payment' limit 1;
+--     if awaiting_id is null then return new; end if;
+--     select id, accounting_stage_id, accounting_completed_at into d
+--       from public.deals where id = new.deal_id limit 1;
+--     if d is null or d.accounting_completed_at is not null or d.accounting_stage_id is null
+--        or d.accounting_stage_id = awaiting_id then
+--       return new;
+--     end if;
+--     select code into current_stage_code from public.pipeline_stages where id = d.accounting_stage_id;
+--     if current_stage_code in ('new','on_hold','partial_payment') then return new; end if;
+--     if exists (select 1 from public.pipeline_stages ps where ps.id = d.accounting_stage_id and ps.is_terminal) then
+--       return new;
+--     end if;
+--     update public.deals set accounting_stage_id = awaiting_id where id = new.deal_id;
+--     return new;
+--   end $function$;
+-- =========================================================================
