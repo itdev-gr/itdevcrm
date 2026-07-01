@@ -20,22 +20,32 @@ export function hasBlockedColumn(board: string): boolean {
   return BLOCKED_COLUMN_BOARDS.has(board);
 }
 
-export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale';
+export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale' | 'due_soon' | 'due_far';
 
 /**
  * Comparator for kanban cards. All modes tie-break by id desc so identical
  * timestamps produce a deterministic order (no jitter on refetch).
- *  - newest / oldest: by created_at
- *  - recent / stale:  by updated_at
+ *  - newest / oldest:      by created_at
+ *  - recent / stale:       by updated_at
+ *  - due_soon / due_far:   by period_due_date (nulls always last — a job with
+ *                          no scheduled due date is never useful at the top
+ *                          of a "sort by due" view)
  */
 export function compareJobs(sortBy: SortBy): (a: JobRow, b: JobRow) => number {
-  const key: 'created_at' | 'updated_at' =
-    sortBy === 'recent' || sortBy === 'stale' ? 'updated_at' : 'created_at';
-  const ascending = sortBy === 'oldest' || sortBy === 'stale';
+  const key: 'created_at' | 'updated_at' | 'period_due_date' =
+    sortBy === 'recent' || sortBy === 'stale'
+      ? 'updated_at'
+      : sortBy === 'due_soon' || sortBy === 'due_far'
+        ? 'period_due_date'
+        : 'created_at';
+  const ascending = sortBy === 'oldest' || sortBy === 'stale' || sortBy === 'due_soon';
   return (a, b) => {
-    const va = a[key] ?? '';
-    const vb = b[key] ?? '';
-    if (va !== vb) {
+    const va = a[key];
+    const vb = b[key];
+    // Nulls always go last, regardless of direction.
+    if (va == null && vb != null) return 1;
+    if (va != null && vb == null) return -1;
+    if (va != null && vb != null && va !== vb) {
       if (ascending) return va < vb ? -1 : 1;
       return va < vb ? 1 : -1;
     }

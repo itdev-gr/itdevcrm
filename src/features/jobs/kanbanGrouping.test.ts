@@ -160,6 +160,39 @@ describe('compareJobs', () => {
     ];
     expect([...tied].sort(compareJobs('recent')).map((r) => r.id)).toEqual(['c', 'b', 'a']);
   });
+
+  const dueJob = (id: string, period_due_date: string | null): JobRow =>
+    ({
+      id, service_type: 'local_seo', stage_id: 'ls-opt', is_blocked: false,
+      created_at: '2026-06-15T00:00:00Z', updated_at: '2026-06-15T00:00:00Z',
+      period_due_date,
+    } as JobRow);
+
+  it('due_soon: period_due_date asc, jobs without a due date sorted last', () => {
+    const rows = [
+      dueJob('a', '2026-07-20'),
+      dueJob('b', '2026-07-05'),
+      dueJob('n', null),
+      dueJob('c', '2026-07-12'),
+    ];
+    expect([...rows].sort(compareJobs('due_soon')).map((r) => r.id)).toEqual(['b', 'c', 'a', 'n']);
+  });
+
+  it('due_far: period_due_date desc, jobs without a due date STILL sorted last', () => {
+    const rows = [
+      dueJob('a', '2026-07-20'),
+      dueJob('b', '2026-07-05'),
+      dueJob('n', null),
+      dueJob('c', '2026-07-12'),
+    ];
+    expect([...rows].sort(compareJobs('due_far')).map((r) => r.id)).toEqual(['a', 'c', 'b', 'n']);
+  });
+
+  it('due_soon: breaks due-date ties by id desc', () => {
+    const d = '2026-07-05';
+    const tied = [dueJob('a', d), dueJob('c', d), dueJob('b', d)];
+    expect([...tied].sort(compareJobs('due_soon')).map((r) => r.id)).toEqual(['c', 'b', 'a']);
+  });
 });
 
 describe('groupJobsForBoard sortBy', () => {

@@ -53,10 +53,12 @@ const SORT_LABEL: { en: string; el: string } = {
 };
 
 const SORT_OPTIONS: { value: SortBy; en: string; el: string }[] = [
-  { value: 'newest', en: 'Newest', el: 'Νεότερα' },
-  { value: 'oldest', en: 'Oldest', el: 'Παλαιότερα' },
-  { value: 'recent', en: 'Newest updated', el: 'Πιο πρόσφατη ενημέρωση' },
-  { value: 'stale',  en: 'Oldest updated', el: 'Παλαιότερη ενημέρωση' },
+  { value: 'newest',   en: 'Newest',          el: 'Νεότερα' },
+  { value: 'oldest',   en: 'Oldest',          el: 'Παλαιότερα' },
+  { value: 'recent',   en: 'Newest updated',  el: 'Πιο πρόσφατη ενημέρωση' },
+  { value: 'stale',    en: 'Oldest updated',  el: 'Παλαιότερη ενημέρωση' },
+  { value: 'due_soon', en: 'Due date (soonest)', el: 'Ημ. λήξης (πλησιέστερη)' },
+  { value: 'due_far',  en: 'Due date (latest)',  el: 'Ημ. λήξης (μακρύτερη)' },
 ];
 
 export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
