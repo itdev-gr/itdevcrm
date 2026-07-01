@@ -17,12 +17,14 @@ import { useJobsRealtime } from './hooks/useJobsRealtime';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
-import { PageHeader } from '@/components/layout/page-shell';
+import { PageHeader, FilterSelect } from '@/components/layout/page-shell';
 import { Input } from '@/components/ui/input';
 import { boardFocusJobId, matchesJobSearch } from './jobSearch';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
+import type { SortBy } from './kanbanGrouping';
+import { useJobsBoardSortStore } from './jobsBoardSortStore';
 import { stageCompletesJob } from './stageCompletion';
 
 const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
@@ -40,6 +42,23 @@ const SEARCH_PLACEHOLDER: { en: string; el: string } = {
   el: 'Αναζήτηση σε αυτόν τον πίνακα…',
 };
 
+// Sort dropdown is opt-in per board so we can roll out to Local + Web SEO first
+// and extend to the other boards (social_media, ads, web_dev, hosting) with a
+// single line change once they ask for it.
+const SORT_ENABLED_BOARDS = new Set<ServiceType>(['local_seo', 'web_seo']);
+
+const SORT_LABEL: { en: string; el: string } = {
+  en: 'Sort',
+  el: 'Ταξινόμηση',
+};
+
+const SORT_OPTIONS: { value: SortBy; en: string; el: string }[] = [
+  { value: 'newest', en: 'Newest', el: 'Νεότερα' },
+  { value: 'oldest', en: 'Oldest', el: 'Παλαιότερα' },
+  { value: 'recent', en: 'Newest updated', el: 'Πιο πρόσφατη ενημέρωση' },
+  { value: 'stale',  en: 'Oldest updated', el: 'Παλαιότερη ενημέρωση' },
+];
+
 export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   useJobsRealtime(serviceType);
   const { i18n } = useTranslation();
@@ -52,6 +71,8 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const sortBy = useJobsBoardSortStore((s) => s.byUserBoard[`${userId}:${serviceType}`] ?? 'newest');
+  const setSortBy = useJobsBoardSortStore((s) => s.setSortBy);
   const [searchParams, setSearchParams] = useSearchParams();
   // Admins always see every job in the department — the Only-mine filter
   // is a per-tech-user convenience, not a permissions boundary.
@@ -88,6 +109,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     jobs: filteredJobs,
     boardStages,
     stageById,
+    sortBy,
   });
 
   function toggleScope() {
@@ -136,6 +158,22 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
             aria-label={SEARCH_PLACEHOLDER[lang]}
             className="h-9 w-48 rounded-lg border-input/80 shadow-sm sm:w-64"
           />
+        )}
+        {SORT_ENABLED_BOARDS.has(serviceType) && (
+          <FilterSelect
+            value={sortBy}
+            aria-label={SORT_LABEL[lang]}
+            title={SORT_LABEL[lang]}
+            onChange={(e) => {
+              if (!userId) return;
+              setSortBy(userId, serviceType, e.target.value as SortBy);
+            }}
+            className="w-44"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o[lang]}</option>
+            ))}
+          </FilterSelect>
         )}
         {isAdmin ? (
           <span className="rounded-full border border-amber-300/80 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
