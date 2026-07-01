@@ -112,6 +112,30 @@ describe('matchesJobSearch', () => {
     expect(matchesJobSearch(webJob, '000013-webseo')).toBe(true);
     expect(matchesJobSearch(aiChild, 'aiseoweb')).toBe(true);
   });
+
+  it('matches the Web Dev live website URL from details.live_url', () => {
+    const webdev = job({
+      code: '000042-WEBDEV', title: 'Website build',
+      details: { live_url: 'https://newshop.example.com', temp_url: 'https://staging.newshop.example.com' },
+    });
+    expect(matchesJobSearch(webdev, 'newshop.example.com')).toBe(true);
+  });
+
+  it('matches the Web Dev staging URL from details.temp_url', () => {
+    const webdev = job({
+      code: '000042-WEBDEV',
+      details: { live_url: null, temp_url: 'https://staging-nsx.vercel.app' },
+    });
+    expect(matchesJobSearch(webdev, 'staging-nsx')).toBe(true);
+  });
+
+  it('matches the Web SEO website from details.website', () => {
+    const webseo = job({
+      code: '000013-WEBSEO',
+      details: { website: 'https://orthohouse.gr/blog', website_path: '/blog' },
+    });
+    expect(matchesJobSearch(webseo, '/blog')).toBe(true);
+  });
 });
 
 describe('boardFocusJobId', () => {

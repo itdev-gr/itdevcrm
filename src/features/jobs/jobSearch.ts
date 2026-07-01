@@ -5,9 +5,10 @@ function str(v: unknown): string {
   return typeof v === 'string' ? v : '';
 }
 
-/** All searchable fields of an SEO-board job (Local SEO + Web SEO), lowercased
- *  and joined with a separator so a query can't match across two adjacent
- *  fields. */
+/** All searchable fields of a service-board job, lowercased and joined with a
+ *  separator so a query can't match across two adjacent fields. Includes the
+ *  per-service Info-tab URL fields — for Web Dev this is where the actual
+ *  website name lives (details.live_url / temp_url), not on the client. */
 export function jobSearchHaystack(job: JobRow): string {
   const d: Record<string, unknown> = job.details ?? {};
   return [
@@ -23,8 +24,18 @@ export function jobSearchHaystack(job: JobRow): string {
     job.client?.phone,
     job.client?.phone_normalized,
     job.client?.website,
+    // Local SEO
     d.profile_url,
     d.business_profile,
+    // Web SEO
+    d.website,
+    d.website_path,
+    // Web Dev
+    d.live_url,
+    d.temp_url,
+    d.hosting,
+    d.supabase_name,
+    d.email,
   ]
     .map(str)
     .join('\n')
