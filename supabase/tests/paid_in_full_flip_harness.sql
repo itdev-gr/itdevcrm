@@ -255,36 +255,35 @@ rollback;
 --  and `create table if not exists`; verified by rerunning Step 5.)
 
 -- ---- Scenario J: integrity audit detects duplicates -------------------
--- COMMENTED OUT until Task 9 lands reconcile_payment_integrity().
--- After Layer 2 lands, `set local session_replication_role = 'replica'` is
--- required to bypass the fixed trigger while seeding the duplicate rows.
--- begin;
--- do $$
--- declare v_client uuid; v_deal uuid; v_alerts int;
---         v_paid_id uuid; v_won_id uuid;
--- begin
---   select id into v_paid_id from public.pipeline_stages
---     where board='accounting_onboarding' and code='paid_in_full';
---   select id into v_won_id  from public.pipeline_stages
---     where board='sales' and code='won';
---   insert into public.clients (name) values ('harness_J_' || gen_random_uuid()::text) returning id into v_client;
---   insert into public.deals (client_id, code, title, stage_id, payment_method, accounting_stage_id)
---     values (v_client, 'HARN-J', 'HARN-J', v_won_id, 'cash', v_paid_id)
---     returning id into v_deal;
---   -- Two live rows same period (should not survive triggers, but seed via
---   -- session_replication_role = replica to bypass the fixed trigger).
---   set local session_replication_role = 'replica';
---   insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
---     amount_net, vat_rate, start_date, end_date, status)
---     values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
---             current_date - 40, current_date - 10, 'paid'),
---            (v_deal, 'ai_seo', 1, 'recurring_monthly', 100, 24,
---             current_date - 40, current_date - 10, 'paid');
---   set local session_replication_role = 'origin';
---   select public.reconcile_payment_integrity() into v_alerts;
---   if v_alerts < 1 then
---     raise exception 'J FAILED: audit did not flag duplicate rows';
---   end if;
---   raise notice 'OK: J integrity audit flags dupes';
--- end $$;
--- rollback;
+-- Uses `alter table ... disable trigger user` inside the txn to bypass the
+-- Layer 2 dup-guard trigger while seeding the duplicate rows. Everything
+-- rolls back so nothing persists. Supabase's `postgres` role probably
+-- can't `set session_replication_role`, so this alter-table pattern is
+-- used instead (Task 1's implementer flagged that).
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_alerts int;
+        v_paid_id uuid; v_won_id uuid;
+begin
+  select id into v_paid_id from public.pipeline_stages
+    where board='accounting_onboarding' and code='paid_in_full';
+  select id into v_won_id  from public.pipeline_stages
+    where board='sales' and code='won';
+  insert into public.clients (name) values ('harness_J_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, stage_id, payment_method, accounting_stage_id)
+    values (v_client, 'HARN-J', 'HARN-J', v_won_id, 'cash', v_paid_id)
+    returning id into v_deal;
+  -- Two live rows same period (Layer 2 trigger would normally reject the
+  -- 2nd — disable user triggers to seed the duplicate the audit catches).
+  alter table public.deal_payments disable trigger user;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 40, current_date - 10, 'paid'),
+           (v_deal, 'ai_seo', 1, 'recurring_monthly', 100, 24,
+            current_date - 40, current_date - 10, 'paid');
+  alter table public.deal_payments enable trigger user;
+  select public.reconcile_payment_integrity() into v_alerts;
+  raise exception 'HARNESS_J_RESULT :: %', case when v_alerts >= 1 then 'PASS J: audit flagged dupes (alerts=' || v_alerts || ')' else 'FAIL J: audit missed dupes (alerts=' || v_alerts || ')' end;
+end $$;
+rollback;

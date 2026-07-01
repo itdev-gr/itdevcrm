@@ -199,3 +199,140 @@ begin
      and j.is_blocked and j.blocked_reason='account_on_hold' and not j.archived;
   return moved;
 end $function$;
+
+-- ---- Section 4: alerts table ----------------------------------------
+create table if not exists public.data_integrity_alerts (
+  id               uuid primary key default gen_random_uuid(),
+  kind             text not null,        -- 'duplicate_period' | 'flip_out_of_paid_in_full' | ...
+  subject_type     text not null,        -- 'deal' | 'deal_payment' | ...
+  subject_id       uuid not null,
+  details          jsonb not null default '{}'::jsonb,
+  detected_at      timestamptz not null default now(),
+  resolved_at      timestamptz,
+  resolved_by      uuid
+);
+create index if not exists data_integrity_alerts_kind_open
+  on public.data_integrity_alerts (kind) where resolved_at is null;
+create index if not exists data_integrity_alerts_subject
+  on public.data_integrity_alerts (subject_type, subject_id);
+
+alter table public.data_integrity_alerts enable row level security;
+
+drop policy if exists data_integrity_alerts_admin_read  on public.data_integrity_alerts;
+drop policy if exists data_integrity_alerts_admin_write on public.data_integrity_alerts;
+
+create policy data_integrity_alerts_admin_read
+  on public.data_integrity_alerts for select
+  using (
+    exists (select 1 from public.profiles p
+             where p.user_id = auth.uid() and p.is_admin and not p.archived)
+  );
+
+create policy data_integrity_alerts_admin_write
+  on public.data_integrity_alerts for update
+  using (
+    exists (select 1 from public.profiles p
+             where p.user_id = auth.uid() and p.is_admin and not p.archived)
+  );
+
+-- ---- Section 5: nightly integrity audit -----------------------------
+create or replace function public.reconcile_payment_integrity()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_alerts int := 0;
+  v_rec record;
+begin
+  -- Detect duplicate live period-keys (schema has no 'cancelled' status
+  -- so any non-null status counts).
+  for v_rec in
+    with dup as (
+      select deal_id, service_type, billing_type, start_date, end_date,
+        array_agg(id order by created_at) as ids,
+        array_agg(status order by created_at) as statuses
+      from public.deal_payments
+      where billing_type in ('recurring_monthly','recurring_yearly')
+        and start_date is not null and end_date is not null
+      group by deal_id, service_type, billing_type, start_date, end_date
+      having count(*) >= 2
+    )
+    select deal_id, service_type, billing_type, start_date, end_date,
+           ids, statuses
+      from dup
+  loop
+    insert into public.data_integrity_alerts
+      (kind, subject_type, subject_id, details)
+    select 'duplicate_period', 'deal', v_rec.deal_id,
+           jsonb_build_object(
+             'service_type', v_rec.service_type,
+             'billing_type', v_rec.billing_type,
+             'start_date',   v_rec.start_date,
+             'end_date',     v_rec.end_date,
+             'payment_ids',  v_rec.ids,
+             'statuses',     v_rec.statuses)
+     where not exists (
+       select 1 from public.data_integrity_alerts a
+        where a.kind = 'duplicate_period'
+          and a.subject_id = v_rec.deal_id
+          and a.details ->> 'start_date' = v_rec.start_date::text
+          and a.details ->> 'end_date'   = v_rec.end_date::text
+          and a.resolved_at is null);
+    v_alerts := v_alerts + 1;
+  end loop;
+
+  -- Detect deals that flipped OUT of paid_in_full in the last 24 h
+  -- (heuristic: currently on_hold, updated recently, has an unpaid past-due).
+  for v_rec in
+    select d.id as deal_id, d.updated_at,
+           public.deal_next_due(d.id) as next_due
+      from public.deals d
+      join public.pipeline_stages ps on ps.id = d.accounting_stage_id
+     where not d.archived and ps.code = 'on_hold'
+       and d.updated_at > now() - interval '25 hours'
+       and public.deal_next_due(d.id) is not null
+       and public.deal_next_due(d.id) <= current_date
+  loop
+    insert into public.data_integrity_alerts
+      (kind, subject_type, subject_id, details)
+    select 'flip_out_of_paid_in_full', 'deal', v_rec.deal_id,
+           jsonb_build_object(
+             'updated_at', v_rec.updated_at,
+             'next_due',   v_rec.next_due)
+     where not exists (
+       select 1 from public.data_integrity_alerts a
+        where a.kind = 'flip_out_of_paid_in_full'
+          and a.subject_id = v_rec.deal_id
+          and a.detected_at > now() - interval '25 hours'
+          and a.resolved_at is null);
+    v_alerts := v_alerts + 1;
+  end loop;
+
+  -- Notify every admin, once per audit run with new alerts.
+  if v_alerts > 0 then
+    insert into public.notifications (user_id, type, payload)
+    select p.user_id, 'payment_integrity_alert',
+           jsonb_build_object(
+             'kind',       'integrity_audit',
+             'alerts_new', v_alerts,
+             'ran_at',     now())
+      from public.profiles p
+     where p.is_admin and not p.archived;
+  end if;
+
+  return v_alerts;
+end $function$;
+
+-- Cron: 04:00 UTC daily, 100 min after the recurring/reconcile crons.
+do $$
+begin
+  if not exists (select 1 from cron.job where jobname = 'reconcile_payment_integrity') then
+    perform cron.schedule(
+      'reconcile_payment_integrity',
+      '0 4 * * *',
+      $c$ select public.reconcile_payment_integrity(); $c$
+    );
+  end if;
+end $$;
