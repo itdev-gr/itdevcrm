@@ -90,3 +90,39 @@ begin
   end loop;
   return created;
 end $function$;
+
+-- ---- Section 3: move_to_awaiting paid guard ------------------------
+-- Pre-existing behavior: inserting ANY row on a paid_in_full deal moves it
+-- to awaiting_payment. This includes paid receipts, which is confusing UX.
+-- Fix: early-return on status='paid'. Preserves the existing behavior for
+-- pending/overdue inserts (which SHOULD signal "new billing coming").
+create or replace function public.deal_payments_move_to_awaiting()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare awaiting_id uuid; d record; current_stage_code text;
+begin
+  if new.billing_type = 'recurring_test_2min' then return new; end if;
+  if new.status = 'paid' then return new; end if;  -- <-- Section 3 addition
+  select id into awaiting_id from public.pipeline_stages
+    where board = 'accounting_onboarding' and code = 'awaiting_payment' limit 1;
+  if awaiting_id is null then return new; end if;
+
+  select id, accounting_stage_id, accounting_completed_at into d
+    from public.deals where id = new.deal_id limit 1;
+  if d is null or d.accounting_completed_at is not null or d.accounting_stage_id is null
+     or d.accounting_stage_id = awaiting_id then
+    return new;
+  end if;
+
+  select code into current_stage_code from public.pipeline_stages where id = d.accounting_stage_id;
+  if current_stage_code in ('new','on_hold','partial_payment') then return new; end if;
+  if exists (select 1 from public.pipeline_stages ps where ps.id = d.accounting_stage_id and ps.is_terminal) then
+    return new;
+  end if;
+
+  update public.deals set accounting_stage_id = awaiting_id where id = new.deal_id;
+  return new;
+end $function$;

@@ -224,9 +224,14 @@ end $$;
 rollback;
 
 -- ---- Scenario B2: change amount_net on unpaid row -----------------
+-- Seed INSERTs a `pending` row on a paid_in_full deal, which — by design
+-- — flips the deal to `awaiting_payment` via move_to_awaiting (pending
+-- inserts signal "new billing coming", unlike paid receipts which S3
+-- now guards against). We assert on the stage AFTER the UPDATE only,
+-- checking that the amount change itself does not further perturb it.
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row uuid; v_stage_after text;
+declare v_client uuid; v_deal uuid; v_row uuid; v_stage_before text; v_stage_after text;
 begin
   insert into public.clients (name) values ('edge_B2_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -241,15 +246,20 @@ begin
             current_date + 5, current_date + 35, 'pending', now() - interval '5 days')
     returning id into v_row;
 
+  -- Capture stage after INSERT — expected to be awaiting_payment by design.
+  select ps.code into v_stage_before from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+
   update public.deal_payments set amount_net = 50 where id = v_row;
   perform public.reconcile_block_lifecycle(false);
 
   select ps.code into v_stage_after from public.deals d
     join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
-  if v_stage_after <> 'paid_in_full' then
-    raise exception 'RESULT :: FAIL B2 :: amount change on unpaid row flipped stage to %', v_stage_after;
+  -- The UPDATE should not further change the stage from what it was after seed.
+  if v_stage_after <> v_stage_before then
+    raise exception 'RESULT :: FAIL B2 :: amount change on unpaid row flipped stage from % to %', v_stage_before, v_stage_after;
   end if;
-  raise exception 'RESULT :: PASS B2 :: amount change on unpaid row does not affect stage';
+  raise exception 'RESULT :: PASS B2 :: amount change on unpaid row does not further perturb stage (stayed %)', v_stage_after;
 end $$;
 rollback;
 
