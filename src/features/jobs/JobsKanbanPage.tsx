@@ -71,7 +71,9 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const sortBy = useJobsBoardSortStore((s) => s.byUserBoard[`${userId}:${serviceType}`] ?? 'newest');
+  const sortBy = useJobsBoardSortStore((s) =>
+    userId ? s.byUserBoard[`${userId}:${serviceType}`] ?? 'newest' : 'newest',
+  );
   const setSortBy = useJobsBoardSortStore((s) => s.setSortBy);
   const [searchParams, setSearchParams] = useSearchParams();
   // Admins always see every job in the department — the Only-mine filter
