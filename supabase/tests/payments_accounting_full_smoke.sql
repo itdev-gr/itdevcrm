@@ -847,10 +847,10 @@ end $$;
 rollback;
 
 -- ---- Scenario D2: archived parent → cron skips deal ----------------
--- With the ai_seo parent archived, the cron guard finds no non-archived
--- ai_seo job for the deal → guard's first branch (not exists) requires
--- billing_active on some non-archived job for the service. Both fail →
--- cron skips. Delta = 0.
+-- Post 20260702 mitigation S2: the legacy `not exists (jobs)` OR-branch
+-- was removed. Cron now requires exists (non-archived + billing_active
+-- job for dp.service_type). With the ai_seo parent archived, that
+-- clause is false → cron skips. Delta = 0.
 begin;
 do $$
 declare v_client uuid; v_deal uuid; v_before int; v_after int;

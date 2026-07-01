@@ -45,9 +45,9 @@ end $$;
 rollback;
 
 -- ---- Scenario A2: extend end_date of a paid recurring row ----------
--- Expected: extended end_date means the "next" row's start_date might
--- now be BEFORE the extended end_date — guard checks start_date >=
--- dp.end_date, so it would NOT match. Cron may create a duplicate.
+-- Expected (post 20260702 mitigation S1): the L1 guard now checks
+-- dp2.end_date > dp.end_date, so the existing next-period row's later
+-- end_date DOES block the extended-source row. Cron creates no duplicate.
 begin;
 do $$
 declare v_client uuid; v_deal uuid; v_before int; v_after int; v_row uuid;
