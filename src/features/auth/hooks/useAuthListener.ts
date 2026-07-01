@@ -39,6 +39,14 @@ async function hydrate(session: Session | null, user: User | null) {
         await supabase.auth.signOut();
         return;
       }
+      if (!profile.is_active) {
+        // Admin deactivated this account: sign out immediately, so the app
+        // bounces to /login even if the session's access token is still
+        // technically valid. Login attempts are also blocked at the auth
+        // layer by set_user_active setting a permanent ban.
+        await supabase.auth.signOut();
+        return;
+      }
       setProfile({ isAdmin: profile.is_admin, groupCodes });
       // Only mark hydrated on success so a later auth event retries after a
       // transient fetch failure.

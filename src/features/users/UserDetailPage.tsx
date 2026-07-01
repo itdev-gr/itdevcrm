@@ -10,10 +10,11 @@ import { PageHeader, SettingsCard, UserAvatar } from '@/components/layout/page-s
 import { useUser } from './hooks/useUser';
 import { useUpdateUser } from './hooks/useUpdateUser';
 import { useUpdateUserGroups } from './hooks/useUpdateUserGroups';
-import { useDeactivateUser } from './hooks/useDeactivateUser';
+import { useSetUserActive } from './hooks/useSetUserActive';
 import { useSetTeamLead } from './hooks/useSetTeamLead';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { ManageGroupsField } from './ManageGroupsField';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 type UserRow = NonNullable<ReturnType<typeof useUser>['data']>;
 
@@ -22,8 +23,11 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
   const { data: groups = [] } = useGroups();
   const updateUser = useUpdateUser();
   const updateGroups = useUpdateUserGroups();
-  const deactivate = useDeactivateUser();
+  const setActive = useSetUserActive();
   const setTeamLead = useSetTeamLead();
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [confirmActivate, setConfirmActivate] = useState(false);
+  const [activeErr, setActiveErr] = useState<string | null>(null);
 
   const [fullName, setFullName] = useState(() => user.full_name ?? '');
   const [isAdmin, setIsAdmin] = useState(() => user.is_admin);
@@ -130,15 +134,19 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
             {user.is_active ? (
               <Button
                 variant="destructive"
-                onClick={() => deactivate.mutate(userId)}
-                disabled={deactivate.isPending}
+                onClick={() => setConfirmDeactivate(true)}
+                disabled={setActive.isPending}
               >
                 {t('actions.deactivate')}
               </Button>
             ) : (
-              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm text-muted-foreground">
-                {t('actions.deactivated')}
-              </span>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmActivate(true)}
+                disabled={setActive.isPending}
+              >
+                {t('actions.reactivate', { defaultValue: 'Reactivate' })}
+              </Button>
             )}
             <Button asChild variant="outline">
               <Link to={`/admin/users/${userId}/permissions`}>
@@ -147,8 +155,51 @@ function UserDetailForm({ user, userId }: { user: UserRow; userId: string }) {
               </Link>
             </Button>
           </div>
+          {activeErr && (
+            <p role="alert" className="mt-1 text-xs text-red-600">
+              {activeErr}
+            </p>
+          )}
         </div>
       </SettingsCard>
+
+      <ConfirmDialog
+        open={confirmDeactivate}
+        onOpenChange={setConfirmDeactivate}
+        title={t('actions.deactivate_confirm_title', { defaultValue: 'Deactivate this account?' })}
+        description={t('actions.deactivate_confirm_body', {
+          defaultValue:
+            'The user will be signed out immediately and unable to log back in until reactivated.',
+        })}
+        confirmLabel={t('actions.deactivate')}
+        onConfirm={async () => {
+          setActiveErr(null);
+          try {
+            await setActive.mutateAsync({ userId, isActive: false });
+            setConfirmDeactivate(false);
+          } catch (err) {
+            setActiveErr((err as Error).message);
+          }
+        }}
+      />
+      <ConfirmDialog
+        open={confirmActivate}
+        onOpenChange={setConfirmActivate}
+        title={t('actions.reactivate_confirm_title', { defaultValue: 'Reactivate this account?' })}
+        description={t('actions.reactivate_confirm_body', {
+          defaultValue: 'The user will be able to log in again after reactivation.',
+        })}
+        confirmLabel={t('actions.reactivate', { defaultValue: 'Reactivate' })}
+        onConfirm={async () => {
+          setActiveErr(null);
+          try {
+            await setActive.mutateAsync({ userId, isActive: true });
+            setConfirmActivate(false);
+          } catch (err) {
+            setActiveErr((err as Error).message);
+          }
+        }}
+      />
     </div>
   );
 }
