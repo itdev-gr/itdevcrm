@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
+import { groupJobsForBoard, hasBlockedColumn, compareJobs, type SortBy } from './kanbanGrouping';
 import type { JobRow } from './hooks/useJobs';
 
 type StageLite = { id: string; board: string; code: string; archived: boolean; position: number };
@@ -110,8 +110,6 @@ describe('hasBlockedColumn', () => {
     expect(hasBlockedColumn('hosting')).toBe(false);
   });
 });
-
-import { compareJobs, type SortBy } from './kanbanGrouping';
 
 describe('compareJobs', () => {
   const j = (id: string, created_at: string, updated_at: string): JobRow =>

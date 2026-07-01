@@ -33,8 +33,8 @@ export function compareJobs(sortBy: SortBy): (a: JobRow, b: JobRow) => number {
     sortBy === 'recent' || sortBy === 'stale' ? 'updated_at' : 'created_at';
   const ascending = sortBy === 'oldest' || sortBy === 'stale';
   return (a, b) => {
-    const va = (a[key] as string | null) ?? '';
-    const vb = (b[key] as string | null) ?? '';
+    const va = a[key] ?? '';
+    const vb = b[key] ?? '';
     if (va !== vb) {
       if (ascending) return va < vb ? -1 : 1;
       return va < vb ? 1 : -1;
