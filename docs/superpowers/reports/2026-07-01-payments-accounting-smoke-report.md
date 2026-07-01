@@ -9,15 +9,32 @@
 
 ## Executive summary
 
-(Populated in Task 6 after all 56 scenarios have run.)
+Ran **56 accounting + payments scenarios** covering the full state-machine surface. Combined with the prior fix-harness (10) + edge-case harness (38), total coverage is **104 scenarios**.
 
 | Result | Count |
 |---|---|
-| ✅ PASS | _pending_ |
-| ❌ FAIL | _pending_ |
-| ⚠ CONCERN | _pending_ |
-| ℹ INFO | _pending_ |
-| 🐛 HARNESS BUG | _pending_ |
+| ✅ PASS | 52 |
+| ❌ FAIL | 2 |
+| ⚠ CONCERN | 0 |
+| ℹ INFO | 2 |
+| 🐛 HARNESS BUG | 0 |
+
+### After root-cause tracing
+
+- **F3 = HARNESS ASSUMPTION ERROR** (not a fix bug). The `deal_payments_release_from_on_hold` trigger's guard is `cur_code not in ('on_hold','partial_payment')` — it explicitly INCLUDES `partial_payment`. Paying the last unpaid row on a partial_payment deal correctly promotes to paid_in_full. The harness assertion "should stay partial_payment" was based on a misread. **No action needed** on the fix; scenario retested and reclassified.
+- **D2 = REAL SEMANTIC GAP** (⚠ CONCERN, not fix-critical). Archiving the AI SEO parent job does NOT stop `ensure_recurring_payments` from creating a next-period row. The cron's job-existence guard is `(no non-archived jobs) OR (has billing_active job)` — archiving all `ai_seo` jobs makes the first branch TRUE (legacy-compatibility fallback), so the cron still fires. This means accountant can't stop AI SEO billing by archiving the parent alone; they must delete/cancel the recurring `deal_payments` row directly. **Mitigation drafted below (Priority 2)**.
+- **C7 = INFO** — NULL `service_type` on a recurring row: cron's L1 guard uses `dp2.service_type = dp.service_type` which is UNKNOWN when NULL, so the guard doesn't fire and cron creates a duplicate. Rare edge case (rows should have service_type populated); worth documenting but no action.
+- **G1 = INFO** — Deal in `new` stage + pending INSERT does NOT auto-move to `awaiting_payment` because `deal_payments_move_to_awaiting` explicitly skips `('new', 'on_hold', 'partial_payment')`. By-design — accountant must manually advance from `new`.
+
+### Bottom-line verdict
+
+**The four-layer flip-fix is holding under 56 additional accounting-side scenarios.** The one real semantic gap (D2 — archive doesn't stop AI SEO billing) is a pre-existing legacy-compatibility fallback in the cron, not a flip-flop cause. Everything else is either PASS, INFO (documented behavior), or a harness assumption error.
+
+### Recommended action items
+
+1. 🟡 **Priority 2 — D2 mitigation:** narrow the cron's job-existence guard to remove the `not exists` legacy fallback (or gate the fallback on `d.created_at < <cutoff>` for pre-jobs-billing deals). Details in the mitigations section.
+2. ℹ **Priority 3 — C7 hardening:** consider `service_type IS NOT NULL` guard on cron's outer loop OR add a CHECK constraint to prevent NULL service_type on new recurring rows. Rare edge case.
+3. 🎯 **Combined follow-up plan:** items above + the earlier A2 (L1 end_date extension) + move_to_awaiting status-guard + L2 UPDATE bypass + created_at editability form a single Priority-2/3 mitigation batch. All are one-line SQL changes.
 
 ---
 
@@ -198,10 +215,101 @@ Ran 56 scenarios. PASS: 52, FAIL: 2, CONCERN: 0, INFO: 2, HARNESS BUG: 0.
 
 ## FAIL / CONCERN root-cause traces
 
-_pending — populated in Task 6._
+### ❌ F3 — HARNESS ASSUMPTION ERROR (not a fix bug)
+
+**Scenario:** `partial_payment` deal + all rows already `paid`. Marking the last unpaid row as `paid` triggered `deal_payments_release_from_on_hold`, which promoted the deal to `paid_in_full`. Harness expected stage to stay `partial_payment`.
+
+**Verified root cause:** the release trigger's guard is:
+
+```sql
+if cur_code is null or cur_code not in ('on_hold','partial_payment') or not has_pm then
+  return new;  -- skip
+end if;
+```
+
+`partial_payment` is EXPLICITLY handled — the trigger fires for BOTH `on_hold` and `partial_payment` deals. This is intentional (per commit history, part of `20260503000020`-era work): when a partial-payment deal settles, it should auto-promote.
+
+**Reclassification:** ✅ Behaviour is correct. Scenario F3's assertion was wrong. **No action needed.**
+
+---
+
+### ⚠ D2 — AI SEO archive does not stop cron billing (REAL SEMANTIC GAP, not fix-critical)
+
+**Scenario:** Standard AI SEO trio (parent + 2 children). Archive the parent `ai_seo` job. Call `ensure_recurring_payments()`. Expected: per-deal delta = 0 (cron should skip because service has no active jobs). Actual: delta = 1 (cron creates a new next-period row).
+
+**Verified root cause:** the cron's job-existence guard is:
+
+```sql
+and (
+  not exists (select 1 from public.jobs j
+               where j.deal_id = dp.deal_id and j.service_type = dp.service_type
+                 and not j.archived)                                    -- (A)
+  or exists (select 1 from public.jobs j
+               where j.deal_id = dp.deal_id and j.service_type = dp.service_type
+                 and not j.archived and j.billing_active)                -- (B)
+)
+```
+
+Branch (A) — "no non-archived jobs for this service_type" — was a legacy-compatibility escape hatch for old deals that had recurring `deal_payments` rows before jobs were the billing unit. When accountant archives ALL `ai_seo` jobs on a deal, branch (A) fires TRUE → guard passes → cron continues creating rows.
+
+**Impact:** accountant intending to stop AI SEO billing by archiving the parent job will find the cron keeps generating monthly rows. Workaround today: delete/cancel the recurring `deal_payments` row directly. Not intuitive.
+
+**Mitigation options:**
+1. **Remove branch (A) entirely** — require an active job for cron to fire. Breaks any legacy deal that never had jobs backfilled. Safest to first audit which prod deals rely on this path: `select count(distinct dp.deal_id) from deal_payments dp join deals d on d.id=dp.deal_id where dp.billing_type in ('recurring_monthly','recurring_yearly') and d.archived=false and not exists (select 1 from jobs j where j.deal_id=dp.deal_id and j.service_type=dp.service_type and not j.archived)`.
+2. **Gate branch (A) on a cutoff date** — allow the fallback only for deals `created_at < 2026-06-01` (pre-jobs-billing era). New deals from that date must have jobs.
+3. **Preserve today's behavior but document** — accept that "stop billing" = "delete the recurring row" and add a UI shortcut/RPC for accountant to do so cleanly.
+
+**Recommendation:** Option 2 (cutoff-gated fallback). Safest — preserves legacy compatibility while making the archive-to-stop pattern work for all new deals. Requires one WHERE-clause tweak.
+
+**Priority:** 🟡 **Priority 2** — annoyance, not a flip-flop cause. Defer to a batched mitigation plan.
+
+---
+
+### ℹ C7 — NULL service_type on recurring row bypasses cron dedup guard (INFO)
+
+**Scenario:** Recurring row with `service_type = NULL`. Cron created a next-period row (delta = 1). The next-period row also has `service_type = NULL`. If cron ran again on either row's expiration, it would create another dup — the L1 guard `dp2.service_type = dp.service_type` is UNKNOWN when both are NULL, so `not exists` is TRUE and the guard doesn't fire.
+
+**Impact:** low — rows should always have `service_type` populated by the `deal_payments_default_service_keys` BEFORE INSERT trigger. NULL only occurs when a legacy row is inserted directly.
+
+**Mitigation options:**
+1. Add `and dp2.service_type is not null and dp.service_type is not null` to the L1 guard.
+2. Add a CHECK constraint `deal_payments_service_type_not_null` (breaks legacy).
+3. Use `is not distinct from` on both sides — treats NULL=NULL as equal.
+
+**Recommendation:** Option 3 — swap `service_type = dp.service_type` to `service_type is not distinct from dp.service_type`. Two-char change, catches the NULL case.
+
+**Priority:** ℹ **Priority 3** — defense-in-depth; NULL rows are rare.
+
+---
+
+### ℹ G1 — `new` deal + pending INSERT does not auto-move (INFO)
+
+**Scenario:** Fresh deal in `new` stage + INSERT pending payment. Deal stayed in `new`. Harness noted this as INFO because the plan speculated it might move to `awaiting_payment`.
+
+**Verified root cause:** `deal_payments_move_to_awaiting`'s skip-list is `('new', 'on_hold', 'partial_payment')`. `new` is explicitly excluded — the intent is that accountants must manually advance from `new` (they add the invoice, verify docs, etc.) before the automatic pipeline kicks in.
+
+**Impact:** none — this is by-design. Documented for the state-machine reference.
 
 ---
 
 ## Prioritised mitigations
 
-_pending — populated in Task 6._
+Aggregating this smoke's findings with the prior edge-case report's mitigations (still open):
+
+| # | Issue | Source | Severity | One-line SQL fix | Priority |
+|---|---|---|---|---|---|
+| 1 | A2 — L1 guard misses end_date extension | Edge-case report | 🔴 REAL GAP | Change L1 guard: `dp2.end_date > dp.end_date` | **P1 — SHIP** |
+| 2 | D2 — Archive parent doesn't stop cron | This smoke | 🟡 SEMANTIC GAP | Gate cron's `not exists` fallback on cutoff date | P2 — DEFER |
+| 3 | move_to_awaiting fires on paid inserts | Edge-case report | 🟡 UX polish | Add `if new.status = 'paid' then return new;` | P2 — DEFER |
+| 4 | E5 — L2 UPDATE bypass | Edge-case report | ⚠ CONCERN | UNIQUE partial index on recurring period-key | P3 — DEFENSE |
+| 5 | I3 — created_at editable | Edge-case report | ⚠ CONCERN | BEFORE UPDATE guard | P3 — DEFENSE |
+| 6 | C7 — NULL service_type bypasses L1 guard | This smoke | ℹ POLISH | `is not distinct from` instead of `=` | P3 — DEFENSE |
+
+**Priority 1 (should ship in a small migration):**
+- A2 (`dp2.end_date > dp.end_date`). Closes the last real flip-flop vector. Estimated impact on prod dry-run: 0-1 additional rows blocked per nightly cron.
+
+**Priority 2 (bundle into a follow-up plan):**
+- D2 + move_to_awaiting status-guard. Both are UX/semantic improvements; neither prevents any flip-flop.
+
+**Priority 3 (defense-in-depth, ship if we get time):**
+- E5 (UNIQUE index) + I3 (created_at guard) + C7 (NULL guard). All would harden the data-integrity boundary; none are user-visible bugs today.
