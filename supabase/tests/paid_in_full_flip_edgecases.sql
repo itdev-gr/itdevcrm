@@ -6,7 +6,7 @@
 -- window (or accepts a new one if the shortening removed coverage).
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_created int; v_row uuid;
+declare v_client uuid; v_deal uuid; v_before int; v_after int; v_row uuid;
 begin
   insert into public.clients (name) values ('edge_A1_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -30,12 +30,15 @@ begin
   -- Accounting shortens the original paid row's end_date by 5 days
   update public.deal_payments set end_date = current_date - 15 where id = v_row;
 
-  -- Run the cron
-  select public.ensure_recurring_payments() into v_created;
+  -- Run the cron (scope assertion to THIS deal — global return value
+  -- is unreliable in a savepoint against prod)
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
 
   -- Assertion: no new duplicate created (existing next-period covers)
-  if v_created > 0 then
-    raise exception 'RESULT :: FAIL A1 :: cron created % row(s) despite existing coverage', v_created;
+  if (v_after - v_before) > 0 then
+    raise exception 'RESULT :: FAIL A1 :: cron created % row(s) despite existing coverage', (v_after - v_before);
   end if;
   raise exception 'RESULT :: PASS A1 :: shortened paid end_date does not cause duplicate';
 end $$;
@@ -47,7 +50,7 @@ rollback;
 -- dp.end_date, so it would NOT match. Cron may create a duplicate.
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_created int; v_row uuid;
+declare v_client uuid; v_deal uuid; v_before int; v_after int; v_row uuid;
 begin
   insert into public.clients (name) values ('edge_A2_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -70,10 +73,12 @@ begin
   -- Accounting extends the original paid row to overlap the next one
   update public.deal_payments set end_date = current_date + 5 where id = v_row;
 
-  select public.ensure_recurring_payments() into v_created;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
 
-  if v_created > 0 then
-    raise exception 'RESULT :: FAIL A2 :: extending paid end_date past next-period start caused % dup', v_created;
+  if (v_after - v_before) > 0 then
+    raise exception 'RESULT :: FAIL A2 :: extending paid end_date past next-period start caused % dup', (v_after - v_before);
   end if;
   raise exception 'RESULT :: PASS A2 :: extending end_date does not cause duplicate';
 end $$;
@@ -187,7 +192,7 @@ rollback;
 -- ---- Scenario B1: change amount_net on paid row -------------------
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row uuid; v_created int;
+declare v_client uuid; v_deal uuid; v_row uuid; v_before int; v_after int;
 begin
   insert into public.clients (name) values ('edge_B1_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -207,10 +212,12 @@ begin
             current_date - 10, current_date + 20, 'paid');
 
   update public.deal_payments set amount_net = 250 where id = v_row;
-  select public.ensure_recurring_payments() into v_created;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
 
-  if v_created > 0 then
-    raise exception 'RESULT :: FAIL B1 :: amount change on paid row caused % dup', v_created;
+  if (v_after - v_before) > 0 then
+    raise exception 'RESULT :: FAIL B1 :: amount change on paid row caused % dup', (v_after - v_before);
   end if;
   raise exception 'RESULT :: PASS B1 :: amount change on paid row does not affect chain';
 end $$;
@@ -252,7 +259,7 @@ rollback;
 -- respect it. Only verify chain integrity here.
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row uuid; v_created int;
+declare v_client uuid; v_deal uuid; v_row uuid; v_before int; v_after int;
 begin
   insert into public.clients (name) values ('edge_B3_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -267,9 +274,11 @@ begin
             current_date - 40, current_date - 10, 'paid')
     returning id into v_row;
 
-  select public.ensure_recurring_payments() into v_created;
-  if v_created <> 1 then
-    raise exception 'RESULT :: FAIL B3 :: expected 1 zero-amount next row, got %', v_created;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
+  if (v_after - v_before) <> 1 then
+    raise exception 'RESULT :: FAIL B3 :: expected 1 zero-amount next row, got %', (v_after - v_before);
   end if;
   raise exception 'RESULT :: PASS B3 :: zero-amount row still creates next chain link (billing memory: known concern)';
 end $$;
@@ -398,7 +407,7 @@ rollback;
 -- next-period row for the new service. Original chain has a gap.
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row uuid; v_created int; v_rows_after int;
+declare v_client uuid; v_deal uuid; v_row uuid; v_before int; v_after int;
 begin
   insert into public.clients (name) values ('edge_D1_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -414,11 +423,12 @@ begin
     returning id into v_row;
 
   update public.deal_payments set service_type = 'local_seo' where id = v_row;
-  select public.ensure_recurring_payments() into v_created;
-  select count(*) into v_rows_after from public.deal_payments where deal_id = v_deal;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
 
-  if v_created <> 1 or v_rows_after <> 2 then
-    raise exception 'RESULT :: FAIL D1 :: expected 1 new row (local_seo chain), got created=% total=%', v_created, v_rows_after;
+  if (v_after - v_before) <> 1 or v_after <> 2 then
+    raise exception 'RESULT :: FAIL D1 :: expected 1 new row (local_seo chain), got delta=% total=%', (v_after - v_before), v_after;
   end if;
   raise exception 'RESULT :: PASS D1 :: service_type change starts new chain';
 end $$;
@@ -427,7 +437,7 @@ rollback;
 -- ---- Scenario D2: recurring_monthly → recurring_yearly ------------
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row uuid; v_created int;
+declare v_client uuid; v_deal uuid; v_row uuid; v_before int; v_after int;
     v_next_start date; v_next_end date;
 begin
   insert into public.clients (name) values ('edge_D2_' || gen_random_uuid()::text) returning id into v_client;
@@ -444,14 +454,16 @@ begin
     returning id into v_row;
 
   update public.deal_payments set billing_type = 'recurring_yearly' where id = v_row;
-  select public.ensure_recurring_payments() into v_created;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
   select start_date, end_date into v_next_start, v_next_end
     from public.deal_payments where deal_id = v_deal and status <> 'paid'
     order by created_at desc limit 1;
 
-  if v_created <> 1 or v_next_end <> (v_next_start + interval '1 year')::date then
-    raise exception 'RESULT :: FAIL D2 :: yearly cadence not applied: created=% start=% end=%',
-      v_created, v_next_start, v_next_end;
+  if (v_after - v_before) <> 1 or v_next_end <> (v_next_start + interval '1 year')::date then
+    raise exception 'RESULT :: FAIL D2 :: yearly cadence not applied: delta=% start=% end=%',
+      (v_after - v_before), v_next_start, v_next_end;
   end if;
   raise exception 'RESULT :: PASS D2 :: billing_type change to yearly applies 1-year cadence';
 end $$;
@@ -462,7 +474,7 @@ rollback;
 -- effect on cron or trigger.
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row uuid; v_created int;
+declare v_client uuid; v_deal uuid; v_row uuid; v_before int; v_after int;
 begin
   insert into public.clients (name) values ('edge_D3_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -480,10 +492,12 @@ begin
     returning id into v_row;
 
   update public.deal_payments set service_index = 5 where id = v_row;
-  select public.ensure_recurring_payments() into v_created;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
 
-  if v_created > 0 then
-    raise exception 'RESULT :: FAIL D3 :: service_index change caused % dup', v_created;
+  if (v_after - v_before) > 0 then
+    raise exception 'RESULT :: FAIL D3 :: service_index change caused % dup', (v_after - v_before);
   end if;
   raise exception 'RESULT :: PASS D3 :: service_index change alone does not create dupes (fix holds)';
 end $$;
@@ -492,7 +506,7 @@ rollback;
 -- ---- Scenario D4: recurring → one_time (cron should skip) --------
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row uuid; v_created int;
+declare v_client uuid; v_deal uuid; v_row uuid; v_before int; v_after int;
 begin
   insert into public.clients (name) values ('edge_D4_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -508,10 +522,12 @@ begin
     returning id into v_row;
 
   update public.deal_payments set billing_type = 'one_time' where id = v_row;
-  select public.ensure_recurring_payments() into v_created;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
 
-  if v_created > 0 then
-    raise exception 'RESULT :: FAIL D4 :: cron created % row(s) for one_time', v_created;
+  if (v_after - v_before) > 0 then
+    raise exception 'RESULT :: FAIL D4 :: cron created % row(s) for one_time', (v_after - v_before);
   end if;
   raise exception 'RESULT :: PASS D4 :: recurring→one_time removes from cron loop';
 end $$;
@@ -522,7 +538,7 @@ rollback;
 -- immediately-past start_date, deal could flip.
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row_del uuid; v_created int;
+declare v_client uuid; v_deal uuid; v_row_del uuid; v_before int; v_after int;
     v_stage_after text;
 begin
   insert into public.clients (name) values ('edge_E1_' || gen_random_uuid()::text) returning id into v_client;
@@ -539,14 +555,16 @@ begin
     returning id into v_row_del;
 
   delete from public.deal_payments where id = v_row_del;
-  select public.ensure_recurring_payments() into v_created;
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
   perform public.reconcile_block_lifecycle(false);
 
   select ps.code into v_stage_after from public.deals d
     join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
-  -- After delete, no expiring row → cron creates 0.
-  if v_created <> 0 then
-    raise exception 'RESULT :: FAIL E1 :: cron created % rows after paid-row deletion', v_created;
+  -- After delete, no expiring row → cron creates 0 for this deal.
+  if (v_after - v_before) <> 0 then
+    raise exception 'RESULT :: FAIL E1 :: cron created % rows after paid-row deletion', (v_after - v_before);
   end if;
   -- Deal stayed paid_in_full since no unpaid rows exist
   if v_stage_after <> 'paid_in_full' then
