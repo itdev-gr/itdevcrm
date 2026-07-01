@@ -198,3 +198,25 @@ create unique index if not exists deal_payments_recurring_period_key_unique
   on public.deal_payments (deal_id, service_type, billing_type, start_date, end_date)
   where billing_type in ('recurring_monthly','recurring_yearly')
     and start_date is not null and end_date is not null;
+
+-- ---- Section 5: created_at UPDATE guard ------------------------------
+-- L3's 24h grace uses created_at. Protect it against UPDATE-based bypass.
+-- Trigger silently reverts changes (returns NEW with created_at := old);
+-- other columns UPDATE normally.
+create or replace function public.deal_payments_created_at_immutable()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $function$
+begin
+  if new.created_at is distinct from old.created_at then
+    new.created_at := old.created_at;
+  end if;
+  return new;
+end $function$;
+
+drop trigger if exists deal_payments_created_at_immutable on public.deal_payments;
+create trigger deal_payments_created_at_immutable
+  before update on public.deal_payments
+  for each row execute function public.deal_payments_created_at_immutable();

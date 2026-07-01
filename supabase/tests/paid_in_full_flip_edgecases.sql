@@ -1100,8 +1100,9 @@ end $$;
 rollback;
 
 -- ---- Scenario I3: accountant modifies created_at (superuser only)
--- Cannot modify created_at via normal DML — it's declared NOT NULL
--- with default now(). Bypassing via direct UPDATE: does it stick?
+-- Mitigation S5 (2026-07-02): BEFORE UPDATE trigger
+-- deal_payments_created_at_immutable silently reverts any change to
+-- created_at → grace window cannot be bypassed by editing the timestamp.
 begin;
 do $$
 declare v_client uuid; v_deal uuid; v_row uuid; v_created_at_after timestamptz;
@@ -1121,10 +1122,10 @@ begin
 
   update public.deal_payments set created_at = now() - interval '30 days' where id = v_row;
   select created_at into v_created_at_after from public.deal_payments where id = v_row;
-  if v_created_at_after > now() - interval '29 days' then
-    raise exception 'RESULT :: FAIL I3 :: created_at UPDATE did not stick (=%)', v_created_at_after;
+  if v_created_at_after <= now() - interval '29 days' then
+    raise exception 'RESULT :: FAIL I3 :: created_at was mutable (=%) — guard missing?', v_created_at_after;
   end if;
-  raise exception 'RESULT :: CONCERN I3 :: created_at is UPDATE-able → grace can be bypassed by editing timestamp';
+  raise exception 'RESULT :: PASS I3 :: created_at is immutable (silently reverted)';
 end $$;
 rollback;
 
