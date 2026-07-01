@@ -328,3 +328,100 @@ begin
   return v_alerts;
 end $function$
 ;
+
+-- ---- Section 4: pause / resume RPCs -----------------------------------
+create or replace function public.job_pause_billing(p_job_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $function$
+declare
+  v_job record; v_cancelled int; v_flagged int;
+begin
+  if not (
+    exists (select 1 from public.profiles p
+             where p.user_id = auth.uid() and p.is_admin and not p.archived)
+    or exists (select 1 from public.profiles p
+                 join public.user_groups ug on ug.user_id = p.user_id
+                 join public.groups g on g.id = ug.group_id
+                where p.user_id = auth.uid() and not p.archived and g.code = 'accounting')
+  ) then
+    raise exception 'not_allowed' using errcode = '42501';
+  end if;
+
+  select j.* into v_job from public.jobs j where j.id = p_job_id and not j.archived;
+  if v_job is null then raise exception 'job_not_found'; end if;
+  if v_job.blocked_reason = 'billing_paused' then raise exception 'already_paused'; end if;
+  if not v_job.billing_active then raise exception 'not_billing_active'; end if;
+
+  -- Flag every non-archived job of this (deal, service_type) chain.
+  update public.jobs j
+     set is_blocked = true, blocked_reason = 'billing_paused',
+         blocked_at = now(), blocked_by = auth.uid(),
+         billing_active = false
+   where j.deal_id = v_job.deal_id and j.service_type = v_job.service_type
+     and not j.archived;
+  get diagnostics v_flagged = row_count;
+
+  -- Excuse the chain's unpaid RECURRING rows (audit-preserving).
+  update public.deal_payments dp
+     set status = 'cancelled'
+   where dp.deal_id = v_job.deal_id
+     and dp.service_type = v_job.service_type
+     and dp.billing_type in ('recurring_monthly','recurring_yearly')
+     and dp.status in ('pending','overdue');
+  get diagnostics v_cancelled = row_count;
+
+  return jsonb_build_object('jobs_flagged', v_flagged, 'payments_cancelled', v_cancelled);
+end $function$;
+
+create or replace function public.job_resume_billing(p_job_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $function$
+declare
+  v_job record; v_src record; v_new_id uuid; v_next_end date; v_unflagged int;
+begin
+  if not (
+    exists (select 1 from public.profiles p
+             where p.user_id = auth.uid() and p.is_admin and not p.archived)
+    or exists (select 1 from public.profiles p
+                 join public.user_groups ug on ug.user_id = p.user_id
+                 join public.groups g on g.id = ug.group_id
+                where p.user_id = auth.uid() and not p.archived and g.code = 'accounting')
+  ) then
+    raise exception 'not_allowed' using errcode = '42501';
+  end if;
+
+  select j.* into v_job from public.jobs j where j.id = p_job_id and not j.archived;
+  if v_job is null then raise exception 'job_not_found'; end if;
+  if v_job.blocked_reason is distinct from 'billing_paused' then raise exception 'not_paused'; end if;
+
+  update public.jobs j
+     set is_blocked = false, blocked_reason = null, blocked_at = null, blocked_by = null,
+         billing_active = true
+   where j.deal_id = v_job.deal_id and j.service_type = v_job.service_type
+     and not j.archived and j.blocked_reason = 'billing_paused';
+  get diagnostics v_unflagged = row_count;
+
+  -- Fresh period starting TODAY (excused semantics — no back-billing).
+  -- Copy pricing from the chain's latest row (any status).
+  select dp.* into v_src from public.deal_payments dp
+   where dp.deal_id = v_job.deal_id and dp.service_type = v_job.service_type
+     and dp.billing_type in ('recurring_monthly','recurring_yearly')
+   order by dp.created_at desc limit 1;
+
+  if v_src is not null then
+    v_next_end := case when v_src.billing_type = 'recurring_yearly'
+                       then (current_date + interval '1 year')::date
+                       else (current_date + interval '1 month')::date end;
+    insert into public.deal_payments
+      (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status)
+      values (v_job.deal_id, v_src.service_type, v_src.service_index, v_src.billing_type,
+              v_src.amount_net, v_src.vat_rate, current_date, v_next_end, 'pending')
+      returning id into v_new_id;
+  end if;
+
+  return jsonb_build_object('jobs_unflagged', v_unflagged, 'new_payment_id', v_new_id,
+                            'next_start', current_date, 'next_end', v_next_end);
+end $function$;
+
+revoke all on function public.job_pause_billing(uuid)  from public, anon;
+revoke all on function public.job_resume_billing(uuid) from public, anon;
+grant execute on function public.job_pause_billing(uuid)  to authenticated, service_role;
+grant execute on function public.job_resume_billing(uuid) to authenticated, service_role;
