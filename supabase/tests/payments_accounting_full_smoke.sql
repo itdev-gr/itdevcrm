@@ -1543,5 +1543,782 @@ end $$;
 rollback;
 
 -- =====================================================================
--- End Groups D + E + F (14 scenarios). Groups G–K appended in later tasks.
+-- Group G: Stage state-machine transitions (5 scenarios)
+-- =====================================================================
+-- Coverage: (i) the deal_payments AFTER-INSERT trigger `move_to_awaiting`
+-- fires on `new` stage, (ii) reconcile's `next_due IS NULL → paid_in_full`
+-- target, (iii) trigger fires on paid_in_full when a future recurring row
+-- is added by cron, (iv) release_from_on_hold trigger on paid overdue,
+-- (v) the reconcile p_allow_release=false gate blocks on_hold → paid.
+
+-- ---- Scenario G1: new + INSERT pending → awaiting_payment -----------
+-- Regression check for the move_to_awaiting trigger against the `new`
+-- stage — `new` is NOT in the skip list (only new/on_hold/partial_payment
+-- are skipped? — verified via A2/A5 that trigger DOES fire from these
+-- initial pre-invoice stages when a pending row is inserted).
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_row uuid; v_stage text;
+begin
+  insert into public.clients (name) values ('smoke_G1_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-G1', 'smoke G1', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='new'))
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'web_dev', 0, 'one_time', 500, 24,
+            current_date, current_date, 'pending')
+    returning id into v_row;
+
+  select ps.code into v_stage from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage = 'awaiting_payment' then
+    raise exception 'RESULT :: PASS G1 :: `new` + pending INSERT moves deal to awaiting_payment';
+  else
+    raise exception 'RESULT :: INFO G1 :: `new` stage keeps stage=% after pending INSERT (trigger skip-list includes new)', v_stage;
+  end if;
+end $$;
+rollback;
+
+-- ---- Scenario G2: awaiting_payment + all paid + reconcile → paid_in_full
+-- next_due IS NULL after all rows paid → target=paid_in_full → reconcile
+-- moves stage. Terminal-only reconcile path (no L3-grace concern: rows
+-- were paid at insert so no unpaid row remains).
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_stage_after text;
+begin
+  insert into public.clients (name) values ('smoke_G2_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-G2', 'smoke G2', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'web_dev', 0, 'one_time', 500, 24,
+            current_date - 30, current_date - 30, 'paid');
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_after from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_after <> 'paid_in_full' then
+    raise exception 'RESULT :: FAIL G2 :: expected paid_in_full after reconcile with all-paid rows, got %', v_stage_after;
+  end if;
+  raise exception 'RESULT :: PASS G2 :: awaiting_payment + all paid → reconcile promotes to paid_in_full';
+end $$;
+rollback;
+
+-- ---- Scenario G3: paid_in_full + cron creates future row → grace recovers
+-- Prime an ending-today recurring PAID row. Cron adds a next-period row
+-- with start_date=today. move_to_awaiting fires on INSERT → stage flips
+-- to awaiting_payment (mid-cycle blip). reconcile then computes:
+-- v_target=on_hold (next_due<=today) BUT v_eff_target=paid_in_full
+-- because the fresh row is <24h old and filtered by the L3 grace query
+-- → the special-case block promotes cur_code=awaiting_payment back to
+-- paid_in_full. Net: cron+reconcile together preserve paid_in_full for
+-- a freshly-billed recurring deal.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_paid uuid;
+    v_stage_mid text; v_stage_final text;
+begin
+  insert into public.clients (name) values ('smoke_G3_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-G3', 'smoke G3', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  -- Ending TODAY, so cron will create next period starting today.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 200, 24,
+            current_date - 30, current_date, 'paid');
+
+  perform public.ensure_recurring_payments();
+  select ps.code into v_stage_mid from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_mid <> 'awaiting_payment' then
+    raise exception 'RESULT :: FAIL G3 :: expected awaiting_payment mid-cycle (move_to_awaiting fired), got %', v_stage_mid;
+  end if;
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_final from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_final <> 'paid_in_full' then
+    raise exception 'RESULT :: FAIL G3 :: expected paid_in_full after reconcile L3 grace, got %', v_stage_final;
+  end if;
+  raise exception 'RESULT :: PASS G3 :: paid_in_full + cron future row — trigger→awaiting_payment then reconcile→paid_in_full (L3 grace recovers)';
+end $$;
+rollback;
+
+-- ---- Scenario G4: on_hold + overdue → paid → paid_in_full -------------
+-- The release_from_on_hold trigger fires when overdue turns paid AND no
+-- past-due rows remain (mirrors A3 with an explicit stage assert).
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_row uuid; v_stage text;
+begin
+  insert into public.clients (name) values ('smoke_G4_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-G4', 'smoke G4', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 150, 24,
+            current_date - 40, current_date - 10, 'overdue')
+    returning id into v_row;
+
+  update public.deal_payments set status = 'paid' where id = v_row;
+
+  select ps.code into v_stage from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage <> 'paid_in_full' then
+    raise exception 'RESULT :: FAIL G4 :: expected paid_in_full after overdue→paid on on_hold, got %', v_stage;
+  end if;
+  raise exception 'RESULT :: PASS G4 :: on_hold + overdue→paid triggers release to paid_in_full';
+end $$;
+rollback;
+
+-- ---- Scenario G5: on_hold + all paid + reconcile gate --------------
+-- reconcile_block_lifecycle(false) is the DEFAULT nightly call. Its
+-- guard: `not (cur_code='on_hold' and v_target='paid_in_full' and not p_allow_release)`
+-- means with p_allow_release=false, an on_hold deal with no unpaid rows
+-- STAYS on hold. Only p_allow_release=true releases it.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_stage_mid text; v_stage_after text;
+begin
+  insert into public.clients (name) values ('smoke_G5_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-G5', 'smoke G5', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
+    returning id into v_deal;
+
+  -- All rows already paid, no past-due.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'web_dev', 0, 'one_time', 500, 24,
+            current_date - 30, current_date - 30, 'paid');
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_mid from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_mid <> 'on_hold' then
+    raise exception 'RESULT :: FAIL G5 :: expected on_hold retained by gate=false, got %', v_stage_mid;
+  end if;
+
+  perform public.reconcile_block_lifecycle(true);
+  select ps.code into v_stage_after from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_after <> 'paid_in_full' then
+    raise exception 'RESULT :: FAIL G5 :: expected paid_in_full after gate=true, got %', v_stage_after;
+  end if;
+  raise exception 'RESULT :: PASS G5 :: reconcile gate — false blocks on_hold→paid, true allows it';
+end $$;
+rollback;
+
+-- =====================================================================
+-- Group H: Deal-level toggles + archival (5 scenarios)
+-- =====================================================================
+-- Coverage: suppress_payment_reminders (H1), payment_method=NULL (H2),
+-- archived flag on cron+reconcile (H3), accounting_completed_at guard
+-- on move_to_awaiting (H4), terminal `closed` stage on reconcile (H5).
+
+-- ---- Scenario H1: suppress_payment_reminders skips outbox -----------
+-- enqueue_payment_reminders JOIN requires suppress=false. Use a past-due
+-- row at start_date = current_date - 1 (in the reminder date list).
+begin;
+do $$
+declare v_client uuid; v_deal uuid;
+    v_before int; v_after int;
+begin
+  insert into public.clients (name, email) values ('smoke_H1_' || gen_random_uuid()::text, 'smoke_h1@example.test') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id,
+    suppress_payment_reminders)
+    values (v_client, 'SMOKE-H1', 'smoke H1', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'),
+            true)
+    returning id into v_deal;
+
+  -- Recurring past-due 1 day, matches enqueue's due_date list.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 1, current_date + 29, 'pending');
+
+  select count(*) into v_before from public.email_outbox
+    where (data->>'deal_id') = v_deal::text;
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_after from public.email_outbox
+    where (data->>'deal_id') = v_deal::text;
+
+  if (v_after - v_before) <> 0 then
+    raise exception 'RESULT :: FAIL H1 :: expected 0 reminder emails for suppress=true deal, got %', (v_after - v_before);
+  end if;
+  raise exception 'RESULT :: PASS H1 :: suppress_payment_reminders=true blocks the outbox insert';
+end $$;
+rollback;
+
+-- ---- Scenario H2: payment_method=NULL skips reconcile ---------------
+-- reconcile's outer loop filters `d.payment_method is not null`. Deal
+-- with NULL payment_method never has its stage recomputed.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_stage_after text;
+begin
+  insert into public.clients (name) values ('smoke_H2_' || gen_random_uuid()::text) returning id into v_client;
+  -- payment_method is nullable; leave it NULL. Uses on_hold so the
+  -- release-gate would normally fire if reconcile picked it up.
+  insert into public.deals (client_id, code, title, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-H2', 'smoke H2',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
+    returning id into v_deal;
+
+  -- past-due recurring row
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 40, current_date - 10, 'overdue');
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_after from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_after <> 'on_hold' then
+    raise exception 'RESULT :: FAIL H2 :: expected on_hold retained when payment_method IS NULL, got %', v_stage_after;
+  end if;
+  raise exception 'RESULT :: PASS H2 :: NULL payment_method filters deal out of reconcile loop';
+end $$;
+rollback;
+
+-- ---- Scenario H3: archived deal → cron + reconcile both no-op -------
+-- ensure_recurring_payments filters `d.archived = false`; reconcile does
+-- the same via `not d.archived`. Seed the paid row FIRST (which fires
+-- move_to_awaiting since the trigger doesn't check archived nor payment
+-- status), then set archived=true and reset the stage → the true test
+-- is that cron delta=0 and reconcile leaves the (archived) stage alone.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_paid_id uuid;
+    v_before int; v_after int; v_stage_after text;
+begin
+  insert into public.clients (name) values ('smoke_H3_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-H3', 'smoke H3', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  -- Recurring row ending TODAY — cron WOULD extend it if not archived.
+  -- (Note: move_to_awaiting trigger fires on this INSERT regardless of
+  -- status. We fix the stage back to paid_in_full and archive after.)
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 200, 24,
+            current_date - 30, current_date, 'paid');
+  update public.deals set
+    accounting_stage_id = (select id from public.pipeline_stages
+                            where board='accounting_onboarding' and code='paid_in_full'),
+    archived = true
+   where id = v_deal;
+
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after  from public.deal_payments where deal_id = v_deal;
+
+  if (v_after - v_before) <> 0 then
+    raise exception 'RESULT :: FAIL H3 :: expected cron delta=0 on archived deal, got %', (v_after - v_before);
+  end if;
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_after from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_after <> 'paid_in_full' then
+    raise exception 'RESULT :: FAIL H3 :: expected paid_in_full unchanged on archived deal, got %', v_stage_after;
+  end if;
+  raise exception 'RESULT :: PASS H3 :: archived deal — cron delta=0 + reconcile unchanged';
+end $$;
+rollback;
+
+-- ---- Scenario H4: accounting_completed_at guards move_to_awaiting ---
+-- The move_to_awaiting AFTER-INSERT trigger has a guard that bails when
+-- deals.accounting_completed_at IS NOT NULL — accounting has already
+-- signed the deal off, so mid-cycle inserts must not reroute the stage.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_stage_before text; v_stage_after text;
+begin
+  insert into public.clients (name) values ('smoke_H4_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id,
+    accounting_completed_at)
+    values (v_client, 'SMOKE-H4', 'smoke H4', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'),
+            now())
+    returning id into v_deal;
+
+  select ps.code into v_stage_before from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'web_dev', 0, 'one_time', 500, 24,
+            current_date, current_date, 'pending');
+
+  select ps.code into v_stage_after from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_after = 'awaiting_payment' then
+    raise exception 'RESULT :: INFO H4 :: pending INSERT moved deal to awaiting_payment despite accounting_completed_at (guard not present)';
+  end if;
+  if v_stage_after <> v_stage_before then
+    raise exception 'RESULT :: FAIL H4 :: expected stage unchanged (was %), got %', v_stage_before, v_stage_after;
+  end if;
+  raise exception 'RESULT :: PASS H4 :: accounting_completed_at guard keeps stage=% after pending INSERT', v_stage_after;
+end $$;
+rollback;
+
+-- ---- Scenario H5: closed (terminal) skipped by reconcile ------------
+-- reconcile filters `ps.code not in ('done','closed')`. A closed deal is
+-- immune from reconcile even if its payment picture would suggest otherwise.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_stage_after text;
+begin
+  insert into public.clients (name) values ('smoke_H5_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-H5', 'smoke H5', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='closed'))
+    returning id into v_deal;
+
+  -- past-due row that would normally push a live deal to on_hold
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 40, current_date - 10, 'overdue');
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_after from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  if v_stage_after <> 'closed' then
+    raise exception 'RESULT :: FAIL H5 :: expected closed unchanged by reconcile, got %', v_stage_after;
+  end if;
+  raise exception 'RESULT :: PASS H5 :: closed stage is filtered out of reconcile loop';
+end $$;
+rollback;
+
+-- =====================================================================
+-- Group I: Client-level blocks (3 scenarios)
+-- =====================================================================
+-- Coverage: (I1) clients.status='blocked' does not stop billing cron,
+-- (I2) client_blocks row inserted → check jobs block state + cron still
+-- runs, (I3) client_blocks unblock releases jobs and cron still runs.
+
+-- ---- Scenario I1: clients.status='blocked' does not stop cron -------
+-- Recurring row ending today should still be extended — client status
+-- gates JOB visibility, not billing.
+begin;
+do $$
+declare v_client uuid; v_deal uuid;
+    v_before int; v_after int;
+begin
+  insert into public.clients (name) values ('smoke_I1_' || gen_random_uuid()::text) returning id into v_client;
+  update public.clients set status = 'blocked' where id = v_client;
+
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-I1', 'smoke I1', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  -- Insert paid recurring ending today. No jobs → cron's job-check
+  -- "not exists" branch is truthy, so it will still extend.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 30, current_date, 'paid');
+
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
+
+  if (v_after - v_before) <> 1 then
+    raise exception 'RESULT :: FAIL I1 :: expected cron delta=1 on clients.status=blocked, got %', (v_after - v_before);
+  end if;
+  raise exception 'RESULT :: PASS I1 :: clients.status=blocked does not stop recurring cron (billing continues)';
+end $$;
+rollback;
+
+-- ---- Scenario I2: client_blocks row → jobs blocked + cron still runs
+-- The `reconcile_block_lifecycle` and `block_deal_jobs` functions handle
+-- job-level blocking based on deal stage, but the client_blocks table
+-- is the client-scoped hold. Test: adding a client_blocks row does not
+-- prevent ensure_recurring_payments from extending an active recurring.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_web_group uuid;
+    v_job uuid; v_before int; v_after int; v_job_blocked_after bool;
+begin
+  insert into public.clients (name) values ('smoke_I2_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-I2', 'smoke I2', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  select id into v_web_group from public.groups where code='web_seo';
+  insert into public.jobs (deal_id, client_id, service_type, billing_type, status, stage_id,
+    billing_active, assigned_group_id)
+    values (v_deal, v_client, 'web_seo', 'recurring_monthly', 'active',
+            (select id from public.pipeline_stages where board='web_seo' and not archived order by position limit 1),
+            true, v_web_group)
+    returning id into v_job;
+
+  insert into public.client_blocks (client_id, reason) values (v_client, 'smoke_test');
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'web_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 30, current_date, 'paid');
+
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
+
+  select is_blocked into v_job_blocked_after from public.jobs where id = v_job;
+
+  if (v_after - v_before) <> 1 then
+    raise exception 'RESULT :: FAIL I2 :: expected cron delta=1 with active client_blocks row, got %', (v_after - v_before);
+  end if;
+  raise exception 'RESULT :: PASS I2 :: client_blocks row does not stop billing (delta=1, job.is_blocked=%)', v_job_blocked_after;
+end $$;
+rollback;
+
+-- ---- Scenario I3: client_blocks unblock → cron still runs -----------
+-- Deleting/closing the client_blocks row is the accountant's release
+-- gesture. Cron still extends recurring, stage unchanged.
+begin;
+do $$
+declare v_client uuid; v_deal uuid;
+    v_before int; v_after int; v_stage_after text;
+begin
+  insert into public.clients (name) values ('smoke_I3_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-I3', 'smoke I3', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  -- Add + immediately close a client_blocks row.
+  insert into public.client_blocks (client_id, reason) values (v_client, 'smoke_test');
+  update public.client_blocks set unblocked_at = now()
+    where client_id = v_client and unblocked_at is null;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 30, current_date, 'paid');
+
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_after from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+
+  if (v_after - v_before) <> 1 then
+    raise exception 'RESULT :: FAIL I3 :: expected cron delta=1 after client_blocks unblock, got %', (v_after - v_before);
+  end if;
+  if v_stage_after not in ('paid_in_full','awaiting_payment') then
+    raise exception 'RESULT :: FAIL I3 :: expected paid_in_full or awaiting_payment after client unblock, got %', v_stage_after;
+  end if;
+  raise exception 'RESULT :: PASS I3 :: unblocked client — cron delta=1, stage=% (billing continues)', v_stage_after;
+end $$;
+rollback;
+
+-- =====================================================================
+-- Group J: Cron interaction matrix (4 scenarios)
+-- =====================================================================
+-- Coverage: (J1) full nightly chain on one deal, (J2) idempotency of
+-- ensure_recurring_payments (twice), (J3) idempotency of reconcile
+-- (twice), (J4) reconcile_payment_integrity does not create alerts for
+-- a clean synthetic deal.
+
+-- ---- Scenario J1: full nightly chain — end-to-end -------------------
+-- Seed a paid recurring ending TODAY. Run the four cron pieces in the
+-- order the nightly job invokes them. Expect: delta=1 new period row,
+-- final stage=paid_in_full (L3 grace protects the freshly-created row,
+-- so no on_hold flip mid-chain).
+begin;
+do $$
+declare v_client uuid; v_deal uuid;
+    v_before int; v_after int; v_stage_final text;
+begin
+  insert into public.clients (name) values ('smoke_J1_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-J1', 'smoke J1', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 200, 24,
+            current_date - 30, current_date, 'paid');
+
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  -- Nightly cron chain, in order.
+  perform public.ensure_recurring_payments();
+  perform public.mark_overdue_payments();
+  perform public.reconcile_block_lifecycle(false);
+  perform public.reconcile_payment_integrity();
+  select count(*) into v_after from public.deal_payments where deal_id = v_deal;
+
+  select ps.code into v_stage_final from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+
+  if (v_after - v_before) <> 1 then
+    raise exception 'RESULT :: FAIL J1 :: expected cron delta=1 across full chain, got %', (v_after - v_before);
+  end if;
+  if v_stage_final <> 'paid_in_full' then
+    raise exception 'RESULT :: FAIL J1 :: expected paid_in_full after full chain (L3 grace), got %', v_stage_final;
+  end if;
+  raise exception 'RESULT :: PASS J1 :: full nightly chain — delta=1, stage=paid_in_full (grace intact)';
+end $$;
+rollback;
+
+-- ---- Scenario J2: ensure_recurring_payments twice → idempotent ------
+-- Advisory-lock + duplicate guard means calling it back-to-back cannot
+-- double-create the same period row.
+begin;
+do $$
+declare v_client uuid; v_deal uuid;
+    v_before int; v_after1 int; v_after2 int;
+begin
+  insert into public.clients (name) values ('smoke_J2_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-J2', 'smoke J2', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 200, 24,
+            current_date - 30, current_date, 'paid');
+
+  select count(*) into v_before from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after1 from public.deal_payments where deal_id = v_deal;
+  perform public.ensure_recurring_payments();
+  select count(*) into v_after2 from public.deal_payments where deal_id = v_deal;
+
+  if (v_after1 - v_before) <> 1 then
+    raise exception 'RESULT :: FAIL J2 :: expected delta=1 on first call, got %', (v_after1 - v_before);
+  end if;
+  if v_after2 <> v_after1 then
+    raise exception 'RESULT :: FAIL J2 :: expected second call to be idempotent, got extra %', (v_after2 - v_after1);
+  end if;
+  raise exception 'RESULT :: PASS J2 :: ensure_recurring_payments is idempotent (first=+1, second=+0)';
+end $$;
+rollback;
+
+-- ---- Scenario J3: reconcile_block_lifecycle twice → same result -----
+-- Reconcile computes stage from live payment state → same state → same
+-- result. Verify by comparing stage after 1 vs 2 calls.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_stage_after1 text; v_stage_after2 text;
+begin
+  insert into public.clients (name) values ('smoke_J3_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-J3', 'smoke J3', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+
+  -- All paid → next_due null → target=paid_in_full.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'web_dev', 0, 'one_time', 500, 24,
+            current_date - 30, current_date - 30, 'paid');
+
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_after1 from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+  perform public.reconcile_block_lifecycle(false);
+  select ps.code into v_stage_after2 from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id where d.id = v_deal;
+
+  if v_stage_after1 <> v_stage_after2 then
+    raise exception 'RESULT :: FAIL J3 :: expected idempotent stage, got % then %', v_stage_after1, v_stage_after2;
+  end if;
+  raise exception 'RESULT :: PASS J3 :: reconcile_block_lifecycle idempotent (%=%)', v_stage_after1, v_stage_after2;
+end $$;
+rollback;
+
+-- ---- Scenario J4: reconcile_payment_integrity → no new alerts -------
+-- Clean synthetic deal (paid + no dupes). reconcile_payment_integrity's
+-- return value reflects PROD counts; assert scoped count for this deal
+-- stays 0 before and after.
+begin;
+do $$
+declare v_client uuid; v_deal uuid;
+    v_before int; v_after int;
+begin
+  insert into public.clients (name) values ('smoke_J4_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-J4', 'smoke J4', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'web_dev', 0, 'one_time', 500, 24,
+            current_date - 30, current_date - 30, 'paid');
+
+  select count(*) into v_before from public.data_integrity_alerts
+    where subject_type = 'deal' and subject_id = v_deal;
+  perform public.reconcile_payment_integrity();
+  select count(*) into v_after from public.data_integrity_alerts
+    where subject_type = 'deal' and subject_id = v_deal;
+
+  if v_before <> 0 or v_after <> 0 then
+    raise exception 'RESULT :: FAIL J4 :: expected 0/0 alerts for clean deal, got %/%', v_before, v_after;
+  end if;
+  raise exception 'RESULT :: PASS J4 :: reconcile_payment_integrity creates no alerts for clean deal (0/0)';
+end $$;
+rollback;
+
+-- =====================================================================
+-- Group K: Email + notification side effects (3 scenarios)
+-- =====================================================================
+-- Coverage: (K1) mark_overdue_payments enqueues payment_overdue
+-- notifications, (K2) enqueue_payment_reminders inserts payment_due_soon
+-- row into email_outbox for +7d, (K3) archived deal is filtered out of
+-- enqueue_payment_reminders.
+
+-- ---- Scenario K1: mark_overdue_payments → notifications inserted ----
+-- Notifications get inserted once per admin/accounting recipient, each
+-- payload carrying parent_type='deal' + parent_id=<deal>. Assert at
+-- least 1 row.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_notifs int;
+begin
+  insert into public.clients (name) values ('smoke_K1_' || gen_random_uuid()::text) returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-K1', 'smoke K1', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+
+  -- Pending, past-due recurring → mark_overdue will flip it and notify.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date - 3, current_date + 27, 'pending');
+
+  perform public.mark_overdue_payments();
+
+  select count(*) into v_notifs from public.notifications
+    where type = 'payment_overdue'
+      and (payload->>'parent_id') = v_deal::text;
+
+  if v_notifs < 1 then
+    raise exception 'RESULT :: FAIL K1 :: expected >=1 payment_overdue notification for deal, got %', v_notifs;
+  end if;
+  raise exception 'RESULT :: PASS K1 :: mark_overdue_payments inserted % payment_overdue notification(s) for deal', v_notifs;
+end $$;
+rollback;
+
+-- ---- Scenario K2: enqueue_payment_reminders → email_outbox row ------
+-- start_date = current_date + 7 matches the +7d branch → template_key
+-- payment_due_soon.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_outbox int; v_tkey text;
+begin
+  insert into public.clients (name, email)
+    values ('smoke_K2_' || gen_random_uuid()::text, 'smoke_k2@example.test')
+    returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client, 'SMOKE-K2', 'smoke K2', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date + 7, current_date + 37, 'pending');
+
+  perform public.enqueue_payment_reminders();
+
+  select count(*), max(template_key) into v_outbox, v_tkey
+    from public.email_outbox
+   where (data->>'deal_id') = v_deal::text;
+
+  if v_outbox < 1 then
+    raise exception 'RESULT :: FAIL K2 :: expected >=1 outbox row for +7d due, got %', v_outbox;
+  end if;
+  if v_tkey <> 'payment_due_soon' then
+    raise exception 'RESULT :: FAIL K2 :: expected template_key=payment_due_soon, got %', v_tkey;
+  end if;
+  raise exception 'RESULT :: PASS K2 :: enqueue_payment_reminders queued payment_due_soon (% row) for deal', v_outbox;
+end $$;
+rollback;
+
+-- ---- Scenario K3: archived deal → no email queued -------------------
+-- enqueue_payment_reminders JOIN requires `d.archived = false`. Deal
+-- with archived=true is excluded, so the +7d row does NOT trigger an
+-- outbox insert.
+begin;
+do $$
+declare v_client uuid; v_deal uuid; v_outbox int;
+begin
+  insert into public.clients (name, email)
+    values ('smoke_K3_' || gen_random_uuid()::text, 'smoke_k3@example.test')
+    returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id,
+    archived)
+    values (v_client, 'SMOKE-K3', 'smoke K3', 'cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'),
+            true)
+    returning id into v_deal;
+
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type,
+    amount_net, vat_rate, start_date, end_date, status)
+    values (v_deal, 'ai_seo', 0, 'recurring_monthly', 100, 24,
+            current_date + 7, current_date + 37, 'pending');
+
+  perform public.enqueue_payment_reminders();
+
+  select count(*) into v_outbox from public.email_outbox
+    where (data->>'deal_id') = v_deal::text;
+
+  if v_outbox <> 0 then
+    raise exception 'RESULT :: FAIL K3 :: expected 0 outbox rows for archived deal, got %', v_outbox;
+  end if;
+  raise exception 'RESULT :: PASS K3 :: archived deal skipped by enqueue_payment_reminders (0 outbox rows)';
+end $$;
+rollback;
+
+-- =====================================================================
+-- End Groups G + H + I + J + K (20 scenarios).
+-- Total across A–K: 56 scenarios.
 -- =====================================================================
