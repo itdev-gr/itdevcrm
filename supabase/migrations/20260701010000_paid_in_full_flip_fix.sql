@@ -86,3 +86,37 @@ begin
   end loop;
   return created;
 end $function$;
+
+-- ---- Section 2: deal_payments_no_duplicate_period trigger ------------
+create or replace function public.deal_payments_no_duplicate_period()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $function$
+begin
+  -- Only guard recurring inserts (one_time and recurring_test_2min are
+  -- free to have overlapping rows; historical practice for corrections).
+  if new.billing_type not in ('recurring_monthly','recurring_yearly') then
+    return new;
+  end if;
+
+  -- Any existing payment on the same (deal_id, service_type, billing_type,
+  -- start_date, end_date) blocks the insert — regardless of service_index
+  -- or amount. Silently drops so the calling INSERT succeeds without a
+  -- row (matches previous behaviour on the old narrower guard). Note:
+  -- status='cancelled' is not a valid value on this schema (CHECK:
+  -- pending|paid|overdue), so no status filter is needed.
+  if exists (
+    select 1 from public.deal_payments dp
+     where dp.deal_id     = new.deal_id
+       and dp.service_type is not distinct from new.service_type
+       and dp.billing_type = new.billing_type
+       and dp.start_date  = new.start_date
+       and dp.end_date    is not distinct from new.end_date
+  ) then
+    return null;
+  end if;
+
+  return new;
+end $function$;
