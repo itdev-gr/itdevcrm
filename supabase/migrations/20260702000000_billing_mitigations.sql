@@ -126,3 +126,75 @@ begin
   update public.deals set accounting_stage_id = awaiting_id where id = new.deal_id;
   return new;
 end $function$;
+
+-- ---- Section 4: cleanup remaining live dupes + UNIQUE partial index --
+-- Prerequisite: resolve 2 remaining duplicate period-keys on deal 000415
+-- (57628db6-26dc-4bb1-b94f-2897dd67e87f), service local_seo:
+--   Cluster A: paid + paid for 2026-05-28 → 2026-06-28
+--   Cluster B: overdue + overdue for 2026-06-28 → 2026-07-28
+-- Keep the OLDEST row of each cluster; back up + delete the newer.
+
+-- Backup remaining live duplicates before delete (idempotent).
+-- Backup table has 16 cols; deal_payments has generated vat_amount/amount_gross that must be excluded.
+insert into public.deal_payments_flipflop_backup_20260701
+  (id, deal_id, service_type, service_index, billing_type, label, amount,
+   start_date, end_date, status, invoice_number, paid_at, created_at, updated_at,
+   amount_net, vat_rate)
+select dp.id, dp.deal_id, dp.service_type, dp.service_index, dp.billing_type, dp.label, dp.amount,
+       dp.start_date, dp.end_date, dp.status, dp.invoice_number, dp.paid_at, dp.created_at, dp.updated_at,
+       dp.amount_net, dp.vat_rate
+  from public.deal_payments dp
+ where (dp.deal_id, dp.service_type, dp.billing_type, dp.start_date, dp.end_date) in (
+   select deal_id, service_type, billing_type, start_date, end_date
+     from public.deal_payments
+    where billing_type in ('recurring_monthly','recurring_yearly')
+      and start_date is not null and end_date is not null
+    group by deal_id, service_type, billing_type, start_date, end_date
+   having count(*) >= 2
+ )
+   and not exists (
+     select 1 from public.deal_payments_flipflop_backup_20260701 b
+      where b.id = dp.id
+   );
+
+-- Delete the newer row(s) of each duplicate cluster (keep the oldest).
+with dup as (
+  select deal_id, service_type, billing_type, start_date, end_date,
+    array_agg(id order by created_at) as ids
+  from public.deal_payments
+  where billing_type in ('recurring_monthly','recurring_yearly')
+    and start_date is not null and end_date is not null
+  group by deal_id, service_type, billing_type, start_date, end_date
+  having count(*) >= 2
+),
+to_delete as (
+  select unnest(ids[2:array_length(ids, 1)]) as id from dup
+)
+delete from public.deal_payment_lines dpl
+ where dpl.payment_id in (select id from to_delete);
+
+with dup as (
+  select deal_id, service_type, billing_type, start_date, end_date,
+    array_agg(id order by created_at) as ids
+  from public.deal_payments
+  where billing_type in ('recurring_monthly','recurring_yearly')
+    and start_date is not null and end_date is not null
+  group by deal_id, service_type, billing_type, start_date, end_date
+  having count(*) >= 2
+),
+to_delete as (
+  select unnest(ids[2:array_length(ids, 1)]) as id from dup
+)
+delete from public.deal_payments dp
+ where dp.id in (select id from to_delete);
+
+-- Resolve the corresponding data_integrity_alerts.
+update public.data_integrity_alerts
+   set resolved_at = now()
+ where kind = 'duplicate_period' and resolved_at is null;
+
+-- Now safe to create the UNIQUE partial index on recurring period-keys.
+create unique index if not exists deal_payments_recurring_period_key_unique
+  on public.deal_payments (deal_id, service_type, billing_type, start_date, end_date)
+  where billing_type in ('recurring_monthly','recurring_yearly')
+    and start_date is not null and end_date is not null;

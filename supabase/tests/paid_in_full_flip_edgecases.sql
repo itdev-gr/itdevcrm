@@ -679,13 +679,14 @@ begin
 end $$;
 rollback;
 
--- ---- Scenario E5: UPDATE to create a duplicate (L2 bypass!) -------
--- L2 only fires on INSERT. Accountant edits a row's start_date to
--- MATCH another existing row's period — creates a duplicate that L2
--- doesn't catch. L4 audit is the only defense.
+-- ---- Scenario E5: UPDATE to create a duplicate (blocked by UNIQUE) -
+-- L2 only fires on INSERT, but the UNIQUE partial index
+-- deal_payments_recurring_period_key_unique (added 2026-07-01) now
+-- blocks UPDATE-based dupes as well. Accountant edits a row's dates
+-- to MATCH another existing row's period → unique_violation.
 begin;
 do $$
-declare v_client uuid; v_deal uuid; v_row1 uuid; v_row2 uuid; v_alerts int;
+declare v_client uuid; v_deal uuid; v_row1 uuid; v_row2 uuid;
 begin
   insert into public.clients (name) values ('edge_E5_' || gen_random_uuid()::text) returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method,
@@ -705,17 +706,17 @@ begin
             current_date - 10, current_date + 20, 'paid')
     returning id into v_row2;
 
-  -- Accountant edits row1 to overlap row2's period
-  update public.deal_payments
-     set start_date = current_date - 10, end_date = current_date + 20
-   where id = v_row1;
-
-  -- L4 audit should catch it
-  select public.reconcile_payment_integrity() into v_alerts;
-  if v_alerts < 1 then
-    raise exception 'RESULT :: FAIL E5 :: L2 bypass via UPDATE not caught by L4 audit';
-  end if;
-  raise exception 'RESULT :: CONCERN E5 :: L2 bypassed via UPDATE (only L4 audit catches, next-day detection)';
+  -- Accountant edits row1 to overlap row2's period.
+  -- UNIQUE partial index should raise unique_violation.
+  begin
+    update public.deal_payments
+       set start_date = current_date - 10, end_date = current_date + 20
+     where id = v_row1;
+    -- Did not raise → UNIQUE index is missing
+    raise exception 'RESULT :: FAIL E5 :: UPDATE-based dup not blocked (UNIQUE index missing?)';
+  exception when unique_violation then
+    raise exception 'RESULT :: PASS E5 :: UNIQUE partial index blocks UPDATE-based dup';
+  end;
 end $$;
 rollback;
 
