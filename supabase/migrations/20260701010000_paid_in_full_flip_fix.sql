@@ -458,3 +458,9 @@ update public.jobs j
    and ps.code = 'paid_in_full'
    and j.is_blocked
    and j.blocked_reason = 'account_on_hold';
+
+-- ---- Section 7: re-enable paused daily_payment_reminders cron -------
+-- Paused ~14:00 UTC 2026-07-01 during triage (jobid 7). Now that the
+-- four defense layers are live and cleanup restored the flipped deals,
+-- payment reminders can resume 06:00 UTC tomorrow.
+select cron.alter_job(job_id => 7, active => true);
