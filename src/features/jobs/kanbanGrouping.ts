@@ -45,24 +45,12 @@ export function compareJobs(sortBy: SortBy): (a: JobRow, b: JobRow) => number {
   };
 }
 
-/**
- * Stable, fixed card order: newest-created on top, with id as a deterministic
- * tie-breaker. Independent of updated_at, so opening or editing a job never
- * moves its card — and identical timestamps no longer jitter on refetch.
- */
-function compareJobsStable(a: JobRow, b: JobRow): number {
-  const ca = a.created_at ?? '';
-  const cb = b.created_at ?? '';
-  if (ca !== cb) return ca < cb ? 1 : -1; // created_at desc (newest first)
-  if (a.id !== b.id) return a.id < b.id ? 1 : -1; // id desc tie-breaker
-  return 0;
-}
-
 export function groupJobsForBoard(args: {
   board: string;
   jobs: JobRow[];
   boardStages: StageLite[];
   stageById: Map<string, StageLite>;
+  sortBy?: SortBy;
 }): { byColumn: Map<string, JobRow[]>; blocked: JobRow[] } {
   const colByCode = new Map(args.boardStages.map((s) => [s.code, s]));
   const byColumn = new Map<string, JobRow[]>(args.boardStages.map((s) => [s.id, []]));
@@ -82,7 +70,8 @@ export function groupJobsForBoard(args: {
     if (!col) continue;
     byColumn.get(col.id)?.push(j);
   }
-  for (const arr of byColumn.values()) arr.sort(compareJobsStable);
-  blocked.sort(compareJobsStable);
+  const cmp = compareJobs(args.sortBy ?? 'newest');
+  for (const arr of byColumn.values()) arr.sort(cmp);
+  blocked.sort(cmp);
   return { byColumn, blocked };
 }

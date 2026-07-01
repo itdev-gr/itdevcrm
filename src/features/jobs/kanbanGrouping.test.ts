@@ -161,3 +161,43 @@ describe('compareJobs', () => {
     expect([...tied].sort(compareJobs('recent')).map((r) => r.id)).toEqual(['c', 'b', 'a']);
   });
 });
+
+describe('groupJobsForBoard sortBy', () => {
+  const rows: JobRow[] = [
+    job({ id: 'a', stage_id: 'ls-opt', created_at: '2026-06-10T00:00:00Z', updated_at: '2026-06-25T00:00:00Z' } as Partial<JobRow>),
+    job({ id: 'b', stage_id: 'ls-opt', created_at: '2026-06-20T00:00:00Z', updated_at: '2026-06-11T00:00:00Z' } as Partial<JobRow>),
+    job({ id: 'c', stage_id: 'ls-opt', created_at: '2026-06-15T00:00:00Z', updated_at: '2026-06-18T00:00:00Z' } as Partial<JobRow>),
+  ];
+
+  it('defaults to newest when no sortBy is supplied', () => {
+    const { byColumn } = groupJobsForBoard({
+      board: 'local_seo', jobs: rows, boardStages: localStages, stageById,
+    });
+    expect(byColumn.get('ls-opt')?.map((j) => j.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('sorts a column by oldest', () => {
+    const { byColumn } = groupJobsForBoard({
+      board: 'local_seo', jobs: rows, boardStages: localStages, stageById, sortBy: 'oldest',
+    });
+    expect(byColumn.get('ls-opt')?.map((j) => j.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('sorts a column by recent (updated_at desc)', () => {
+    const { byColumn } = groupJobsForBoard({
+      board: 'local_seo', jobs: rows, boardStages: localStages, stageById, sortBy: 'recent',
+    });
+    expect(byColumn.get('ls-opt')?.map((j) => j.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('sorts the blocked bucket by the same sortBy', () => {
+    const blockedRows: JobRow[] = [
+      job({ id: 'a', stage_id: 'ls-opt', is_blocked: true, created_at: '2026-06-10T00:00:00Z', updated_at: '2026-06-25T00:00:00Z' } as Partial<JobRow>),
+      job({ id: 'b', stage_id: 'ls-opt', is_blocked: true, created_at: '2026-06-20T00:00:00Z', updated_at: '2026-06-11T00:00:00Z' } as Partial<JobRow>),
+    ];
+    const { blocked } = groupJobsForBoard({
+      board: 'local_seo', jobs: blockedRows, boardStages: localStages, stageById, sortBy: 'stale',
+    });
+    expect(blocked.map((j) => j.id)).toEqual(['b', 'a']);
+  });
+});
