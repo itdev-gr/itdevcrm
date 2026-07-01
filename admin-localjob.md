@@ -1,0 +1,263 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "I info@itdev.gr" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: I
+          - generic [ref=e19]: info@itdev.gr
+        - button "5" [ref=e20]:
+          - img
+          - generic [ref=e21]: "5"
+        - combobox "Theme" [ref=e22]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e23]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e24]
+  - generic [ref=e25]:
+    - complementary [ref=e26]:
+      - navigation [ref=e27]:
+        - link "Home" [ref=e28] [cursor=pointer]:
+          - /url: /
+          - img [ref=e29]
+          - text: Home
+        - link "Tasks" [ref=e32] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e33]
+          - text: Tasks
+        - link "Dashboard" [ref=e36] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e37]
+          - text: Dashboard
+        - generic [ref=e39]:
+          - paragraph [ref=e40]: Sales
+          - generic [ref=e41]:
+            - link "My Clients" [ref=e42] [cursor=pointer]:
+              - /url: /sales/clients
+              - img [ref=e43]
+              - text: My Clients
+            - link "Leads" [ref=e48] [cursor=pointer]:
+              - /url: /sales/leads
+              - img [ref=e49]
+              - text: Leads
+            - link "Lead Intake" [ref=e53] [cursor=pointer]:
+              - /url: /sales/lead-intake
+              - img [ref=e54]
+              - text: Lead Intake
+            - link "Sales pipeline" [ref=e56] [cursor=pointer]:
+              - /url: /sales/kanban
+              - img [ref=e57]
+              - text: Sales pipeline
+            - link "Documentation" [ref=e59] [cursor=pointer]:
+              - /url: /sales/docs
+            - link "Contracts" [ref=e60] [cursor=pointer]:
+              - /url: /contracts
+              - img [ref=e61]
+              - text: Contracts
+        - generic [ref=e64]:
+          - paragraph [ref=e65]: Accounting
+          - generic [ref=e66]:
+            - link "Clients" [ref=e67] [cursor=pointer]:
+              - /url: /accounting/clients
+              - img [ref=e68]
+              - text: Clients
+            - link "Accounting onboarding" [ref=e72] [cursor=pointer]:
+              - /url: /accounting/onboarding
+              - img [ref=e73]
+              - text: Accounting onboarding
+            - link "Recurring" [ref=e76] [cursor=pointer]:
+              - /url: /accounting/recurring
+              - img [ref=e77]
+              - text: Recurring
+            - link "Documentation" [ref=e82] [cursor=pointer]:
+              - /url: /accounting/docs
+            - link "Report" [ref=e83] [cursor=pointer]:
+              - /url: /accounting/report
+              - img [ref=e84]
+              - text: Report
+            - link "Expenses" [ref=e86] [cursor=pointer]:
+              - /url: /accounting/expenses
+              - img [ref=e87]
+              - text: Expenses
+        - generic [ref=e90]:
+          - paragraph [ref=e91]: Technical
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - link "Web SEO" [ref=e94] [cursor=pointer]:
+                - /url: /tech/web-seo
+                - img [ref=e95]
+                - text: Web SEO
+              - link "My Clients" [ref=e98] [cursor=pointer]:
+                - /url: /tech/web-seo/clients
+              - link "Documentation" [ref=e99] [cursor=pointer]:
+                - /url: /tech/web-seo/docs
+            - generic [ref=e100]:
+              - link "Local SEO" [ref=e101] [cursor=pointer]:
+                - /url: /tech/local-seo
+                - img [ref=e102]
+                - text: Local SEO
+              - link "My Clients" [ref=e106] [cursor=pointer]:
+                - /url: /tech/local-seo/clients
+              - link "Documentation" [ref=e107] [cursor=pointer]:
+                - /url: /tech/local-seo/docs
+            - generic [ref=e108]:
+              - link "Web Dev" [ref=e109] [cursor=pointer]:
+                - /url: /tech/web-dev
+                - img [ref=e110]
+                - text: Web Dev
+              - link "My Clients" [ref=e114] [cursor=pointer]:
+                - /url: /tech/web-dev/clients
+              - link "Documentation" [ref=e115] [cursor=pointer]:
+                - /url: /tech/web-dev/docs
+            - generic [ref=e116]:
+              - link "Social Media" [ref=e117] [cursor=pointer]:
+                - /url: /tech/social-media
+                - img [ref=e118]
+                - text: Social Media
+              - link "My Clients" [ref=e124] [cursor=pointer]:
+                - /url: /tech/social-media/clients
+            - generic [ref=e125]:
+              - link "Hosting" [ref=e126] [cursor=pointer]:
+                - /url: /tech/hosting
+                - img [ref=e127]
+                - text: Hosting
+              - link "My Clients" [ref=e130] [cursor=pointer]:
+                - /url: /tech/hosting/clients
+            - generic [ref=e131]:
+              - link "Ads" [ref=e132] [cursor=pointer]:
+                - /url: /tech/ads
+                - img [ref=e133]
+                - text: Ads
+              - link "My Clients" [ref=e136] [cursor=pointer]:
+                - /url: /tech/ads/clients
+        - link "Settings" [ref=e138] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e139]
+          - text: Settings
+    - main [ref=e142]:
+      - button "Back" [ref=e144]:
+        - img [ref=e145]
+        - text: Back
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - generic [ref=e150]:
+              - generic [ref=e151]:
+                - generic [ref=e152]: Job
+                - button "005036-LOCALSEO" [ref=e153]
+              - heading "Βαγγελης" [level=1] [ref=e154]
+              - paragraph [ref=e155]:
+                - generic [ref=e156]: local seo
+                - generic [ref=e157]: ·
+                - generic [ref=e158]:
+                  - img [ref=e159]
+                  - text: 24 Jun 2026
+                - generic [ref=e161]: ·
+                - generic [ref=e162]: 5h ago
+            - generic [ref=e163]:
+              - button "Block" [ref=e164]
+              - button "Delete" [ref=e165]:
+                - img
+                - text: Delete
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - generic [ref=e168]: Stage
+              - combobox "Stage" [ref=e169]:
+                - option "New project"
+                - option "Renewal"
+                - option "Called/No response"
+                - option "Send form"
+                - option "Optimize" [selected]
+                - option "Rank tracking"
+                - option "New GBP"
+                - option "Done"
+                - option "Suspended"
+                - option "Verification"
+                - option "Closed"
+            - generic [ref=e170]:
+              - generic [ref=e171]: Owner
+              - generic [ref=e172]: dtzouvaras@itdev.gr
+        - generic [ref=e173]:
+          - tablist [ref=e175]:
+            - tab "Overview" [selected] [ref=e176]
+            - tab "Info" [ref=e177]
+            - tab "Tasks" [ref=e178]
+            - tab "Attachments" [ref=e179]
+            - tab "Activity" [ref=e180]
+          - tabpanel "Overview" [ref=e181]:
+            - generic [ref=e182]:
+              - generic [ref=e183]:
+                - generic [ref=e184]:
+                  - generic [ref=e186]: Contacts
+                  - generic [ref=e187]:
+                    - generic [ref=e188]:
+                      - heading "Primary contact" [level=3] [ref=e189]
+                      - generic [ref=e190]:
+                        - generic [ref=e191]:
+                          - generic [ref=e192]: Βαγγελης
+                          - link "b70308029@hotmail.com" [ref=e194] [cursor=pointer]:
+                            - /url: mailto:b70308029@hotmail.com
+                          - link "+30 694 430 8029" [ref=e196] [cursor=pointer]:
+                            - /url: tel:+306944308029
+                            - img [ref=e197]
+                            - text: +30 694 430 8029
+                        - button "Edit contact" [ref=e200]:
+                          - img
+                    - generic [ref=e201]:
+                      - heading "Additional contacts" [level=3] [ref=e202]
+                      - button "+ Add contact" [ref=e204]
+                - generic [ref=e205]:
+                  - heading "Project info" [level=2] [ref=e206]
+                  - generic [ref=e207]:
+                    - generic [ref=e208]:
+                      - term [ref=e209]: Service
+                      - definition [ref=e210]: local seo
+                    - generic [ref=e211]:
+                      - term [ref=e212]: Status
+                      - definition [ref=e213]:
+                        - generic [ref=e214]: active
+                    - generic [ref=e215]:
+                      - term [ref=e216]: One-time
+                      - definition [ref=e217]: €250
+                    - generic [ref=e218]:
+                      - term [ref=e219]: Client
+                      - definition [ref=e220]:
+                        - link "ΒΑΓΓΕΛΗΣ" [ref=e221] [cursor=pointer]:
+                          - /url: /clients/36ea2e2a-9257-4d0f-a73d-2f76a87f932a
+                    - generic [ref=e222]:
+                      - term [ref=e223]: Deal
+                      - definition [ref=e224]:
+                        - link "005036" [ref=e225] [cursor=pointer]:
+                          - /url: /deals/e2e66000-e5a2-43dc-a42a-c913f042fe35
+              - complementary [ref=e226]:
+                - generic [ref=e227]:
+                  - heading "Comments" [level=2] [ref=e229]
+                  - generic [ref=e231]:
+                    - generic [ref=e234]:
+                      - img [ref=e236]
+                      - paragraph [ref=e238]: No comments yet. Start the conversation.
+                    - generic [ref=e239]:
+                      - paragraph [ref=e240]: New comment
+                      - generic [ref=e242]:
+                        - generic [ref=e243]: II
+                        - generic [ref=e244]:
+                          - textbox "Write a comment… use @ to mention a teammate" [ref=e245]
+                          - generic [ref=e246]:
+                            - paragraph [ref=e247]: Type @ to mention someone
+                            - generic [ref=e248]:
+                              - button "Post" [disabled]:
+                                - img
+                                - text: Post

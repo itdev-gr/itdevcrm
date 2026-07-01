@@ -1,0 +1,242 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "I info@itdev.gr" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: I
+          - generic [ref=e19]: info@itdev.gr
+        - button "10" [ref=e20]:
+          - img
+          - generic [ref=e21]: "10"
+        - combobox "Theme" [ref=e22]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e23]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e24]
+  - alert [ref=e25]: "⚠ Email: 1 email(s) stuck pending"
+  - generic [ref=e26]:
+    - complementary [ref=e27]:
+      - navigation [ref=e28]:
+        - link "Home" [ref=e29] [cursor=pointer]:
+          - /url: /
+          - img [ref=e30]
+          - text: Home
+        - link "Tasks" [ref=e33] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e34]
+          - text: Tasks
+        - link "Dashboard" [ref=e37] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e38]
+          - text: Dashboard
+        - generic [ref=e40]:
+          - paragraph [ref=e41]: Sales
+          - generic [ref=e42]:
+            - link "My Clients" [ref=e43] [cursor=pointer]:
+              - /url: /sales/clients
+              - img [ref=e44]
+              - text: My Clients
+            - link "Leads" [ref=e49] [cursor=pointer]:
+              - /url: /sales/leads
+              - img [ref=e50]
+              - text: Leads
+            - link "Lead Intake 1" [ref=e54] [cursor=pointer]:
+              - /url: /sales/lead-intake
+              - img [ref=e55]
+              - text: Lead Intake
+              - generic [ref=e57]: "1"
+            - link "Sales pipeline" [ref=e58] [cursor=pointer]:
+              - /url: /sales/kanban
+              - img [ref=e59]
+              - text: Sales pipeline
+            - link "Documentation" [ref=e61] [cursor=pointer]:
+              - /url: /sales/docs
+            - link "Contracts" [ref=e62] [cursor=pointer]:
+              - /url: /contracts
+              - img [ref=e63]
+              - text: Contracts
+        - generic [ref=e66]:
+          - paragraph [ref=e67]: Accounting
+          - generic [ref=e68]:
+            - link "Clients" [ref=e69] [cursor=pointer]:
+              - /url: /accounting/clients
+              - img [ref=e70]
+              - text: Clients
+            - link "Accounting onboarding" [ref=e74] [cursor=pointer]:
+              - /url: /accounting/onboarding
+              - img [ref=e75]
+              - text: Accounting onboarding
+            - link "Recurring" [ref=e78] [cursor=pointer]:
+              - /url: /accounting/recurring
+              - img [ref=e79]
+              - text: Recurring
+            - link "Documentation" [ref=e84] [cursor=pointer]:
+              - /url: /accounting/docs
+            - link "Report" [ref=e85] [cursor=pointer]:
+              - /url: /accounting/report
+              - img [ref=e86]
+              - text: Report
+            - link "Expenses" [ref=e88] [cursor=pointer]:
+              - /url: /accounting/expenses
+              - img [ref=e89]
+              - text: Expenses
+        - generic [ref=e92]:
+          - paragraph [ref=e93]: Technical
+          - generic [ref=e94]:
+            - generic [ref=e95]:
+              - link "Web SEO" [ref=e96] [cursor=pointer]:
+                - /url: /tech/web-seo
+                - img [ref=e97]
+                - text: Web SEO
+              - link "My Clients" [ref=e100] [cursor=pointer]:
+                - /url: /tech/web-seo/clients
+              - link "Documentation" [ref=e101] [cursor=pointer]:
+                - /url: /tech/web-seo/docs
+            - generic [ref=e102]:
+              - link "Local SEO" [ref=e103] [cursor=pointer]:
+                - /url: /tech/local-seo
+                - img [ref=e104]
+                - text: Local SEO
+              - link "My Clients" [ref=e108] [cursor=pointer]:
+                - /url: /tech/local-seo/clients
+              - link "Documentation" [ref=e109] [cursor=pointer]:
+                - /url: /tech/local-seo/docs
+            - generic [ref=e110]:
+              - link "Web Dev" [ref=e111] [cursor=pointer]:
+                - /url: /tech/web-dev
+                - img [ref=e112]
+                - text: Web Dev
+              - link "My Clients" [ref=e116] [cursor=pointer]:
+                - /url: /tech/web-dev/clients
+              - link "Documentation" [ref=e117] [cursor=pointer]:
+                - /url: /tech/web-dev/docs
+            - generic [ref=e118]:
+              - link "Social Media" [ref=e119] [cursor=pointer]:
+                - /url: /tech/social-media
+                - img [ref=e120]
+                - text: Social Media
+              - link "My Clients" [ref=e126] [cursor=pointer]:
+                - /url: /tech/social-media/clients
+            - generic [ref=e127]:
+              - link "Hosting" [ref=e128] [cursor=pointer]:
+                - /url: /tech/hosting
+                - img [ref=e129]
+                - text: Hosting
+              - link "My Clients" [ref=e132] [cursor=pointer]:
+                - /url: /tech/hosting/clients
+            - generic [ref=e133]:
+              - link "Ads" [ref=e134] [cursor=pointer]:
+                - /url: /tech/ads
+                - img [ref=e135]
+                - text: Ads
+              - link "My Clients" [ref=e138] [cursor=pointer]:
+                - /url: /tech/ads/clients
+        - link "Settings" [ref=e140] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e141]
+          - text: Settings
+    - main [ref=e144]:
+      - button "Back" [ref=e146]:
+        - img [ref=e147]
+        - text: Back
+      - generic [ref=e149]:
+        - generic [ref=e151]:
+          - generic [ref=e152]:
+            - heading "BPURL SMOKE" [level=1] [ref=e153]
+            - generic [ref=e154]: Deal
+            - button "005099" [ref=e155]
+            - generic [ref=e157]:
+              - img [ref=e158]
+              - text: 26 Jun 2026
+              - generic [ref=e160]: ·
+              - text: just now
+              - generic [ref=e161]: ·
+              - generic [ref=e162]: IT DEV
+            - generic [ref=e163]:
+              - generic [ref=e164]: Status
+              - combobox "Status" [ref=e165]:
+                - option "New" [selected]
+                - option "Active"
+                - option "Blocked"
+                - option "Done"
+            - generic [ref=e166]:
+              - generic [ref=e167]: Owner
+              - combobox "Owner" [ref=e168]:
+                - option "Unassigned" [selected]
+                - option "marios@itdev.gr · admin"
+                - option "tvogiatzi@itdev.gr"
+                - option "stavroula@itdev.gr"
+                - option "akotzampasakis@itdev.gr"
+                - option "Angelos Zazas"
+                - option "Carlos M. Postantzian"
+                - option "Dimitris Giannakakis"
+                - option "Eirini Marketaki"
+                - option "IT DEV · admin"
+                - option "Marios Kifokeris · admin"
+                - option "Valentin Dimitrov"
+                - option "Ερμής Κιτσάκης"
+            - generic [ref=e169]:
+              - generic [ref=e170]: Move to
+              - combobox "Move to" [ref=e171]:
+                - option "New" [selected]
+                - option "Awaiting Payment"
+                - option "On Hold"
+                - option "Documents Verified"
+                - option "Invoice Issued"
+                - option "Partial Payment"
+                - option "Paid In Full"
+                - option "Done"
+                - option "Closed"
+          - generic [ref=e172]:
+            - button "Send welcome email" [ref=e173]:
+              - img
+              - text: Send welcome email
+            - generic "26 Jun 2026" [ref=e174]:
+              - img [ref=e175]
+              - text: just now
+        - generic [ref=e178]:
+          - tablist [ref=e180]:
+            - tab "Overview" [selected] [ref=e181]
+            - tab "Payment" [ref=e182]
+            - tab "Jobs" [ref=e183]
+            - tab "Tasks" [ref=e184]
+            - tab "Attachments" [ref=e185]
+            - tab "Activity" [ref=e186]
+            - tab "Offers" [ref=e187]
+            - tab "Contracts" [ref=e188]
+          - tabpanel "Overview" [ref=e189]:
+            - generic [ref=e190]:
+              - generic [ref=e191]:
+                - generic [ref=e192]:
+                  - generic [ref=e193]
+                  - generic [ref=e198]
+                  - generic [ref=e207]
+                  - generic [ref=e211]
+                  - generic [ref=e232]
+                - generic [ref=e243]:
+                  - heading "Notes area" [level=2] [ref=e244]
+                  - generic [ref=e245]
+                  - generic [ref=e248]
+                  - generic [ref=e252]
+                - generic [ref=e257]:
+                  - generic [ref=e258]
+                  - generic [ref=e290]
+                  - generic [ref=e315]
+              - complementary [ref=e329]:
+                - generic [ref=e330]:
+                  - heading "Comments" [level=2] [ref=e332]
+                  - generic [ref=e334]

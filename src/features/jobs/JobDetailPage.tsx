@@ -520,6 +520,18 @@ export function JobDetailPage() {
                       </dd>
                     </div>
                   )}
+                  {job.period_start_date && (
+                    <div>
+                      <dt className="text-[11px] text-muted-foreground">Period start</dt>
+                      <dd className="mt-0.5 text-sm font-medium">{job.period_start_date}</dd>
+                    </div>
+                  )}
+                  {job.period_due_date && (
+                    <div>
+                      <dt className="text-[11px] text-muted-foreground">Due date</dt>
+                      <dd className="mt-0.5 text-sm font-medium">{job.period_due_date}</dd>
+                    </div>
+                  )}
                 </dl>
               </section>
               {canEditBilling && job.parent_job_id == null && (

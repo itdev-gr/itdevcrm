@@ -1,0 +1,124 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "T test-web_dev@example.com" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: T
+          - generic [ref=e19]: test-web_dev@example.com
+        - button [ref=e20]:
+          - img
+        - combobox "Theme" [ref=e21]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e22]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e23]
+  - generic [ref=e24]:
+    - complementary [ref=e25]:
+      - navigation [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e28]
+          - text: Home
+        - link "Tasks" [ref=e31] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e32]
+          - text: Tasks
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Technical
+          - generic [ref=e38]:
+            - link "Web Dev" [ref=e39] [cursor=pointer]:
+              - /url: /tech/web-dev
+              - img [ref=e40]
+              - text: Web Dev
+            - link "My Clients" [ref=e44] [cursor=pointer]:
+              - /url: /tech/web-dev/clients
+            - link "Documentation" [ref=e45] [cursor=pointer]:
+              - /url: /tech/web-dev/docs
+    - main [ref=e46]:
+      - button "Back" [ref=e48]:
+        - img [ref=e49]
+        - text: Back
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: Job
+              - button "000066-WEBDEV-2" [ref=e57]
+            - heading "ΑΛΕΞΑΝΔΡΑ ΦΟΥΡΝΑΡΗ" [level=1] [ref=e58]
+            - paragraph [ref=e59]:
+              - generic [ref=e60]: web dev
+              - generic [ref=e61]: ·
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - text: 24 Jun 2026
+              - generic [ref=e65]: ·
+              - generic [ref=e66]: 1h ago
+          - generic [ref=e68]:
+            - generic [ref=e69]: Stage
+            - combobox "Stage" [ref=e70]:
+              - option "New Project" [selected]
+              - option "Client Contact"
+              - option "Called / No response"
+              - option "Get requirements - Creds"
+              - option "Planning"
+              - option "Development"
+              - option "Stuck"
+              - option "Revision"
+              - option "Redesign"
+              - option "Waiting client Approval"
+              - option "Live"
+              - option "Closed"
+        - generic [ref=e71]:
+          - tablist [ref=e73]:
+            - tab "Overview" [ref=e74]
+            - tab "Info" [selected] [ref=e75]
+            - tab "Tasks" [ref=e76]
+            - tab "Attachments" [ref=e77]
+            - tab "Activity" [ref=e78]
+          - tabpanel "Info" [ref=e144]:
+            - generic [ref=e145]:
+              - generic [ref=e146]:
+                - generic [ref=e147]:
+                  - generic [ref=e148]:
+                    - generic [ref=e149]: Web Dev Notes
+                    - textbox [ref=e150]
+                  - generic [ref=e151]:
+                    - generic [ref=e152]: Hosting
+                    - textbox [ref=e153]
+                  - generic [ref=e154]:
+                    - generic [ref=e155]: Supabase name
+                    - textbox [ref=e156]
+                  - generic [ref=e157]:
+                    - generic [ref=e158]: Temp Website URL
+                    - textbox [ref=e159]
+                  - generic [ref=e160]:
+                    - generic [ref=e161]: Live Website URL
+                    - textbox [ref=e162]
+                  - generic [ref=e163]:
+                    - generic [ref=e164]: Email
+                    - textbox [ref=e165]
+                - paragraph [ref=e166]
+              - generic [ref=e167]:
+                - generic [ref=e168]:
+                  - img [ref=e169]
+                  - text: Web Dev · Attachments
+                - paragraph [ref=e171]: No files yet.
+                - generic [ref=e172]:
+                  - button "Choose File" [active] [ref=e173]
+                  - button "Upload" [ref=e174]:
+                    - img
+                    - text: Upload

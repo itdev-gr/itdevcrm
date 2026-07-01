@@ -1,0 +1,133 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "T test-web_seo@example.com" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: T
+          - generic [ref=e19]: test-web_seo@example.com
+        - button [ref=e20]:
+          - img
+        - combobox "Theme" [ref=e21]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e22]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e23]
+  - generic [ref=e24]:
+    - complementary [ref=e25]:
+      - navigation [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e28]
+          - text: Home
+        - link "Tasks" [ref=e31] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e32]
+          - text: Tasks
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Technical
+          - generic [ref=e38]:
+            - link "Web SEO" [ref=e39] [cursor=pointer]:
+              - /url: /tech/web-seo
+              - img [ref=e40]
+              - text: Web SEO
+            - link "My Clients" [ref=e43] [cursor=pointer]:
+              - /url: /tech/web-seo/clients
+            - link "Documentation" [ref=e44] [cursor=pointer]:
+              - /url: /tech/web-seo/docs
+    - main [ref=e45]:
+      - button "Back" [ref=e47]:
+        - img [ref=e48]
+        - text: Back
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e53]:
+            - generic [ref=e54]:
+              - generic [ref=e55]: Job
+              - button "000420-WEBSEO" [ref=e56]
+            - heading "Παναγιώτης" [level=1] [ref=e57]
+            - paragraph [ref=e58]:
+              - generic [ref=e59]: web seo
+              - generic [ref=e60]: ·
+              - generic [ref=e61]:
+                - img [ref=e62]
+                - text: 23 Jun 2026
+              - generic [ref=e64]: ·
+              - generic [ref=e65]: yesterday
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - generic [ref=e68]: Stage
+              - combobox "Stage" [ref=e69]:
+                - option "New Project"
+                - option "No Response"
+                - option "Renewal"
+                - option "GSC & GA4 Setup"
+                - option "Sitemap & Schema"
+                - option "Performance Audit"
+                - option "Technical Crawl"
+                - option "Keyword Research"
+                - option "Metadata"
+                - option "Content"
+                - option "Internal Links"
+                - option "Backlink Cleanup"
+                - option "Blogs" [selected]
+                - option "Results Review"
+                - option "Stuck"
+                - option "Done"
+                - option "Closed"
+            - generic [ref=e70]:
+              - generic [ref=e71]: Owner
+              - generic [ref=e72]: pefstathiadis@itdev.gr
+        - generic [ref=e73]:
+          - tablist [ref=e75]:
+            - tab "Overview" [ref=e76]
+            - tab "Info" [selected] [ref=e77]
+            - tab "Tasks" [ref=e78]
+            - tab "Attachments" [ref=e79]
+            - tab "Activity" [ref=e80]
+          - tabpanel "Info" [ref=e161]:
+            - generic [ref=e162]:
+              - generic [ref=e163]:
+                - generic [ref=e164]:
+                  - generic [ref=e165]:
+                    - generic [ref=e166]: Website username
+                    - textbox [ref=e167]: admin2
+                  - generic [ref=e168]:
+                    - generic [ref=e169]: Website password
+                    - generic [ref=e170]:
+                      - textbox [ref=e171]: 6fFQxWlwNGB()LDFN#F!@Xxc
+                      - button "Reveal" [ref=e172]: 👁
+                  - generic [ref=e173]:
+                    - generic [ref=e174]: Web SEO report URL
+                    - textbox [ref=e175]: https://itdevseointelligence.com/client-report/dashboard
+                  - generic [ref=e176]:
+                    - generic [ref=e177]: SEO Notes
+                    - textbox [ref=e178]: https://sergianitravel.gr/wp-login.php
+                - paragraph [ref=e179]
+              - generic [ref=e180]:
+                - generic [ref=e181]:
+                  - img [ref=e182]
+                  - text: Web SEO · Attachments
+                - list [ref=e188]:
+                  - listitem [ref=e189]:
+                    - button "SMOKE-web.txt" [ref=e190]
+                    - button [ref=e191]:
+                      - img
+                - generic [ref=e185]:
+                  - button "Choose File" [ref=e186]
+                  - button "Upload" [disabled]:
+                    - img
+                    - text: Upload

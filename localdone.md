@@ -1,0 +1,122 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "T test-local_seo@example.com" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: T
+          - generic [ref=e19]: test-local_seo@example.com
+        - button [ref=e20]:
+          - img
+        - combobox "Theme" [ref=e21]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e22]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e23]
+  - generic [ref=e24]:
+    - complementary [ref=e25]:
+      - navigation [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e28]
+          - text: Home
+        - link "Tasks" [ref=e31] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e32]
+          - text: Tasks
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Technical
+          - generic [ref=e38]:
+            - link "Local SEO" [ref=e39] [cursor=pointer]:
+              - /url: /tech/local-seo
+              - img [ref=e40]
+              - text: Local SEO
+            - link "My Clients" [ref=e44] [cursor=pointer]:
+              - /url: /tech/local-seo/clients
+            - link "Documentation" [ref=e45] [cursor=pointer]:
+              - /url: /tech/local-seo/docs
+    - main [ref=e46]:
+      - button "Back" [ref=e48]:
+        - img [ref=e49]
+        - text: Back
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: Job
+              - button "005036-LOCALSEO" [ref=e57]
+            - heading "Βαγγελης" [level=1] [ref=e58]
+            - paragraph [ref=e59]:
+              - generic [ref=e60]: local seo
+              - generic [ref=e61]: ·
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - text: 24 Jun 2026
+              - generic [ref=e65]: ·
+              - generic [ref=e66]: 5h ago
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - generic [ref=e69]: Stage
+              - combobox "Stage" [ref=e70]:
+                - option "New project"
+                - option "Renewal"
+                - option "Called/No response"
+                - option "Send form"
+                - option "Optimize" [selected]
+                - option "Rank tracking"
+                - option "New GBP"
+                - option "Done"
+                - option "Suspended"
+                - option "Verification"
+                - option "Closed"
+            - generic [ref=e71]:
+              - generic [ref=e72]: Owner
+              - generic [ref=e73]: dtzouvaras@itdev.gr
+        - generic [ref=e74]:
+          - tablist [ref=e76]:
+            - tab "Overview" [ref=e77]
+            - tab "Info" [selected] [ref=e78]
+            - tab "Tasks" [ref=e79]
+            - tab "Attachments" [ref=e80]
+            - tab "Activity" [ref=e81]
+          - tabpanel "Info" [ref=e146]:
+            - generic [ref=e147]:
+              - generic [ref=e148]:
+                - generic [ref=e149]:
+                  - generic [ref=e150]:
+                    - generic [ref=e151]: Profile URL
+                    - textbox [ref=e152]
+                  - generic [ref=e153]:
+                    - generic [ref=e154]: Report URL
+                    - textbox [ref=e155]
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: Local SEO Notes
+                    - textbox [ref=e158]
+                - paragraph [ref=e159]
+              - generic [ref=e160]:
+                - generic [ref=e161]:
+                  - img [ref=e162]
+                  - text: Local SEO · Attachments
+                - list [ref=e168]:
+                  - listitem [ref=e169]:
+                    - button "SMOKE-local.txt" [ref=e170]
+                    - button [ref=e171]:
+                      - img
+                - generic [ref=e165]:
+                  - button "Choose File" [ref=e166]
+                  - button "Upload" [disabled]:
+                    - img
+                    - text: Upload

@@ -47,8 +47,210 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "activity_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "activity_log_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      activity_log_clientid_backfill_backup_20260625: {
+        Row: {
+          client_id: string | null
+          id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      activity_log_email_dedup_backup_20260629: {
+        Row: {
+          action: string | null
+          changes: Json | null
+          client_id: string | null
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          changes?: Json | null
+          client_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          changes?: Json | null
+          client_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      activity_log_noop_backup_20260629: {
+        Row: {
+          action: string | null
+          changes: Json | null
+          client_id: string | null
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          changes?: Json | null
+          client_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          changes?: Json | null
+          client_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      announcement_dismissals: {
+        Row: {
+          announcement_id: string
+          dismissed_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          dismissed_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          dismissed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_dismissals_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_dismissals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      announcement_targets: {
+        Row: {
+          announcement_id: string
+          group_id: string
+        }
+        Insert: {
+          announcement_id: string
+          group_id: string
+        }
+        Update: {
+          announcement_id?: string
+          group_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_targets_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_targets_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          severity: string
+          target_all: boolean
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          severity?: string
+          target_all?: boolean
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          severity?: string
+          target_all?: boolean
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
@@ -234,6 +436,78 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      block_lifecycle_backup_20260626: {
+        Row: {
+          accounting_stage_id: string | null
+          backed_up_at: string | null
+          client_id: string | null
+          deal_id: string | null
+        }
+        Insert: {
+          accounting_stage_id?: string | null
+          backed_up_at?: string | null
+          client_id?: string | null
+          deal_id?: string | null
+        }
+        Update: {
+          accounting_stage_id?: string | null
+          backed_up_at?: string | null
+          client_id?: string | null
+          deal_id?: string | null
+        }
+        Relationships: []
+      }
+      block_lifecycle_clients_backup_20260626: {
+        Row: {
+          backed_up_at: string | null
+          client_id: string | null
+          status: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          client_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          client_id?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      block_lifecycle_jobs_backup_20260626: {
+        Row: {
+          backed_up_at: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          deal_id: string | null
+          is_blocked: boolean | null
+          job_id: string | null
+          stage_id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          deal_id?: string | null
+          is_blocked?: boolean | null
+          job_id?: string | null
+          stage_id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          deal_id?: string | null
+          is_blocked?: boolean | null
+          job_id?: string | null
+          stage_id?: string | null
+        }
+        Relationships: []
       }
       client_blocks: {
         Row: {
@@ -493,6 +767,183 @@ export type Database = {
           },
         ]
       }
+      comments_aiseo_del_backup_20260625: {
+        Row: {
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          author_id: string | null
+          body: string | null
+          created_at: string | null
+          id: string | null
+          mentioned_user_ids: string[] | null
+          parent_id: string | null
+          parent_type: string | null
+          reply_to_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          mentioned_user_ids?: string[] | null
+          parent_id?: string | null
+          parent_type?: string | null
+          reply_to_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          mentioned_user_ids?: string[] | null
+          parent_id?: string | null
+          parent_type?: string | null
+          reply_to_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      comments_aiseo_dup_backup_20260625: {
+        Row: {
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          author_id: string | null
+          body: string | null
+          created_at: string | null
+          id: string | null
+          mentioned_user_ids: string[] | null
+          parent_id: string | null
+          parent_type: string | null
+          reply_to_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          mentioned_user_ids?: string[] | null
+          parent_id?: string | null
+          parent_type?: string | null
+          reply_to_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          mentioned_user_ids?: string[] | null
+          parent_id?: string | null
+          parent_type?: string | null
+          reply_to_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      comments_dup_won_delete_backup_20260623: {
+        Row: {
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          author_id: string | null
+          body: string | null
+          created_at: string | null
+          id: string | null
+          mentioned_user_ids: string[] | null
+          parent_id: string | null
+          parent_type: string | null
+          reply_to_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          mentioned_user_ids?: string[] | null
+          parent_id?: string | null
+          parent_type?: string | null
+          reply_to_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          author_id?: string | null
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          mentioned_user_ids?: string[] | null
+          parent_id?: string | null
+          parent_type?: string | null
+          reply_to_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      contact_backfill_backup_20260630: {
+        Row: {
+          backed_up_at: string
+          new_email: string | null
+          new_phone: string | null
+          prev_email: string | null
+          prev_phone: string | null
+          prev_phone_normalized: string | null
+          row_id: string
+          src_table: string
+        }
+        Insert: {
+          backed_up_at?: string
+          new_email?: string | null
+          new_phone?: string | null
+          prev_email?: string | null
+          prev_phone?: string | null
+          prev_phone_normalized?: string | null
+          row_id: string
+          src_table: string
+        }
+        Update: {
+          backed_up_at?: string
+          new_email?: string | null
+          new_phone?: string | null
+          prev_email?: string | null
+          prev_phone?: string | null
+          prev_phone_normalized?: string | null
+          row_id?: string
+          src_table?: string
+        }
+        Relationships: []
+      }
       contract_templates: {
         Row: {
           body: string
@@ -591,6 +1042,39 @@ export type Database = {
           },
         ]
       }
+      data_integrity_alerts: {
+        Row: {
+          details: Json
+          detected_at: string
+          id: string
+          kind: string
+          resolved_at: string | null
+          resolved_by: string | null
+          subject_id: string
+          subject_type: string
+        }
+        Insert: {
+          details?: Json
+          detected_at?: string
+          id?: string
+          kind: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          subject_id: string
+          subject_type: string
+        }
+        Update: {
+          details?: Json
+          detected_at?: string
+          id?: string
+          kind?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          subject_id?: string
+          subject_type?: string
+        }
+        Relationships: []
+      }
       deal_payment_lines: {
         Row: {
           amount_gross: number | null
@@ -648,6 +1132,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      deal_payment_lines_aiseo_dup_backup_20260625: {
+        Row: {
+          amount_gross: number | null
+          amount_net: number | null
+          created_at: string | null
+          id: string | null
+          job_id: string | null
+          label: string | null
+          payment_id: string | null
+          vat_amount: number | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          created_at?: string | null
+          id?: string | null
+          job_id?: string | null
+          label?: string | null
+          payment_id?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          created_at?: string | null
+          id?: string | null
+          job_id?: string | null
+          label?: string | null
+          payment_id?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Relationships: []
       }
       deal_payment_lines_backup_20260619: {
         Row: {
@@ -792,6 +1312,69 @@ export type Database = {
           },
         ]
       }
+      deal_payments_aiseo_dup_backup_20260625: {
+        Row: {
+          amount: number | null
+          amount_gross: number | null
+          amount_net: number | null
+          billing_type: string | null
+          created_at: string | null
+          deal_id: string | null
+          end_date: string | null
+          id: string | null
+          invoice_number: string | null
+          label: string | null
+          paid_at: string | null
+          service_index: number | null
+          service_type: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+          vat_amount: number | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_gross?: number | null
+          amount_net?: number | null
+          billing_type?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string | null
+          invoice_number?: string | null
+          label?: string | null
+          paid_at?: string | null
+          service_index?: number | null
+          service_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount?: number | null
+          amount_gross?: number | null
+          amount_net?: number | null
+          billing_type?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string | null
+          invoice_number?: string | null
+          label?: string | null
+          paid_at?: string | null
+          service_index?: number | null
+          service_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Relationships: []
+      }
       deal_payments_backup_20260619: {
         Row: {
           amount: number | null
@@ -855,7 +1438,136 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_payments_flipflop_backup_20260701: {
+        Row: {
+          amount: number | null
+          amount_net: number | null
+          billing_type: string | null
+          created_at: string | null
+          deal_id: string | null
+          end_date: string | null
+          id: string | null
+          invoice_number: string | null
+          label: string | null
+          paid_at: string | null
+          service_index: number | null
+          service_type: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_net?: number | null
+          billing_type?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string | null
+          invoice_number?: string | null
+          label?: string | null
+          paid_at?: string | null
+          service_index?: number | null
+          service_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount?: number | null
+          amount_net?: number | null
+          billing_type?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string | null
+          invoice_number?: string | null
+          label?: string | null
+          paid_at?: string | null
+          service_index?: number | null
+          service_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Relationships: []
+      }
+      deal_payments_hosting_yearly_20260622: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          old_billing_type: string | null
+          old_end_date: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_billing_type?: string | null
+          old_end_date?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_billing_type?: string | null
+          old_end_date?: string | null
+        }
+        Relationships: []
+      }
+      deal_payments_overdue_backfill_backup_20260628: {
+        Row: {
+          backed_up_at: string | null
+          billing_type: string | null
+          deal_id: string | null
+          end_date: string | null
+          id: string | null
+          start_date: string | null
+          status: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          billing_type?: string | null
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          billing_type?: string | null
+          deal_id?: string | null
+          end_date?: string | null
+          id?: string | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       deal_payments_service_backfill_20260622: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          new_service_type: string | null
+          old_service_type: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          new_service_type?: string | null
+          old_service_type?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          new_service_type?: string | null
+          old_service_type?: string | null
+        }
+        Relationships: []
+      }
+      deal_payments_service_fix_20260622: {
         Row: {
           backed_up_at: string | null
           id: string | null
@@ -1051,6 +1763,69 @@ export type Database = {
           },
         ]
       }
+      deals_block_resweep_backup_20260623: {
+        Row: {
+          backed_up_at: string | null
+          deal_id: string | null
+          stage_before: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          stage_before?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          stage_before?: string | null
+        }
+        Relationships: []
+      }
+      deals_done_unarchive_backup_20260622: {
+        Row: {
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          backed_up_at: string | null
+          id: string | null
+        }
+        Insert: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          backed_up_at?: string | null
+          id?: string | null
+        }
+        Update: {
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          backed_up_at?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      deals_onhold_sweep_backup_20260623: {
+        Row: {
+          backed_up_at: string | null
+          deal_id: string | null
+          prev_stage_id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          prev_stage_id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          prev_stage_id?: string | null
+        }
+        Relationships: []
+      }
       deals_rebaseline_backup_20260619: {
         Row: {
           accounting_completed_at: string | null
@@ -1081,6 +1856,63 @@ export type Database = {
           id?: string | null
           invoiced_date?: string | null
           payment_method?: string | null
+        }
+        Relationships: []
+      }
+      deleted_test_clients_backup_20260622: {
+        Row: {
+          data: Json | null
+          deleted_at: string | null
+          entity: string | null
+          id: string | null
+        }
+        Insert: {
+          data?: Json | null
+          deleted_at?: string | null
+          entity?: string | null
+          id?: string | null
+        }
+        Update: {
+          data?: Json | null
+          deleted_at?: string | null
+          entity?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      dpl_aiseo_del_backup_20260625: {
+        Row: {
+          amount_gross: number | null
+          amount_net: number | null
+          created_at: string | null
+          id: string | null
+          job_id: string | null
+          label: string | null
+          payment_id: string | null
+          vat_amount: number | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          created_at?: string | null
+          id?: string | null
+          job_id?: string | null
+          label?: string | null
+          payment_id?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          created_at?: string | null
+          id?: string | null
+          job_id?: string | null
+          label?: string | null
+          payment_id?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Relationships: []
       }
@@ -1137,8 +1969,11 @@ export type Database = {
       }
       email_log: {
         Row: {
+          bounced_at: string | null
+          client_id: string | null
           created_at: string
           dedupe_key: string | null
+          delivered_at: string | null
           error: string | null
           id: string
           identity: string
@@ -1148,8 +1983,11 @@ export type Database = {
           to_email: string
         }
         Insert: {
+          bounced_at?: string | null
+          client_id?: string | null
           created_at?: string
           dedupe_key?: string | null
+          delivered_at?: string | null
           error?: string | null
           id?: string
           identity: string
@@ -1159,8 +1997,11 @@ export type Database = {
           to_email: string
         }
         Update: {
+          bounced_at?: string | null
+          client_id?: string | null
           created_at?: string
           dedupe_key?: string | null
+          delivered_at?: string | null
           error?: string | null
           id?: string
           identity?: string
@@ -1169,11 +2010,42 @@ export type Database = {
           template_key?: string
           to_email?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      email_log_clientid_backup_20260625: {
+        Row: {
+          client_id: string | null
+          id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          id?: string | null
+        }
         Relationships: []
       }
       email_outbox: {
         Row: {
           attempts: number
+          claimed_at: string | null
           created_at: string
           data: Json
           dedupe_key: string | null
@@ -1187,6 +2059,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number
+          claimed_at?: string | null
           created_at?: string
           data?: Json
           dedupe_key?: string | null
@@ -1200,6 +2073,7 @@ export type Database = {
         }
         Update: {
           attempts?: number
+          claimed_at?: string | null
           created_at?: string
           data?: Json
           dedupe_key?: string | null
@@ -1210,6 +2084,27 @@ export type Database = {
           status?: string
           template_key?: string
           to_email?: string
+        }
+        Relationships: []
+      }
+      email_outbox_stage_gate_backup_20260701: {
+        Row: {
+          cancelled_at: string
+          id: string
+          prior_last_error: string | null
+          prior_status: string
+        }
+        Insert: {
+          cancelled_at?: string
+          id: string
+          prior_last_error?: string | null
+          prior_status: string
+        }
+        Update: {
+          cancelled_at?: string
+          id?: string
+          prior_last_error?: string | null
+          prior_status?: string
         }
         Relationships: []
       }
@@ -1577,13 +2472,18 @@ export type Database = {
           details: Json
           id: string
           installment_plan: string
+          installment_schedule: Json | null
           is_blocked: boolean
           is_custom: boolean
           monthly_amount: number | null
           monthly_tasks: Json
           monthly_tasks_period: string | null
+          onboarded_at: string | null
           one_time_amount: number | null
           owner_user_id: string | null
+          parent_job_id: string | null
+          period_due_date: string | null
+          period_start_date: string | null
           recurring_start_date: string | null
           service_type: string
           setup_fee: number | null
@@ -1617,13 +2517,18 @@ export type Database = {
           details?: Json
           id?: string
           installment_plan?: string
+          installment_schedule?: Json | null
           is_blocked?: boolean
           is_custom?: boolean
           monthly_amount?: number | null
           monthly_tasks?: Json
           monthly_tasks_period?: string | null
+          onboarded_at?: string | null
           one_time_amount?: number | null
           owner_user_id?: string | null
+          parent_job_id?: string | null
+          period_due_date?: string | null
+          period_start_date?: string | null
           recurring_start_date?: string | null
           service_type: string
           setup_fee?: number | null
@@ -1657,13 +2562,18 @@ export type Database = {
           details?: Json
           id?: string
           installment_plan?: string
+          installment_schedule?: Json | null
           is_blocked?: boolean
           is_custom?: boolean
           monthly_amount?: number | null
           monthly_tasks?: Json
           monthly_tasks_period?: string | null
+          onboarded_at?: string | null
           one_time_amount?: number | null
           owner_user_id?: string | null
+          parent_job_id?: string | null
+          period_due_date?: string | null
+          period_start_date?: string | null
           recurring_start_date?: string | null
           service_type?: string
           setup_fee?: number | null
@@ -1725,6 +2635,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "jobs_parent_job_id_fkey"
+            columns: ["parent_job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "jobs_stage_id_fkey"
             columns: ["stage_id"]
             isOneToOne: false
@@ -1732,6 +2649,429 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      jobs_000516_aiseo_dupe_backup_20260625: {
+        Row: {
+          amount_net: number | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          assigned_group_id: string | null
+          billing_active: boolean | null
+          billing_group_id: string | null
+          billing_only: boolean | null
+          billing_type: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          client_id: string | null
+          code: string | null
+          completed_at: string | null
+          created_at: string | null
+          deal_id: string | null
+          description: string | null
+          details: Json | null
+          id: string | null
+          installment_plan: string | null
+          installment_schedule: Json | null
+          is_blocked: boolean | null
+          is_custom: boolean | null
+          monthly_amount: number | null
+          monthly_tasks: Json | null
+          monthly_tasks_period: string | null
+          one_time_amount: number | null
+          owner_user_id: string | null
+          parent_job_id: string | null
+          recurring_start_date: string | null
+          service_type: string | null
+          setup_fee: number | null
+          stage_id: string | null
+          started_at: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          installment_schedule?: Json | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          installment_schedule?: Json | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Relationships: []
+      }
+      jobs_ai_seo_split_backup_20260624: {
+        Row: {
+          billing_only: boolean | null
+          id: string | null
+          owner_user_id: string | null
+          stage_id: string | null
+        }
+        Insert: {
+          billing_only?: boolean | null
+          id?: string | null
+          owner_user_id?: string | null
+          stage_id?: string | null
+        }
+        Update: {
+          billing_only?: boolean | null
+          id?: string | null
+          owner_user_id?: string | null
+          stage_id?: string | null
+        }
+        Relationships: []
+      }
+      jobs_aiseo_004977_fix_backup_20260625: {
+        Row: {
+          billing_only: boolean | null
+          id: string | null
+          owner_user_id: string | null
+          stage_id: string | null
+        }
+        Insert: {
+          billing_only?: boolean | null
+          id?: string | null
+          owner_user_id?: string | null
+          stage_id?: string | null
+        }
+        Update: {
+          billing_only?: boolean | null
+          id?: string | null
+          owner_user_id?: string | null
+          stage_id?: string | null
+        }
+        Relationships: []
+      }
+      jobs_aiseo_del_backup_20260625: {
+        Row: {
+          amount_net: number | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          assigned_group_id: string | null
+          billing_active: boolean | null
+          billing_group_id: string | null
+          billing_only: boolean | null
+          billing_type: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          client_id: string | null
+          code: string | null
+          completed_at: string | null
+          created_at: string | null
+          deal_id: string | null
+          description: string | null
+          details: Json | null
+          id: string | null
+          installment_plan: string | null
+          is_blocked: boolean | null
+          is_custom: boolean | null
+          monthly_amount: number | null
+          monthly_tasks: Json | null
+          monthly_tasks_period: string | null
+          one_time_amount: number | null
+          owner_user_id: string | null
+          parent_job_id: string | null
+          recurring_start_date: string | null
+          service_type: string | null
+          setup_fee: number | null
+          stage_id: string | null
+          started_at: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Relationships: []
+      }
+      jobs_aiseo_dup_backup_20260625: {
+        Row: {
+          amount_net: number | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          assigned_group_id: string | null
+          billing_active: boolean | null
+          billing_group_id: string | null
+          billing_only: boolean | null
+          billing_type: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          client_id: string | null
+          code: string | null
+          completed_at: string | null
+          created_at: string | null
+          deal_id: string | null
+          description: string | null
+          details: Json | null
+          id: string | null
+          installment_plan: string | null
+          is_blocked: boolean | null
+          is_custom: boolean | null
+          monthly_amount: number | null
+          monthly_tasks: Json | null
+          monthly_tasks_period: string | null
+          one_time_amount: number | null
+          owner_user_id: string | null
+          parent_job_id: string | null
+          recurring_start_date: string | null
+          service_type: string | null
+          setup_fee: number | null
+          stage_id: string | null
+          started_at: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Relationships: []
       }
       jobs_backup_20260619: {
         Row: {
@@ -1853,6 +3193,24 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs_endjob_stage_backup_20260622: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          old_stage_id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_stage_id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          old_stage_id?: string | null
+        }
+        Relationships: []
+      }
       jobs_hosting_billing_backup_20260622: {
         Row: {
           backed_up_at: string | null
@@ -1871,10 +3229,203 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs_onboarded_backfill_backup_20260629: {
+        Row: {
+          backed_up_at: string | null
+          job_id: string | null
+          prev_onboarded_at: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          job_id?: string | null
+          prev_onboarded_at?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          job_id?: string | null
+          prev_onboarded_at?: string | null
+        }
+        Relationships: []
+      }
+      jobs_unsplit_aiseo_backup_20260629: {
+        Row: {
+          billing_active: boolean | null
+          billing_only: boolean | null
+          deal_id: string | null
+          id: string | null
+          owner_user_id: string | null
+          stage_id: string | null
+        }
+        Insert: {
+          billing_active?: boolean | null
+          billing_only?: boolean | null
+          deal_id?: string | null
+          id?: string | null
+          owner_user_id?: string | null
+          stage_id?: string | null
+        }
+        Update: {
+          billing_active?: boolean | null
+          billing_only?: boolean | null
+          deal_id?: string | null
+          id?: string | null
+          owner_user_id?: string | null
+          stage_id?: string | null
+        }
+        Relationships: []
+      }
+      jobs_webdev_dup_archive_backup_20260625: {
+        Row: {
+          amount_net: number | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          assigned_group_id: string | null
+          billing_active: boolean | null
+          billing_group_id: string | null
+          billing_only: boolean | null
+          billing_type: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          client_id: string | null
+          code: string | null
+          completed_at: string | null
+          created_at: string | null
+          deal_id: string | null
+          description: string | null
+          details: Json | null
+          id: string | null
+          installment_plan: string | null
+          installment_schedule: Json | null
+          is_blocked: boolean | null
+          is_custom: boolean | null
+          monthly_amount: number | null
+          monthly_tasks: Json | null
+          monthly_tasks_period: string | null
+          one_time_amount: number | null
+          owner_user_id: string | null
+          parent_job_id: string | null
+          recurring_start_date: string | null
+          service_type: string | null
+          setup_fee: number | null
+          stage_id: string | null
+          started_at: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          installment_schedule?: Json | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount_net?: number | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          assigned_group_id?: string | null
+          billing_active?: boolean | null
+          billing_group_id?: string | null
+          billing_only?: boolean | null
+          billing_type?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          client_id?: string | null
+          code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          details?: Json | null
+          id?: string | null
+          installment_plan?: string | null
+          installment_schedule?: Json | null
+          is_blocked?: boolean | null
+          is_custom?: boolean | null
+          monthly_amount?: number | null
+          monthly_tasks?: Json | null
+          monthly_tasks_period?: string | null
+          one_time_amount?: number | null
+          owner_user_id?: string | null
+          parent_job_id?: string | null
+          recurring_start_date?: string | null
+          service_type?: string | null
+          setup_fee?: number | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          vat_rate?: number | null
+        }
+        Relationships: []
+      }
+      jobs_website_backfill_backup_20260629: {
+        Row: {
+          backed_up_at: string | null
+          job_id: string | null
+          prev_details: Json | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          job_id?: string | null
+          prev_details?: Json | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          job_id?: string | null
+          prev_details?: Json | null
+        }
+        Relationships: []
+      }
       lead_distribution_state: {
         Row: {
           auto_enabled: boolean
           auto_merge_enabled: boolean
+          auto_release_enabled: boolean
           id: boolean
           last_assigned_user_id: string | null
           updated_at: string
@@ -1882,6 +3433,7 @@ export type Database = {
         Insert: {
           auto_enabled?: boolean
           auto_merge_enabled?: boolean
+          auto_release_enabled?: boolean
           id?: boolean
           last_assigned_user_id?: string | null
           updated_at?: string
@@ -1889,6 +3441,7 @@ export type Database = {
         Update: {
           auto_enabled?: boolean
           auto_merge_enabled?: boolean
+          auto_release_enabled?: boolean
           id?: boolean
           last_assigned_user_id?: string | null
           updated_at?: string
@@ -2677,6 +4230,654 @@ export type Database = {
         }
         Relationships: []
       }
+      leads_dup_merge_backup_20260624: {
+        Row: {
+          additional_contacts: Json | null
+          additional_notes: string | null
+          address: string | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          automations_enabled: boolean | null
+          backed_up_at: string | null
+          code: string | null
+          company_name: string | null
+          contact_first_name: string | null
+          contact_info: string | null
+          contact_last_name: string | null
+          converted_at: string | null
+          converted_client_id: string | null
+          converted_deal_id: string | null
+          country: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          email_opt_out: boolean | null
+          estimated_monthly_value: number | null
+          estimated_one_time_value: number | null
+          estimated_total_value: number | null
+          expected_close_date: string | null
+          facebook: string | null
+          id: string | null
+          industry: string | null
+          instagram: string | null
+          intake_log: string | null
+          linkedin: string | null
+          notes: string | null
+          owner_user_id: string | null
+          payment_method: string | null
+          phone: string | null
+          phone_normalized: string | null
+          scheduled_for: string | null
+          services_planned: Json | null
+          source: string | null
+          source_data: Json | null
+          stage_id: string | null
+          tiktok: string | null
+          title: string | null
+          unsubscribe_token: string | null
+          updated_at: string | null
+          vat_number: string | null
+          website: string | null
+          won_by_user_id: string | null
+        }
+        Insert: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Update: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Relationships: []
+      }
+      leads_dup_merge_backup_20260701: {
+        Row: {
+          backed_up_at: string | null
+          keeper_id: string | null
+          keeper_prev_additional_contacts: Json | null
+          keeper_prev_intake_log: string | null
+          keeper_prev_notes: string | null
+          keeper_prev_stage_id: string | null
+          loser_id: string | null
+          loser_row: Json | null
+          match_key: string | null
+          match_kind: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          keeper_id?: string | null
+          keeper_prev_additional_contacts?: Json | null
+          keeper_prev_intake_log?: string | null
+          keeper_prev_notes?: string | null
+          keeper_prev_stage_id?: string | null
+          loser_id?: string | null
+          loser_row?: Json | null
+          match_key?: string | null
+          match_kind?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          keeper_id?: string | null
+          keeper_prev_additional_contacts?: Json | null
+          keeper_prev_intake_log?: string | null
+          keeper_prev_notes?: string | null
+          keeper_prev_stage_id?: string | null
+          loser_id?: string | null
+          loser_row?: Json | null
+          match_key?: string | null
+          match_kind?: string | null
+        }
+        Relationships: []
+      }
+      leads_dup_won_delete_backup_20260623: {
+        Row: {
+          additional_contacts: Json | null
+          additional_notes: string | null
+          address: string | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          automations_enabled: boolean | null
+          code: string | null
+          company_name: string | null
+          contact_first_name: string | null
+          contact_info: string | null
+          contact_last_name: string | null
+          converted_at: string | null
+          converted_client_id: string | null
+          converted_deal_id: string | null
+          country: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          email_opt_out: boolean | null
+          estimated_monthly_value: number | null
+          estimated_one_time_value: number | null
+          estimated_total_value: number | null
+          expected_close_date: string | null
+          facebook: string | null
+          id: string | null
+          industry: string | null
+          instagram: string | null
+          intake_log: string | null
+          linkedin: string | null
+          notes: string | null
+          owner_user_id: string | null
+          payment_method: string | null
+          phone: string | null
+          phone_normalized: string | null
+          scheduled_for: string | null
+          services_planned: Json | null
+          source: string | null
+          source_data: Json | null
+          stage_id: string | null
+          tiktok: string | null
+          title: string | null
+          unsubscribe_token: string | null
+          updated_at: string | null
+          vat_number: string | null
+          website: string | null
+          won_by_user_id: string | null
+        }
+        Insert: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Update: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Relationships: []
+      }
+      leads_email_backfill_backup_20260624: {
+        Row: {
+          backed_up_at: string | null
+          code: string | null
+          id: string | null
+          old_email: string | null
+          source_data: Json | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          code?: string | null
+          id?: string | null
+          old_email?: string | null
+          source_data?: Json | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          code?: string | null
+          id?: string | null
+          old_email?: string | null
+          source_data?: Json | null
+        }
+        Relationships: []
+      }
+      leads_junk_phone_backup_20260624: {
+        Row: {
+          backed_up_at: string | null
+          code: string | null
+          id: string | null
+          old_phone: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          code?: string | null
+          id?: string | null
+          old_phone?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          code?: string | null
+          id?: string | null
+          old_phone?: string | null
+        }
+        Relationships: []
+      }
+      leads_owner_reassign_backup_20260630: {
+        Row: {
+          backed_up_at: string
+          lead_id: string
+          new_owner_user_id: string | null
+          prev_owner_user_id: string | null
+        }
+        Insert: {
+          backed_up_at?: string
+          lead_id: string
+          new_owner_user_id?: string | null
+          prev_owner_user_id?: string | null
+        }
+        Update: {
+          backed_up_at?: string
+          lead_id?: string
+          new_owner_user_id?: string | null
+          prev_owner_user_id?: string | null
+        }
+        Relationships: []
+      }
+      leads_phonedup_merge_backup_20260624: {
+        Row: {
+          additional_contacts: Json | null
+          additional_notes: string | null
+          address: string | null
+          archived: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
+          automations_enabled: boolean | null
+          backed_up_at: string | null
+          code: string | null
+          company_name: string | null
+          contact_first_name: string | null
+          contact_info: string | null
+          contact_last_name: string | null
+          converted_at: string | null
+          converted_client_id: string | null
+          converted_deal_id: string | null
+          country: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          email_opt_out: boolean | null
+          estimated_monthly_value: number | null
+          estimated_one_time_value: number | null
+          estimated_total_value: number | null
+          expected_close_date: string | null
+          facebook: string | null
+          id: string | null
+          industry: string | null
+          instagram: string | null
+          intake_log: string | null
+          linkedin: string | null
+          notes: string | null
+          owner_user_id: string | null
+          payment_method: string | null
+          phone: string | null
+          phone_normalized: string | null
+          scheduled_for: string | null
+          services_planned: Json | null
+          source: string | null
+          source_data: Json | null
+          stage_id: string | null
+          tiktok: string | null
+          title: string | null
+          unsubscribe_token: string | null
+          updated_at: string | null
+          vat_number: string | null
+          website: string | null
+          won_by_user_id: string | null
+        }
+        Insert: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Update: {
+          additional_contacts?: Json | null
+          additional_notes?: string | null
+          address?: string | null
+          archived?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
+          automations_enabled?: boolean | null
+          backed_up_at?: string | null
+          code?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_info?: string | null
+          contact_last_name?: string | null
+          converted_at?: string | null
+          converted_client_id?: string | null
+          converted_deal_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          estimated_monthly_value?: number | null
+          estimated_one_time_value?: number | null
+          estimated_total_value?: number | null
+          expected_close_date?: string | null
+          facebook?: string | null
+          id?: string | null
+          industry?: string | null
+          instagram?: string | null
+          intake_log?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_normalized?: string | null
+          scheduled_for?: string | null
+          services_planned?: Json | null
+          source?: string | null
+          source_data?: Json | null
+          stage_id?: string | null
+          tiktok?: string | null
+          title?: string | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          website?: string | null
+          won_by_user_id?: string | null
+        }
+        Relationships: []
+      }
+      leads_won_backfill_backup_20260623: {
+        Row: {
+          action: string
+          deal_id: string | null
+          inserted_at: string
+          lead_id: string
+        }
+        Insert: {
+          action: string
+          deal_id?: string | null
+          inserted_at?: string
+          lead_id: string
+        }
+        Update: {
+          action?: string
+          deal_id?: string | null
+          inserted_at?: string
+          lead_id?: string
+        }
+        Relationships: []
+      }
+      lifecycle_cleanup_jobs_backup_20260626: {
+        Row: {
+          backed_up_at: string | null
+          blocked_reason: string | null
+          completed_at: string | null
+          deal_id: string | null
+          is_blocked: boolean | null
+          job_id: string | null
+          stage_id: string | null
+          status: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          blocked_reason?: string | null
+          completed_at?: string | null
+          deal_id?: string | null
+          is_blocked?: boolean | null
+          job_id?: string | null
+          stage_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          blocked_reason?: string | null
+          completed_at?: string | null
+          deal_id?: string | null
+          is_blocked?: boolean | null
+          job_id?: string | null
+          stage_id?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      localseo_renewal_backup_20260626: {
+        Row: {
+          backed_up_at: string | null
+          deal_id: string | null
+          job_id: string | null
+          prev_blocked: boolean | null
+          prev_stage_id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          job_id?: string | null
+          prev_blocked?: boolean | null
+          prev_stage_id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          job_id?: string | null
+          prev_blocked?: boolean | null
+          prev_stage_id?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -2977,6 +5178,21 @@ export type Database = {
           },
         ]
       }
+      seo_onboarding_config: {
+        Row: {
+          cutover_at: string
+          id: boolean
+        }
+        Insert: {
+          cutover_at: string
+          id?: boolean
+        }
+        Update: {
+          cutover_at?: string
+          id?: boolean
+        }
+        Relationships: []
+      }
       service_monthly_task_templates: {
         Row: {
           service_type: string
@@ -3096,6 +5312,55 @@ export type Database = {
           },
         ]
       }
+      task_comments: {
+        Row: {
+          assigned_task_id: string | null
+          author_user_id: string
+          body: string
+          created_at: string
+          id: string
+          user_task_id: string | null
+        }
+        Insert: {
+          assigned_task_id?: string | null
+          author_user_id: string
+          body: string
+          created_at?: string
+          id?: string
+          user_task_id?: string | null
+        }
+        Update: {
+          assigned_task_id?: string | null
+          author_user_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          user_task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_assigned_task_id_fkey"
+            columns: ["assigned_task_id"]
+            isOneToOne: false
+            referencedRelation: "assigned_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "task_comments_user_task_id_fkey"
+            columns: ["user_task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_google_accounts: {
         Row: {
           connected_at: string
@@ -3205,59 +5470,10 @@ export type Database = {
           },
         ]
       }
-      task_comments: {
-        Row: {
-          assigned_task_id: string | null
-          author_user_id: string
-          body: string
-          created_at: string
-          id: string
-          user_task_id: string | null
-        }
-        Insert: {
-          assigned_task_id?: string | null
-          author_user_id: string
-          body: string
-          created_at?: string
-          id?: string
-          user_task_id?: string | null
-        }
-        Update: {
-          assigned_task_id?: string | null
-          author_user_id?: string
-          body?: string
-          created_at?: string
-          id?: string
-          user_task_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_comments_assigned_task_id_fkey"
-            columns: ["assigned_task_id"]
-            isOneToOne: false
-            referencedRelation: "assigned_tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_comments_author_user_id_fkey"
-            columns: ["author_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "task_comments_user_task_id_fkey"
-            columns: ["user_task_id"]
-            isOneToOne: false
-            referencedRelation: "user_tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_tasks: {
         Row: {
-          completed_at: string | null
           client_id: string | null
+          completed_at: string | null
           created_at: string
           created_by: string | null
           due_at: string
@@ -3270,8 +5486,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          completed_at?: string | null
           client_id?: string | null
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           due_at: string
@@ -3284,8 +5500,8 @@ export type Database = {
           user_id: string
         }
         Update: {
-          completed_at?: string | null
           client_id?: string | null
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           due_at?: string
@@ -3298,6 +5514,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
           {
             foreignKeyName: "user_tasks_created_by_fkey"
             columns: ["created_by"]
@@ -3313,6 +5543,30 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      webseo_renewal_backup_20260626: {
+        Row: {
+          backed_up_at: string | null
+          deal_id: string | null
+          job_id: string | null
+          prev_blocked: boolean | null
+          prev_stage_id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          job_id?: string | null
+          prev_blocked?: boolean | null
+          prev_stage_id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          deal_id?: string | null
+          job_id?: string | null
+          prev_blocked?: boolean | null
+          prev_stage_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -3436,12 +5690,39 @@ export type Database = {
       }
     }
     Functions: {
+      accounting_create_deal: {
+        Args: {
+          p_client_id?: string
+          p_description?: string
+          p_monthly?: number
+          p_new_client?: Json
+          p_one_time?: number
+          p_payment_method?: string
+          p_title?: string
+        }
+        Returns: Json
+      }
+      accounting_mark_paid_in_full: {
+        Args: { target_deal_id: string }
+        Returns: Json
+      }
       apply_intake_merge: {
         Args: {
           p_lead_id: string
           r: Database["public"]["Tables"]["lead_intake"]["Row"]
         }
         Returns: undefined
+      }
+      apply_intake_reengage_merge: {
+        Args: {
+          p_lead_id: string
+          r: Database["public"]["Tables"]["lead_intake"]["Row"]
+        }
+        Returns: undefined
+      }
+      apply_lead_shuffle: {
+        Args: { p_assignments: Json; p_stage_code: string }
+        Returns: number
       }
       assignable_owners: {
         Args: never
@@ -3456,6 +5737,7 @@ export type Database = {
         Args: { reason_text: string; target_client_id: string }
         Returns: Json
       }
+      block_deal_jobs: { Args: { p_deal_id: string }; Returns: undefined }
       block_job: {
         Args: { reason?: string; target_job_id: string }
         Returns: Json
@@ -3468,11 +5750,44 @@ export type Database = {
       bulk_merge_intake_preview: { Args: never; Returns: Json }
       bulk_release_intake: { Args: { p_limit?: number }; Returns: Json }
       bulk_release_intake_preview: { Args: never; Returns: Json }
+      claim_email_outbox: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          data: Json
+          dedupe_key: string | null
+          id: string
+          identity: string
+          last_error: string | null
+          sent_at: string | null
+          status: string
+          template_key: string
+          to_email: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       close_deal: { Args: { p_deal_id: string; p_jobs?: Json }; Returns: Json }
-      accounting_mark_paid_in_full: { Args: { target_deal_id: string }; Returns: Json }
       complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
       convert_lead_to_client: {
         Args: { target_lead_id: string }
+        Returns: Json
+      }
+      create_announcement: {
+        Args: {
+          p_body: string
+          p_expires_at?: string
+          p_group_ids?: string[]
+          p_severity?: string
+          p_target_all?: boolean
+          p_title: string
+        }
         Returns: Json
       }
       create_custom_job: {
@@ -3483,7 +5798,9 @@ export type Database = {
           p_deal_id: string
           p_department: string
           p_description: string
+          p_force?: boolean
           p_installment_plan?: string
+          p_installment_schedule?: Json
           p_setup_fee?: number
           p_title: string
           p_vat_rate: number
@@ -3494,20 +5811,59 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: boolean
       }
+      current_user_in_group: { Args: { p_code: string }; Returns: boolean }
       current_user_is_admin: { Args: never; Returns: boolean }
       current_user_scope: {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      deal_next_due: { Args: { p_deal_id: string }; Returns: string }
+      delete_announcement: { Args: { p_id: string }; Returns: Json }
       delete_jobs: { Args: { p_ids: string[] }; Returns: Json }
       delete_leads: { Args: { p_ids: string[] }; Returns: Json }
       discard_lead_intake: { Args: { p_id: string }; Returns: Json }
+      dismiss_announcement: { Args: { p_id: string }; Returns: Json }
       distribute_unassigned_leads: { Args: never; Returns: number }
       email_automation_enabled: {
         Args: { setting_key: string }
         Returns: boolean
       }
+      email_failure_rows: {
+        Args: never
+        Returns: {
+          created_at: string
+          error: string
+          id: string
+          recipient_id: string
+          recipient_kind: string
+          recipient_name: string
+          status: string
+          template_key: string
+          to_email: string
+        }[]
+      }
+      email_outbox_cancel: { Args: { p_id: string }; Returns: Json }
+      email_outbox_retry: { Args: { p_id: string }; Returns: Json }
       email_pipeline_health: { Args: never; Returns: Json }
+      email_queue_rows: {
+        Args: never
+        Returns: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string
+          recipient_id: string
+          recipient_kind: string
+          recipient_name: string
+          status: string
+          template_key: string
+          to_email: string
+        }[]
+      }
+      email_setting_department: {
+        Args: { setting_key: string }
+        Returns: string
+      }
       end_job: { Args: { p_job_id: string }; Returns: Json }
       enqueue_lead_email: {
         Args: { dkey: string; target_lead_id: string; tpl_key: string }
@@ -3545,9 +5901,18 @@ export type Database = {
           record_id: string
         }[]
       }
+      first_email_in_jsonb: { Args: { p: Json }; Returns: string }
+      first_phone_in_jsonb: { Args: { p: Json }; Returns: string }
       format_intake_merge_block: {
         Args: { r: Database["public"]["Tables"]["lead_intake"]["Row"] }
         Returns: string
+      }
+      gbp_access_sent_map: {
+        Args: never
+        Returns: {
+          last_sent: string
+          to_email: string
+        }[]
       }
       generate_job_code: {
         Args: { p_deal_id: string; p_service_type: string }
@@ -3557,6 +5922,16 @@ export type Database = {
       generate_payments_for_deal: {
         Args: { target_deal_id: string }
         Returns: undefined
+      }
+      get_my_announcements: {
+        Args: never
+        Returns: {
+          body: string
+          created_at: string
+          id: string
+          severity: string
+          title: string
+        }[]
       }
       global_search: {
         Args: { max_rows?: number; q: string }
@@ -3574,8 +5949,18 @@ export type Database = {
         Args: { target_client_id: string }
         Returns: boolean
       }
+      is_task_party: {
+        Args: { p_assigned_task: string; p_user_task: string }
+        Returns: boolean
+      }
       job_billing_ref_count: { Args: { p_job_id: string }; Returns: number }
       job_service_abbr: { Args: { st: string }; Returns: string }
+      lead_cold_ids: {
+        Args: { p_ids: string[] }
+        Returns: {
+          id: string
+        }[]
+      }
       lead_dead_end_ids: {
         Args: { p_ids: string[] }
         Returns: {
@@ -3587,6 +5972,7 @@ export type Database = {
         Returns: Json
       }
       lead_is_dead_end: { Args: { p_lead_id: string }; Returns: boolean }
+      lead_shuffle_pool: { Args: never; Returns: string[] }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
       mark_overdue_payments: { Args: never; Returns: number }
       mentionable_users: {
@@ -3613,10 +5999,33 @@ export type Database = {
       }
       pick_next_sales_assignee: { Args: never; Returns: string }
       process_email_sequences: { Args: never; Returns: number }
+      recompute_deal_job_period_dates: {
+        Args: { p_deal_id: string }
+        Returns: undefined
+      }
+      recompute_job_period_dates: {
+        Args: { p_job_id: string }
+        Returns: undefined
+      }
+      reconcile_block_lifecycle: {
+        Args: { p_allow_release?: boolean }
+        Returns: number
+      }
+      reconcile_payment_integrity: { Args: never; Returns: number }
+      reconcile_seo_onboarding_emails: { Args: never; Returns: number }
+      recover_stale_email_claims: {
+        Args: { p_older_than?: string }
+        Returns: number
+      }
+      reengage_lead_intake: {
+        Args: { p_id: string; p_target_lead_id: string }
+        Returns: Json
+      }
       release_billing_jobs_for_deal: {
         Args: { target_deal_id: string }
         Returns: number
       }
+      release_deal_jobs: { Args: { p_deal_id: string }; Returns: undefined }
       release_jobs_for_deal: {
         Args: { partial_payment_mode: boolean; target_deal_id: string }
         Returns: number
@@ -3634,6 +6043,7 @@ export type Database = {
         }[]
       }
       sales_pool_ids: { Args: never; Returns: string[] }
+      sales_stage_rank: { Args: { p_code: string }; Returns: number }
       seed_deal_jobs_and_payments: {
         Args: { target_deal_id: string }
         Returns: undefined
@@ -3642,9 +6052,46 @@ export type Database = {
         Args: { target_deal_id: string }
         Returns: undefined
       }
+      seo_access_sent_map: {
+        Args: never
+        Returns: {
+          last_sent: string
+          template_key: string
+          to_email: string
+        }[]
+      }
+      seo_onboarding_pending_jobs: {
+        Args: never
+        Returns: {
+          code: string
+          deal_id: string
+          dedupe_key: string
+          job_id: string
+          service_type: string
+          setting_key: string
+          template_key: string
+          to_email: string
+        }[]
+      }
+      set_announcement_active: {
+        Args: { p_active: boolean; p_id: string }
+        Returns: Json
+      }
       set_job_monthly_task: {
         Args: { p_code: string; p_completed: boolean; p_job_id: string }
         Returns: undefined
+      }
+      target_accounting_stage: {
+        Args: { next_due: string; today: string }
+        Returns: string
+      }
+      task_target_job_id: {
+        Args: {
+          p_deal_id: string
+          p_department_group_id: string
+          p_job_id: string
+        }
+        Returns: string
       }
       team_lead_for_group: { Args: { p_group_code: string }; Returns: string }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
@@ -3657,6 +6104,7 @@ export type Database = {
           p_clear_group?: boolean
           p_description?: string
           p_installment_plan?: string
+          p_installment_schedule?: Json
           p_job_id: string
           p_title?: string
           p_vat_rate?: number

@@ -11,6 +11,7 @@ import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
+import { formatJobPeriodChip } from './jobPeriodChip';
 import { canViewJobPricing } from './permissions';
 import { groupIdForServiceType } from './serviceTaskMatch';
 import { useServiceTaskCounts } from './hooks/useServiceTaskCounts';
@@ -56,6 +57,10 @@ export function JobsKanbanCard({
     .join(' · ');
   const amountLabel = jobAmountLabel(job.billing_type, job.amount_net, lang);
   const displayCode = job.code ?? job.deal?.code ?? null;
+  const periodChip = formatJobPeriodChip(
+    { start: job.period_start_date ?? null, due: job.period_due_date ?? null },
+    new Date(),
+  );
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
@@ -75,6 +80,22 @@ export function JobsKanbanCard({
             <div className="min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 {displayCode && <CopyableCode code={displayCode} className="text-[10px]" />}
+                {periodChip && (
+                  <span
+                    title={periodChip.label}
+                    className={cn(
+                      'rounded px-1 text-[10px] font-medium',
+                      periodChip.tone === 'overdue' &&
+                        'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
+                      periodChip.tone === 'due-soon' &&
+                        'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+                      periodChip.tone === 'ok' &&
+                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+                    )}
+                  >
+                    {periodChip.label}
+                  </span>
+                )}
                 {job.parent_job_id != null && (
                   <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-semibold text-violet-800 dark:bg-violet-950/50 dark:text-violet-200">
                     AI SEO

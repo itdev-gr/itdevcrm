@@ -1,0 +1,293 @@
+- generic:
+  - generic:
+    - generic:
+      - banner:
+        - generic:
+          - generic:
+            - link:
+              - /url: /
+              - generic:
+                - paragraph: IT DEV
+                - paragraph: CRM Platform
+          - generic:
+            - generic:
+              - generic:
+                - img
+                - searchbox
+          - generic:
+            - link:
+              - /url: /profile
+              - generic: T
+              - generic: test-accounting@example.com
+            - button:
+              - img
+            - combobox:
+              - generic:
+                - generic:
+                  - img
+                  - text: System
+              - img
+            - combobox:
+              - generic: English
+              - img
+            - button: Logout
+      - generic:
+        - complementary:
+          - navigation:
+            - link:
+              - /url: /
+              - img
+              - text: Home
+            - link:
+              - /url: /tasks
+              - img
+              - text: Tasks
+            - generic:
+              - paragraph: Accounting
+              - generic:
+                - link:
+                  - /url: /accounting/clients
+                  - img
+                  - text: Clients
+                - link:
+                  - /url: /accounting/onboarding
+                  - img
+                  - text: Accounting onboarding
+                - link:
+                  - /url: /accounting/recurring
+                  - img
+                  - text: Recurring
+                - link:
+                  - /url: /accounting/docs
+                  - text: Documentation
+        - main:
+          - generic:
+            - button:
+              - img
+              - text: Back
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: Deal
+                    - button: "005036"
+                  - heading [level=1]: Heaven by the Sea by Blue Cyclades
+                  - paragraph:
+                    - generic:
+                      - img
+                      - text: 24 Jun 2026
+                    - generic: ·
+                    - generic: 5h ago
+                - generic:
+                  - generic: ✓ Complete accounting
+              - generic:
+                - generic:
+                  - generic: Status
+                  - combobox
+                - generic:
+                  - generic: Owner
+                  - combobox [disabled]
+                - generic:
+                  - generic: Move to
+                  - combobox
+            - generic:
+              - generic:
+                - tablist:
+                  - tab [selected]: Overview
+                  - tab: Payment
+                  - tab: Jobs
+                  - tab: Tasks
+                  - tab: Attachments
+                  - tab: Activity
+                  - tab: Offers
+                  - tab: Contracts
+              - tabpanel:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - heading [level=2]: Deal
+                        - generic:
+                          - generic: Title
+                          - textbox: Heaven by the Sea by Blue Cyclades
+                      - generic:
+                        - heading [level=2]: Primary contact
+                        - generic:
+                          - generic:
+                            - generic: Βαγγελης
+                            - generic:
+                              - link:
+                                - /url: mailto:b70308029@hotmail.com
+                                - text: b70308029@hotmail.com
+                            - generic:
+                              - link:
+                                - /url: tel:+306944308029
+                                - img
+                                - text: +30 694 430 8029
+                          - generic:
+                            - button:
+                              - img
+                      - generic:
+                        - heading [level=2]: Additional contacts
+                        - generic:
+                          - button: + Add contact
+                      - generic:
+                        - heading [level=2]: Company
+                        - generic:
+                          - generic:
+                            - generic: Company name
+                            - textbox: ΒΑΓΓΕΛΗΣ
+                          - generic:
+                            - generic: VAT number
+                            - textbox: "801927573"
+                          - generic:
+                            - generic: Website
+                            - textbox:
+                              - /placeholder: https://
+                          - generic:
+                            - generic: Industry
+                            - combobox
+                          - generic:
+                            - generic: Country
+                            - combobox
+                          - generic:
+                            - generic: Address
+                            - textbox
+                      - generic:
+                        - heading [level=2]: Sales
+                        - generic:
+                          - generic:
+                            - generic: Payment method
+                            - combobox
+                          - generic:
+                            - generic: Deal amount
+                            - textbox: "250"
+                            - paragraph: Total agreed amount (reference for accounting).
+                    - generic:
+                      - heading [level=2]: Notes area
+                      - generic:
+                        - generic: Sales Note
+                        - textbox: local seo
+                        - paragraph: Major info the sales team passes to accounting.
+                      - generic:
+                        - generic: Local SEO notes
+                        - generic: —
+                    - generic:
+                      - heading [level=2]:
+                        - img
+                        - text: Service files
+                      - generic:
+                        - generic:
+                          - generic: Local SEO
+                          - list:
+                            - listitem:
+                              - button: SMOKE-local.txt
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - heading [level=2]: Jobs & billing
+                            - button: + Add job
+                          - paragraph: "Invoiced date: —"
+                          - generic:
+                            - table:
+                              - rowgroup:
+                                - row:
+                                  - columnheader: Title
+                                  - columnheader: Department
+                                  - columnheader: Price
+                                  - columnheader: Status
+                                  - columnheader: Billing
+                                  - columnheader
+                              - rowgroup:
+                                - row:
+                                  - cell: Local seocustom
+                                  - cell: Local SEO
+                                  - cell:
+                                    - generic:
+                                      - generic: €
+                                      - spinbutton: "250.00"
+                                  - cell: Active
+                                  - cell:
+                                    - generic:
+                                      - generic:
+                                        - combobox:
+                                          - generic: One-time
+                                          - img
+                                        - combobox [disabled]:
+                                          - generic: Bill separately
+                                          - img
+                                  - cell:
+                                    - button: End
+                        - generic:
+                          - generic: Pricing summary
+                          - table:
+                            - rowgroup:
+                              - row:
+                                - columnheader
+                                - columnheader: Subtotal
+                                - columnheader: VAT
+                                - columnheader: Total
+                            - rowgroup:
+                              - row:
+                                - cell: One-time
+                                - cell: €250.00
+                                - cell: €60.00
+                                - cell: €310.00
+                              - row:
+                                - cell: Monthly
+                                - cell: €0.00
+                                - cell: €0.00
+                                - cell: €0.00
+                              - row:
+                                - cell: Yearly
+                                - cell: €0.00
+                                - cell: €0.00
+                                - cell: €0.00
+                        - generic:
+                          - heading [level=3]: Payments
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: 24 Jun 2026
+                                - generic:
+                                  - generic: €310.00
+                                  - button: Paid
+                                  - textbox:
+                                    - /placeholder: "Invoice #"
+                              - list:
+                                - listitem:
+                                  - generic: Local seo
+                                  - generic: €310.00
+                  - complementary:
+                    - generic:
+                      - generic:
+                        - heading [level=2]: Comments
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - img
+                                - paragraph: No comments yet. Start the conversation.
+                          - generic:
+                            - paragraph: New comment
+                            - generic:
+                              - generic:
+                                - generic: TA
+                                - generic:
+                                  - textbox:
+                                    - /placeholder: Write a comment… use @ to mention a teammate
+                                  - generic:
+                                    - paragraph: Type @ to mention someone
+                                    - generic:
+                                      - button [disabled]:
+                                        - img
+                                        - text: Post
+  - dialog "Λίστα επιλογής σταδίων και επιλογή \"Πλήρως εξοφλημένο\"" [ref=e5]:
+    - generic [ref=e6]:
+      - heading "Λίστα επιλογής σταδίων και επιλογή \"Πλήρως εξοφλημένο\"" [level=2] [ref=e7]
+      - paragraph [ref=e8]: Σας άνοιξα τη λίστα επιλογής (drop-down) μέσα από την καρτέλα, ώστε να μπορείτε να μετακινείτε τις καρτέλες στην κατάλληλη κατηγορία χωρίς να χρειάζεται να βγαίνετε από την καρτέλα. Επίσης, σας άνοιξα και την επιλογή «Πλήρως Εξοφλημένο», ώστε να μεταφέρετε εκεί όσους έχουν ολοκληρώσει την πληρωμή τους.
+    - button "Got it" [active] [ref=e10]

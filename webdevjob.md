@@ -1,0 +1,151 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "T test-web_dev@example.com" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: T
+          - generic [ref=e19]: test-web_dev@example.com
+        - button [ref=e20]:
+          - img
+        - combobox "Theme" [ref=e21]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e22]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e23]
+  - generic [ref=e24]:
+    - complementary [ref=e25]:
+      - navigation [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e28]
+          - text: Home
+        - link "Tasks" [ref=e31] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e32]
+          - text: Tasks
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Technical
+          - generic [ref=e38]:
+            - link "Web Dev" [ref=e39] [cursor=pointer]:
+              - /url: /tech/web-dev
+              - img [ref=e40]
+              - text: Web Dev
+            - link "My Clients" [ref=e44] [cursor=pointer]:
+              - /url: /tech/web-dev/clients
+            - link "Documentation" [ref=e45] [cursor=pointer]:
+              - /url: /tech/web-dev/docs
+    - main [ref=e46]:
+      - button "Back" [ref=e48]:
+        - img [ref=e49]
+        - text: Back
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: Job
+              - button "000066-WEBDEV-2" [ref=e57]
+            - heading "ΑΛΕΞΑΝΔΡΑ ΦΟΥΡΝΑΡΗ" [level=1] [ref=e58]
+            - paragraph [ref=e59]:
+              - generic [ref=e60]: web dev
+              - generic [ref=e61]: ·
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - text: 24 Jun 2026
+              - generic [ref=e65]: ·
+              - generic [ref=e66]: 1h ago
+          - generic [ref=e68]:
+            - generic [ref=e69]: Stage
+            - combobox "Stage" [ref=e70]:
+              - option "New Project" [selected]
+              - option "Client Contact"
+              - option "Called / No response"
+              - option "Get requirements - Creds"
+              - option "Planning"
+              - option "Development"
+              - option "Stuck"
+              - option "Revision"
+              - option "Redesign"
+              - option "Waiting client Approval"
+              - option "Live"
+              - option "Closed"
+        - generic [ref=e71]:
+          - tablist [ref=e73]:
+            - tab "Overview" [selected] [ref=e74]
+            - tab "Info" [ref=e75]
+            - tab "Tasks" [ref=e76]
+            - tab "Attachments" [ref=e77]
+            - tab "Activity" [ref=e78]
+          - tabpanel "Overview" [ref=e79]:
+            - generic [ref=e80]:
+              - generic [ref=e81]:
+                - generic [ref=e82]:
+                  - generic [ref=e84]: Contacts
+                  - generic [ref=e85]:
+                    - generic [ref=e86]:
+                      - heading "Primary contact" [level=3] [ref=e87]
+                      - generic [ref=e88]:
+                        - generic [ref=e89]:
+                          - generic [ref=e90]: ΑΛΕΞΑΝΔΡΑ ΦΟΥΡΝΑΡΗ
+                          - link "katalinaslifeevents@gmail.com" [ref=e92] [cursor=pointer]:
+                            - /url: mailto:katalinaslifeevents@gmail.com
+                          - link "6936622749" [ref=e94] [cursor=pointer]:
+                            - /url: tel:6936622749
+                            - img [ref=e95]
+                            - text: "6936622749"
+                          - generic [ref=e97]: "2nd email: afournari@gmail.com"
+                        - button "Edit contact" [ref=e99]:
+                          - img
+                    - generic [ref=e100]:
+                      - heading "Additional contacts" [level=3] [ref=e101]
+                      - button "+ Add contact" [ref=e103]
+                - generic [ref=e104]:
+                  - heading "Project info" [level=2] [ref=e105]
+                  - generic [ref=e106]:
+                    - generic [ref=e107]:
+                      - term [ref=e108]: Service
+                      - definition [ref=e109]: web dev
+                    - generic [ref=e110]:
+                      - term [ref=e111]: Status
+                      - definition [ref=e112]:
+                        - generic [ref=e113]: active
+                    - generic [ref=e114]:
+                      - term [ref=e115]: Monthly
+                      - definition [ref=e116]: €100/mo
+                    - generic [ref=e117]:
+                      - term [ref=e118]: Client
+                      - definition [ref=e119]:
+                        - link "ΦΟΥΡΝΑΡΗ ΑΙΚΑΤΕΡΙΝΗ ΤΟΥ ΙΩΑΝΝΗ" [ref=e120] [cursor=pointer]:
+                          - /url: /clients/7931c8c7-4118-467a-8370-6bfb233b987a
+              - complementary [ref=e121]:
+                - generic [ref=e122]:
+                  - heading "Comments" [level=2] [ref=e124]
+                  - generic [ref=e126]:
+                    - generic [ref=e129]:
+                      - img [ref=e131]
+                      - paragraph [ref=e133]: No comments yet. Start the conversation.
+                    - generic [ref=e134]:
+                      - paragraph [ref=e135]: New comment
+                      - generic [ref=e137]:
+                        - generic [ref=e138]: TW
+                        - generic [ref=e139]:
+                          - textbox "Write a comment… use @ to mention a teammate" [ref=e140]
+                          - generic [ref=e141]:
+                            - paragraph [ref=e142]: Type @ to mention someone
+                            - generic [ref=e143]:
+                              - button "Post" [disabled]:
+                                - img
+                                - text: Post

@@ -1,0 +1,172 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "T test-web_seo@example.com" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: T
+          - generic [ref=e19]: test-web_seo@example.com
+        - button [ref=e20]:
+          - img
+        - combobox "Theme" [ref=e21]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e22]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e23]
+  - generic [ref=e24]:
+    - complementary [ref=e25]:
+      - navigation [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e28]
+          - text: Home
+        - link "Tasks" [ref=e31] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e32]
+          - text: Tasks
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Technical
+          - generic [ref=e38]:
+            - link "Web SEO" [ref=e39] [cursor=pointer]:
+              - /url: /tech/web-seo
+              - img [ref=e40]
+              - text: Web SEO
+            - link "My Clients" [ref=e43] [cursor=pointer]:
+              - /url: /tech/web-seo/clients
+            - link "Documentation" [ref=e44] [cursor=pointer]:
+              - /url: /tech/web-seo/docs
+    - main [ref=e45]:
+      - button "Back" [ref=e47]:
+        - img [ref=e48]
+        - text: Back
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e53]:
+            - generic [ref=e54]:
+              - generic [ref=e55]: Job
+              - button "000420-WEBSEO" [ref=e56]
+            - heading "Παναγιώτης" [level=1] [ref=e57]
+            - paragraph [ref=e58]:
+              - generic [ref=e59]: web seo
+              - generic [ref=e60]: ·
+              - generic [ref=e61]:
+                - img [ref=e62]
+                - text: 23 Jun 2026
+              - generic [ref=e64]: ·
+              - generic [ref=e65]: yesterday
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - generic [ref=e68]: Stage
+              - combobox "Stage" [ref=e69]:
+                - option "New Project"
+                - option "No Response"
+                - option "Renewal"
+                - option "GSC & GA4 Setup"
+                - option "Sitemap & Schema"
+                - option "Performance Audit"
+                - option "Technical Crawl"
+                - option "Keyword Research"
+                - option "Metadata"
+                - option "Content"
+                - option "Internal Links"
+                - option "Backlink Cleanup"
+                - option "Blogs" [selected]
+                - option "Results Review"
+                - option "Stuck"
+                - option "Done"
+                - option "Closed"
+            - generic [ref=e70]:
+              - generic [ref=e71]: Owner
+              - generic [ref=e72]: pefstathiadis@itdev.gr
+        - generic [ref=e73]:
+          - tablist [ref=e75]:
+            - tab "Overview" [selected] [ref=e76]
+            - tab "Info" [ref=e77]
+            - tab "Tasks" [ref=e78]
+            - tab "Attachments" [ref=e79]
+            - tab "Activity" [ref=e80]
+          - tabpanel "Overview" [ref=e81]:
+            - generic [ref=e82]:
+              - generic [ref=e83]:
+                - generic [ref=e84]:
+                  - generic [ref=e86]: Contacts
+                  - generic [ref=e87]:
+                    - generic [ref=e88]:
+                      - heading "Primary contact" [level=3] [ref=e89]
+                      - generic [ref=e90]:
+                        - generic [ref=e91]:
+                          - generic [ref=e92]: Παναγιώτης
+                          - link "sergianitravel@gmail.com" [ref=e94] [cursor=pointer]:
+                            - /url: mailto:sergianitravel@gmail.com
+                          - link "6976811825" [ref=e96] [cursor=pointer]:
+                            - /url: tel:6976811825
+                            - img [ref=e97]
+                            - text: "6976811825"
+                        - button "Edit contact" [ref=e100]:
+                          - img
+                    - generic [ref=e101]:
+                      - heading "Additional contacts" [level=3] [ref=e102]
+                      - button "+ Add contact" [ref=e104]
+                - generic [ref=e105]:
+                  - heading "Project info" [level=2] [ref=e106]
+                  - generic [ref=e107]:
+                    - generic [ref=e108]:
+                      - term [ref=e109]: Service
+                      - definition [ref=e110]: web seo
+                    - generic [ref=e111]:
+                      - term [ref=e112]: Status
+                      - definition [ref=e113]:
+                        - generic [ref=e114]: active
+                    - generic [ref=e115]:
+                      - term [ref=e116]: Monthly
+                      - definition [ref=e117]: €242/mo
+                    - generic [ref=e118]:
+                      - term [ref=e119]: Client
+                      - definition [ref=e120]:
+                        - link "SERGIANI TRAVEL Ι Κ Ε" [ref=e121] [cursor=pointer]:
+                          - /url: /clients/a8dc59c8-102a-4bd5-aeea-9479d2b56fe1
+              - complementary [ref=e122]:
+                - generic [ref=e123]:
+                  - heading "Comments" [level=2] [ref=e125]
+                  - generic [ref=e127]:
+                    - article [ref=e130]:
+                      - generic [ref=e131]:
+                        - generic [ref=e132]: 1B
+                        - generic [ref=e133]:
+                          - generic [ref=e136]:
+                            - generic [ref=e137]: 19aa9170-bd62-4319-8118-668c11e93c98
+                            - time [ref=e138]: 1 hour ago · 14:47
+                          - generic [ref=e139]:
+                            - paragraph [ref=e140]: ── 06/04/2026 ──
+                            - paragraph [ref=e141]: Εφτιαξα ολες τις αλλαγες που μου ζητησε!
+                            - paragraph [ref=e143]: ── 21/04/2026 ──
+                            - paragraph [ref=e144]: h selida "NEA" tin eftiaksa opos itan prin me 4 blogs stin seira, 10 sunolika se kathe selida. tha ftiakso arthra
+                            - paragraph [ref=e145]: sxetika me tis leksis pou aneferes.
+                          - button "Reply" [ref=e147]:
+                            - img [ref=e148]
+                            - text: Reply
+                    - generic [ref=e151]:
+                      - paragraph [ref=e152]: New comment
+                      - generic [ref=e154]:
+                        - generic [ref=e155]: TW
+                        - generic [ref=e156]:
+                          - textbox "Write a comment… use @ to mention a teammate" [ref=e157]
+                          - generic [ref=e158]:
+                            - paragraph [ref=e159]: Type @ to mention someone
+                            - generic [ref=e160]:
+                              - button "Post" [disabled]:
+                                - img
+                                - text: Post

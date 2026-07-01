@@ -1,0 +1,153 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "IT DEV CRM Platform" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: IT DEV
+          - paragraph [ref=e11]: CRM Platform
+      - generic [ref=e14]:
+        - img
+        - searchbox "Search leads, clients, deals…" [ref=e15]
+      - generic [ref=e16]:
+        - link "T test-local_seo@example.com" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e18]: T
+          - generic [ref=e19]: test-local_seo@example.com
+        - button [ref=e20]:
+          - img
+        - combobox "Theme" [ref=e21]:
+          - generic:
+            - generic:
+              - img
+              - text: System
+          - img
+        - combobox "Language" [ref=e22]:
+          - generic: English
+          - img
+        - button "Logout" [ref=e23]
+  - generic [ref=e24]:
+    - complementary [ref=e25]:
+      - navigation [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - img [ref=e28]
+          - text: Home
+        - link "Tasks" [ref=e31] [cursor=pointer]:
+          - /url: /tasks
+          - img [ref=e32]
+          - text: Tasks
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Technical
+          - generic [ref=e38]:
+            - link "Local SEO" [ref=e39] [cursor=pointer]:
+              - /url: /tech/local-seo
+              - img [ref=e40]
+              - text: Local SEO
+            - link "My Clients" [ref=e44] [cursor=pointer]:
+              - /url: /tech/local-seo/clients
+            - link "Documentation" [ref=e45] [cursor=pointer]:
+              - /url: /tech/local-seo/docs
+    - main [ref=e46]:
+      - button "Back" [ref=e48]:
+        - img [ref=e49]
+        - text: Back
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: Job
+              - button "005036-LOCALSEO" [ref=e57]
+            - heading "Βαγγελης" [level=1] [ref=e58]
+            - paragraph [ref=e59]:
+              - generic [ref=e60]: local seo
+              - generic [ref=e61]: ·
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - text: 24 Jun 2026
+              - generic [ref=e65]: ·
+              - generic [ref=e66]: 5h ago
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - generic [ref=e69]: Stage
+              - combobox "Stage" [ref=e70]:
+                - option "New project"
+                - option "Renewal"
+                - option "Called/No response"
+                - option "Send form"
+                - option "Optimize" [selected]
+                - option "Rank tracking"
+                - option "New GBP"
+                - option "Done"
+                - option "Suspended"
+                - option "Verification"
+                - option "Closed"
+            - generic [ref=e71]:
+              - generic [ref=e72]: Owner
+              - generic [ref=e73]: dtzouvaras@itdev.gr
+        - generic [ref=e74]:
+          - tablist [ref=e76]:
+            - tab "Overview" [selected] [ref=e77]
+            - tab "Info" [ref=e78]
+            - tab "Tasks" [ref=e79]
+            - tab "Attachments" [ref=e80]
+            - tab "Activity" [ref=e81]
+          - tabpanel "Overview" [ref=e82]:
+            - generic [ref=e83]:
+              - generic [ref=e84]:
+                - generic [ref=e85]:
+                  - generic [ref=e87]: Contacts
+                  - generic [ref=e88]:
+                    - generic [ref=e89]:
+                      - heading "Primary contact" [level=3] [ref=e90]
+                      - generic [ref=e91]:
+                        - generic [ref=e92]:
+                          - generic [ref=e93]: Βαγγελης
+                          - link "b70308029@hotmail.com" [ref=e95] [cursor=pointer]:
+                            - /url: mailto:b70308029@hotmail.com
+                          - link "+30 694 430 8029" [ref=e97] [cursor=pointer]:
+                            - /url: tel:+306944308029
+                            - img [ref=e98]
+                            - text: +30 694 430 8029
+                        - button "Edit contact" [ref=e101]:
+                          - img
+                    - generic [ref=e102]:
+                      - heading "Additional contacts" [level=3] [ref=e103]
+                      - button "+ Add contact" [ref=e105]
+                - generic [ref=e106]:
+                  - heading "Project info" [level=2] [ref=e107]
+                  - generic [ref=e108]:
+                    - generic [ref=e109]:
+                      - term [ref=e110]: Service
+                      - definition [ref=e111]: local seo
+                    - generic [ref=e112]:
+                      - term [ref=e113]: Status
+                      - definition [ref=e114]:
+                        - generic [ref=e115]: active
+                    - generic [ref=e116]:
+                      - term [ref=e117]: One-time
+                      - definition [ref=e118]: €250
+                    - generic [ref=e119]:
+                      - term [ref=e120]: Client
+                      - definition [ref=e121]:
+                        - link "ΒΑΓΓΕΛΗΣ" [ref=e122] [cursor=pointer]:
+                          - /url: /clients/36ea2e2a-9257-4d0f-a73d-2f76a87f932a
+              - complementary [ref=e123]:
+                - generic [ref=e124]:
+                  - heading "Comments" [level=2] [ref=e126]
+                  - generic [ref=e128]:
+                    - generic [ref=e131]:
+                      - img [ref=e133]
+                      - paragraph [ref=e135]: No comments yet. Start the conversation.
+                    - generic [ref=e136]:
+                      - paragraph [ref=e137]: New comment
+                      - generic [ref=e139]:
+                        - generic [ref=e140]: TL
+                        - generic [ref=e141]:
+                          - textbox "Write a comment… use @ to mention a teammate" [ref=e142]
+                          - generic [ref=e143]:
+                            - paragraph [ref=e144]: Type @ to mention someone
+                            - generic [ref=e145]:
+                              - button "Post" [disabled]:
+                                - img
+                                - text: Post

@@ -1,0 +1,140 @@
+- generic:
+  - generic:
+    - generic:
+      - banner:
+        - generic:
+          - generic:
+            - link:
+              - /url: /
+              - generic:
+                - paragraph: IT DEV
+                - paragraph: CRM Platform
+          - generic:
+            - generic:
+              - generic:
+                - img
+                - searchbox
+          - generic:
+            - link:
+              - /url: /profile
+              - generic: T
+              - generic: test-accounting@example.com
+            - button:
+              - img
+            - combobox:
+              - generic:
+                - generic:
+                  - img
+                  - text: System
+              - img
+            - combobox:
+              - generic: English
+              - img
+            - button: Logout
+      - generic:
+        - complementary:
+          - navigation:
+            - link:
+              - /url: /
+              - img
+              - text: Home
+            - link:
+              - /url: /tasks
+              - img
+              - text: Tasks
+            - generic:
+              - paragraph: Accounting
+              - generic:
+                - link:
+                  - /url: /accounting/clients
+                  - img
+                  - text: Clients
+                - link:
+                  - /url: /accounting/onboarding
+                  - img
+                  - text: Accounting onboarding
+                - link:
+                  - /url: /accounting/recurring
+                  - img
+                  - text: Recurring
+                - link:
+                  - /url: /accounting/docs
+                  - text: Documentation
+        - main:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - heading [level=1]: Calendar
+                      - generic:
+                        - button:
+                          - img
+                        - button: Today
+                        - button:
+                          - img
+                        - generic: Jun 22 – Jun 28
+                    - generic:
+                      - button:
+                        - img
+                        - text: + Task
+                      - generic:
+                        - button: Day
+                        - button: Week
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: 22 Mon
+                        - list:
+                          - listitem: —
+                      - generic:
+                        - generic: 23 Tue
+                        - list:
+                          - listitem: —
+                      - generic:
+                        - generic: 24 Wed
+                        - list:
+                          - listitem: —
+                      - generic:
+                        - generic: 25 Thu
+                        - list:
+                          - listitem: —
+                      - generic:
+                        - generic: 26 Fri
+                        - list:
+                          - listitem: —
+                      - generic:
+                        - generic: 27 Sat
+                        - list:
+                          - listitem: —
+                      - generic:
+                        - generic: 28 Sun
+                        - list:
+                          - listitem: —
+              - generic:
+                - generic:
+                  - heading [level=2]:
+                    - text: Assigned to me
+                    - generic: (0)
+                  - generic:
+                    - button:
+                      - img
+                      - text: + Task
+                - generic:
+                  - generic:
+                    - img
+                    - paragraph: No open tasks. You're clear.
+            - complementary:
+              - generic:
+                - generic:
+                  - heading [level=2]: Notifications
+              - generic:
+                - generic:
+                  - img
+                  - paragraph: No notifications.
+  - dialog "Λίστα επιλογής σταδίων και επιλογή \"Πλήρως εξοφλημένο\"" [ref=e5]:
+    - generic [ref=e6]:
+      - heading "Λίστα επιλογής σταδίων και επιλογή \"Πλήρως εξοφλημένο\"" [level=2] [ref=e7]
+      - paragraph [ref=e8]: Σας άνοιξα τη λίστα επιλογής (drop-down) μέσα από την καρτέλα, ώστε να μπορείτε να μετακινείτε τις καρτέλες στην κατάλληλη κατηγορία χωρίς να χρειάζεται να βγαίνετε από την καρτέλα. Επίσης, σας άνοιξα και την επιλογή «Πλήρως Εξοφλημένο», ώστε να μεταφέρετε εκεί όσους έχουν ολοκληρώσει την πληρωμή τους.
+    - button "Got it" [active] [ref=e10]
