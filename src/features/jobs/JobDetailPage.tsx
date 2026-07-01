@@ -62,6 +62,7 @@ import { isNotAccessible } from '@/lib/notAccessibleError';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
 import { JobBillingEditCard } from './JobBillingEditCard';
+import { JobBillingPauseCard } from './JobBillingPauseCard';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
@@ -545,6 +546,17 @@ export function JobDetailPage() {
                     installment_plan: job.installment_plan,
                     service_type: job.service_type,
                   }}
+                />
+              )}
+              {job.parent_job_id == null && (
+                <JobBillingPauseCard
+                  jobId={job.id}
+                  dealId={job.deal_id}
+                  billingType={job.billing_type}
+                  billingActive={job.billing_active}
+                  blockedReason={job.blocked_reason}
+                  blockedAt={job.blocked_at}
+                  canToggle={canEditBilling}
                 />
               )}
             </div>
