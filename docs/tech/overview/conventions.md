@@ -78,3 +78,26 @@ flowchart TD
 - `/Users/marios/Desktop/Cursor/itdevcrm/src/app/router.tsx` — lazy chunks + `RouteError` boundary
 - `/Users/marios/Desktop/Cursor/itdevcrm/supabase/migrations/` — migrations-as-source-of-truth
 - `/Users/marios/Desktop/Cursor/itdevcrm/docs/system-analysis/2026-06-17-accounting-and-technical-walkthrough.md` — billing/stage behavior in depth
+
+## Migration grants checklist (since 2026-07-01)
+
+Default privileges were hardened on 2026-07-01
+(`20260701230000_revoke_secdef_fn_grants.sql` + `20260701231000_default_privs_global_public_revoke.sql`):
+new functions created by `postgres` get **no** `anon`/`PUBLIC` EXECUTE (global default-ACL entry)
+and new tables/sequences in `public` get **no** `anon` grants. `authenticated` and `service_role`
+defaults remain open. Every new migration must therefore:
+
+1. **New user-facing RPC** — nothing extra needed for the grant (`authenticated` is default),
+   but the function body MUST gate internally (`current_user_is_admin()` / `current_user_can(...)`).
+2. **New internal / cron / trigger-helper function** — add
+   `revoke execute on function public.<fn>(<args>) from authenticated;`
+   (cron runs as `postgres` = owner; triggers check EXECUTE at creation time — neither needs a grant).
+3. **New backup / scratch table** — add
+   `revoke all on table public.<tbl> from authenticated;` (anon is already closed by default).
+4. **RPC called from an edge function / script** — the `service_role` default grant covers it; if you
+   revoke broadly, re-grant `service_role` explicitly.
+
+Caveat: objects created by `supabase_admin` (rare — platform tooling, some dashboard operations)
+still get the old open defaults; `postgres` cannot alter that role's default ACL. App migrations via
+CLI/MCP/mgmt-API all run as `postgres`, so this is acceptable — but if a function is ever created
+another way, check its grants.
