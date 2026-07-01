@@ -464,3 +464,167 @@ update public.jobs j
 -- four defense layers are live and cleanup restored the flipped deals,
 -- payment reminders can resume 06:00 UTC tomorrow.
 select cron.alter_job(job_id => 7, active => true);
+
+
+-- =========================================================================
+-- Section 8: REVERT SQL (documentation only — do NOT run automatically)
+-- =========================================================================
+-- To roll back this migration, run the following in order. All statements
+-- are idempotent; re-running is safe.
+--
+-- Step 1: Restore the three modified functions to their pre-patch bodies.
+--         (Captured verbatim from prod pg_get_functiondef 2026-07-01 before
+--          any layer of this migration was applied.)
+--
+--   CREATE OR REPLACE FUNCTION public.ensure_recurring_payments()
+--    RETURNS integer
+--    LANGUAGE plpgsql
+--    SECURITY DEFINER
+--    SET search_path TO 'public'
+--   AS $function$
+--   declare
+--     r record; next_start date; next_end date; created int := 0; v_payment_id uuid;
+--   begin
+--     perform pg_advisory_xact_lock(hashtext('ensure_recurring_payments')::bigint);
+--     for r in
+--       select dp.*
+--         from public.deal_payments dp
+--         join public.deals d on d.id = dp.deal_id
+--        where dp.billing_type in ('recurring_monthly','recurring_yearly')
+--          and dp.end_date is not null
+--          and dp.end_date <= current_date + interval '7 days'
+--          and d.archived = false
+--          and coalesce((select ps.code from public.pipeline_stages ps
+--                         where ps.id = d.accounting_stage_id), '') <> 'closed'
+--          and (
+--               not exists (select 1 from public.jobs j
+--                            where j.deal_id = dp.deal_id and j.service_type = dp.service_type
+--                              and not j.archived)
+--            or exists (select 1 from public.jobs j
+--                            where j.deal_id = dp.deal_id and j.service_type = dp.service_type
+--                              and not j.archived and j.billing_active)
+--          )
+--          and not exists (
+--            select 1 from public.deal_payments dp2
+--             where dp2.deal_id = dp.deal_id
+--               and dp2.billing_type = dp.billing_type
+--               and dp2.service_index is not distinct from dp.service_index
+--               and dp2.start_date >= dp.end_date
+--          )
+--     loop
+--       next_start := r.end_date;
+--       if r.billing_type = 'recurring_monthly' then
+--         next_end := next_start + interval '1 month';
+--       else
+--         next_end := next_start + interval '1 year';
+--       end if;
+--       insert into public.deal_payments
+--         (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date)
+--         values (r.deal_id, r.service_type, r.service_index, r.billing_type, r.amount_net, r.vat_rate, next_start, next_end)
+--         returning id into v_payment_id;
+--       insert into public.deal_payment_lines (payment_id, job_id, label, amount_net, vat_rate)
+--         values (v_payment_id,
+--           (select j.id from public.jobs j
+--             where j.deal_id = r.deal_id and j.service_type = r.service_type and not j.archived
+--             order by j.created_at limit 1),
+--           coalesce(r.label, r.service_type), r.amount_net, r.vat_rate);
+--       created := created + 1;
+--     end loop;
+--     return created;
+--   end $function$;
+--
+--   CREATE OR REPLACE FUNCTION public.deal_payments_no_duplicate_period()
+--    RETURNS trigger
+--    LANGUAGE plpgsql
+--    SECURITY DEFINER
+--    SET search_path TO 'public'
+--   AS $function$
+--   begin
+--     if new.billing_type in ('recurring_monthly','recurring_yearly')
+--        and exists (
+--          select 1 from public.deal_payments dp
+--           where dp.deal_id = new.deal_id
+--             and dp.billing_type = new.billing_type
+--             and dp.service_index is not distinct from new.service_index
+--             and dp.start_date = new.start_date
+--             and dp.end_date is not distinct from new.end_date
+--        ) then
+--       return null;
+--     end if;
+--     return new;
+--   end $function$;
+--
+--   CREATE OR REPLACE FUNCTION public.reconcile_block_lifecycle(p_allow_release boolean DEFAULT false)
+--    RETURNS integer
+--    LANGUAGE plpgsql
+--    SECURITY DEFINER
+--    SET search_path TO 'public'
+--   AS $function$
+--   declare r record; v_target text; v_target_id uuid; moved int := 0;
+--   begin
+--     for r in
+--       select d.id, ps.code as cur_code, public.deal_next_due(d.id) as next_due
+--         from public.deals d join public.pipeline_stages ps on ps.id = d.accounting_stage_id
+--        where not d.archived and ps.code not in ('done','closed')
+--          and d.payment_method is not null
+--          and exists (select 1 from public.deal_payments dp
+--                       where dp.deal_id = d.id and dp.start_date is not null)
+--     loop
+--       v_target := public.target_accounting_stage(r.next_due, current_date);
+--       if r.cur_code in ('awaiting_payment','on_hold','paid_in_full') and v_target is distinct from r.cur_code then
+--         if not (r.cur_code = 'on_hold' and v_target = 'paid_in_full' and not p_allow_release) then
+--           select id into v_target_id from public.pipeline_stages where board='accounting_onboarding' and code = v_target;
+--           update public.deals set accounting_stage_id = v_target_id where id = r.id;
+--           moved := moved + 1; continue;
+--         end if;
+--       end if;
+--       if r.cur_code in ('on_hold','partial_payment') then
+--         perform public.block_deal_jobs(r.id);
+--       else
+--         update public.jobs set is_blocked=false, blocked_reason=null, blocked_at=null, blocked_by=null
+--           where deal_id = r.id and is_blocked and blocked_reason='account_on_hold';
+--       end if;
+--     end loop;
+--     update public.jobs j set is_blocked=false, blocked_reason=null, blocked_at=null, blocked_by=null
+--       from public.pipeline_stages s
+--      where s.id = j.stage_id and (s.is_terminal or s.code='done')
+--        and j.is_blocked and j.blocked_reason='account_on_hold' and not j.archived;
+--     return moved;
+--   end $function$;
+--
+-- Step 2: Drop the new audit function + cron.
+--   select cron.unschedule('reconcile_payment_integrity');
+--   drop function if exists public.reconcile_payment_integrity();
+--
+-- Step 3: Drop the alerts table (only if you don't need the history).
+--   drop table if exists public.data_integrity_alerts;
+--
+-- Step 4: Restore historical duplicate rows from backup (if desired).
+--   insert into public.deal_payments (
+--     id, deal_id, service_type, service_index, billing_type, amount_net,
+--     vat_rate, start_date, end_date, status, created_at, updated_at,
+--     label, paid_at
+--   )
+--   select id, deal_id, service_type, service_index, billing_type, amount_net,
+--          vat_rate, start_date, end_date, status, created_at, updated_at,
+--          label, paid_at
+--     from public.deal_payments_flipflop_backup_20260701
+--    on conflict (id) do nothing;
+--   -- Note: deal_payment_lines were also deleted for those rows; rebuild
+--   -- manually if needed by inspecting the backup rows' service_type/amount.
+--
+-- Step 5: Flip the restored deals back to on_hold (list captured in the
+--         plan file docs/superpowers/plans/2026-07-01-paid-in-full-hold-flip-fix.md
+--         and in memory project_paid_in_full_flip_fix.md; check MEMORY.md).
+--   -- Example — adjust the code list to match what actually got restored:
+--   -- update public.deals set accounting_stage_id = (
+--   --   select id from public.pipeline_stages
+--   --    where board='accounting_onboarding' and code='on_hold')
+--   --  where code in ('000131','000066','000203','000512');
+--
+-- Step 6: Re-disable the payment reminders cron.
+--   select cron.alter_job(job_id => 7, active => false);
+--
+-- Step 7: Drop the backup table (final step, only if fully rolled back).
+--   drop table if exists public.deal_payments_flipflop_backup_20260701;
+-- =========================================================================
