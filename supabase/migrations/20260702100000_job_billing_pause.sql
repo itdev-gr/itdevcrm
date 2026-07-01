@@ -406,7 +406,10 @@ begin
      and dp.billing_type in ('recurring_monthly','recurring_yearly')
    order by dp.created_at desc limit 1;
 
-  if v_src is not null then
+  -- NB: `v_src is not null` would be TRUE only if EVERY field were non-null
+  -- (record semantics) — nullable cols like label/paid_at made the insert
+  -- silently skip. FOUND is the correct row-was-selected test.
+  if found then
     v_next_end := case when v_src.billing_type = 'recurring_yearly'
                        then (current_date + interval '1 year')::date
                        else (current_date + interval '1 month')::date end;
