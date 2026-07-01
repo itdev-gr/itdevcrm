@@ -20,6 +20,31 @@ export function hasBlockedColumn(board: string): boolean {
   return BLOCKED_COLUMN_BOARDS.has(board);
 }
 
+export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale';
+
+/**
+ * Comparator for kanban cards. All modes tie-break by id desc so identical
+ * timestamps produce a deterministic order (no jitter on refetch).
+ *  - newest / oldest: by created_at
+ *  - recent / stale:  by updated_at
+ */
+export function compareJobs(sortBy: SortBy): (a: JobRow, b: JobRow) => number {
+  const key: 'created_at' | 'updated_at' =
+    sortBy === 'recent' || sortBy === 'stale' ? 'updated_at' : 'created_at';
+  const ascending = sortBy === 'oldest' || sortBy === 'stale';
+  return (a, b) => {
+    const va = (a[key] as string | null) ?? '';
+    const vb = (b[key] as string | null) ?? '';
+    if (va !== vb) {
+      if (ascending) return va < vb ? -1 : 1;
+      return va < vb ? 1 : -1;
+    }
+    // Always id desc for a stable tie-break, in every mode.
+    if (a.id !== b.id) return a.id < b.id ? 1 : -1;
+    return 0;
+  };
+}
+
 /**
  * Stable, fixed card order: newest-created on top, with id as a deterministic
  * tie-breaker. Independent of updated_at, so opening or editing a job never

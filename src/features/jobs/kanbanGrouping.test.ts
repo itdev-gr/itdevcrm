@@ -110,3 +110,56 @@ describe('hasBlockedColumn', () => {
     expect(hasBlockedColumn('hosting')).toBe(false);
   });
 });
+
+import { compareJobs, type SortBy } from './kanbanGrouping';
+
+describe('compareJobs', () => {
+  const j = (id: string, created_at: string, updated_at: string): JobRow =>
+    ({ id, created_at, updated_at, service_type: 'local_seo', stage_id: 'ls-opt', is_blocked: false } as JobRow);
+
+  const rows = [
+    j('a', '2026-06-10T00:00:00Z', '2026-06-25T00:00:00Z'),
+    j('b', '2026-06-20T00:00:00Z', '2026-06-11T00:00:00Z'),
+    j('c', '2026-06-15T00:00:00Z', '2026-06-18T00:00:00Z'),
+  ];
+
+  function sortedIds(sortBy: SortBy): string[] {
+    return [...rows].sort(compareJobs(sortBy)).map((r) => r.id);
+  }
+
+  it('newest: created_at desc', () => {
+    expect(sortedIds('newest')).toEqual(['b', 'c', 'a']);
+  });
+
+  it('oldest: created_at asc', () => {
+    expect(sortedIds('oldest')).toEqual(['a', 'c', 'b']);
+  });
+
+  it('recent: updated_at desc', () => {
+    expect(sortedIds('recent')).toEqual(['a', 'c', 'b']);
+  });
+
+  it('stale: updated_at asc', () => {
+    expect(sortedIds('stale')).toEqual(['b', 'c', 'a']);
+  });
+
+  it('newest: breaks created_at ties by id desc so refetches do not jitter', () => {
+    const ts = '2026-06-20T00:00:00Z';
+    const tied = [
+      j('a', ts, ts),
+      j('c', ts, ts),
+      j('b', ts, ts),
+    ];
+    expect([...tied].sort(compareJobs('newest')).map((r) => r.id)).toEqual(['c', 'b', 'a']);
+  });
+
+  it('recent: breaks updated_at ties by id desc', () => {
+    const ts = '2026-06-20T00:00:00Z';
+    const tied = [
+      j('a', '2026-01-01T00:00:00Z', ts),
+      j('c', '2026-01-02T00:00:00Z', ts),
+      j('b', '2026-01-03T00:00:00Z', ts),
+    ];
+    expect([...tied].sort(compareJobs('recent')).map((r) => r.id)).toEqual(['c', 'b', 'a']);
+  });
+});
