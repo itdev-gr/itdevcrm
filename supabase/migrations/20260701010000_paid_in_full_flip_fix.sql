@@ -336,3 +336,125 @@ begin
     );
   end if;
 end $$;
+
+-- ---- Section 6: historical cleanup ----------------------------------
+-- Backup table mirrors deal_payments *without* generated columns
+-- (vat_amount, amount_gross) so a plain column-by-column insert works.
+create table if not exists public.deal_payments_flipflop_backup_20260701 (
+  id              uuid,
+  deal_id         uuid,
+  service_type    text,
+  service_index   integer,
+  billing_type    text,
+  label           text,
+  amount          numeric,
+  start_date      date,
+  end_date        date,
+  status          text,
+  invoice_number  text,
+  paid_at         timestamptz,
+  created_at      timestamptz,
+  updated_at      timestamptz,
+  amount_net      numeric,
+  vat_rate        numeric
+);
+
+-- Backup EVERY row involved in a duplicate period-key. Idempotent: rows
+-- already in the backup are skipped by the "not exists" guard.
+insert into public.deal_payments_flipflop_backup_20260701 (
+  id, deal_id, service_type, service_index, billing_type, label,
+  amount, start_date, end_date, status, invoice_number, paid_at,
+  created_at, updated_at, amount_net, vat_rate
+)
+select dp.id, dp.deal_id, dp.service_type, dp.service_index, dp.billing_type, dp.label,
+       dp.amount, dp.start_date, dp.end_date, dp.status, dp.invoice_number, dp.paid_at,
+       dp.created_at, dp.updated_at, dp.amount_net, dp.vat_rate
+  from public.deal_payments dp
+  join (
+    select deal_id, service_type, billing_type, start_date, end_date
+      from public.deal_payments
+     where billing_type in ('recurring_monthly','recurring_yearly')
+       and start_date is not null and end_date is not null
+     group by deal_id, service_type, billing_type, start_date, end_date
+     having count(*) >= 2
+  ) k on k.deal_id = dp.deal_id
+     and k.service_type = dp.service_type
+     and k.billing_type = dp.billing_type
+     and k.start_date  = dp.start_date
+     and k.end_date    = dp.end_date
+ where not exists (
+   select 1 from public.deal_payments_flipflop_backup_20260701 b
+    where b.id = dp.id);
+
+-- Delete the deal_payment_lines for the removable duplicate rows first
+-- (FK ordering). "Removable" = live-unpaid AND has a paid sibling in the
+-- same cluster. Never delete a paid row (would erase money-received
+-- history).
+with dup as (
+  select deal_id, service_type, billing_type, start_date, end_date,
+    array_agg(id order by created_at)      as ids,
+    array_agg(status order by created_at)  as statuses
+  from public.deal_payments
+  where billing_type in ('recurring_monthly','recurring_yearly')
+    and start_date is not null and end_date is not null
+  group by deal_id, service_type, billing_type, start_date, end_date
+  having count(*) >= 2
+),
+deletable as (
+  select unnest(dup.ids)      as id,
+         unnest(dup.statuses) as status,
+         dup.statuses         as cluster_statuses
+    from dup
+   where 'paid' = any (dup.statuses)  -- keeper exists
+)
+delete from public.deal_payment_lines dpl
+ where dpl.payment_id in (
+   select id from deletable where status in ('overdue','pending')
+ );
+
+with dup as (
+  select deal_id, service_type, billing_type, start_date, end_date,
+    array_agg(id order by created_at)      as ids,
+    array_agg(status order by created_at)  as statuses
+  from public.deal_payments
+  where billing_type in ('recurring_monthly','recurring_yearly')
+    and start_date is not null and end_date is not null
+  group by deal_id, service_type, billing_type, start_date, end_date
+  having count(*) >= 2
+),
+deletable as (
+  select unnest(dup.ids)      as id,
+         unnest(dup.statuses) as status,
+         dup.statuses         as cluster_statuses
+    from dup
+   where 'paid' = any (dup.statuses)
+)
+delete from public.deal_payments dp
+ where dp.id in (select id from deletable where status in ('overdue','pending'));
+
+-- Restore any deal that's currently on_hold and now has no live past-due
+-- after the delete above.
+with paid_stage as (
+  select id from public.pipeline_stages
+   where board='accounting_onboarding' and code='paid_in_full' limit 1
+),
+target as (
+  select d.id
+    from public.deals d
+    join public.pipeline_stages ps on ps.id = d.accounting_stage_id
+   where not d.archived
+     and ps.code = 'on_hold'
+     and public.deal_next_due(d.id) is null
+)
+update public.deals set accounting_stage_id = (select id from paid_stage)
+ where id in (select id from target);
+
+-- Unblock jobs on those restored deals.
+update public.jobs j
+   set is_blocked = false, blocked_reason = null, blocked_at = null, blocked_by = null
+  from public.deals d
+  join public.pipeline_stages ps on ps.id = d.accounting_stage_id
+ where j.deal_id = d.id
+   and ps.code = 'paid_in_full'
+   and j.is_blocked
+   and j.blocked_reason = 'account_on_hold';
