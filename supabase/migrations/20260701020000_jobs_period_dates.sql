@@ -76,6 +76,12 @@ begin
      limit 1;
   end if;
 
+  -- Collapse start=end (the one_time convention) to NULL due — the payment
+  -- period IS a single day, so no meaningful "Due" exists.
+  if v_due is not null and v_due = v_start then
+    v_due := null;
+  end if;
+
   update public.jobs
      set period_start_date = v_start,
          period_due_date   = v_due,
