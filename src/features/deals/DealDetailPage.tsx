@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRecordBadgeClass, detailHeaderRowClass, detailHeaderSelectClass, detailHeaderStatusBadgeClass, detailHeaderTitleClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
+import { effectiveVatRate } from '@/lib/countries';
 import { DealForm } from './DealForm';
 import { useDeal } from './hooks/useDeal';
 import { isNotAccessible } from '@/lib/notAccessibleError';
@@ -344,7 +345,7 @@ export function DealDetailPage() {
               <section className="min-w-0 rounded-xl border border-border/60 bg-card p-3 shadow-sm">
                 <JobsBillingPanel
                   dealId={dealId}
-                  defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+                  defaultVatRate={effectiveVatRate(deal.payment_method, deal.client?.country, deal.cash_charge_vat ?? false) * 100}
                   readOnly={!canManageBilling}
                   invoicedDate={deal.invoiced_date ?? null}
                 />
@@ -377,7 +378,7 @@ export function DealDetailPage() {
             <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
               <JobsBillingPanel
                 dealId={dealId}
-                defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+                defaultVatRate={effectiveVatRate(deal.payment_method, deal.client?.country, deal.cash_charge_vat ?? false) * 100}
                 invoicedDate={deal.invoiced_date ?? null}
               />
             </div>
@@ -386,7 +387,7 @@ export function DealDetailPage() {
             <PaymentsPanel
               dealId={dealId}
               services={dealServices}
-              defaultVatRate={deal.client?.country === 'Greece' ? 24 : 0}
+              defaultVatRate={effectiveVatRate(deal.payment_method, deal.client?.country, deal.cash_charge_vat ?? false) * 100}
             />
           </div>
         </TabsContent>
