@@ -23,6 +23,7 @@ export type JobBillingRow = {
   description: string | null;
   /** Set on €0 AI SEO work-card children; top-level billing rows are null. */
   parent_job_id: string | null;
+  blocked_reason: string | null;
 };
 
 /** A single billed line of a payment, scoped to one job. */
@@ -96,7 +97,7 @@ export function useJobsBilling(dealId: string) {
       const jobsRes = await supabase
         .from('jobs')
         .select(
-          'id, title, service_type, billing_type, installment_plan, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id',
+          'id, title, service_type, billing_type, installment_plan, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason',
         )
         .eq('deal_id', dealId)
         .eq('archived', false)
@@ -121,6 +122,7 @@ export function useJobsBilling(dealId: string) {
         is_custom: (j.is_custom as boolean | null) ?? null,
         description: (j.description as string | null) ?? null,
         parent_job_id: (j.parent_job_id as string | null) ?? null,
+        blocked_reason: (j.blocked_reason as string | null) ?? null,
       }));
 
       // 2. Payment headers (with totals) for the deal.

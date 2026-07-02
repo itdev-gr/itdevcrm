@@ -19,6 +19,13 @@ vi.mock('./hooks/useDealPayments', () => ({
   useUpdateDealPayment: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+const pauseMutate = vi.fn().mockResolvedValue(undefined);
+const resumeMutate = vi.fn().mockResolvedValue(undefined);
+vi.mock('@/features/jobs/hooks/useJobBillingPause', () => ({
+  useJobPauseBilling: () => ({ mutateAsync: pauseMutate, isPending: false }),
+  useJobResumeBilling: () => ({ mutateAsync: resumeMutate, isPending: false }),
+}));
+
 const billing: { current: JobsBilling } = { current: { jobs: [], payments: [] } };
 vi.mock('./hooks/useJobsBilling', async () => {
   const actual = await vi.importActual<typeof import('./hooks/useJobsBilling')>(
@@ -48,6 +55,7 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     is_custom: true,
     description: null,
     parent_job_id: null,
+    blocked_reason: null,
     ...over,
   };
 }
@@ -367,5 +375,51 @@ describe('JobsBillingPanel note preview', () => {
     render(wrap(<JobsBillingPanel dealId="d1" />));
     const cell = screen.getByTestId('note-preview-c').querySelector('td')!;
     expect(cell.textContent).toBe(short);
+  });
+});
+
+describe('JobsBillingPanel pause/resume', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows Pause for a recurring parent active job and calls the pause hook', async () => {
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'SEO', billing_type: 'recurring_monthly' })], payments: [] };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const row = screen.getByText('SEO').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /pause billing/i }));
+    await user.click(await screen.findByRole('button', { name: /^pause billing$/i }));
+    await waitFor(() => expect(pauseMutate).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows a Paused badge + Resume for a paused job and calls the resume hook', async () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'SEO', billing_type: 'recurring_monthly', blocked_reason: 'billing_paused' })],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const row = screen.getByText('SEO').closest('tr') as HTMLElement;
+    expect(within(row).getByText(/paused/i)).toBeInTheDocument();
+    await user.click(within(row).getByRole('button', { name: /resume billing/i }));
+    await user.click(await screen.findByRole('button', { name: /^resume billing$/i }));
+    await waitFor(() => expect(resumeMutate).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows no pause control for one-time / child jobs', () => {
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'a', title: 'Setup', billing_type: 'one_time' }),
+        makeJob({ id: 'b', title: 'Child', billing_type: 'recurring_monthly', parent_job_id: 'p1' }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    expect(screen.queryByRole('button', { name: /pause billing/i })).not.toBeInTheDocument();
+  });
+
+  it('hides pause/resume controls in read-only mode', () => {
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'SEO', billing_type: 'recurring_monthly' })], payments: [] };
+    render(wrap(<JobsBillingPanel dealId="d1" readOnly />));
+    expect(screen.queryByRole('button', { name: /pause billing/i })).not.toBeInTheDocument();
   });
 });

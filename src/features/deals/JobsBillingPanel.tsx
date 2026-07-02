@@ -24,6 +24,8 @@ import { splitInstallments, type InstallmentPlan } from './installmentSplit';
 import { CustomScheduleEditor } from './CustomScheduleEditor';
 import { validateCustomSchedule, type ScheduleRow } from './customSchedule';
 import type { BillingType } from '@/lib/rpc';
+import { PauseCircle, PlayCircle } from 'lucide-react';
+import { useJobPauseBilling, useJobResumeBilling } from '@/features/jobs/hooks/useJobBillingPause';
 
 /** Billing-term options offered per job, in display order. */
 const TERMS: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];
@@ -76,6 +78,8 @@ function JobRow({
   const { t } = useTranslation('deals');
   const update = useUpdateJobBilling(dealId);
   const end = useEndJob(dealId);
+  const pause = useJobPauseBilling(job.id, dealId);
+  const resume = useJobResumeBilling(job.id, dealId);
 
   // Same-cadence jobs that aren't already in a group — candidates to pair with
   // (joining an existing group is offered separately via the group labels).
@@ -95,9 +99,15 @@ function JobRow({
     job.amount_net != null ? Number(job.amount_net).toFixed(2) : '',
   );
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [confirmPause, setConfirmPause] = useState(false);
+  const [confirmResume, setConfirmResume] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleRow[] | null>(null);
 
   const ended = job.status === 'ended' || job.billing_active === false;
+  const isRecurring = job.billing_type === 'recurring_monthly' || job.billing_type === 'recurring_yearly';
+  const isPaused = job.blocked_reason === 'billing_paused';
+  const showPause = !readOnly && isRecurring && job.parent_job_id == null && !isPaused && !ended;
+  const showResume = !readOnly && isRecurring && job.parent_job_id == null && isPaused;
   const department = job.billing_only
     ? t('jobs_billing.billing_only')
     : t(`services.types.${job.department}`, { defaultValue: job.department });
@@ -216,10 +226,18 @@ function JobRow({
       <td className="px-1.5 py-1.5">
         <span
           className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
-            ended ? 'bg-muted text-muted-foreground' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+            isPaused
+              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+              : ended
+                ? 'bg-muted text-muted-foreground'
+                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
           }`}
         >
-          {ended ? t('jobs_billing.status.ended') : t('jobs_billing.status.active')}
+          {isPaused
+            ? t('jobs_billing.pause.paused')
+            : ended
+              ? t('jobs_billing.status.ended')
+              : t('jobs_billing.status.active')}
         </span>
       </td>
       <td className="px-1.5 py-1.5">
@@ -324,18 +342,46 @@ function JobRow({
         )}
       </td>
       <td className="px-1.5 py-1.5 text-right">
-        {!readOnly && !ended && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            onClick={() => setConfirmEnd(true)}
-            disabled={end.isPending}
-          >
-            {t('jobs_billing.end')}
-          </Button>
-        )}
+        <div className="flex items-center justify-end gap-1">
+          {showPause && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setConfirmPause(true)}
+              disabled={pause.isPending}
+            >
+              <PauseCircle className="size-3.5" />
+              {t('jobs_billing.pause.pause')}
+            </Button>
+          )}
+          {showResume && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setConfirmResume(true)}
+              disabled={resume.isPending}
+            >
+              <PlayCircle className="size-3.5" />
+              {t('jobs_billing.pause.resume')}
+            </Button>
+          )}
+          {!readOnly && !ended && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setConfirmEnd(true)}
+              disabled={end.isPending}
+            >
+              {t('jobs_billing.end')}
+            </Button>
+          )}
+        </div>
         {!readOnly && (
           <ConfirmDialog
             open={confirmEnd}
@@ -348,6 +394,42 @@ function JobRow({
               try {
                 await end.mutateAsync(job.id);
                 setConfirmEnd(false);
+              } catch (err) {
+                reportError(err);
+              }
+            }}
+          />
+        )}
+        {showPause && (
+          <ConfirmDialog
+            open={confirmPause}
+            onOpenChange={setConfirmPause}
+            title={t('jobs_billing.pause.pause_confirm_title')}
+            description={t('jobs_billing.pause.pause_confirm_body')}
+            confirmLabel={t('jobs_billing.pause.pause')}
+            pending={pause.isPending}
+            onConfirm={async () => {
+              try {
+                await pause.mutateAsync();
+                setConfirmPause(false);
+              } catch (err) {
+                reportError(err);
+              }
+            }}
+          />
+        )}
+        {showResume && (
+          <ConfirmDialog
+            open={confirmResume}
+            onOpenChange={setConfirmResume}
+            title={t('jobs_billing.pause.resume_confirm_title')}
+            description={t('jobs_billing.pause.resume_confirm_body')}
+            confirmLabel={t('jobs_billing.pause.resume')}
+            pending={resume.isPending}
+            onConfirm={async () => {
+              try {
+                await resume.mutateAsync();
+                setConfirmResume(false);
               } catch (err) {
                 reportError(err);
               }

@@ -185,6 +185,15 @@
     "end": "End",
     "end_confirm_title": "End this job?",
     "end_confirm_body": "Billing stops and the job is marked ended. This can't be undone here.",
+    "pause": {
+      "pause": "Pause billing",
+      "resume": "Resume billing",
+      "paused": "Paused",
+      "pause_confirm_title": "Pause billing for this service?",
+      "pause_confirm_body": "Unpaid payments for this service will be cancelled (kept in history) and no new periods will be generated. Paused months are never back-billed.",
+      "resume_confirm_title": "Resume billing for this service?",
+      "resume_confirm_body": "The job is unblocked and a fresh billing period starts today. The deal will move to Awaiting Payment."
+    },
     "form": {
       "title": "Title",
       "title_placeholder": "e.g. Extra landing page",
