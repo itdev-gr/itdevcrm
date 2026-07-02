@@ -18,6 +18,7 @@
 - **Never touch** deals in `new`/`documents_verified`/`invoice_issued`/`partial_payment`/`done`/`closed` — those are the accountant's.
 - **KEEP (do NOT remove) all billing-integrity/dedup guards:** `deal_payments_no_duplicate_period`, the `ensure_recurring_payments` end_date/null-safe/no-legacy guards, the UNIQUE recurring period-key index, `deal_payments_created_at_immutable`. This plan only removes stage-conflict referees.
 - **KEEP unchanged:** `deals_hold_jobs_on_stage_change`, `deals_release_jobs_on_partial_payment`, `deals_close_jobs_on_close`, `deals_sync_client_status`, `guard_payment_method`, the reminder crons/functions, the closed-client guard.
+- **JOB BLOCK/UNBLOCK — MUST HOLD (explicit requirement):** whenever a deal **is On Hold** its jobs must be **blocked** (`block_deal_jobs` → `blocked_reason='account_on_hold'`, which excludes `web_dev`/`hosting` and terminal jobs); whenever the deal **leaves On Hold** (to Awaiting, Paid In Full, or the accountant moves it elsewhere) those `account_on_hold` blocks must be **cleared**. This is enforced two ways that must agree: `reconcile_deal_stage` does it directly on every run (its `if v_target='on_hold' then block_deal_jobs else clear account_on_hold` branch), **and** the unchanged `deals_hold_jobs_on_stage_change` does it on any stage change (including the accountant's manual moves). Blocks with **other** reasons (`billing_paused`, `partial_payment_pending`, `client_blocked`) are left intact — only `account_on_hold` is touched. Task 3 has a dedicated end-to-end test (block M).
 - Every migration file ends with a commented, verbatim **revert block** (the prior bodies/triggers, captured live via `pg_get_functiondef`).
 - Harness must be GREEN between every task. Push to `main`, atomic commits, no PR.
 
@@ -297,11 +298,47 @@ Add the `deal_payments` trigger that calls `reconcile_deal_stage` on any payment
 - Produces: trigger `deal_payments_reconcile_stage` AFTER INSERT/UPDATE/DELETE on `public.deal_payments` → `public.deal_payments_reconcile_stage()` → `reconcile_deal_stage(coalesce(new.deal_id, old.deal_id))`.
 - Removes: triggers `deal_payments_move_to_awaiting`, `deal_payments_release_from_on_hold` (functions kept for revert).
 
-- [ ] **Step 1: Write the failing harness** — `scratchpad/h3_trigger.sql`, 4 blocks. These do NOT force the stage — they rely on the trigger. Because `move_to_awaiting` is still present until Step 3 applies, these will initially misbehave (that's the failing state).
+- [ ] **Step 1: Write the failing harness** — `scratchpad/h3_trigger.sql`, 5 blocks. These do NOT force the stage — they rely on the trigger. Because `move_to_awaiting` is still present until Step 3 applies, these will initially misbehave (that's the failing state).
   - **I:** deal at `paid_in_full`, insert a `+30` future charge → assert **paid_in_full** (trigger runs the rule; no flip). *(Today `move_to_awaiting` flips it to awaiting → this FAILS pre-swap.)*
   - **J:** deal at `paid_in_full`, insert a `+3` charge → assert **awaiting_payment**.
   - **K:** deal at `awaiting_payment`, insert a `-2` overdue charge → assert **on_hold**.
   - **L:** deal at `on_hold` with one unpaid `-2` charge; UPDATE that charge to `status='paid'` → assert **paid_in_full** (trigger on UPDATE runs the rule; nothing left due).
+  - **M (job block/unblock — the requirement):** deal at `awaiting_payment` **with a `local_seo` job** on the board; insert a `-2` overdue charge → assert the deal is **on_hold** AND the job is **blocked** (`is_blocked` + `blocked_reason='account_on_hold'`); then UPDATE the charge to `status='paid'` → assert the deal is **paid_in_full** AND the job is **unblocked**. Block M:
+
+```sql
+do $$
+declare v_client uuid; v_deal uuid; v_job uuid; v_pay uuid;
+        v_stage1 text; v_blocked1 boolean; v_reason1 text; v_stage2 text; v_blocked2 boolean; v_status text;
+begin
+  insert into public.clients(name,email,country) values('h3m','h3m@t.gr','Greece') returning id into v_client;
+  insert into public.deals(client_id,code,title,payment_method,stage_id,accounting_stage_id)
+    values(v_client,'H3M','h3m','cash',
+      (select id from public.pipeline_stages where board='sales' and code='won'),
+      (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.jobs(deal_id, client_id, service_type, stage_id)
+    values(v_deal, v_client, 'local_seo',
+      (select id from public.pipeline_stages where board='local_seo' and code='new_project'))
+    returning id into v_job;
+  -- overdue charge -> trigger -> on_hold + job blocked
+  insert into public.deal_payments(deal_id,service_type,service_index,billing_type,amount_net,vat_rate,start_date,end_date,status)
+    values(v_deal,'local_seo',0,'recurring_monthly',100,24, current_date - 2, current_date + 28, 'pending')
+    returning id into v_pay;
+  select ps.code, j.is_blocked, j.blocked_reason into v_stage1, v_blocked1, v_reason1
+    from public.deals d join public.pipeline_stages ps on ps.id=d.accounting_stage_id, public.jobs j
+   where d.id=v_deal and j.id=v_job;
+  -- pay it off -> trigger -> paid_in_full + job unblocked
+  update public.deal_payments set status='paid' where id=v_pay;
+  select ps.code, j.is_blocked into v_stage2, v_blocked2
+    from public.deals d join public.pipeline_stages ps on ps.id=d.accounting_stage_id, public.jobs j
+   where d.id=v_deal and j.id=v_job;
+  v_status := case
+    when v_stage1='on_hold' and v_blocked1 and v_reason1='account_on_hold'
+     and v_stage2='paid_in_full' and not v_blocked2 then 'PASS' else 'FAIL' end;
+  raise exception 'RESULT :: % M on_hold-blocks-job / paid-unblocks :: stage1=% blocked1=% reason1=% stage2=% blocked2=%',
+    v_status, v_stage1, v_blocked1, v_reason1, v_stage2, v_blocked2;
+end $$;
+```
 
 Block I template:
 ```sql
@@ -358,7 +395,7 @@ drop trigger if exists deal_payments_release_from_on_hold on public.deal_payment
 
 - [ ] **Step 4: Apply live** — Run: `cd scratchpad && cp ../supabase/migrations/20260702150200_reconcile_stage_trigger_swap.sql apply.sql && bash runsql.sh apply.sql`. Expected: `[]`.
 
-- [ ] **Step 5: Run harness, verify I–L PASS** — Run: `cd scratchpad && python3 runharness.py h3_trigger.sql`. Expected: `[1] PASS I...` … `[4] PASS L...`.
+- [ ] **Step 5: Run harness, verify I–M PASS** — Run: `cd scratchpad && python3 runharness.py h3_trigger.sql`. Expected: `[1] PASS I...` … `[5] PASS M...` (block M proves jobs block on On Hold and unblock when the deal leaves On Hold).
 
 - [ ] **Step 6: Live rolled-back dry-run of the sweep** — confirm the whole live dataset is stable (no churn) under the new rule. Write `scratchpad/h3_dryrun.sql`:
 ```sql
@@ -421,7 +458,7 @@ Then update memory: mark `project_stage_locked_emails` / add a note that the sin
 
 ## Self-Review
 
-**Spec coverage:** the single rule (Task 1) ✓; one-writer-two-ways (Task 1 fn + Task 2 sweep + Task 3 trigger) ✓; remove move_to_awaiting + release_from_on_hold + grace (Tasks 2–3) ✓; keep billing-integrity guards (Global Constraints — none of the migrations touch them) ✓; Fully Paid→Awaiting kept (Task 1 block B, Task 3 block J) ✓; never touch workflow/terminal (Task 1 block F) ✓; reminders unchanged (not modified; Task 4 confirms the reminder harness still green) ✓; revert blocks (each migration) ✓; live dry-run (Task 3 Step 6, Task 4 Step 7) ✓.
+**Spec coverage:** the single rule (Task 1) ✓; one-writer-two-ways (Task 1 fn + Task 2 sweep + Task 3 trigger) ✓; remove move_to_awaiting + release_from_on_hold + grace (Tasks 2–3) ✓; keep billing-integrity guards (Global Constraints — none of the migrations touch them) ✓; Fully Paid→Awaiting kept (Task 1 block B, Task 3 block J) ✓; never touch workflow/terminal (Task 1 block F) ✓; **jobs blocked on On Hold / unblocked when it leaves On Hold** (Global Constraints requirement + Task 3 block M end-to-end test) ✓; reminders unchanged (not modified; Task 4 confirms the reminder harness still green) ✓; revert blocks (each migration) ✓; live dry-run (Task 3 Step 6, Task 4 Step 7) ✓.
 
 **Placeholder scan:** the Task 2 REVERT block requires the implementer to paste the live grace-version body — flagged explicitly in Step 3, not left as a silent TODO. No other placeholders.
 
