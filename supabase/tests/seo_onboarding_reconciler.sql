@@ -1,7 +1,7 @@
 -- supabase/tests/seo_onboarding_reconciler.sql
 -- Run with: supabase test db  (transactional; rolls back)
 begin;
-select plan(7);
+select plan(8);
 
 select has_function('public','seo_onboarding_pending_jobs','helper exists');
 select has_function('public','reconcile_seo_onboarding_emails','reconciler exists');
@@ -12,7 +12,7 @@ declare v_deal uuid; v_client uuid;
 begin
   select id, client_id into v_deal, v_client from public.deals where code is not null limit 1;
   perform set_config('t.deal', v_deal::text, true);
-  update public.clients set email='reconcile-test@example.gr' where id=v_client;
+  update public.clients set email='reconcile-test@example.gr', name='Reconcile Test AE' where id=v_client;
   update public.email_automation_settings set enabled=true where key in ('dept_technical','localseo_gbp');
   -- The reconciler only considers jobs onboarded at/after the cutover; push it into the
   -- past so this test's "onboarded 2h ago" job qualifies (rolled back with the test).
@@ -37,6 +37,12 @@ select is((select count(*)::int from public.email_outbox
            where dedupe_key='localseo_gbp:'||current_setting('t.deal')
              and template_key='localseo_gbp_access'),
           1, 'reconciler re-queues the missing GBP email');
+
+-- The re-queued email carries the client name so the greeting is not "Γεια σας ,".
+select is((select data->>'name' from public.email_outbox
+           where dedupe_key='localseo_gbp:'||current_setting('t.deal')
+             and template_key='localseo_gbp_access' limit 1),
+          'Reconcile Test AE', 'reconciler passes the client name into the email data');
 
 -- A delivered email_log row excludes the job from the pending set.
 do $$
