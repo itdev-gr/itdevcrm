@@ -20,4 +20,25 @@ describe('jobEmailStatus', () => {
     const map = { 'webseo_gsc_access|a@b.com': '2026-07-01T00:00:00Z' };
     expect(jobEmailStatus({ ...web, client_email: 'A@B.com' }, map).state).toBe('sent');
   });
+  it('missing client_email -> not_sent', () => {
+    expect(jobEmailStatus({ service_type: 'web_seo' }, {})).toEqual({
+      state: 'not_sent',
+      templateKey: 'webseo_gsc_access',
+      lastSent: null,
+    });
+  });
+  it('empty client_email -> not_sent', () => {
+    expect(jobEmailStatus({ ...local, client_email: '' }, {})).toEqual({
+      state: 'not_sent',
+      templateKey: 'localseo_gbp_access',
+      lastSent: null,
+    });
+  });
+  it('ai_seo (no onboarding email) -> coming_soon', () => {
+    expect(jobEmailStatus({ service_type: 'ai_seo', client_email: 'a@b.com' }, {})).toEqual({
+      state: 'coming_soon',
+      templateKey: null,
+      lastSent: null,
+    });
+  });
 });

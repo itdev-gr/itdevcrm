@@ -87,7 +87,13 @@
     "gbp_confirm_body": "Αποστολή του email αιτήματος πρόσβασης στο Google Business Profile στο {{email}};",
     "gsc_request": "Αίτημα πρόσβασης στο Google Search Console",
     "gsc_confirm_title": "Αίτημα πρόσβασης GSC",
-    "gsc_confirm_body": "Αποστολή του email αιτήματος πρόσβασης στο Google Search Console στο {{email}};"
+    "gsc_confirm_body": "Αποστολή του email αιτήματος πρόσβασης στο Google Search Console στο {{email}};",
+    "coming_soon": "Έρχεται σύντομα",
+    "coming_soon_hint": "Το email onboarding θα είναι διαθέσιμο σύντομα",
+    "not_sent": "Δεν εστάλη",
+    "not_sent_hint": "Δεν έχει σταλεί email πρόσβασης — κλικ για επαναποστολή",
+    "sent": "Απεστάλη email πρόσβασης",
+    "resend": "Επαναποστολή"
   },
   "client_picker": {
     "label": "Πελάτης (προαιρετικά)",

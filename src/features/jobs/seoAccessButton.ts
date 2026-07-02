@@ -1,7 +1,3 @@
-import type { JobRow } from './hooks/useJobs';
-
-export type SeoAccessState = 'hidden' | 'no-email' | 'idle' | 'sent';
-
 export type SeoAccessConfig = {
   /** email_templates key the button sends. */
   templateKey: string;
@@ -33,12 +29,4 @@ export function seoAccessConfig(serviceType: string): SeoAccessConfig | null {
     };
   }
   return null;
-}
-
-/** What the access-request button should show for a job + its last-sent timestamp. */
-export function seoAccessState(job: JobRow, lastSent: string | null): SeoAccessState {
-  if (!seoAccessConfig(job.service_type)) return 'hidden';
-  const email = job.client?.email?.trim();
-  if (!email) return 'no-email';
-  return lastSent ? 'sent' : 'idle';
 }

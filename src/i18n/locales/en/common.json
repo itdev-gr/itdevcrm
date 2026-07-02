@@ -87,7 +87,13 @@
     "gbp_confirm_body": "Send the Google Business Profile access request email to {{email}}?",
     "gsc_request": "Request Google Search Console access",
     "gsc_confirm_title": "Request GSC access",
-    "gsc_confirm_body": "Send the Google Search Console access request email to {{email}}?"
+    "gsc_confirm_body": "Send the Google Search Console access request email to {{email}}?",
+    "coming_soon": "Coming soon",
+    "coming_soon_hint": "Onboarding email coming soon",
+    "not_sent": "Not sent",
+    "not_sent_hint": "Access email not sent — click to resend",
+    "sent": "Access email sent",
+    "resend": "Resend"
   },
   "client_picker": {
     "label": "Client (optional)",
