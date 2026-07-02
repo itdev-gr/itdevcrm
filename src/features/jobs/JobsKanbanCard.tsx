@@ -15,7 +15,7 @@ import { formatJobPeriodChip } from './jobPeriodChip';
 import { canViewJobPricing } from './permissions';
 import { groupIdForServiceType } from './serviceTaskMatch';
 import { useServiceTaskCounts } from './hooks/useServiceTaskCounts';
-import { RequestSeoAccessButton } from './RequestSeoAccessButton';
+import { JobEmailStatusBadge } from './JobEmailStatusBadge';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { JobRow } from './hooks/useJobs';
 
@@ -153,7 +153,7 @@ export function JobsKanbanCard({
                 {owner ? owner.full_name || owner.email : 'Unassigned'}
               </span>
             </div>
-            <RequestSeoAccessButton job={job} />
+            <JobEmailStatusBadge job={job} variant="card" />
           </div>
 
           <div

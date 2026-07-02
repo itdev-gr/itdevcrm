@@ -38,6 +38,7 @@ import { areasForJob, canUploadArea } from '@/features/attachments/serviceAreas'
 import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachmentsSection';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { useJob } from './hooks/useJob';
+import { JobEmailStatusBadge } from './JobEmailStatusBadge';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
 import { infoFieldsFor } from './serviceInfoFields';
@@ -264,6 +265,7 @@ export function JobDetailPage() {
               aria-hidden="true"
             />
             <span className={detailHeaderChipClass}>{job.service_type.replace(/_/g, ' ')}</span>
+            <JobEmailStatusBadge job={job} variant="detail" />
             <span className={detailHeaderMetaClass}>
               <Calendar className="size-3 opacity-70" />
               {formatDate(job.created_at)}
