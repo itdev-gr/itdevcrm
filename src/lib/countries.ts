@@ -21,6 +21,16 @@ export function vatRateFor(country: string | null | undefined): number {
   return match?.vatRate ?? DEFAULT_VAT_RATE;
 }
 
+/** The VAT actually charged. Cash is always VAT-free (ΦΠΑ), regardless of
+ *  country; any other payment method uses the country's rate. */
+export function effectiveVatRate(
+  paymentMethod: string | null | undefined,
+  country: string | null | undefined,
+): number {
+  if ((paymentMethod ?? '').trim().toLowerCase() === 'cash') return 0;
+  return vatRateFor(country);
+}
+
 export function formatEur(amount: number): string {
   return `€${amount.toFixed(2)}`;
 }

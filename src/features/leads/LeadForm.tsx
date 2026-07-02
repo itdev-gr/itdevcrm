@@ -13,7 +13,7 @@ import {
 } from '@/features/contacts/AdditionalContactsField';
 import { useUpdateLead } from './hooks/useUpdateLead';
 import type { LeadRow } from './hooks/useLeads';
-import { COUNTRIES, formatEur, vatRateFor } from '@/lib/countries';
+import { COUNTRIES, formatEur, effectiveVatRate } from '@/lib/countries';
 import { INDUSTRIES } from '@/lib/industries';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { EditableContact } from '@/features/contacts/EditableContact';
@@ -370,7 +370,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             </div>
             <div className="p-4">
               {(() => {
-                const vatRate = vatRateFor(country);
+                const vatRate = effectiveVatRate(paymentMethod, country);
                 const oneTimeVat = oneTimeNum * vatRate;
                 const monthlyVat = monthlyNum * vatRate;
                 const yearlyVat = yearlyNum * vatRate;
