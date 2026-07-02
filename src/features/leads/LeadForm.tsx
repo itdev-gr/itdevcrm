@@ -67,6 +67,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [tiktok, setTiktok] = useState(lead.tiktok ?? '');
   const [linkedin, setLinkedin] = useState(lead.linkedin ?? '');
   const [paymentMethod, setPaymentMethod] = useState(lead.payment_method ?? '');
+  const [cashChargeVat, setCashChargeVat] = useState<boolean>(lead.cash_charge_vat ?? false);
   const [scheduledFor, setScheduledFor] = useState<string>(() => {
     if (!lead.scheduled_for) return '';
     const d = new Date(lead.scheduled_for);
@@ -112,6 +113,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       tiktok: tiktok.trim() || null,
       linkedin: linkedin.trim() || null,
       payment_method: paymentMethod || null,
+      cash_charge_vat: paymentMethod === 'cash' ? cashChargeVat : false,
       scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
       notes: notes.trim() || null,
       additional_notes: additionalNotes.trim() || null,
@@ -137,6 +139,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       tiktok,
       linkedin,
       paymentMethod,
+      cashChargeVat,
       scheduledFor,
       notes,
       additionalNotes,
@@ -325,6 +328,17 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                 <option value="cash">{t('form.payment_method_options.cash')}</option>
                 <option value="online">{t('form.payment_method_options.online')}</option>
               </FilterSelect>
+              {paymentMethod === 'cash' && (
+                <label className="mt-2 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={cashChargeVat}
+                    onChange={(e) => setCashChargeVat(e.target.checked)}
+                    disabled={readOnly}
+                  />
+                  {t('form.cash_charge_vat', { defaultValue: 'Χρέωση ΦΠΑ (μετρητά)' })}
+                </label>
+              )}
             </div>
             <div>
               <Label htmlFor="scheduled-for">
@@ -370,7 +384,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             </div>
             <div className="p-4">
               {(() => {
-                const vatRate = effectiveVatRate(paymentMethod, country);
+                const vatRate = effectiveVatRate(paymentMethod, country, cashChargeVat);
                 const oneTimeVat = oneTimeNum * vatRate;
                 const monthlyVat = monthlyNum * vatRate;
                 const yearlyVat = yearlyNum * vatRate;
