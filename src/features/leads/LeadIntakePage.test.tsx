@@ -33,6 +33,14 @@ vi.mock('./hooks/useAutoMerge', () => ({
     setEnabled: { mutate: setAutoMerge, isPending: false },
   }),
 }));
+const setAutoRelease = vi.fn();
+vi.mock('./hooks/useAutoRelease', () => ({
+  useAutoRelease: () => ({
+    autoEnabled: false,
+    isLoading: false,
+    setEnabled: { mutate: setAutoRelease, isPending: false },
+  }),
+}));
 const bulkMerge = vi.fn();
 vi.mock('./hooks/useBulkMergeIntake', () => ({
   useBulkMergeIntake: () => ({ mutateAsync: bulkMerge, isPending: false }),

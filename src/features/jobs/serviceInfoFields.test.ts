@@ -6,7 +6,7 @@ describe('SERVICE_INFO_FIELDS', () => {
     const keys = SERVICE_INFO_FIELDS.ai_seo.map((f) => f.key);
     expect(keys).toEqual([
       'profile_url', 'business_profile', 'local_report_url', 'local_notes',
-      'website_username', 'website_password', 'website_path', 'web_report_url', 'seo_notes',
+      'website', 'website_username', 'website_password', 'website_path', 'web_report_url', 'seo_notes',
     ]);
     expect(new Set(keys).size).toBe(keys.length);
   });
