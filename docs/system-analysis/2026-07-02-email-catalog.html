@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>ITDEV CRM — Email Catalog (2026-07-02)</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: #111; font-size: 11px; line-height: 1.45; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: #555; margin-bottom: 18px; font-size: 11px; }
+  h2 { font-size: 15px; margin: 22px 0 8px; padding: 6px 10px; background: #0f766e; color: #fff; border-radius: 6px; page-break-after: avoid; }
+  .card { border: 1px solid #d5d5d5; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; page-break-inside: avoid; }
+  .card h3 { font-size: 12.5px; margin: 0 0 4px; }
+  .key { font-family: Menlo, monospace; font-size: 9.5px; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; color: #334155; }
+  .meta { margin: 4px 0 6px; }
+  .meta div { margin: 1px 0; }
+  .lbl { display: inline-block; min-width: 88px; font-weight: 600; color: #444; }
+  .on { color: #047857; font-weight: 600; }
+  .off { color: #b91c1c; font-weight: 600; }
+  .subject { background: #eef6f6; border-left: 3px solid #0f766e; padding: 4px 8px; margin: 6px 0; font-weight: 600; }
+  .body { white-space: pre-wrap; background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 8px 10px; font-size: 10.5px; color: #222; }
+  .note { color: #92400e; background: #fef3c7; border-radius: 6px; padding: 4px 8px; margin-top: 6px; font-size: 10px; }
+  .intro { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+  .intro ul { margin: 4px 0 0 16px; padding: 0; }
+</style>
+</head>
+<body>
+
+<h1>ITDEV CRM — Κατάλογος Email / Email Catalog</h1>
+<div class="sub">Generated 2026-07-02 from the live production database (email_templates + trigger audit). 25 emails total.</div>
+
+<div class="intro">
+  <b>How the system works:</b>
+  <ul>
+    <li>Every client email subject is automatically prefixed with the client's code: <b>{{code}} - …</b></li>
+    <li>Clients marked <b>closed ("done")</b> never receive automated emails.</li>
+    <li>Each department has a master switch in Settings → Email automations (Sales / Accounting / Technical — all currently <span class="on">ON</span>), plus a per-email switch.</li>
+    <li>Placeholders like {{name}}, {{amount_gross}} are filled in automatically per recipient.</li>
+  </ul>
+</div>
+
+<h2>1. Sales — προς leads (αποστολέας: sales@itdev.gr, κοινοποίηση στον υπεύθυνο πωλητή)</h2>
+
+<div class="card">
+  <h3>Welcome / Καλωσόρισμα νέου lead <span class="key">lead_welcome</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Στέλνεται αυτόματα μόλις ένα lead μπει στη στήλη «Unique Lead» (νέα Meta leads, χειροκίνητα, release από το Intake, re-engage). Μία φορά ανά lead — ποτέ δεύτερη.</div>
+    <div><span class="lbl">Switch:</span> <span class="on">ON</span> (Sales dept + own toggle)</div>
+  </div>
+  <div class="subject">{{code}} - Καλώς ήρθατε στην ITDEV, {{name}}!</div>
+  <div class="body">Γεια σας {{name}},
+
+Σας ευχαριστούμε για το ενδιαφέρον σας! Ο συνεργάτης μας {{owner_name}} θα επικοινωνήσει μαζί σας εντός 24 ωρών.
+
+Στο μεταξύ, μπορείτε να δείτε τις υπηρεσίες μας στο itdev.gr.
+
+Με εκτίμηση,
+Η ομάδα της ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Επιβεβαίωση ραντεβού <span class="key">scheduled_confirm</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Όταν κλείνεται ραντεβού/κλήση με το lead (ορίζεται ημερομηνία στο CRM).</div>
+    <div><span class="lbl">Switch:</span> <span class="off">OFF</span> (απενεργοποιημένο σκόπιμα)</div>
+  </div>
+  <div class="subject">{{code}} - Επιβεβαίωση ραντεβού — {{scheduled_for}}</div>
+  <div class="body">Γεια σας {{name}},
+
+Σας ευχαριστούμε, που επιλέξατε την ITDEV.
+
+Το ραντεβού μας επιβεβαιώθηκε για {{scheduled_for}}.
+
+Ο/Η εκπρόσωπος του αντίστοιχου τμήματος {{owner_name}} θα σας καλέσει για μία σχετική συζήτηση.
+
+Παρακαλούμε αν χρειαστείτε οποιαδήποτε αλλαγή αναφορικά με το ραντεβού σας, να απαντήσετε σε αυτό το e-mail.
+
+Με εκτίμηση,
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Υπενθύμιση ραντεβού <span class="key">scheduled_reminder</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Την προηγούμενη μέρα του προγραμματισμένου ραντεβού.</div>
+    <div><span class="lbl">Switch:</span> <span class="off">OFF</span></div>
+  </div>
+  <div class="subject">{{code}} - Υπενθύμιση: το ραντεβού μας αύριο</div>
+  <div class="body">Γεια σας {{name}},
+
+Μια φιλική υπενθύμιση για το ραντεβού μας αύριο, {{scheduled_for}}.
+
+Τα λέμε σύντομα!
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Χαμένο ραντεβού (no-show) <span class="key">scheduled_noshow</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Την επόμενη μέρα, αν το ραντεβού δεν πραγματοποιήθηκε.</div>
+    <div><span class="lbl">Switch:</span> <span class="off">OFF</span></div>
+  </div>
+  <div class="subject">{{code}} - Δεν τα καταφέραμε χθες — να ξανακλείσουμε;</div>
+  <div class="body">Γεια σας {{name}},
+
+Χθες δεν καταφέραμε δυστυχώς να συνομιλήσουμε.
+
+Θα χαιρόμασταν να μας ενημερώσετε αναφορικά με την ώρα που σας βολεύει και μπορούμε να κανονίσουμε το ραντεβού μας σε άλλο χρονικό πλαίσιο.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Σειρά "Δεν απαντά" — Ημέρα 0 <span class="key">noanswer_day0</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Αυτόματη σειρά 4 email όταν ένα lead μαρκαριστεί «Δεν απαντά». Το 1ο στέλνεται άμεσα, τα επόμενα τις ημέρες 2, 5 και 10 (ημερήσιο αυτόματο). Η σειρά σταματά αν το lead απαντήσει/αλλάξει στάδιο.</div>
+    <div><span class="lbl">Switch:</span> Sales dept (<span class="on">ON</span>) + ενεργή σειρά</div>
+  </div>
+  <div class="subject">{{code}} - Προσπαθήσαμε να επικοινωνήσουμε μαζί σας</div>
+  <div class="body">Γεια σας {{name}},
+
+Σας ευχαριστούμε για το ενδιαφέρον σας για τις υπηρεσίες της ITDEV.
+
+Προσπαθήσαμε να επικοινωνήσουμε μαζί σας τηλεφωνικά, αλλά δεν απαντήσατε.
+
+Παρακαλούμε, να μας αποστείλετε διαθέσιμες ώρες επικοινωνίας, για να μπορέσουμε να συζητήσουμε εκτενέστερα.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Σειρά "Δεν απαντά" — Ημέρα 2 <span class="key">noanswer_day2</span></h3>
+  <div class="subject">{{code}} - Πώς βοηθάμε επιχειρήσεις σαν τη δική σας</div>
+  <div class="body">Γεια σας {{name}},
+
+Ξέρουμε ότι οι μέρες τρέχουν. Στην ITDEV βοηθάμε επιχειρήσεις στον κλάδο σας να αποκτήσουν περισσότερους πελάτες μέσω Google και social media. Αν θα θέλατε να σας εξηγήσουμε τι θα μπορούσαμε να κάνουμε για την επιχείρησή σας, παρακαλούμε απαντήστε σε αυτό το e-mail ή αλλιώς θα μπορούσατε να κλείσετε ένα 15λεπτο τηλεφωνικό ραντεβού με κάποιον σύμβουλό μας για μια πιο εκτενή συζήτηση.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Σειρά "Δεν απαντά" — Ημέρα 5 <span class="key">noanswer_day5</span></h3>
+  <div class="subject">{{code}} - Δείτε τι πετύχαμε για πελάτες μας</div>
+  <div class="body">Γεια σας {{name}},
+
+Πρόσφατα βοηθήσαμε κάποιον πελάτη μας να διπλασιάσει τις κλήσεις από τη Google μέσα σε 4 μήνες.
+
+Θα χαρούμε να σας δείξουμε πώς θα δούλευε κάτι αντίστοιχο για εσάς.
+
+Για να επικοινωνήσουμε μαζί σας, παρακαλούμε απαντήστε σε αυτό το e-mail ή καλέστε μας στο τηλέφωνο 2102603414.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Σειρά "Δεν απαντά" — Ημέρα 10 (τελευταίο) <span class="key">noanswer_day10</span></h3>
+  <div class="subject">{{code}} - Να κλείσουμε τον φάκελό σας;</div>
+  <div class="body">Γεια σας {{name}},
+
+Δυστυχώς δεν καταφέραμε να επικοινωνήσουμε μαζί σας, οπότε να θεωρήσουμε ότι δεν υφίσταται πλέον το ενδιαφέρον σας;
+
+Σε κάθε περίπτωση θα προβούμε στο κλείσιμο της καρτέλας σας, εκτός αν μας ενημερώσετε να επικοινωνήσουμε μαζί σας.
+
+Είμαστε πάντα στη διάθεσή σας για οτιδήποτε χρειαστείτε.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Follow-up προσφοράς — Ημέρα 2 <span class="key">offer_followup_day2</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Αυτόματη σειρά 3 email μετά την αποστολή προσφοράς (ημέρες 2, 5, 10). Σταματά αν η προσφορά απαντηθεί/γίνει δεκτή.</div>
+    <div><span class="lbl">Switch:</span> Sales dept (<span class="on">ON</span>) + ενεργή σειρά</div>
+  </div>
+  <div class="subject">{{code}} - Έχετε απορίες για την προσφορά σας;</div>
+  <div class="body">Γεια σας {{name}},
+
+Αν έχετε οποιαδήποτε απορία αναφορικά με την προσφορά, που σας έχουμε αποστείλει, θα χαρούμε να συζητήσουμε εκτενέστερα.
+
+Μπορείτε πάντα να μας απαντήσετε σε αυτό το e-mail ή να μας καλέσετε στο τηλέφωνο 2102603434.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Follow-up προσφοράς — Ημέρα 5 <span class="key">offer_followup_day5</span></h3>
+  <div class="subject">{{code}} - Η προσφορά σας από την ITDEV</div>
+  <div class="body">Γεια σας {{name}},
+
+Μια ευγενική υπενθύμιση για την προσφορά που σας έχουμε στείλει.
+
+Θα χαρούμε να μας ενημερώσετε σχετικά και να προχωρήσουμε μαζί σε μία όμορφη συνεργασία.
+
+Παραμένουμε στη διάθεσή σας για οποιαδήποτε διευκρίνιση.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Follow-up προσφοράς — Ημέρα 10 (τελευταίο) <span class="key">offer_followup_day10</span></h3>
+  <div class="subject">{{code}} - Τελευταία υπενθύμιση για την προσφορά σας</div>
+  <div class="body">Γεια σας {{name}},
+
+Ως μία τελευταία προσπάθεια επικοινωνίας, σας αποστέλλουμε μία σχετική υπενθύμιση για την προσφορά, που λάβατε από εμάς πριν από λίγες ημέρες.
+
+Αν επιθυμείτε να συζητήσουμε εκτενέστερα ή να αναπροσαρμόσουμε την προσφορά, που μας ζητήσατε, παρακαλούμε να επικοινωνήσετε μαζί μας.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Επανασύνδεση μετά από 90 ημέρες <span class="key">reengage_90d</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> 90 ημέρες αφότου ένα lead «κρύωσε» (dead end / not interested), μία προσπάθεια επανασύνδεσης.</div>
+    <div><span class="lbl">Switch:</span> Sales dept (<span class="on">ON</span>) + ενεργή σειρά</div>
+  </div>
+  <div class="subject">{{code}} - Άλλαξε κάτι, {{name}};</div>
+  <div class="body">Γεια σας {{name}},
+
+Πριν λίγο καιρό είχαμε συζητήσει για την online παρουσία της επιχείρησής σας.
+
+Αν κάτι έχει αλλάξει το τρέχον διάστημα, θα χαιρόμασταν να ξανασυζητήσουμε αναφορικά με τις υπηρεσίες μας.
+
+Είμαστε πάντα στη διάθεσή σας.
+
+Με εκτίμηση,
+{{owner_name}}
+ITDEV</div>
+</div>
+
+<div class="card">
+  <h3>Επόμενα βήματα μετά το "Κερδισμένο" <span class="key">won_next_steps</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Όταν ένα deal κερδίζεται (πλευρά πωλήσεων) — ενημερώνει τον πελάτη τι ακολουθεί.</div>
+    <div><span class="lbl">Switch:</span> <span class="on">ON</span></div>
+  </div>
+  <div class="subject">{{code}} - Τα επόμενα βήματα της συνεργασίας μας</div>
+  <div class="body">Γεια σας {{name}},
+
+Για να ξεκινήσουμε τις διαδικασίες άμεσα:
+
+1. Το λογιστήριό μας θα σας αποστείλει σύντομα το σχετικό παραστατικό πληρωμής.
+2. Μόλις ολοκληρωθεί η πληρωμή, η τεχνική μας ομάδα ξεκινά αμέσως τις απαιτούμενες ενέργειες.
+3. Θα λάβετε μια σύντομη φόρμα, για να συμπληρώσετε κάποια απαραίτητα στοιχεία (πρόσβαση, υλικό, στόχοι).
+
+Για οποιαδήποτε απορία, μπορείτε να απαντήσετε σε αυτό το e-mail.
+
+Με εκτίμηση,
+Η ομάδα της ITDEV</div>
+</div>
+
+<h2>2. Λογιστήριο — προς πελάτες (αποστολέας: accounting@itdev.gr, κοινοποίηση accounting@)</h2>
+
+<div class="card">
+  <h3>Καλωσόρισμα νέου πελάτη <span class="key">won_welcome</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Όταν ένα κερδισμένο deal μπαίνει στο λογιστήριο (onboarding). Μία φορά ανά deal.</div>
+    <div><span class="lbl">Switch:</span> <span class="on">ON</span> (Accounting dept + own toggle)</div>
+  </div>
+  <div class="subject">{{code}} - Καλώς ήρθατε στην ITDEV! 🎉</div>
+  <div class="body">Καλωσορίσατε στην ITDEV – Ξεκινάμε τη συνεργασία μας!
+Καλησπέρα {{name}},
+
+Καλωσορίσατε στην IT DEV Digital Agency και σας ευχαριστούμε θερμά για την εμπιστοσύνη σας.
+
+Είμαστε ενθουσιασμένοι που ξεκινάμε τη συνεργασία μας και θέλουμε να σας δώσουμε μια ξεκάθαρη εικόνα για τα επόμενα βήματα:
+
+Local SEO: Σε 2–3 εβδομάδες θα αρχίσετε να βλέπετε βελτιώσεις στην τοπική σας ορατότητα στη Google.
+
+Πρόσβαση στο Optivise Dashboard: Σε 5 εργάσιμες ημέρες θα λάβετε email με τα στοιχεία σύνδεσης για την προσωπική σας πλατφόρμα.
+
+Google Business Profile &amp; Citations: Από την 1η εβδομάδα ξεκινάμε τις απαραίτητες βελτιστοποιήσεις και θα ενημερώνεστε για κάθε σημαντικό βήμα.
+
+Η ομάδα μας θα είναι δίπλα σας σε όλη τη διάρκεια της συνεργασίας μας.
+
+Συμπληρώστε την παρακάτω φόρμα:
+https://form.jotform.com/252513070502342
+
+Με εκτίμηση,
+Η ομάδα της IT DEV</div>
+</div>
+
+<div class="card">
+  <h3>Υπενθύμιση πληρωμής (7 ημέρες πριν) <span class="key">payment_due_soon</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Αυτόματα, 7 ημέρες πριν τη λήξη κάθε προγραμματισμένης πληρωμής (ημερήσιος έλεγχος). Μία φορά ανά πληρωμή. Δεν στέλνεται αν το deal έχει «σίγαση υπενθυμίσεων».</div>
+    <div><span class="lbl">Switch:</span> Accounting dept (<span class="on">ON</span>)</div>
+  </div>
+  <div class="subject">{{code}} - Υπενθύμιση πληρωμής — λήγει {{due_date}}</div>
+  <div class="body">Καλησπέρα σας,
+
+Ελπίζουμε να είστε καλά.
+
+Θα θέλαμε να σας υπενθυμίσουμε ότι πλησιάζει η ημερομηνία της προγραμματισμένης μηνιαίας πληρωμής, στο πλαίσιο της μεταξύ μας συνεργασίας.
+
+Παρακαλούμε όπως μεριμνήσετε για την τακτοποίηση του ποσού εντός των επόμενων ημερών.
+
+Ποσό πληρωμής: {{amount_gross}}€
+
+Παρακάτω θα βρείτε τους διαθέσιμους τρόπους πληρωμής:
+
+Τράπεζα Εθνικής
+
+IBAN: GR4401101670000091004687462
+SWIFT/BIC: ETHNGRAA
+Δικαιούχος: IT DEV EE
+Τράπεζα: Εθνική Τράπεζα Ελλάδος (NBG)
+
+Τράπεζα Πειραιώς
+
+IBAN: GR31 0172 1470 0051 4711 0472 667
+SWIFT/BIC: PIRBGRAA
+Δικαιούχος: IT DEV E.E. / IT DEV S.P.
+Α.Φ.Μ.: 802223278
+
+Viva Wallet
+
+Άμεσος σύνδεσμος πληρωμής:
+https://pay.vivawallet.com/it-dev
+
+Παρακαλούμε, με την ολοκλήρωση της πληρωμής, να μας αποστείλετε το σχετικό αποδεικτικό.
+
+Είμαστε στη διάθεσή σας για οποιαδήποτε διευκρίνιση ή απορία.</div>
+</div>
+
+<div class="card">
+  <h3>Εκπρόθεσμη πληρωμή (1 ημέρα μετά) <span class="key">payment_overdue</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Αυτόματα, την επόμενη μέρα από τη λήξη, αν η πληρωμή παραμένει ανεξόφλητη.</div>
+    <div><span class="lbl">Switch:</span> Accounting dept (<span class="on">ON</span>)</div>
+  </div>
+  <div class="subject">{{code}} - Εκπρόθεσμη πληρωμή</div>
+  <div class="body">Καλησπέρα σας,
+
+Ελπίζουμε να είστε καλά.
+
+Θα θέλαμε να σας ενημερώσουμε ότι υπάρχει εκκρεμότητα σχετικά με την προγραμματισμένη πληρωμή της μεταξύ μας συνεργασίας.
+
+Παρακαλούμε όπως μεριμνήσετε για την τακτοποίηση του ποσού το συντομότερο δυνατό, ώστε να συνεχιστεί ομαλά και απρόσκοπτα η παροχή των υπηρεσιών μας.
+
+Ποσό πληρωμής: {{amount_gross}}€
+
+[…ίδιοι τρόποι πληρωμής: Εθνική / Πειραιώς / Viva Wallet…]
+
+Σε περίπτωση που η πληρωμή έχει ήδη πραγματοποιηθεί, παρακαλούμε αγνοήστε το παρόν μήνυμα και αποστείλετέ μας το σχετικό αποδεικτικό, ώστε να ενημερώσουμε το αρχείο μας.
+
+Παραμένουμε στη διάθεσή σας για οποιαδήποτε διευκρίνιση ή απορία.</div>
+</div>
+
+<div class="card">
+  <h3>Τελική ειδοποίηση (7 ημέρες μετά) <span class="key">payment_final_notice</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Αυτόματα, 7 ημέρες μετά τη λήξη αν παραμένει ανεξόφλητη — προειδοποιεί για παύση υπηρεσιών.</div>
+    <div><span class="lbl">Switch:</span> Accounting dept (<span class="on">ON</span>)</div>
+  </div>
+  <div class="subject">{{code}} - Τελική ενημέρωση για εκκρεμότητα πληρωμής</div>
+  <div class="body">Καλησπέρα σας,
+
+Ελπίζουμε να είστε καλά.
+
+Θα θέλαμε να σας ενημερώσουμε ότι, παρά την προηγούμενη υπενθύμιση, παραμένει σε εκκρεμότητα η προγραμματισμένη πληρωμή της μεταξύ μας συνεργασίας.
+
+Καθώς έχει παρέλθει το χρονικό διάστημα των 7 ημερών από την αρχική ενημέρωση, σας ενημερώνουμε ότι, σε περίπτωση μη τακτοποίησης της οφειλής, οι σχετικές ενέργειες και υπηρεσίες θα τεθούν προσωρινά σε παύση.
+
+Η παύση των ενεργειών θα παραμείνει σε ισχύ έως την εξόφληση του εκκρεμούς ποσού και την αποστολή του σχετικού αποδεικτικού πληρωμής.
+
+Ποσό πληρωμής: {{amount_gross}}€
+
+[…ίδιοι τρόποι πληρωμής: Εθνική / Πειραιώς / Viva Wallet…]
+
+Σε περίπτωση που η πληρωμή έχει ήδη πραγματοποιηθεί, παρακαλούμε αγνοήστε το παρόν μήνυμα και αποστείλετέ μας το σχετικό αποδεικτικό, ώστε να ενημερώσουμε άμεσα το αρχείο μας και να αποφευχθεί η παύση των ενεργειών.
+
+Παραμένουμε στη διάθεσή σας για οποιαδήποτε διευκρίνιση.</div>
+</div>
+
+<div class="card">
+  <h3>Η πληρωμή λήγει σήμερα <span class="key">payment_due_today</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> ΚΑΝΕΝΑ αυτή τη στιγμή — το κείμενο υπάρχει, αλλά δεν είναι συνδεδεμένο με το ημερήσιο αυτόματο (εκκρεμότητα F9 από τον έλεγχο 2026-07-02: είτε θα συνδεθεί σε offset ημέρας-0 είτε θα διαγραφεί).</div>
+    <div><span class="lbl">Switch:</span> —</div>
+  </div>
+  <div class="subject">{{code}} - Η πληρωμή σας λήγει σήμερα</div>
+  <div class="body">Αγαπητέ/ή {{client_name}},
+
+Η πληρωμή για την υπηρεσία {{service_type}} ποσού {{amount_gross}}€ λήγει σήμερα {{due_date}}.
+
+Με εκτίμηση,
+ITDEV Λογιστήριο</div>
+</div>
+
+<div class="card">
+  <h3>Αποστολή σύμβασης <span class="key">contract_send</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Χειροκίνητα — όταν συνάδελφος στείλει σύμβαση από το CRM (επισυνάπτεται το PDF της σύμβασης).</div>
+    <div><span class="lbl">Switch:</span> — (χειροκίνητο, δεν έχει αυτόματο διακόπτη)</div>
+  </div>
+  <div class="subject">{{code}} - Σύμβαση συνεργασίας {{contract_number}} — ITDEV</div>
+  <div class="body">Αγαπητέ/ή {{client_name}},
+
+Σας αποστέλλουμε συνημμένη τη σύμβαση συνεργασίας «{{contract_title}}» ({{contract_number}}) σε μορφή PDF.
+
+Παρακαλούμε διαβάστε την προσεκτικά και επιστρέψτε μας υπογεγραμμένο αντίγραφο.
+
+Με εκτίμηση,
+ITDEV</div>
+</div>
+
+<h2>3. Τεχνικό τμήμα — προς πελάτες (αποστολέας: support@itdev.gr, κοινοποίηση support@)</h2>
+
+<div class="card">
+  <h3>Πρόσβαση Google Search Console <span class="key">webseo_gsc_access</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Αυτόματα όταν δημιουργείται Web SEO job για τον πελάτη (και για το web-κομμάτι ενός AI SEO). Μία φορά ανά deal.</div>
+    <div><span class="lbl">Switch:</span> <span class="on">ON</span> (Technical dept + own toggle)</div>
+  </div>
+  <div class="subject">{{code}} - Πρόσβαση στο Google Search Console — ITDev</div>
+  <div class="body">Καλησπέρα σας,
+Παρακάτω θα βρείτε αναλυτικές οδηγίες (βήμα προς βήμα) για το πώς μπορείτε να μας παραχωρήσετε πρόσβαση στο Google Search Console της επιχείρησής σας:
+
+Μπορείτε να δείτε τα βήματα στο παρακάτω βίντεο αλλιώς υπάρχουν και γραπτώς.
+https://shorturl.at/OqTid
+
+1. Είσοδος: Συνδεθείτε στον λογαριασμό σας στο Google Search Console.
+2. Επιλογή Ιδιότητας: Από το πτυσσόμενο μενού πάνω αριστερά, επιλέξτε την ιστοσελίδα (property) στην οποία θέλετε να δώσετε πρόσβαση.
+3. Ρυθμίσεις: Κάντε κλικ στην επιλογή Ρυθμίσεις (Settings) που βρίσκεται στο κάτω μέρος της αριστερής πλαϊνής στήλης.
+4. Χρήστες και δικαιώματα: Πατήστε στην ενότητα Χρήστες και δικαιώματα (Users and permissions).
+5. Προσθήκη χρήστη: Κάντε κλικ στο κουμπί Προσθήκη χρήστη (Add user) πάνω δεξιά.
+6. Εισαγάγετε το email: info@itdev.gr με πλήρης άδεια και πατήστε προσθήκη.
+
+Παρακαλούμε ακολουθήστε τις παραπάνω οδηγίες, ώστε να μπορέσουμε να ξεκινήσουμε άμεσα τις εργασίες από πλευράς μας.
+Σε περίπτωση που αντιμετωπίσετε οποιαδήποτε δυσκολία, μπορείτε να επικοινωνήσετε με τον υπεύθυνο Web SEO, κ. Παύλο Ευσταθιάδη, στο email pefstathiadis@itdev.gr ή τηλεφωνικά στο 210 260 3414 (εσωτερικό 104).</div>
+</div>
+
+<div class="card">
+  <h3>Πρόσβαση Google Business Profile <span class="key">localseo_gbp_access</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Αυτόματα όταν δημιουργείται Local SEO job (και για το local-κομμάτι ενός AI SEO). Μία φορά ανά deal.</div>
+    <div><span class="lbl">Switch:</span> <span class="on">ON</span> (Technical dept + own toggle)</div>
+  </div>
+  <div class="subject">{{code}} - Πρόσβαση στο Google Business Profile — ITDev</div>
+  <div class="body">Καλησπέρα σας,
+Παρακάτω θα βρείτε έναν σύνδεσμο με αναλυτικές οδηγίες (βήμα προς βήμα) για το πώς μπορείτε να μας παραχωρήσετε πρόσβαση στο Google Business Profile της επιχείρησής σας:
+
+https://tutorial-local.itdev.gr/
+
+Εναλλακτικά, μπορείτε να ακολουθήσετε τα παρακάτω βήματα:
+Συνδεθείτε στον browser με το email που είναι συνδεδεμένο με την επιχείρηση.
+Ανοίξτε νέα καρτέλα, πατήστε τις τρεις τελείες επάνω δεξιά και επιλέξτε Διαχείριση επιχειρηματικού προφίλ.
+Πατήστε ξανά τις τρεις τελείες δεξιά και επιλέξτε Ρυθμίσεις εταιρικού προφίλ.
+Επιλέξτε Άτομα και πρόσβαση.
+Πατήστε Προσθήκη και προσκαλέστε ως διαχειριστή το email: itdevgr24@gmail.com.
+Παρακαλούμε ακολουθήστε τις παραπάνω οδηγίες, ώστε να μπορέσουμε να ξεκινήσουμε άμεσα τις εργασίες από πλευράς μας.
+Σε περίπτωση που αντιμετωπίσετε οποιαδήποτε δυσκολία, μπορείτε να επικοινωνήσετε με τον υπεύθυνο Local SEO, κ. Δημήτρη Τζουβάρα, στο email dtzouvaras@itdev.gr ή τηλεφωνικά στο 210 260 3414 (εσωτερικό 103).</div>
+</div>
+
+<h2>4. Εσωτερικά — προς την ομάδα (αποστολέας: no-reply, εσωτερικά)</h2>
+
+<div class="card">
+  <h3>Νέα ανάθεση εργασίας (task) <span class="key">internal_new_task</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Όταν ανατίθεται εργασία σε συνάδελφο (όχι σε αυτο-ανάθεση). Πάει στον ανατιθέμενο, με σύνδεσμο που ανοίγει την εργασία στο CRM.</div>
+    <div><span class="lbl">Switch:</span> Πάντα ενεργό (χωρίς διακόπτη)</div>
+  </div>
+  <div class="subject">Νέα εργασία: [τίτλος εργασίας]</div>
+  <div class="body">Σου ανατέθηκε νέα εργασία: [τίτλος].
+[Άνοιγμα στο CRM → σύνδεσμος /tasks που ανοίγει τη συγκεκριμένη εργασία]</div>
+</div>
+
+<div class="card">
+  <h3>Νέο job για την ομάδα <span class="key">internal_new_job</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Όταν δημιουργείται νέο job με ανατεθειμένη ομάδα — στέλνεται σε ΟΛΑ τα μέλη της ομάδας, με σύνδεσμο στο deal.</div>
+    <div><span class="lbl">Switch:</span> <span class="on">ON</span> — ΔΙΟΡΘΩΘΗΚΕ 2026-07-02: ήταν κατά λάθος απενεργοποιημένο από τις 24/06 (εύρημα F1 του ελέγχου).</div>
+  </div>
+  <div class="subject">Νέο job: [υπηρεσία]</div>
+  <div class="body">Δημιουργήθηκε νέο job [υπηρεσία] για τον πελάτη [όνομα].
+[Άνοιγμα στο CRM → σύνδεσμος στο deal]</div>
+</div>
+
+<h2>5. Σύστημα</h2>
+
+<div class="card">
+  <h3>Επαναφορά κωδικού <span class="key">auth_password_reset</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Όταν χρήστης πατήσει «Ξέχασα τον κωδικό μου» στη σελίδα εισόδου. Δίγλωσσο (GR/EN), σύνδεσμος 1 ώρας, μίας χρήσης.</div>
+    <div><span class="lbl">Switch:</span> Πάντα ενεργό</div>
+  </div>
+  <div class="subject">Επαναφορά κωδικού ITDEV CRM / ITDEV CRM password reset</div>
+  <div class="body">Γεια σας,
+
+Λάβαμε αίτημα επαναφοράς του κωδικού σας στο ITDEV CRM. Πατήστε το κουμπί παρακάτω για να ορίσετε νέο κωδικό. Ο σύνδεσμος ισχύει για 1 ώρα και μπορεί να χρησιμοποιηθεί μία φορά.
+
+Αν δεν ζητήσατε εσείς την επαναφορά, αγνοήστε αυτό το email.
+
+Αν το κουμπί δεν λειτουργεί, αντιγράψτε αυτόν τον σύνδεσμο: {{reset_url}}
+
+---
+(English version follows in the same email)</div>
+</div>
+
+<div class="card">
+  <h3>Ελεύθερο email από το CRM <span class="key">custom</span></h3>
+  <div class="meta">
+    <div><span class="lbl">Trigger:</span> Χειροκίνητα — το παράθυρο «Send email» μέσα στο CRM: συνάδελφος γράφει ελεύθερο κείμενο προς οποιονδήποτε παραλήπτη.</div>
+    <div><span class="lbl">Switch:</span> — (χειροκίνητο)</div>
+  </div>
+  <div class="subject">[όπως το γράψει ο αποστολέας]</div>
+  <div class="body">[ελεύθερο κείμενο — οι σύνδεσμοι γίνονται αυτόματα clickable]</div>
+</div>
+
+</body>
+</html>
