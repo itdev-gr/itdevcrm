@@ -13,16 +13,20 @@ describe('vatRateFor', () => {
 });
 
 describe('effectiveVatRate', () => {
-  it('cash is always VAT-free, regardless of country', () => {
-    expect(effectiveVatRate('cash', 'Greece')).toBe(0);
-    expect(effectiveVatRate('cash', 'Cyprus')).toBe(0);
-    expect(effectiveVatRate('cash', null)).toBe(0);
-    expect(effectiveVatRate('Cash', 'Greece')).toBe(0); // case-insensitive
+  it('cash without charge-VAT is 0, regardless of country', () => {
+    expect(effectiveVatRate('cash', 'Greece', false)).toBe(0);
+    expect(effectiveVatRate('cash', 'Cyprus', false)).toBe(0);
+    expect(effectiveVatRate('cash', null, false)).toBe(0);
   });
-  it('non-cash uses the country rate', () => {
-    expect(effectiveVatRate('online', 'Greece')).toBe(0.24);
-    expect(effectiveVatRate('', 'Greece')).toBe(0.24); // unset payment method
-    expect(effectiveVatRate(null, 'Greece')).toBe(0.24);
-    expect(effectiveVatRate('online', 'Cyprus')).toBe(0);
+  it('cash WITH charge-VAT uses the country rate', () => {
+    expect(effectiveVatRate('cash', 'Greece', true)).toBe(0.24);
+    expect(effectiveVatRate('Cash', 'Greece', true)).toBe(0.24); // case-insensitive
+    expect(effectiveVatRate('cash', 'Cyprus', true)).toBe(0);
+  });
+  it('non-cash ignores the flag and uses the country rate', () => {
+    expect(effectiveVatRate('online', 'Greece', false)).toBe(0.24);
+    expect(effectiveVatRate('online', 'Greece', true)).toBe(0.24);
+    expect(effectiveVatRate('', 'Greece', false)).toBe(0.24);
+    expect(effectiveVatRate(null, 'Greece', false)).toBe(0.24);
   });
 });

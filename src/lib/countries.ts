@@ -21,13 +21,16 @@ export function vatRateFor(country: string | null | undefined): number {
   return match?.vatRate ?? DEFAULT_VAT_RATE;
 }
 
-/** The VAT actually charged. Cash is always VAT-free (ΦΠΑ), regardless of
- *  country; any other payment method uses the country's rate. */
+/** The VAT actually charged. For cash the caller's explicit choice decides
+ *  (default no VAT); any other payment method uses the country's rate. */
 export function effectiveVatRate(
   paymentMethod: string | null | undefined,
   country: string | null | undefined,
+  cashChargeVat: boolean,
 ): number {
-  if ((paymentMethod ?? '').trim().toLowerCase() === 'cash') return 0;
+  if ((paymentMethod ?? '').trim().toLowerCase() === 'cash') {
+    return cashChargeVat ? vatRateFor(country) : 0;
+  }
   return vatRateFor(country);
 }
 
