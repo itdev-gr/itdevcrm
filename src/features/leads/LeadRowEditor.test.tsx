@@ -18,6 +18,7 @@ import type { StageRow } from '@/features/stages/hooks/usePipelineStages';
 
 const baseLead: LeadRow = {
   id: 'lead-1',
+  cash_charge_vat: false,
   code: 'L-001',
   title: 'Test Lead',
   source: 'manual',
