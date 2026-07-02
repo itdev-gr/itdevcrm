@@ -123,12 +123,19 @@ begin
     returning id into v_deal;
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  -- The deal_payments_move_to_awaiting trigger bumps paid_in_full -> awaiting on
+  -- a pending insert, so force the stage back to paid_in_full to test the enqueue
+  -- gate for a deal genuinely HELD in paid_in_full (the real 24h-grace state:
+  -- reconcile keeps a paid_in_full deal that has a fresh unpaid near-due row).
+  update public.deals set accounting_stage_id =
+    (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full')
+   where id = v_deal;
   perform public.enqueue_payment_reminders();
   select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
   if v_any <> 0 then
     raise exception 'RESULT :: FAIL SL6 :: paid_in_full must get NO reminder, got %', v_any;
   end if;
-  raise exception 'RESULT :: PASS SL6 :: paid_in_full -> no reminder';
+  raise exception 'RESULT :: PASS SL6 :: paid_in_full (held) -> no reminder';
 end $$;
 
 -- ---- SL7 (NEG): partial_payment + 9d overdue -> no email -------------
