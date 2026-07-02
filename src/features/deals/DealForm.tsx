@@ -65,6 +65,7 @@ export function DealForm({ initial }: Props) {
   const [industry, setIndustry] = useState(client?.industry ?? '');
   const [address, setAddress] = useState(client?.address ?? '');
   const [paymentMethod, setPaymentMethod] = useState(initial.payment_method ?? '');
+  const [cashChargeVat, setCashChargeVat] = useState<boolean>(initial.cash_charge_vat ?? false);
   const [tempDealAmount, setTempDealAmount] = useState(initial.temp_deal_amount ?? '');
 
   const seededRef = useRef(false);
@@ -84,9 +85,10 @@ export function DealForm({ initial }: Props) {
     () => ({
       title: title.trim() || initial.title || '',
       payment_method: paymentMethod || null,
+      cash_charge_vat: paymentMethod === 'cash' ? cashChargeVat : false,
       temp_deal_amount: tempDealAmount.trim() || null,
     }),
-    [title, paymentMethod, tempDealAmount, initial.title],
+    [title, paymentMethod, cashChargeVat, tempDealAmount, initial.title],
   );
 
   const clientPatch = useMemo(() => {
@@ -129,6 +131,7 @@ export function DealForm({ initial }: Props) {
       .update({
         title: next.title,
         payment_method: next.payment_method,
+        cash_charge_vat: next.cash_charge_vat,
         temp_deal_amount: next.temp_deal_amount,
       })
       .eq('id', initial.id);
@@ -267,6 +270,16 @@ export function DealForm({ initial }: Props) {
               <option value="cash">{tLeads('form.payment_method_options.cash')}</option>
               <option value="online">{tLeads('form.payment_method_options.online')}</option>
             </FilterSelect>
+            {paymentMethod === 'cash' && (
+              <label className="mt-2 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={cashChargeVat}
+                  onChange={(e) => setCashChargeVat(e.target.checked)}
+                />
+                {tLeads('form.cash_charge_vat', { defaultValue: 'Χρέωση ΦΠΑ (μετρητά)' })}
+              </label>
+            )}
           </div>
           <div>
             <Label htmlFor="temp-deal-amount">{t('form.temp_deal_amount')}</Label>
