@@ -35,7 +35,10 @@ begin
                         on ps.id = d.accounting_stage_id
                        and ps.board = 'accounting_onboarding'
       join public.clients c on c.id = d.client_id
+                           and c.status <> 'done'          -- never email closed clients (2026-07-01 rule)
      where dp.status in ('pending','overdue')
+       and dp.paid_at is null                              -- belt-and-suspenders vs status
+       and dp.created_at::date < dp.start_date             -- skip back-dated rows (2026-07-01 no-backdated rule)
        and c.email is not null and c.email <> ''
   loop
     v_days_past := current_date - r.due_date;   -- >0 overdue, <0 not yet due
