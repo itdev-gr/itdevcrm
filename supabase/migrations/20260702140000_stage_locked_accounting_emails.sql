@@ -119,3 +119,92 @@ on conflict (id) do nothing;
 update public.email_outbox
    set status = 'failed', last_error = 'cancelled by stage-lock 20260702'
  where id in (select id from public.email_outbox_stagelock_backup_20260702);
+
+-- =========================================================================
+-- ---- Section 5: REVERT (verbatim — uncomment + run via apply to undo) ----
+-- =========================================================================
+-- 1) Restore the pre-stage-lock enqueue_payment_reminders() body (live snapshot
+--    captured 2026-07-02 before this migration):
+--
+--   CREATE OR REPLACE FUNCTION public.enqueue_payment_reminders()
+--    RETURNS integer
+--    LANGUAGE plpgsql
+--    SECURITY DEFINER
+--    SET search_path TO 'public'
+--   AS $function$
+--   declare
+--     r record;
+--     tkey text;
+--     dkey text;
+--     prefix text;
+--     created int := 0;
+--   begin
+--     for r in
+--       select dp.id as payment_id, dp.service_type, dp.amount_gross, dp.start_date as due_date,
+--              dp.deal_id, d.code as deal_code, c.name as client_name, c.email as to_email
+--         from public.deal_payments dp
+--         join public.deals d on d.id = dp.deal_id
+--                            and d.archived = false
+--                            and d.suppress_payment_reminders = false
+--         join public.pipeline_stages ps
+--                           on ps.id = d.accounting_stage_id
+--                          and ps.board = 'accounting_onboarding'
+--                          and ps.code in ('invoice_issued','awaiting_payment',
+--                                          'partial_payment','paid_in_full','on_hold')
+--         join public.clients c on c.id = d.client_id
+--                              and c.status <> 'done'
+--        where dp.status in ('pending', 'overdue')
+--          and dp.paid_at is null
+--          and dp.created_at::date < dp.start_date
+--          and c.email is not null and c.email <> ''
+--          and dp.start_date in (current_date + 7, current_date - 1, current_date - 7)
+--     loop
+--       if r.due_date = current_date + 7 then
+--         tkey := 'payment_due_soon'; prefix := 'pay_soon';
+--       elsif r.due_date = current_date - 1 then
+--         tkey := 'payment_overdue'; prefix := 'pay_overdue';
+--       else
+--         tkey := 'payment_final_notice'; prefix := 'pay_final';
+--       end if;
+--   
+--       dkey := prefix || ':' || r.payment_id;
+--   
+--       if exists (select 1 from public.email_log where dedupe_key = dkey and status = 'sent') then
+--         continue;
+--       end if;
+--       if exists (select 1 from public.email_outbox where dedupe_key = dkey and status in ('pending','sending','sent')) then
+--         continue;
+--       end if;
+--   
+--       insert into public.email_outbox (identity, to_email, template_key, data, dedupe_key)
+--       values ('accounting', r.to_email, tkey,
+--               jsonb_build_object('code', r.deal_code, 'client_name', r.client_name,
+--                                  'service_type', r.service_type, 'amount_gross', r.amount_gross,
+--                                  'due_date', to_char(r.due_date, 'DD/MM/YYYY'), 'deal_id', r.deal_id),
+--               dkey);
+--       created := created + 1;
+--     end loop;
+--     return created;
+--   end $function$
+--
+-- 2) Repoint the cron back to the bare enqueuer:
+--   select cron.alter_job((select jobid from cron.job where jobname='daily_payment_reminders'),
+--                         command => 'select public.enqueue_payment_reminders();');
+--
+-- 3) Drop the wrapper:
+--   drop function if exists public.run_daily_payment_reminders();
+--
+-- 4) Restore the payment_due_today template:
+--   insert into public.email_templates
+--   select * from public.email_templates_dropped_backup_20260702 where key='payment_due_today'
+--   on conflict (key) do nothing;
+--
+-- 5) Restore cancelled outbox rows:
+--   update public.email_outbox o set status=b.prior_status, last_error=b.prior_last_error
+--     from public.email_outbox_stagelock_backup_20260702 b
+--    where o.id=b.id and o.status='failed' and o.last_error='cancelled by stage-lock 20260702';
+--
+-- 6) Drop the backup tables:
+--   drop table if exists public.email_outbox_stagelock_backup_20260702;
+--   drop table if exists public.email_templates_dropped_backup_20260702;
+-- ---- end of Section 5 revert block --------------------------------------
