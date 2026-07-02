@@ -37,6 +37,7 @@ export function NewDealDialog({ open, onClose }: Props) {
   const [oneTime, setOneTime] = useState('');
   const [monthly, setMonthly] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'' | 'cash' | 'online'>('');
+  const [cashChargeVat, setCashChargeVat] = useState(false);
   const [description, setDescription] = useState('');
 
   function reset() {
@@ -49,6 +50,7 @@ export function NewDealDialog({ open, onClose }: Props) {
     setOneTime('');
     setMonthly('');
     setPaymentMethod('');
+    setCashChargeVat(false);
     setDescription('');
   }
 
@@ -68,6 +70,7 @@ export function NewDealDialog({ open, onClose }: Props) {
       oneTime: Number(oneTime) || 0,
       monthly: Number(monthly) || 0,
       paymentMethod,
+      cashChargeVat,
       description,
     };
   }
@@ -197,6 +200,16 @@ export function NewDealDialog({ open, onClose }: Props) {
               <option value="cash">{t('new_deal.payment_cash')}</option>
               <option value="online">{t('new_deal.payment_online')}</option>
             </select>
+            {paymentMethod === 'cash' && (
+              <label className="mt-2 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={cashChargeVat}
+                  onChange={(e) => setCashChargeVat(e.target.checked)}
+                />
+                {t('new_deal.cash_charge_vat', { defaultValue: 'Χρέωση ΦΠΑ (μετρητά)' })}
+              </label>
+            )}
           </div>
 
           <div className="space-y-1.5">

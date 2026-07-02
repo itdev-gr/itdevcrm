@@ -10,6 +10,7 @@ export type NewDealInput = {
   oneTime: number;
   monthly: number;
   paymentMethod: '' | 'cash' | 'online';
+  cashChargeVat: boolean;
   description: string;
 };
 
@@ -26,6 +27,7 @@ export type CreateDealParams = {
   p_one_time: number;
   p_monthly: number;
   p_payment_method: string | null;
+  p_cash_charge_vat: boolean;
   p_description: string | null;
 };
 
@@ -54,6 +56,7 @@ export function buildCreateDealParams(input: NewDealInput): CreateDealParams {
     p_one_time: input.oneTime,
     p_monthly: input.monthly,
     p_payment_method: input.paymentMethod === '' ? null : input.paymentMethod,
+    p_cash_charge_vat: input.paymentMethod === 'cash' ? input.cashChargeVat : false,
     p_description: input.description.trim() ? input.description.trim() : null,
   };
 }

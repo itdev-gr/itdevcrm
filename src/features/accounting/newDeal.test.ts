@@ -11,6 +11,7 @@ const base: NewDealInput = {
   oneTime: 0,
   monthly: 0,
   paymentMethod: '',
+  cashChargeVat: false,
   description: '',
 };
 
@@ -51,8 +52,19 @@ describe('buildCreateDealParams', () => {
       p_one_time: 0,
       p_monthly: 49,
       p_payment_method: 'online',
+      p_cash_charge_vat: false,
       p_description: null,
     });
+  });
+
+  it('passes cashChargeVat only when payment method is cash', () => {
+    expect(
+      buildCreateDealParams({ ...base, paymentMethod: 'cash', cashChargeVat: true }),
+    ).toMatchObject({ p_payment_method: 'cash', p_cash_charge_vat: true });
+    // Non-cash never charges the cash-VAT flag, even if it's set.
+    expect(
+      buildCreateDealParams({ ...base, paymentMethod: 'online', cashChargeVat: true }),
+    ).toMatchObject({ p_payment_method: 'online', p_cash_charge_vat: false });
   });
 
   it('maps a new-client deal, omitting blank optional contact fields', () => {
@@ -73,6 +85,7 @@ describe('buildCreateDealParams', () => {
       p_one_time: 0,
       p_monthly: 0,
       p_payment_method: null,
+      p_cash_charge_vat: false,
       p_description: 'note',
     });
   });

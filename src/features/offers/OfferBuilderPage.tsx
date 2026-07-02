@@ -20,7 +20,7 @@ import { useCreateOffer } from './hooks/useCreateOffer';
 import { OfferSummaryPanel } from './OfferSummaryPanel';
 import type { OfferItem } from '@/lib/offers/types';
 import { calculateTotals } from '@/lib/offers/calculate';
-import { vatRateFor } from '@/lib/countries';
+import { effectiveVatRate } from '@/lib/countries';
 
 const lang: 'en' | 'el' = 'el';
 
@@ -98,7 +98,7 @@ export function OfferBuilderPage() {
   useEffect(() => {
     if (!lead) return;
     if (!vatSeededRef.current) {
-      const rate = vatRateFor(lead.country);
+      const rate = effectiveVatRate(lead.payment_method, lead.country, lead.cash_charge_vat ?? false);
       setVatPercent(Math.round(rate * 100));
       vatSeededRef.current = true;
     }
