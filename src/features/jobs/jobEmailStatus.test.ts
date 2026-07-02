@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { jobEmailStatus } from './jobEmailStatus';
 
-const web = { service_type: 'web_seo', client_email: 'a@b.com' } as any;
-const local = { service_type: 'local_seo', client_email: 'a@b.com' } as any;
-const ads = { service_type: 'ads', client_email: 'a@b.com' } as any;
+const web = { service_type: 'web_seo', client_email: 'a@b.com' };
+const local = { service_type: 'local_seo', client_email: 'a@b.com' };
+const ads = { service_type: 'ads', client_email: 'a@b.com' };
 
 describe('jobEmailStatus', () => {
   it('web_seo with a sent GSC email -> sent', () => {
