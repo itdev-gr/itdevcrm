@@ -88,3 +88,34 @@ select cron.alter_job(
   (select jobid from cron.job where jobname = 'daily_payment_reminders'),
   command => 'select public.run_daily_payment_reminders();'
 );
+
+-- ---- Section 3: drop the unwired payment_due_today template ------------
+-- No trigger + no automation-settings row (audit flag F9). Back up the row, then remove it.
+create table if not exists public.email_templates_dropped_backup_20260702 (like public.email_templates including all);
+insert into public.email_templates_dropped_backup_20260702
+select * from public.email_templates where key = 'payment_due_today'
+on conflict (key) do nothing;
+delete from public.email_templates where key = 'payment_due_today';
+
+-- ---- Section 4: cancel queued reminders now in the wrong column --------
+create table if not exists public.email_outbox_stagelock_backup_20260702 (
+  id uuid primary key,
+  prior_status text not null,
+  prior_last_error text,
+  cancelled_at timestamptz not null default now()
+);
+insert into public.email_outbox_stagelock_backup_20260702 (id, prior_status, prior_last_error)
+select o.id, o.status, o.last_error
+  from public.email_outbox o
+  left join public.deals d on d.id = (o.data->>'deal_id')::uuid
+  left join public.pipeline_stages ps on ps.id = d.accounting_stage_id
+ where o.status in ('pending','sending')
+   and (
+     (o.template_key = 'payment_due_soon'     and coalesce(ps.code,'') <> 'awaiting_payment')
+  or (o.template_key = 'payment_overdue'      and coalesce(ps.code,'') <> 'on_hold')
+  or (o.template_key = 'payment_final_notice' and coalesce(ps.code,'') <> 'on_hold')
+   )
+on conflict (id) do nothing;
+update public.email_outbox
+   set status = 'failed', last_error = 'cancelled by stage-lock 20260702'
+ where id in (select id from public.email_outbox_stagelock_backup_20260702);
