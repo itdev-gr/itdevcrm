@@ -2,6 +2,8 @@
 
 **Purpose:** map *every* automated rule in the accounting layer — stage transitions, job creation, the block lifecycle, and all email triggers/sends — from the **live database**, then debug where rules **overlap or fight each other**. Built from `pg_trigger` / `cron.job` / `pg_get_functiondef`, cross-checked with live savepoint probes.
 
+> **✅ SHIPPED 2026-07-02** — the root overlap below is fixed. `accounting_stage` now has ONE owner (`reconcile_deal_stage`, a due-date rule called instantly on payment changes + by the nightly sweep). The 24h grace, `move_to_awaiting`, and `release_from_on_hold` are retired. Decision B: the system flags deals *into* On Hold on overdue but never auto-lifts a hold (the accountant does, which unblocks jobs). See `docs/superpowers/specs/2026-07-02-accounting-stage-single-owner-design.md`.
+
 **TL;DR of the audit:** the system is over-complex in one specific, fixable way — **the deal's `accounting_stage` is written by three independent mechanisms** (a payment-insert trigger, a payment-paid trigger, and a nightly due-date cron) *plus* manual drags. They disagree, so the stage flip-flops. Every "flip fix / 24h grace / mitigation" shipped this session is a **patch over that one overlap.** Detail + evidence below.
 
 ---

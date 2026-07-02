@@ -1,7 +1,7 @@
 # Accounting Stage — Single-Owner Simplification — Design Spec
 
 **Date:** 2026-07-02
-**Status:** Approved (brainstorming) — pending implementation plan
+**Status:** ✅ SHIPPED 2026-07-02 — single-owner stage live (migrations `20260702150000`/`150100`/`150150`/`150200`); grace + move_to_awaiting + release_from_on_hold retired; Decision B (never auto-lift a hold) applied; authoritative harness `supabase/tests/reconcile_deal_stage.sql` green; billing-integrity guards untouched.
 **Audit it fixes:** `docs/system-analysis/2026-07-02-accounting-processes-map-and-overlap-audit.md`
 
 ## Goal

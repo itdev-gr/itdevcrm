@@ -1,3 +1,9 @@
+-- SUPERSEDED (2026-07-02): the 24h grace + move_to_awaiting + release_from_on_hold this
+-- file exercises were RETIRED by the single-owner stage change. Grace/mover scenarios here
+-- now FAIL by design (deal goes on_hold instead of grace-held paid_in_full; on_hold is not
+-- auto-lifted per Decision B). Authoritative coverage: supabase/tests/reconcile_deal_stage.sql
+-- + spec docs/superpowers/specs/2026-07-02-accounting-stage-single-owner-design.md. Kept for history.
+
 -- Paid-In-Full flip-flop harness. Run each scenario in its own transaction,
 -- rollback at the end so the DB is untouched. Each scenario raises with a
 -- clear REPRO message on failure and prints 'OK: <name>' on success.
