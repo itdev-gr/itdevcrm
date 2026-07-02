@@ -1,95 +1,174 @@
--- Run with: supabase test db  (transactional; rolls back)
--- Verifies enqueue_payment_reminders():
---   * fires only for deals whose accounting_stage is in the invoiced+ whitelist
---     (invoice_issued / awaiting_payment / partial_payment / paid_in_full / on_hold)
---   * uses the current +7 / -1 / -7 date window and picks the right template
---   * skips 'paid' payments
---   * is idempotent (dedupe on second run)
-begin;
-select plan(6);
+-- Stage-locked accounting reminder harness (RAISE-style, savepoint-rollback).
+-- Runs against prod via runharness.py (pgtap is NOT installed on prod).
+-- Each scenario seeds its own client+deal, calls enqueue_payment_reminders(),
+-- asserts the outbox rows for THAT deal only, then RAISEs a RESULT and rolls back.
+-- Locks under test:
+--   payment_due_soon     -> awaiting_payment, today < due <= today+7
+--   payment_overdue      -> on_hold,          1..6 days past due
+--   payment_final_notice -> on_hold,          >=7 days past due
+\set ON_ERROR_STOP off
 
+-- ---- SL1: awaiting + due in 3d -> 1 payment_due_soon ------------------
 do $$
-declare
-  cid uuid;
-  did_new uuid; did_docs uuid; did_inv uuid; did_await uuid; did_closed uuid;
-  sales_sid uuid;
-  s_new uuid; s_docs uuid; s_inv uuid; s_await uuid; s_closed uuid;
+declare v_client uuid; v_deal uuid; v_soon int; v_other int;
 begin
-  select id into sales_sid from public.pipeline_stages where board = 'sales' order by position limit 1;
-  select id into s_new    from public.pipeline_stages where board='accounting_onboarding' and code='new';
-  select id into s_docs   from public.pipeline_stages where board='accounting_onboarding' and code='documents_verified';
-  select id into s_inv    from public.pipeline_stages where board='accounting_onboarding' and code='invoice_issued';
-  select id into s_await  from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment';
-  select id into s_closed from public.pipeline_stages where board='accounting_onboarding' and code='closed';
-
-  insert into public.clients (name, email, country)
-       values ('TestCo', 't@example.com', 'Greece')
-    returning id into cid;
-
-  insert into public.deals (client_id, archived, title, stage_id, accounting_stage_id)
-       values (cid, false, 'New-stage deal',   sales_sid, s_new)    returning id into did_new;
-  insert into public.deals (client_id, archived, title, stage_id, accounting_stage_id)
-       values (cid, false, 'Docs-verified',    sales_sid, s_docs)   returning id into did_docs;
-  insert into public.deals (client_id, archived, title, stage_id, accounting_stage_id)
-       values (cid, false, 'Invoice-issued',   sales_sid, s_inv)    returning id into did_inv;
-  insert into public.deals (client_id, archived, title, stage_id, accounting_stage_id)
-       values (cid, false, 'Awaiting-payment', sales_sid, s_await)  returning id into did_await;
-
-  -- 'closed' stage may not exist on every environment (was added later); skip if so.
-  if s_closed is not null then
-    insert into public.deals (client_id, archived, title, stage_id, accounting_stage_id)
-         values (cid, false, 'Closed', sales_sid, s_closed) returning id into did_closed;
+  insert into public.clients (name, email, country) values ('sl1_'||gen_random_uuid()::text,'sl1@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL1','sl1','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_soon  from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key='payment_due_soon';
+  select count(*) into v_other from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key<>'payment_due_soon';
+  if v_soon <> 1 or v_other <> 0 then
+    raise exception 'RESULT :: FAIL SL1 :: expected 1 due_soon + 0 other, got soon=% other=%', v_soon, v_other;
   end if;
-
-  -- One payment per deal on the +7-day (due_soon) window.
-  insert into public.deal_payments
-    (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
-  values
-    (did_new,   'web_seo',0,'recurring_monthly',100,24, current_date + 7, 'pending'),
-    (did_docs,  'web_seo',0,'recurring_monthly',100,24, current_date + 7, 'pending'),
-    (did_inv,   'web_seo',0,'recurring_monthly',100,24, current_date + 7, 'pending'),
-    (did_await, 'web_seo',0,'recurring_monthly',100,24, current_date + 7, 'pending'),
-    -- Same due date, but 'paid' → must be ignored regardless of stage.
-    (did_inv,   'web_seo',1,'recurring_monthly',100,24, current_date + 7, 'paid');
-
-  if did_closed is not null then
-    insert into public.deal_payments
-      (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
-    values
-      (did_closed, 'web_seo',0,'recurring_monthly',100,24, current_date + 7, 'pending');
-  end if;
-
-  -- Also add a -1-day (overdue) row on an invoiced deal to prove template routing.
-  insert into public.deal_payments
-    (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
-  values
-    (did_await, 'web_seo',1,'recurring_monthly',100,24, current_date - 1, 'pending');
+  raise exception 'RESULT :: PASS SL1 :: awaiting + due-in-3 -> 1 payment_due_soon';
 end $$;
 
--- Assertions
--- 2 invoiced+ deals × 1 due_soon each + 1 overdue = 3 reminders.
-select is( public.enqueue_payment_reminders(), 3,
-           'stage-gated: 2 due_soon (invoiced+) + 1 overdue' );
+-- ---- SL2: on_hold + 3d overdue -> 1 payment_overdue ------------------
+do $$
+declare v_client uuid; v_deal uuid; v_over int; v_other int;
+begin
+  insert into public.clients (name, email, country) values ('sl2_'||gen_random_uuid()::text,'sl2@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL2','sl2','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 3, 'overdue');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_over  from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key='payment_overdue';
+  select count(*) into v_other from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key<>'payment_overdue';
+  if v_over <> 1 or v_other <> 0 then
+    raise exception 'RESULT :: FAIL SL2 :: expected 1 overdue + 0 other, got over=% other=%', v_over, v_other;
+  end if;
+  raise exception 'RESULT :: PASS SL2 :: on_hold + 3d-overdue -> 1 payment_overdue';
+end $$;
 
-select is( (select count(*)::int from public.email_outbox where template_key='payment_due_soon'), 2,
-           'exactly 2 due_soon reminders (invoice_issued + awaiting_payment)' );
+-- ---- SL3: on_hold + 9d overdue -> 1 payment_final_notice -------------
+do $$
+declare v_client uuid; v_deal uuid; v_final int; v_other int;
+begin
+  insert into public.clients (name, email, country) values ('sl3_'||gen_random_uuid()::text,'sl3@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL3','sl3','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 9, 'overdue');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_final from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key='payment_final_notice';
+  select count(*) into v_other from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key<>'payment_final_notice';
+  if v_final <> 1 or v_other <> 0 then
+    raise exception 'RESULT :: FAIL SL3 :: expected 1 final + 0 other, got final=% other=%', v_final, v_other;
+  end if;
+  raise exception 'RESULT :: PASS SL3 :: on_hold + 9d-overdue -> 1 payment_final_notice';
+end $$;
 
-select is( (select count(*)::int from public.email_outbox where template_key='payment_overdue'), 1,
-           'exactly 1 overdue reminder' );
+-- ---- SL4 (KEY NEG): awaiting + 7d overdue -> NO final_notice ---------
+do $$
+declare v_client uuid; v_deal uuid; v_any int;
+begin
+  insert into public.clients (name, email, country) values ('sl4_'||gen_random_uuid()::text,'sl4@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL4','sl4','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 7, 'overdue');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_any <> 0 then
+    raise exception 'RESULT :: FAIL SL4 :: awaiting+7d-overdue must get NO email, got %', v_any;
+  end if;
+  raise exception 'RESULT :: PASS SL4 :: awaiting + 7d-overdue -> no email (final_notice needs on_hold)';
+end $$;
 
-select is( (select count(*)::int
-              from public.email_outbox o
-              join public.deals d on d.id = (o.data->>'deal_id')::uuid
-              join public.pipeline_stages ps on ps.id = d.accounting_stage_id
-             where ps.code in ('new','documents_verified','closed')), 0,
-           'no reminders for new / documents_verified / closed stages' );
+-- ---- SL5 (NEG): awaiting + 3d overdue -> no email --------------------
+do $$
+declare v_client uuid; v_deal uuid; v_any int;
+begin
+  insert into public.clients (name, email, country) values ('sl5_'||gen_random_uuid()::text,'sl5@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL5','sl5','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 3, 'overdue');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_any <> 0 then
+    raise exception 'RESULT :: FAIL SL5 :: awaiting+3d-overdue must get NO email, got %', v_any;
+  end if;
+  raise exception 'RESULT :: PASS SL5 :: awaiting + 3d-overdue -> no email (overdue needs on_hold)';
+end $$;
 
--- Idempotent: a second run enqueues nothing new (dedupe).
-select is( public.enqueue_payment_reminders(), 0, 'second run is idempotent' );
+-- ---- SL6 (NEG): paid_in_full + due 3d -> no email --------------------
+do $$
+declare v_client uuid; v_deal uuid; v_any int;
+begin
+  insert into public.clients (name, email, country) values ('sl6_'||gen_random_uuid()::text,'sl6@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL6','sl6','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='paid_in_full'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_any <> 0 then
+    raise exception 'RESULT :: FAIL SL6 :: paid_in_full must get NO reminder, got %', v_any;
+  end if;
+  raise exception 'RESULT :: PASS SL6 :: paid_in_full -> no reminder';
+end $$;
 
--- Backfill safety: cleanup snapshot table must exist (created by the fix migration).
-select has_table('public','email_outbox_stage_gate_backup_20260701',
-                 'cleanup snapshot table exists for rollback');
+-- ---- SL7 (NEG): partial_payment + 9d overdue -> no email -------------
+do $$
+declare v_client uuid; v_deal uuid; v_any int;
+begin
+  insert into public.clients (name, email, country) values ('sl7_'||gen_random_uuid()::text,'sl7@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL7','sl7','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='partial_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 9, 'overdue');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_any <> 0 then
+    raise exception 'RESULT :: FAIL SL7 :: partial_payment must get NO reminder, got %', v_any;
+  end if;
+  raise exception 'RESULT :: PASS SL7 :: partial_payment -> no reminder';
+end $$;
 
-select * from finish();
-rollback;
+-- ---- SL8: dedupe -> second enqueue adds nothing for the deal ---------
+do $$
+declare v_client uuid; v_deal uuid; v_after1 int; v_after2 int;
+begin
+  insert into public.clients (name, email, country) values ('sl8_'||gen_random_uuid()::text,'sl8@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL8','sl8','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_after1 from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_after2 from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_after1 <> 1 or v_after2 <> 1 then
+    raise exception 'RESULT :: FAIL SL8 :: dedupe broken, after1=% after2=%', v_after1, v_after2;
+  end if;
+  raise exception 'RESULT :: PASS SL8 :: dedupe holds (1 -> still 1 on second run)';
+end $$;
