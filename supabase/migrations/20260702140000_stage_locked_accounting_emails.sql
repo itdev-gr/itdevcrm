@@ -71,3 +71,20 @@ begin
   end loop;
   return created;
 end $function$;
+
+-- ---- Section 2: nightly chain (move, then send) ------------------------
+create or replace function public.run_daily_payment_reminders()
+returns int
+language plpgsql security definer set search_path = public as $function$
+declare v_created int;
+begin
+  perform public.reconcile_block_lifecycle(false);          -- 1) MOVE every deal to its column
+  select public.enqueue_payment_reminders() into v_created; -- 2) THEN send, stage-locked
+  return v_created;
+end $function$;
+
+-- Repoint the 06:00 cron from the bare enqueuer to the chained wrapper.
+select cron.alter_job(
+  (select jobid from cron.job where jobname = 'daily_payment_reminders'),
+  command => 'select public.run_daily_payment_reminders();'
+);
