@@ -55,26 +55,80 @@ function metaDate(iso: string | null): string | null {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
 
+// Excel/Meta column order: A, B, … Z, AA, AB, … (length first, then lexicographic).
+function compareColKeys(a: string, b: string): number {
+  const x = a.slice(4); // drop the "COL$" prefix
+  const y = b.slice(4);
+  return x.length - y.length || (x < y ? -1 : x > y ? 1 : 0);
+}
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
+// Meta lead-status tokens occupy the trailing column on some forms — never an answer.
+const LEAD_STATUS = new Set(['created', 'in_progress', 'disqualified', 'complete', 'archived', 'deleted']);
+
 export function parseColumnarMetaLead(data: Record<string, unknown>): ColumnarLead | null {
   if (!('COL$A' in data) && !('COL$N' in data)) return null;
   const c = (k: string): string | null => str(data[k]);
 
+  // The positional payload lists the standard contact fields (full name, phone, email)
+  // consecutively, in that order, AFTER the form's custom-question answers. But the
+  // number of question columns varies per form (0 for Social, 1 for AI/Local SEO, 2 for
+  // the website form), which shifts every later column — so a hard-coded COL$N=name is
+  // only right for single-question forms and mis-reads an answer as the name otherwise.
+  // Anchor on the email column (the one field with an unambiguous shape) and read phone
+  // and name by relative position; fall back to the legacy fixed columns if no email is
+  // found, so we never do worse than before on an unrecognised payload.
+  const colKeys = Object.keys(data)
+    .filter((k) => /^COL\$[A-Z]+$/.test(k))
+    .sort(compareColKeys);
+
+  const emailIdx = colKeys.findIndex((k) => EMAIL_RE.test(c(k) ?? ''));
+  let nameIdx: number;
+  let phoneIdx: number;
+  let mailIdx: number;
+  if (emailIdx >= 2) {
+    mailIdx = emailIdx;
+    phoneIdx = emailIdx - 1;
+    nameIdx = emailIdx - 2;
+  } else {
+    nameIdx = colKeys.indexOf('COL$N');
+    phoneIdx = colKeys.indexOf('COL$O');
+    mailIdx = colKeys.indexOf('COL$P');
+  }
+  const at = (i: number): string | null => (i >= 0 && i < colKeys.length ? c(colKeys[i]!) : null);
+
   const leadgenId = stripPrefix(c('COL$A'), 'l:');
-  const fullName = c('COL$N');
-  const email = c('COL$P');
-  const phone = stripPrefix(c('COL$O'), 'p:');
+  const fullName = at(nameIdx);
+  const email = at(mailIdx);
+  const phone = stripPrefix(at(phoneIdx), 'p:');
   const formName = c('COL$J');
-  const colR = c('COL$R');
-  const website = looksLikeUrl(colR) ? colR : null;
+
+  // Website = the first URL-looking column after email (was hard-coded to COL$R).
+  let website: string | null = null;
+  for (let i = mailIdx + 1; i < colKeys.length; i++) {
+    const v = c(colKeys[i]!);
+    if (looksLikeUrl(v)) {
+      website = v;
+      break;
+    }
+  }
 
   const platformRaw = (c('COL$L') ?? '').toLowerCase();
   const platform =
     platformRaw === 'fb' ? 'Facebook' : platformRaw === 'ig' ? 'Instagram' : c('COL$L');
 
-  // Custom form answers (question text is not in the positional payload).
-  const answers = [c('COL$M'), c('COL$Q'), website ? null : colR].filter(
-    (x): x is string => !!x,
-  );
+  // Custom form answers (question text is not in the positional payload): every column
+  // after the platform that isn't the name/phone/email, the website URL, or the trailing
+  // lead-status token.
+  const platformIdx = colKeys.indexOf('COL$L');
+  const answersStart = platformIdx >= 0 ? platformIdx + 1 : colKeys.indexOf('COL$M');
+  const answers: string[] = [];
+  for (let i = answersStart; i >= 0 && i < colKeys.length; i++) {
+    if (i === nameIdx || i === phoneIdx || i === mailIdx) continue;
+    const v = c(colKeys[i]!);
+    if (!v || looksLikeUrl(v) || LEAD_STATUS.has(v.toLowerCase())) continue;
+    answers.push(v);
+  }
 
   const lines: string[] = [];
   if (formName) lines.push(`Form: ${formName}`);
