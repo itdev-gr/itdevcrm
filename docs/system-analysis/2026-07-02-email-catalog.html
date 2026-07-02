@@ -27,13 +27,14 @@
 <body>
 
 <h1>ITDEV CRM — Κατάλογος Email / Email Catalog</h1>
-<div class="sub">Generated 2026-07-02 from the live production database (email_templates + trigger audit). 25 emails total.</div>
+<div class="sub">Generated 2026-07-02 from the live production database (email_templates + trigger audit). Updated 2026-07-02: accounting payment reminders are now <b>stage-locked</b> to their board column (see §2). 24 active emails (payment_due_today removed).</div>
 
 <div class="intro">
   <b>How the system works:</b>
   <ul>
     <li>Every client email subject is automatically prefixed with the client's code: <b>{{code}} - …</b></li>
     <li>Clients marked <b>closed ("done")</b> never receive automated emails.</li>
+    <li><b>Τα αυτόματα λογιστικά email πληρωμών στέλνονται μόνο από τη σωστή στήλη</b>, αφού πρώτα γίνει η νυχτερινή μετακίνηση του deal: <b>Υπενθύμιση (7 ημέρες)</b> → Awaiting Payment· <b>Εκπρόθεσμη</b> & <b>Τελική ειδοποίηση</b> → On Hold.</li>
     <li>Each department has a master switch in Settings → Email automations (Sales / Accounting / Technical — all currently <span class="on">ON</span>), plus a per-email switch.</li>
     <li>Placeholders like {{name}}, {{amount_gross}} are filled in automatically per recipient.</li>
   </ul>
@@ -300,7 +301,7 @@ https://form.jotform.com/252513070502342
 <div class="card">
   <h3>Υπενθύμιση πληρωμής (7 ημέρες πριν) <span class="key">payment_due_soon</span></h3>
   <div class="meta">
-    <div><span class="lbl">Trigger:</span> Αυτόματα, 7 ημέρες πριν τη λήξη κάθε προγραμματισμένης πληρωμής (ημερήσιος έλεγχος). Μία φορά ανά πληρωμή. Δεν στέλνεται αν το deal έχει «σίγαση υπενθυμίσεων».</div>
+    <div><span class="lbl">Trigger:</span> Στέλνεται <b>ΜΟΝΟ όταν το deal βρίσκεται στη στήλη «Awaiting Payment»</b> (Αναμονή πληρωμής) και η πληρωμή λήγει εντός 7 ημερών. Μία φορά ανά πληρωμή, αφού πρώτα γίνει η νυχτερινή μετακίνηση του deal στη σωστή στήλη. Δεν στέλνεται αν το deal έχει «σίγαση υπενθυμίσεων».</div>
     <div><span class="lbl">Switch:</span> Accounting dept (<span class="on">ON</span>)</div>
   </div>
   <div class="subject">{{code}} - Υπενθύμιση πληρωμής — λήγει {{due_date}}</div>
@@ -343,7 +344,7 @@ https://pay.vivawallet.com/it-dev
 <div class="card">
   <h3>Εκπρόθεσμη πληρωμή (1 ημέρα μετά) <span class="key">payment_overdue</span></h3>
   <div class="meta">
-    <div><span class="lbl">Trigger:</span> Αυτόματα, την επόμενη μέρα από τη λήξη, αν η πληρωμή παραμένει ανεξόφλητη.</div>
+    <div><span class="lbl">Trigger:</span> Στέλνεται <b>ΜΟΝΟ όταν το deal είναι στη στήλη «On Hold»</b> (Σε αναμονή) και η πληρωμή είναι <b>1–6 ημέρες εκπρόθεσμη</b>. Μία φορά ανά πληρωμή, αφού πρώτα γίνει η νυχτερινή μετακίνηση.</div>
     <div><span class="lbl">Switch:</span> Accounting dept (<span class="on">ON</span>)</div>
   </div>
   <div class="subject">{{code}} - Εκπρόθεσμη πληρωμή</div>
@@ -367,7 +368,7 @@ https://pay.vivawallet.com/it-dev
 <div class="card">
   <h3>Τελική ειδοποίηση (7 ημέρες μετά) <span class="key">payment_final_notice</span></h3>
   <div class="meta">
-    <div><span class="lbl">Trigger:</span> Αυτόματα, 7 ημέρες μετά τη λήξη αν παραμένει ανεξόφλητη — προειδοποιεί για παύση υπηρεσιών.</div>
+    <div><span class="lbl">Trigger:</span> Στέλνεται <b>ΜΟΝΟ όταν το deal είναι στη στήλη «On Hold»</b> (Σε αναμονή) και η πληρωμή είναι <b>≥7 ημέρες εκπρόθεσμη</b> — προειδοποιεί για παύση υπηρεσιών. Μία φορά ανά πληρωμή, αφού πρώτα γίνει η νυχτερινή μετακίνηση.</div>
     <div><span class="lbl">Switch:</span> Accounting dept (<span class="on">ON</span>)</div>
   </div>
   <div class="subject">{{code}} - Τελική ενημέρωση για εκκρεμότητα πληρωμής</div>
@@ -391,18 +392,11 @@ https://pay.vivawallet.com/it-dev
 </div>
 
 <div class="card">
-  <h3>Η πληρωμή λήγει σήμερα <span class="key">payment_due_today</span></h3>
+  <h3>Η πληρωμή λήγει σήμερα <span class="key">payment_due_today</span> — <span class="off">ΚΑΤΑΡΓΗΘΗΚΕ 2026-07-02</span></h3>
   <div class="meta">
-    <div><span class="lbl">Trigger:</span> ΚΑΝΕΝΑ αυτή τη στιγμή — το κείμενο υπάρχει, αλλά δεν είναι συνδεδεμένο με το ημερήσιο αυτόματο (εκκρεμότητα F9 από τον έλεγχο 2026-07-02: είτε θα συνδεθεί σε offset ημέρας-0 είτε θα διαγραφεί).</div>
+    <div><span class="lbl">Trigger:</span> Καταργήθηκε (εκκρεμότητα F9). Το πρότυπο αφαιρέθηκε από τη βάση — δεν στέλνεται πλέον καμία «λήγει σήμερα» ειδοποίηση. Η πρώτη ειδοποίηση εκπρόθεσμης είναι πλέον η <span class="key">payment_overdue</span> (+1 ημέρα).</div>
     <div><span class="lbl">Switch:</span> —</div>
   </div>
-  <div class="subject">{{code}} - Η πληρωμή σας λήγει σήμερα</div>
-  <div class="body">Αγαπητέ/ή {{client_name}},
-
-Η πληρωμή για την υπηρεσία {{service_type}} ποσού {{amount_gross}}€ λήγει σήμερα {{due_date}}.
-
-Με εκτίμηση,
-ITDEV Λογιστήριο</div>
 </div>
 
 <div class="card">
