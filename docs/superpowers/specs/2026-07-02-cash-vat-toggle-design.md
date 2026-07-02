@@ -75,18 +75,17 @@ effectiveVatRate(
    the AI-SEO trio seeder @ `20260629000000`, and any other spot computing `v_vat`)
    read the deal's `payment_method` + `cash_charge_vat` and compute:
    `v_vat := case when payment_method='cash' and not cash_charge_vat then 0 else country_rate end`.
-3. **Re-derive on change** — a trigger on `deals` (AFTER UPDATE of `payment_method` or
-   `cash_charge_vat`) re-derives `vat_rate` on that deal's jobs that are **not yet
-   invoiced/paid**, so a later toggle takes effect without disturbing already-billed
-   rows. (The exact "not yet invoiced" predicate — e.g. no `deal_payments` row, or a
-   billing flag — is to be pinned down in the plan.)
 
-## Existing data (backfill)
+**Forward-only.** The toggle is read at seed time. Editing it on a deal whose jobs are
+**already seeded** does NOT retroactively change those jobs' `vat_rate` — there is no
+re-derive trigger. Accounting adjusts already-seeded jobs manually if ever needed.
 
-- All existing `leads`/`deals` get `cash_charge_vat = false` via the column default.
-- The **11 jobs on cash deals currently at `vat_rate = 24`**: set to `0` **only if not
-  already invoiced/paid** (verify first). Any already-billed job stays untouched and is
-  reported to the user. Backup table + rollback SQL.
+## Existing data
+
+**No backfill. Existing leads / deals / jobs are not touched.** Adding the column gives
+existing rows `cash_charge_vat = false` by default, but no existing job's `vat_rate` is
+changed and no already-billed row is modified. The feature applies only to conversions /
+seeds from now on. (The 11 current cash-deal jobs at 24 % are left exactly as they are.)
 
 ## Testing
 
@@ -94,23 +93,19 @@ effectiveVatRate(
   cash+no-charge → 0, non-cash → country rate (Greece + Cyprus).
 - **pgTAP**: seed function sets `vat_rate = 0` for a cash + `cash_charge_vat=false` deal,
   and country rate for cash + `cash_charge_vat=true` and for non-cash.
-- **pgTAP**: the re-derive trigger updates a non-invoiced job's `vat_rate` when the deal's
-  toggle flips, and leaves an invoiced job untouched.
 
 ## Changes / Revert
 
 **Changes**
 
 - Migration: `cash_charge_vat` column on `leads` + `deals`; updated seed functions
-  (`release_billing_jobs_for_deal`, AI-SEO seeder); conversion copy; re-derive trigger;
-  data backfill of the 11 cash-deal jobs.
+  (`release_billing_jobs_for_deal`, AI-SEO seeder); conversion copy. No data backfill.
 - Frontend: `effectiveVatRate` signature; `LeadForm` + `DealForm` checkbox + wiring;
   tests.
 
 **Revert**
 
-- Migration `ROLLBACK` restores the country-only `v_vat` in the seed functions, drops the
-  re-derive trigger, restores the backed-up `vat_rate` values, and drops the
-  `cash_charge_vat` columns.
+- Migration `ROLLBACK` restores the country-only `v_vat` in the seed functions and drops
+  the `cash_charge_vat` columns. No data to restore (nothing was backfilled).
 - Frontend: revert the helper signature + form changes (the 2026-07-02 `64a77c3` auto-zero
   behavior is fully replaced, not restored).
