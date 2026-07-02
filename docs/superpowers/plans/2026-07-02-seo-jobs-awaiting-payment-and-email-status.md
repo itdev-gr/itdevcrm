@@ -1,5 +1,7 @@
 # SEO Jobs at Awaiting Payment + Per-Job Email-Status Badge — Implementation Plan
 
+> **STATUS 2026-07-02:** Part A (Tasks A1–A3) was DROPPED — the owner corrected the requirement to keep SEO+emails at Fully Paid (= current behavior; no code needed). Only **Part B (Tasks B1–B4 + C, the email-status badge)** was implemented + shipped (commits 360fb92..985287a). The Part A section below is retained for history only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Create the SEO jobs (and fire their access emails) the first time a deal reaches Awaiting Payment (or Fully Paid), and add a per-job onboarding-email status badge (Sent / Not sent + Resend / Coming soon) on every job's board card and detail page.

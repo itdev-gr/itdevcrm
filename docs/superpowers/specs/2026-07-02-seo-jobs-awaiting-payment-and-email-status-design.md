@@ -1,7 +1,7 @@
 # SEO Jobs at Awaiting Payment + Per-Job Email-Status Badge — Design Spec
 
 **Date:** 2026-07-02
-**Status:** Approved (brainstorming) — pending implementation plan
+**Status:** Part A DROPPED (2026-07-02) — the owner corrected the requirement: SEO jobs + access emails stay at **Fully Paid** (web_dev/hosting at Partial), which is the CURRENT behavior, so no code was needed. **Only Part B (the email-status badge) was built + shipped** (commits 360fb92..985287a).
 **Author:** collaborative brainstorm (product owner + Claude)
 
 ## Goal
