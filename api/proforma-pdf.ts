@@ -30,8 +30,8 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     await runHandler(req, res);
   } catch (err) {
     const e = err as Error;
-    console.error('offer-pdf handler error:', e);
-    captureApiError('offer-pdf', err);
+    console.error('proforma-pdf handler error:', e);
+    captureApiError('proforma-pdf', err);
     if (!res.headersSent) {
       res.status(500).json({ error: 'internal_error' });
     }
@@ -39,12 +39,12 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
 }
 
 async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  const offerId = typeof req.query.id === 'string' ? req.query.id : null;
+  const proFormaId = typeof req.query.id === 'string' ? req.query.id : null;
   const auth = req.headers.authorization ?? '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
 
-  if (!offerId || !token) {
-    res.status(400).json({ error: 'missing offer id or token' });
+  if (!proFormaId || !token) {
+    res.status(400).json({ error: 'missing pro forma id or token' });
     return;
   }
 
@@ -59,12 +59,12 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
   // Defer the supabase + template imports so a failed module load lands
   // inside the outer handler's try/catch rather than crashing cold start.
   const { createClient } = await import('@supabase/supabase-js');
-  const { renderOfferHtml } = await import('./_pdf-template.js');
+  const { renderProFormaHtml } = await import('./_proforma-pdf-template.js');
 
   // Service-role client used for storage + DB updates.
   const admin = createClient(supabaseUrl, serviceRoleKey);
 
-  // User client for permission verification — RLS-safe read of the offer.
+  // User client for permission verification — RLS-safe read of the pro forma.
   // Uses the ANON key (not service_role): if the Authorization header is ever
   // dropped, RLS denies the read rather than silently granting full
   // service-role access. Privileged storage/DB writes go through `admin`.
@@ -78,48 +78,46 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     return;
   }
 
-  const { data: offer, error } = await userClient
-    .from('offers').select('*').eq('id', offerId).single();
-  if (error || !offer) {
+  const { data: proForma, error } = await userClient
+    .from('pro_formas').select('*').eq('id', proFormaId).single();
+  if (error || !proForma) {
     res.status(404).json({ error: error?.message ?? 'not found' });
     return;
   }
 
   // Resolve the recipient printed at the top of the PDF. Prefer a linked
-  // client; otherwise fall back to the originating lead — most offers are
-  // drafted from an un-converted lead (no client_id), and without this the
-  // header printed the literal word "Client".
+  // client; otherwise fall back to the originating lead.
   let client: RecipientSource = null;
-  if (offer.client_id) {
+  if (proForma.client_id) {
     const { data } = await userClient
       .from('clients').select('name, email, contact_first_name, contact_last_name')
-      .eq('id', offer.client_id).single();
+      .eq('id', proForma.client_id).single();
     client = data;
   }
   let lead: RecipientSource = null;
-  if (!client && offer.lead_id) {
+  if (!client && proForma.lead_id) {
     const { data } = await userClient
       .from('leads').select('company_name, email, contact_first_name, contact_last_name')
-      .eq('id', offer.lead_id).single();
+      .eq('id', proForma.lead_id).single();
     lead = data;
   }
   const { clientName, companyName, email } = resolveOfferRecipient(client, lead);
 
-  const html = renderOfferHtml({
-    offerId: offer.id,
-    offerNumber: offer.offer_number,
+  const html = renderProFormaHtml({
+    proFormaId: proForma.id,
+    proFormaNumber: proForma.pro_forma_number,
     clientName,
     companyName,
     email,
-    currency: offer.currency,
-    vatPercent: Number(offer.vat_percent),
-    validityDays: offer.validity_days,
-    notes: offer.notes,
-    items: (offer.items as unknown as OfferItem[]) ?? [],
-    totals: (offer.totals as unknown as OfferTotals) ?? {
+    currency: proForma.currency,
+    vatPercent: Number(proForma.vat_percent),
+    validityDays: proForma.validity_days,
+    notes: proForma.notes,
+    items: (proForma.items as unknown as OfferItem[]) ?? [],
+    totals: (proForma.totals as unknown as OfferTotals) ?? {
       subtotal: 0, discountAmount: 0, taxable: 0, vatAmount: 0, total: 0,
     },
-    createdAt: offer.created_at,
+    createdAt: proForma.created_at,
   });
 
   const puppeteer = await import('puppeteer-core');
@@ -138,7 +136,7 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     // Render as a single tall page (no page breaks). Measure the rendered
     // body height in px and convert to mm via the 96 DPI ratio
     // (1 mm = 3.779527559 px). 297 mm = A4 height — use as a floor so
-    // tiny offers still come out at A4 size.
+    // tiny documents still come out at A4 size.
     const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
     const pageHeightMm = Math.max(bodyHeight / 3.779527559, 297);
     pdf = await page.pdf({
@@ -153,20 +151,20 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     await browser.close();
   }
 
-  const path = `offers/${offer.id}.pdf`;
+  const path = `proformas/${proForma.id}.pdf`;
   const { error: uploadErr } = await admin.storage
-    .from('offer-pdfs')
+    .from('proforma-pdfs')
     .upload(path, pdf, { contentType: 'application/pdf', upsert: true });
   if (uploadErr) {
     res.status(500).json({ error: 'upload failed: ' + uploadErr.message });
     return;
   }
 
-  await admin.from('offers').update({ pdf_path: path }).eq('id', offer.id);
+  await admin.from('pro_formas').update({ pdf_path: path }).eq('id', proForma.id);
 
   const { data: signed } = await admin.storage
-    .from('offer-pdfs').createSignedUrl(path, 60 * 5);
+    .from('proforma-pdfs').createSignedUrl(path, 60 * 5);
   res.status(200).json({ url: signed?.signedUrl ?? null });
 }
 
-export default withSentry('offer-pdf', handler);
+export default withSentry('proforma-pdf', handler);

@@ -22,6 +22,10 @@
       "maxDuration": 60,
       "includeFiles": "node_modules/@sparticuz/chromium/**"
     },
+    "api/proforma-pdf.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/@sparticuz/chromium/**"
+    },
     "api/pbx-lookup.ts": {
       "maxDuration": 10
     },

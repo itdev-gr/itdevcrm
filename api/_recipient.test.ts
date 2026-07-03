@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveOfferRecipient } from './offer-pdf';
+import { resolveOfferRecipient } from './_recipient';
 
 describe('resolveOfferRecipient', () => {
   it('uses the client when one is linked (contact name preferred)', () => {
