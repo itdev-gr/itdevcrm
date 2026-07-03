@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   alertLink,
   alertLinkLabel,
-  groupAlerts,
+  groupAlertsBySubject,
   severityClass,
   severityLabel,
   type AlertRow,
@@ -37,7 +37,7 @@ export default function AccountingAlertsPage() {
   const dismiss = useDismissAlert();
   const undismiss = useUndismissAlert();
 
-  const groups = groupAlerts(alerts);
+  const groups = groupAlertsBySubject(alerts);
   const openCount = alerts.length;
 
   return (
@@ -79,65 +79,74 @@ export default function AccountingAlertsPage() {
               {t('accounting:alerts.empty', { defaultValue: 'No alerts 🎉' })}
             </div>
           ) : (
-            <div className="flex flex-col gap-6">
-              {groups.map((group) => (
-                <section key={group.category} className="flex flex-col gap-2">
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t(`accounting:alerts.category.${group.category}`, {
-                      defaultValue: CATEGORY_LABEL[group.category],
-                    })}
-                  </h2>
-                  <ul className="flex flex-col gap-2">
-                    {group.rows.map((row) => {
-                      const link = alertLink(row);
-                      return (
+            <div className="flex flex-col gap-4">
+              {groups.map((group) => {
+                const anchor = group.rows.find((r) => r.deal_id) ?? group.rows[0]!;
+                const link = alertLink(anchor);
+                return (
+                  <section
+                    key={group.code}
+                    className="flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-3 shadow-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-semibold">{group.code}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {group.rows.length} {group.rows.length === 1 ? 'issue' : 'issues'}
+                      </span>
+                      {link && (
+                        <Button asChild variant="outline" size="sm" className="ml-auto">
+                          <Link to={link}>{alertLinkLabel(anchor)}</Link>
+                        </Button>
+                      )}
+                    </div>
+                    <ul className="flex flex-col gap-1.5">
+                      {group.rows.map((row) => (
                         <li
                           key={`${row.check_key}:${row.subject_id}:${row.signature}`}
-                          className="flex items-start gap-3 rounded-xl border border-border/70 bg-card p-3 shadow-sm"
+                          className="flex items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-2"
                         >
                           <span
                             className={cn(
-                              'rounded px-2 py-0.5 text-xs font-medium',
+                              'shrink-0 rounded px-2 py-0.5 text-xs font-medium',
                               severityClass(row.severity),
                             )}
                           >
                             {severityLabel(row.severity)}
                           </span>
+                          <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                            {CATEGORY_LABEL[row.category]}
+                          </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-baseline gap-x-2">
-                              <span className="font-mono text-xs text-muted-foreground">
-                                {row.subject_code}
-                              </span>
+                              {row.subject_code !== group.code && (
+                                <span className="font-mono text-xs text-muted-foreground">
+                                  {row.subject_code}
+                                </span>
+                              )}
                               <span className="font-semibold">{row.title}</span>
                             </div>
                             <p className="text-sm text-muted-foreground">{row.detail}</p>
                           </div>
-                          <div className="flex shrink-0 items-center gap-2">
-                            {link && (
-                              <Button asChild variant="outline" size="sm">
-                                <Link to={link}>{alertLinkLabel(row)}</Link>
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                dismiss.mutate({
-                                  check_key: row.check_key,
-                                  subject_id: row.subject_id,
-                                  signature: row.signature,
-                                })
-                              }
-                            >
-                              {t('accounting:alerts.ignore', { defaultValue: 'Ignore' })}
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() =>
+                              dismiss.mutate({
+                                check_key: row.check_key,
+                                subject_id: row.subject_id,
+                                signature: row.signature,
+                              })
+                            }
+                          >
+                            {t('accounting:alerts.ignore', { defaultValue: 'Ignore' })}
+                          </Button>
                         </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              ))}
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
             </div>
           )
         ) : dismissed.isLoading ? (

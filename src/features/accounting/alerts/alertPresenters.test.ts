@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupAlerts, alertLink, severityLabel, type AlertRow } from './alertPresenters';
+import { groupAlerts, groupAlertsBySubject, alertLink, severityLabel, type AlertRow } from './alertPresenters';
 const mk = (o: Partial<AlertRow>): AlertRow => ({ check_key:'x',severity:'amber',category:'money',subject_type:'deal',subject_id:'s',subject_code:'000001',title:'t',detail:'d',deal_id:'D',job_id:null,signature:'', ...o });
 describe('alertPresenters', () => {
   it('links deal-first (deal > client > job)', () => {
@@ -12,6 +12,16 @@ describe('alertPresenters', () => {
     expect(severityLabel('red')).toBe('High');
     expect(severityLabel('amber')).toBe('Medium');
     expect(severityLabel('grey')).toBe('Low');
+  });
+  it('groups by subject base code (deal + its job together), worst-severity first', () => {
+    const g = groupAlertsBySubject([
+      mk({ subject_code: '000084-LOCALSEO', severity: 'amber' }),
+      mk({ subject_code: '000084', severity: 'red' }),
+      mk({ subject_code: '000090', severity: 'grey' }),
+    ]);
+    expect(g.map((x) => x.code)).toEqual(['000084', '000090']); // 000084 first (has a red)
+    expect(g[0]!.rows.length).toBe(2); // deal + its job merged under 000084
+    expect(g[0]!.rows[0]!.severity).toBe('red'); // rows sorted by severity within a group
   });
   it('groups in money→lifecycle→missing order', () => {
     const g = groupAlerts([mk({category:'missing'}), mk({category:'money'}), mk({category:'lifecycle'})]);

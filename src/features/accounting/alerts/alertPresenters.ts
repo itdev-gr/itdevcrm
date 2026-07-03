@@ -26,6 +26,34 @@ export function groupAlerts(rows: AlertRow[]): { category: AlertRow['category'];
   })).filter((g) => g.rows.length > 0);
 }
 
+const SEVERITY_RANK: Record<AlertRow['severity'], number> = { red: 0, amber: 1, grey: 2 };
+
+/**
+ * Group alerts by their subject ENTITY — the base code before the first '-',
+ * so a deal `000084` and its job `000084-LOCALSEO` land in one group. Groups
+ * are ordered by their most-severe alert (worst customers first); rows within
+ * a group are ordered by severity.
+ */
+export function groupAlertsBySubject(rows: AlertRow[]): { code: string; rows: AlertRow[] }[] {
+  const map = new Map<string, AlertRow[]>();
+  for (const r of rows) {
+    const code = r.subject_code.split('-')[0] || r.subject_code;
+    const arr = map.get(code);
+    if (arr) arr.push(r);
+    else map.set(code, [r]);
+  }
+  return [...map.entries()]
+    .map(([code, rs]) => ({
+      code,
+      rows: [...rs].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]),
+    }))
+    .sort((a, b) => {
+      const wa = Math.min(...a.rows.map((r) => SEVERITY_RANK[r.severity]));
+      const wb = Math.min(...b.rows.map((r) => SEVERITY_RANK[r.severity]));
+      return wa - wb || a.code.localeCompare(b.code);
+    });
+}
+
 /** Link a row to its DEAL (preferred — accounting works at the deal level),
  *  else its client, else its job. Null if none. */
 export function alertLink(row: AlertRow): string | null {
