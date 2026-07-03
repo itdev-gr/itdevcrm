@@ -9,7 +9,9 @@ begin
     return; -- no rows for anyone else
   end if;
   return query
-  with alerts as (
+  with alerts (check_key, severity, category, subject_type,
+               subject_id, subject_code, title, detail,
+               deal_id, job_id, signature) as (
     -- 1 deal_zero_value
     select 'deal_zero_value'::text, 'amber'::text, 'money'::text, 'deal'::text,
            d.id, d.code, 'Deal has €0 total'::text,
@@ -87,14 +89,18 @@ begin
       from jobs j join pipeline_stages s on s.id=j.stage_id
      where not j.archived and s.code='renewal' and j.period_due_date is not null and j.period_due_date < current_date
     union all
-    -- 11 billing_gap
-    select 'billing_gap','red','lifecycle','deal', d.id, d.code, 'Recurring deal has no next payment',
-           'Active recurring deal with no upcoming payment scheduled', d.id, null::uuid, ''
+    -- 11 billing_gap: recurring billing has STALLED — no period covers today.
+    -- (Mid-cycle deals are covered by a current period, so they don't match; the
+    --  next renewal is only generated ~7d before the current ends, so "no future
+    --  payment" alone is normal and NOT a gap.)
+    select 'billing_gap','red','lifecycle','deal', d.id, d.code, 'Recurring billing has stalled',
+           'No billing period covers today (schedule lapsed)', d.id, null::uuid, ''
       from deals d join pipeline_stages ps on ps.id=d.accounting_stage_id
      where not d.archived and ps.code not in ('closed','done','on_hold')
        and exists (select 1 from jobs j where j.deal_id=d.id and j.billing_active and not j.archived
                     and j.billing_type in ('recurring_monthly','recurring_yearly'))
-       and not exists (select 1 from deal_payments p where p.deal_id=d.id and p.status<>'cancelled' and p.start_date >= current_date)
+       and not exists (select 1 from deal_payments p where p.deal_id=d.id and p.status<>'cancelled'
+                        and p.start_date <= current_date and p.end_date >= current_date)
     union all
     -- 12 no_payment_method
     select 'no_payment_method','amber','missing','deal', d.id, d.code, 'No payment method',
