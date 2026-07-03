@@ -124,6 +124,54 @@ begin
      where not d.archived and ps.code not in ('closed','done')
        and coalesce(jsonb_array_length(d.services_planned),0)=0
        and not exists (select 1 from jobs j where j.deal_id=d.id and not j.archived)
+    union all
+    -- 15 cash_deal_with_vat: deal chose cash + no-VAT, yet a job still charges VAT
+    select 'cash_deal_with_vat','amber','possible_mistakes','job', j.id, j.code,
+           'Cash deal but VAT charged',
+           'Deal is cash + no-VAT, but this job has VAT '||j.vat_rate::text||'%',
+           j.deal_id, j.id, j.vat_rate::text
+      from jobs j join deals d on d.id=j.deal_id
+     where not j.archived and coalesce(j.amount_net,0)>0 and coalesce(j.vat_rate,0)>0
+       and d.payment_method='cash' and not coalesce(d.cash_charge_vat,false)
+    union all
+    -- 16 duplicate_vat_number: two+ active clients share a VAT number
+    select 'duplicate_vat_number','amber','possible_mistakes','client', c.id, c.code,
+           'Duplicate VAT number', 'VAT '||c.vat_number||' is shared by another client',
+           null::uuid, null::uuid, c.vat_number
+      from clients c
+     where not c.archived and nullif(trim(coalesce(c.vat_number,'')),'') is not null
+       and exists (select 1 from clients c2 where c2.id<>c.id and not c2.archived
+                    and trim(coalesce(c2.vat_number,''))=trim(c.vat_number))
+    union all
+    -- 17 deal_value_mismatch: deal's monthly value != sum of its recurring job amounts
+    select 'deal_value_mismatch','grey','possible_mistakes','deal', d.id, d.code,
+           'Deal value differs from its jobs',
+           'Monthly value E'||coalesce(d.recurring_monthly_value,0)::text||' vs jobs E'||js.jobsum::text,
+           d.id, null::uuid, ''
+      from deals d join pipeline_stages ps on ps.id=d.accounting_stage_id
+      join lateral (select coalesce(sum(j.amount_net),0) as jobsum from jobs j
+                     where j.deal_id=d.id and not j.archived and j.billing_active
+                       and j.billing_type in ('recurring_monthly','recurring_yearly')) js on true
+     where not d.archived and ps.code not in ('closed','done')
+       and js.jobsum>0 and coalesce(d.recurring_monthly_value,0)>0
+       and abs(coalesce(d.recurring_monthly_value,0)-js.jobsum)>=1
+    union all
+    -- 18 large_recurring_amount: an unusually large recurring amount (possible typo)
+    select 'large_recurring_amount','grey','possible_mistakes','job', j.id, j.code,
+           'Unusually large recurring amount', 'Recurring E'||j.amount_net::text||' / period',
+           j.deal_id, j.id, ''
+      from jobs j
+     where not j.archived and j.billing_active
+       and j.billing_type in ('recurring_monthly','recurring_yearly')
+       and coalesce(j.amount_net,0)>3000
+    union all
+    -- 19 test_client_name: client name looks like a test/placeholder
+    select 'test_client_name','grey','possible_mistakes','client', c.id, c.code,
+           'Test-looking client name', 'Client name: '||c.name, null::uuid, null::uuid, ''
+      from clients c
+     where not c.archived and coalesce(c.status,'')<>'done'
+       and (c.name ilike '%test%' or c.name ilike '%δοκιμ%' or c.name ilike '%asdf%'
+            or c.name ilike '%xxx%' or c.name ilike '%qwerty%')
   )
   select a.* from alerts a
    where not exists (

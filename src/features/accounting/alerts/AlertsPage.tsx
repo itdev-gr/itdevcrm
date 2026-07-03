@@ -23,6 +23,7 @@ const CATEGORY_LABEL: Record<AlertRow['category'], string> = {
   money: 'Money',
   lifecycle: 'Lifecycle',
   missing: 'Missing info',
+  possible_mistakes: 'Possible mistakes',
 };
 
 type Tab = 'open' | 'ignored';

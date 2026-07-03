@@ -1,7 +1,7 @@
 export type AlertRow = {
   check_key: string;
   severity: 'red' | 'amber' | 'grey';
-  category: 'money' | 'lifecycle' | 'missing';
+  category: 'money' | 'lifecycle' | 'missing' | 'possible_mistakes';
   subject_type: string;
   subject_id: string;
   subject_code: string;
@@ -12,7 +12,7 @@ export type AlertRow = {
   signature: string;
 };
 
-const CATEGORY_ORDER: AlertRow['category'][] = ['money', 'lifecycle', 'missing'];
+const CATEGORY_ORDER: AlertRow['category'][] = ['money', 'lifecycle', 'missing', 'possible_mistakes'];
 
 /**
  * Bucket alert rows into the fixed category order (money → lifecycle → missing),
