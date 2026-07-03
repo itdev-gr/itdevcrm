@@ -84,7 +84,7 @@ export default function AccountingAlertsPage() {
                       const link = alertLink(row);
                       return (
                         <li
-                          key={`${row.check_key}:${row.subject_id}`}
+                          key={`${row.check_key}:${row.subject_id}:${row.signature}`}
                           className="flex items-start gap-3 rounded-xl border border-border/70 bg-card p-3 shadow-sm"
                         >
                           <span

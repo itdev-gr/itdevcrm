@@ -26,10 +26,11 @@ export function groupAlerts(rows: AlertRow[]): { category: AlertRow['category'];
   })).filter((g) => g.rows.length > 0);
 }
 
-/** Link a row to its job (preferred) or deal detail page, else null. */
+/** Link a row to its job (preferred), deal, or client detail page, else null. */
 export function alertLink(row: AlertRow): string | null {
   if (row.job_id) return '/jobs/' + row.job_id;
   if (row.deal_id) return '/deals/' + row.deal_id;
+  if (row.subject_type === 'client') return '/clients/' + row.subject_id;
   return null;
 }
 

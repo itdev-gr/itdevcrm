@@ -5,6 +5,7 @@ describe('alertPresenters', () => {
   it('links to job when job_id present, else deal', () => {
     expect(alertLink(mk({ job_id:'J', deal_id:'D' }))).toBe('/jobs/J');
     expect(alertLink(mk({ job_id:null, deal_id:'D' }))).toBe('/deals/D');
+    expect(alertLink(mk({ job_id:null, deal_id:null, subject_type:'client', subject_id:'C1' }))).toBe('/clients/C1');
     expect(alertLink(mk({ job_id:null, deal_id:null }))).toBeNull();
   });
   it('groups in money→lifecycle→missing order', () => {

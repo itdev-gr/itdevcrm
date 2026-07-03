@@ -35,7 +35,7 @@ begin
       from jobs j join deals d on d.id=j.deal_id
       left join clients c on c.id=d.client_id
      where not j.archived and coalesce(j.amount_net,0)>0 and coalesce(j.vat_rate,0)=0
-       and not (d.payment_method='cash' and not coalesce(d.cash_charge_vat,false))
+       and not coalesce(d.payment_method='cash' and not coalesce(d.cash_charge_vat,false), false)
        and coalesce(c.country,'') not ilike 'cyprus'
     union all
     -- 4 vat_odd_rate
