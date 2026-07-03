@@ -34,6 +34,7 @@ export function useDismissAlert() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['integrity-alerts'] });
       void qc.invalidateQueries({ queryKey: ['integrity-alerts-count'] });
+      void qc.invalidateQueries({ queryKey: ['integrity-alert-dismissals'] });
     },
   });
 }
