@@ -2451,6 +2451,36 @@ export type Database = {
         }
         Relationships: []
       }
+      integrity_alert_dismissals: {
+        Row: {
+          check_key: string
+          dismissed_at: string
+          dismissed_by: string | null
+          id: string
+          note: string | null
+          signature: string
+          subject_id: string
+        }
+        Insert: {
+          check_key: string
+          dismissed_at?: string
+          dismissed_by?: string | null
+          id?: string
+          note?: string | null
+          signature?: string
+          subject_id: string
+        }
+        Update: {
+          check_key?: string
+          dismissed_at?: string
+          dismissed_by?: string | null
+          id?: string
+          note?: string | null
+          signature?: string
+          subject_id?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           amount_net: number | null
