@@ -14,6 +14,10 @@
     "subject": "Your offer from ITDEV",
     "body": "Dear {{name}},\n\nThank you for your interest. You can view your offer here: {{offerUrl}}\n\nBest regards,\nThe ITDEV team"
   },
+  "proforma": {
+    "subject": "Your pro forma invoice from ITDEV",
+    "body": "Dear {{name}},\n\nPlease find your pro forma invoice here: {{proFormaUrl}}\n\nBest regards,\nThe ITDEV team"
+  },
   "won": {
     "subject": "Welcome to ITDEV",
     "body": "Dear {{name}},\n\nWe're glad to start working together! We'll be in touch shortly with next steps.\n\nBest regards,\nThe ITDEV team"

@@ -151,6 +151,10 @@ const OfferDetailPage = lazyPage(
   () => import('@/features/offers/OfferDetailPage'),
   'OfferDetailPage',
 );
+const ProFormaDetailPage = lazyPage(
+  () => import('@/features/proformas/ProFormaDetailPage'),
+  'ProFormaDetailPage',
+);
 const ContractTemplatesPage = lazyPage(
   () => import('@/features/contracts/ContractTemplatesPage'),
   'ContractTemplatesPage',
@@ -298,6 +302,7 @@ export const router = createBrowserRouter([
           { path: 'leads/:leadId', element: <LeadDetailPage /> },
           { path: 'leads/:leadId/offers/new', element: <OfferBuilderPage /> },
           { path: 'offers/:offerId', element: <OfferDetailPage /> },
+          { path: 'proformas/:proFormaId', element: <ProFormaDetailPage /> },
           { path: 'contracts', element: <ContractsListPage /> },
           { path: 'contracts/new', element: <ContractBuilderPage /> },
           { path: 'contracts/:contractId', element: <ContractDetailPage /> },
