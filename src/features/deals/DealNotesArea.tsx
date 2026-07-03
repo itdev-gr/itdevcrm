@@ -29,19 +29,28 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
 
   const [salesNote, setSalesNote] = useState(deal.sales_note ?? '');
   const [businessProfileUrl, setBusinessProfileUrl] = useState(deal.business_profile_url ?? '');
+  const [businessProfileName, setBusinessProfileName] = useState(deal.business_profile_name ?? '');
 
   const webSeo = noteFrom(jobs, ['web_seo', 'ai_seo'], 'seo_notes');
   const local = noteFrom(jobs, ['local_seo', 'ai_seo'], 'local_notes');
   const website = noteFrom(jobs, ['web_dev'], 'webdev_notes');
 
   const patch = useMemo(
-    () => ({ sales_note: salesNote.trim() || null, business_profile_url: businessProfileUrl.trim() || null }),
-    [salesNote, businessProfileUrl],
+    () => ({
+      sales_note: salesNote.trim() || null,
+      business_profile_url: businessProfileUrl.trim() || null,
+      business_profile_name: businessProfileName.trim() || null,
+    }),
+    [salesNote, businessProfileUrl, businessProfileName],
   );
   const status = useAutoSave(patch, async (next) => {
     const { error } = await supabase
       .from('deals')
-      .update({ sales_note: next.sales_note, business_profile_url: next.business_profile_url })
+      .update({
+        sales_note: next.sales_note,
+        business_profile_url: next.business_profile_url,
+        business_profile_name: next.business_profile_name,
+      })
       .eq('id', deal.id);
     if (error) throw new Error(error.message);
     void qc.invalidateQueries({ queryKey: queryKeys.deal(deal.id) });
@@ -67,6 +76,15 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
           placeholder="https://"
           value={businessProfileUrl}
           onChange={(e) => setBusinessProfileUrl(e.target.value)}
+          className="mt-1.5"
+        />
+      </div>
+      <div>
+        <Label htmlFor="deal-bpname">{t('notes_area.business_profile_name')}</Label>
+        <Input
+          id="deal-bpname"
+          value={businessProfileName}
+          onChange={(e) => setBusinessProfileName(e.target.value)}
           className="mt-1.5"
         />
       </div>

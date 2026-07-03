@@ -25,6 +25,7 @@
   "notes_area": {
     "title": "Notes area",
     "business_profile_url": "Business Profile URL",
+    "business_profile_name": "Business Profile Name",
     "sales_note": "Sales Note",
     "sales_note_hint": "Major info the sales team passes to accounting.",
     "web_seo_notes": "Web SEO notes",
