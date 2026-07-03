@@ -29,6 +29,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
+import { ProFormasTab } from '@/features/proformas/ProFormasTab';
 import { ContractsTab } from '@/features/contracts/ContractsTab';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
@@ -330,6 +331,9 @@ export function DealDetailPage() {
           <TabsTrigger value="offers" className={detailTabTriggerClass}>
             {t('tabs.offers', { defaultValue: 'Offers' })}
           </TabsTrigger>
+          <TabsTrigger value="proformas" className={detailTabTriggerClass}>
+            {t('tabs.proformas', { defaultValue: 'Pro Formas' })}
+          </TabsTrigger>
           <TabsTrigger value="contracts" className={detailTabTriggerClass}>
             {tContracts('tab.title')}
           </TabsTrigger>
@@ -415,6 +419,11 @@ export function DealDetailPage() {
         <TabsContent value="offers" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <OffersTab dealId={dealId} />
+          </div>
+        </TabsContent>
+        <TabsContent value="proformas" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <ProFormasTab dealId={dealId} />
           </div>
         </TabsContent>
         <TabsContent value="contracts" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">

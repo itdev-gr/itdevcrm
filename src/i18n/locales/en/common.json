@@ -9,6 +9,7 @@
     "job": "Job",
     "client": "Client",
     "offer": "Offer",
+    "proforma": "Pro Forma",
     "contract": "Contract"
   },
   "nav": {

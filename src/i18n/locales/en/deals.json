@@ -40,7 +40,8 @@
     "attachments": "Attachments",
     "activity": "Activity",
     "tasks": "Tasks",
-    "offers": "Offers"
+    "offers": "Offers",
+    "proformas": "Pro Formas"
   },
   "assigned_tasks": {
     "section_open": "Open",

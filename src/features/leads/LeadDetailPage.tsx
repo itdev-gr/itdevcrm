@@ -29,6 +29,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
+import { ProFormasTab } from '@/features/proformas/ProFormasTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
 import { buildOfferDraft } from '@/features/email/buildDraft';
 
@@ -310,6 +311,9 @@ export function LeadDetailPage() {
           <TabsTrigger value="offers" className={detailTabTriggerClass}>
             {t('tabs.offers')}
           </TabsTrigger>
+          <TabsTrigger value="proformas" className={detailTabTriggerClass}>
+            {t('tabs.proformas')}
+          </TabsTrigger>
         </DetailTabsList>
 
         <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
@@ -360,6 +364,11 @@ export function LeadDetailPage() {
         <TabsContent value="offers" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <OffersTab leadId={leadId} />
+          </div>
+        </TabsContent>
+        <TabsContent value="proformas" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <ProFormasTab leadId={leadId} />
           </div>
         </TabsContent>
       </Tabs>
