@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { readPath } from './notification-presenters';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { CompactNotificationContent, readPath } from './notification-presenters';
 
 describe('readPath — parent fallback', () => {
   it('maps a deal parent to /deals/:id', () => {
@@ -102,5 +103,34 @@ describe('readPath — task routing', () => {
         target_job_id: null,
       }),
     ).toBe('/tasks?open=assigned:t13');
+  });
+});
+
+describe('payment_integrity_alert presenter', () => {
+  const render = (alertsNew: number) =>
+    renderToStaticMarkup(
+      CompactNotificationContent({
+        type: 'payment_integrity_alert',
+        payload: { kind: 'integrity_audit', alerts_new: alertsNew, ran_at: '2026-07-02T00:00:00Z' },
+        parentLabel: null,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      }),
+    );
+
+  it('links the billing-audit notification to the Alerts page', () => {
+    expect(readPath({ kind: 'integrity_audit', alerts_new: 3, ran_at: '2026-07-02T00:00:00Z' })).toBe(
+      '/accounting/alerts',
+    );
+  });
+
+  it('titles the notification with the pluralized issue count', () => {
+    expect(render(3)).toContain('Billing audit found 3 issues');
+  });
+
+  it('uses the singular form for a single issue', () => {
+    const markup = render(1);
+    expect(markup).toContain('Billing audit found 1 issue');
+    expect(markup).not.toContain('1 issues');
   });
 });

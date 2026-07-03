@@ -12,6 +12,10 @@ export type NotifPayload = Record<string, unknown> | null;
 export function readPath(payload: NotifPayload): string | null {
   if (!payload) return null;
 
+  // Nightly billing-integrity audit notifications carry no parent row; route
+  // the recipient straight to the accounting Alerts page.
+  if (payload['kind'] === 'integrity_audit') return '/accounting/alerts';
+
   const taskId = payload['task_id'];
   if (typeof taskId === 'string') {
     const kind =
@@ -66,6 +70,7 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
       return <MessageSquare className={cn(iconClass, 'text-blue-600 dark:text-blue-400')} />;
     case 'task_started':
       return <PlayCircle className={cn(iconClass, 'text-cyan-600 dark:text-cyan-400')} />;
+    case 'payment_integrity_alert':
     case 'payment_overdue':
       return <AlertTriangle className={cn(iconClass, 'text-red-600 dark:text-red-400')} />;
     default:
@@ -216,6 +221,19 @@ export function CompactNotificationContent({
             <span className="shrink-0 text-[10px]">{when}</span>
           </p>
         )}
+      </>
+    );
+  }
+
+  if (type === 'payment_integrity_alert') {
+    const n = Number(payload?.alerts_new ?? 0);
+    const title = `Billing audit found ${n} issue${n === 1 ? '' : 's'}`;
+    return (
+      <>
+        <p className="min-w-0">
+          <span className="font-semibold text-red-700 dark:text-red-300">{title}</span>
+        </p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
     );
   }
