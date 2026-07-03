@@ -364,14 +364,24 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <Label>{t('form.services_planned')}</Label>
               {!readOnly && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => navigate(`/leads/${lead.id}/offers/new`)}
-                >
-                  Create offer
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate(`/leads/${lead.id}/offers/new`)}
+                  >
+                    Create offer
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate(`/leads/${lead.id}/proformas/new`)}
+                  >
+                    Create pro forma
+                  </Button>
+                </div>
               )}
             </div>
             <ServicesPlannedField value={services} onChange={setServices} disabled={readOnly} />

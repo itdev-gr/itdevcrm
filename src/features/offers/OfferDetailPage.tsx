@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,7 @@ export function OfferDetailPage() {
   const { data: offer, isLoading, error } = useOffer(offerId);
   const updateStatus = useUpdateOfferStatus(offerId);
   const download = useDownloadOfferPdf();
+  const navigate = useNavigate();
 
   useDocumentTitle(
     formatPageTitle(offer?.client?.name, t('record_type.offer'), offer?.offer_number),
@@ -71,6 +72,17 @@ export function OfferDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {offer.lead_id && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                navigate(`/leads/${offer.lead_id}/proformas/new?fromOffer=${offer.id}`)
+              }
+            >
+              Create Pro Forma
+            </Button>
+          )}
           <div className="flex items-center gap-2">
             <Label htmlFor="status" className="text-sm">
               Status:
