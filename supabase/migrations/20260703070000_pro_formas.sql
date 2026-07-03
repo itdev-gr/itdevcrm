@@ -89,12 +89,12 @@ create policy pro_formas_select on public.pro_formas for select to authenticated
     or exists (
       select 1 from public.leads l
        where l.id = pro_formas.lead_id
-         and (l.owner_user_id = auth.uid() or l.won_by_user_id = auth.uid())
+         and (l.owner_user_id = (select auth.uid()) or l.won_by_user_id = (select auth.uid()))
     )
     or exists (
       select 1 from public.deals d
        where d.id = pro_formas.deal_id
-         and (d.owner_user_id = auth.uid() or d.won_by_user_id = auth.uid())
+         and (d.owner_user_id = (select auth.uid()) or d.won_by_user_id = (select auth.uid()))
     )
   );
 
