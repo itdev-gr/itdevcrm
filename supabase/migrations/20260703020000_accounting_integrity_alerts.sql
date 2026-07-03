@@ -110,7 +110,7 @@ begin
        and nullif(trim(coalesce(d.payment_method,'')),'') is null
     union all
     -- 13 bad_email
-    select 'bad_email','amber','missing','client', c.id, c.code, 'Bad or missing client email',
+    select 'bad_email','amber','missing','client', c.id, coalesce(c.code, left(c.id::text,8)), 'Bad or missing client email',
            coalesce(c.email,'(empty)'), null::uuid, null::uuid, coalesce(c.email,'')
       from clients c
      where not c.archived and coalesce(c.status,'') <> 'done'
@@ -135,7 +135,7 @@ begin
        and d.payment_method='cash' and not coalesce(d.cash_charge_vat,false)
     union all
     -- 16 duplicate_vat_number: two+ active clients share a VAT number
-    select 'duplicate_vat_number','amber','possible_mistakes','client', c.id, c.code,
+    select 'duplicate_vat_number','amber','possible_mistakes','client', c.id, coalesce(c.code, left(c.id::text,8)),
            'Duplicate VAT number', 'VAT '||c.vat_number||' is shared by another client',
            null::uuid, null::uuid, c.vat_number
       from clients c
@@ -166,7 +166,7 @@ begin
        and coalesce(j.amount_net,0)>3000
     union all
     -- 19 test_client_name: client name looks like a test/placeholder
-    select 'test_client_name','grey','possible_mistakes','client', c.id, c.code,
+    select 'test_client_name','grey','possible_mistakes','client', c.id, coalesce(c.code, left(c.id::text,8)),
            'Test-looking client name', 'Client name: '||c.name, null::uuid, null::uuid, ''
       from clients c
      where not c.archived and coalesce(c.status,'')<>'done'

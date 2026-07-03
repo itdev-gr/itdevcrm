@@ -37,7 +37,9 @@ const SEVERITY_RANK: Record<AlertRow['severity'], number> = { red: 0, amber: 1, 
 export function groupAlertsBySubject(rows: AlertRow[]): { code: string; rows: AlertRow[] }[] {
   const map = new Map<string, AlertRow[]>();
   for (const r of rows) {
-    const code = r.subject_code.split('-')[0] || r.subject_code;
+    // subject_code can be null (e.g. a client without a code); fall back to the id.
+    const raw = r.subject_code ?? '';
+    const code = raw.split('-')[0] || raw || r.subject_id;
     const arr = map.get(code);
     if (arr) arr.push(r);
     else map.set(code, [r]);
