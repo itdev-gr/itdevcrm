@@ -41,6 +41,7 @@ import { useJob } from './hooks/useJob';
 import { JobEmailStatusBadge } from './JobEmailStatusBadge';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
+import { HostingInfoSection } from './HostingInfoSection';
 import { infoFieldsFor } from './serviceInfoFields';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { useGroups } from '@/features/groups/hooks/useGroups';
@@ -592,6 +593,7 @@ export function JobDetailPage() {
                 serviceType={job.service_type}
                 initialDetails={(job.details ?? {}) as Record<string, unknown>}
               />
+              {job.service_type === 'web_dev' && <HostingInfoSection clientId={job.client_id} />}
               {areasForJob(job).map((area) => (
                 <ServiceAttachmentsSection
                   key={area.kind}
