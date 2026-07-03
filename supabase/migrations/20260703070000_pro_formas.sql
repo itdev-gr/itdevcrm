@@ -68,6 +68,11 @@ end $$;
 create trigger pro_formas_set_number_t before insert on public.pro_formas
   for each row execute function public.pro_formas_set_number();
 
+-- The number trigger is not SECURITY DEFINER, so nextval runs as the
+-- inserting role; grant explicitly rather than relying on default privileges
+-- (which the grant-boundary remediation has tightened before).
+grant usage, select on sequence public.pro_formas_seq to authenticated;
+
 create unique index pro_formas_number_unique
   on public.pro_formas (pro_forma_number)
   where pro_forma_number is not null;
