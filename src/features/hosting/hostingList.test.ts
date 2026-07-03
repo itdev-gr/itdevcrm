@@ -18,6 +18,16 @@ describe('hostingList', () => {
     expect(hostingStatus(mk({ stage: { id: 's', code: 'closed', board: 'hosting', display_names: {} } }))).toBe('done');
   });
 
+  it('derives status from stage_id when doneStageId is given (optimistic move)', () => {
+    // stage.code is stale ('active') but stage_id says done — stage_id must win.
+    const j = mk({
+      stage_id: 'done-id',
+      stage: { id: 's', code: 'active', board: 'hosting', display_names: {} },
+    });
+    expect(hostingStatus(j, 'done-id')).toBe('done');
+    expect(hostingStatus(j, 'other-id')).toBe('active');
+  });
+
   it('picks the domain from details then client website', () => {
     expect(hostingDomain(mk({ details: { live_url: 'a.gr' } }))).toBe('a.gr');
     expect(hostingDomain(mk({ details: { hosting: 'b.gr' } }))).toBe('b.gr');

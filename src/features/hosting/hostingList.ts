@@ -3,8 +3,14 @@ import type { JobRow } from '@/features/jobs/hooks/useJobs';
 
 export type HostingStatus = 'active' | 'done';
 
-/** A hosting job is Done iff it sits in the terminal 'closed' stage. */
-export function hostingStatus(job: JobRow): HostingStatus {
+/**
+ * A hosting job is Done iff it sits in the terminal 'closed' stage.
+ * Pass `doneStageId` (the 'closed' stage's id) to derive status from `stage_id`
+ * instead of the joined `stage.code` — the optimistic stage-move only patches
+ * `stage_id`, so keying off it makes a status flip reflect instantly.
+ */
+export function hostingStatus(job: JobRow, doneStageId?: string): HostingStatus {
+  if (doneStageId) return job.stage_id === doneStageId ? 'done' : 'active';
   return job.stage?.code === 'closed' ? 'done' : 'active';
 }
 
@@ -21,11 +27,11 @@ export function hostingDomain(job: JobRow): string {
 /** Filter by status + free-text search, sorted by renewal due asc (nulls last). */
 export function filterAndSortHosting(
   jobs: JobRow[],
-  opts: { status: 'active' | 'done' | 'all'; search: string },
+  opts: { status: 'active' | 'done' | 'all'; search: string; doneStageId?: string | undefined },
 ): JobRow[] {
   const q = opts.search.trim().toLowerCase();
   const filtered = jobs.filter((j) => {
-    if (opts.status !== 'all' && hostingStatus(j) !== opts.status) return false;
+    if (opts.status !== 'all' && hostingStatus(j, opts.doneStageId) !== opts.status) return false;
     if (!q) return true;
     const hay = [j.client?.name ?? '', j.code ?? '', hostingDomain(j)].join(' ').toLowerCase();
     return hay.includes(q);

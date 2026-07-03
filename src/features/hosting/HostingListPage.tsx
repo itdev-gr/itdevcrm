@@ -1,5 +1,5 @@
 // src/features/hosting/HostingListPage.tsx
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
@@ -29,18 +29,15 @@ export function HostingListPage() {
   const move = useMoveJobStage('hosting');
 
   const hostingStages = stages.filter((s) => s.board === 'hosting' && !s.archived);
-  const activeStage = hostingStages.find((s) => s.code === 'active');
-  const doneStage = hostingStages.find((s) => s.code === 'closed');
+  const activeStageId = hostingStages.find((s) => s.code === 'active')?.id;
+  const doneStageId = hostingStages.find((s) => s.code === 'closed')?.id;
 
-  const rows = useMemo(
-    () => filterAndSortHosting(jobs, { status, search: query }),
-    [jobs, status, query],
-  );
+  const rows = filterAndSortHosting(jobs, { status, search: query, doneStageId });
 
   function setJobStatus(jobId: string, next: 'active' | 'done') {
-    const stage = next === 'done' ? doneStage : activeStage;
-    if (!stage) return;
-    move.mutate({ jobId, stageId: stage.id, completed: next === 'done' });
+    const stageId = next === 'done' ? doneStageId : activeStageId;
+    if (!stageId) return;
+    move.mutate({ jobId, stageId, completed: next === 'done' });
   }
 
   if (isLoading) {
@@ -104,7 +101,7 @@ export function HostingListPage() {
               <tbody>
                 {rows.map((j) => {
                   const domain = hostingDomain(j);
-                  const st = hostingStatus(j);
+                  const st = hostingStatus(j, doneStageId);
                   return (
                     <tr
                       key={j.id}
