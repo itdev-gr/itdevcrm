@@ -174,7 +174,8 @@
     "cash_charge_vat": "Χρέωση ΦΠΑ (μετρητά)",
     "scheduled_for": "Προγραμματισμένο για",
     "scheduled_for_hint": "Η επιλογή ημερομηνίας μετακινεί το lead στο στάδιο Προγραμματισμένο και το προσθέτει στο ημερολόγιο.",
-    "business_profile_url": "URL Προφίλ Επιχείρησης"
+    "business_profile_url": "URL Προφίλ Επιχείρησης",
+    "business_profile_name": "Όνομα Προφίλ Επιχείρησης"
   },
   "tabs": {
     "overview": "Επισκόπηση",

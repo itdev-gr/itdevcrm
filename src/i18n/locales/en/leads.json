@@ -174,7 +174,8 @@
     "cash_charge_vat": "Charge VAT (cash)",
     "scheduled_for": "Scheduled for",
     "scheduled_for_hint": "Picking a date moves the lead to Scheduled and adds it to the home calendar.",
-    "business_profile_url": "Business Profile URL"
+    "business_profile_url": "Business Profile URL",
+    "business_profile_name": "Business Profile Name"
   },
   "tabs": {
     "overview": "Overview",
