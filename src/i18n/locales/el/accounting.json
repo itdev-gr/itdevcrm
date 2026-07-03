@@ -19,7 +19,8 @@
   "nav": {
     "onboarding": "Λογιστήριο - Νέοι",
     "clients": "Πελάτες",
-    "recurring": "Επαναλαμβανόμενοι"
+    "recurring": "Επαναλαμβανόμενοι",
+    "alerts": "Ειδοποιήσεις"
   },
   "clients_page": {
     "title": "Πελάτες",

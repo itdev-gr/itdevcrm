@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import {
+  AlertTriangle,
   BarChart3,
   Building2,
   ClipboardList,
@@ -22,12 +23,23 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useLeadIntakeCount } from '@/features/leads/hooks/useLeadIntake';
+import { useAlertsCount } from '@/features/accounting/alerts/hooks/useAlertsCount';
 import { useTaskBadgeCounts } from '@/features/tasks/hooks/useTaskBadgeCounts';
 import { sidebarLinkClass, sidebarSectionClass } from './sidebar-nav-styles';
 
 function LeadIntakeBadge() {
   const { data } = useLeadIntakeCount();
   if (!data) return null;
+  return (
+    <span className="ml-auto rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
+      {data}
+    </span>
+  );
+}
+
+function AlertsBadge() {
+  const { data } = useAlertsCount();
+  if (data <= 0) return null;
   return (
     <span className="ml-auto rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
       {data}
@@ -196,6 +208,14 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             >
               <RefreshCw className="size-4 shrink-0 opacity-80" />
               {t('accounting:nav.recurring')}
+            </NavLink>
+            <NavLink
+              to="/accounting/alerts"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <AlertTriangle className="size-4 shrink-0 opacity-80" />
+              {t('accounting:nav.alerts')}
+              <AlertsBadge />
             </NavLink>
             <NavLink
               to="/accounting/docs"

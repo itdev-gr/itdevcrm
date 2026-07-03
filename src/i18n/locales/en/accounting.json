@@ -19,7 +19,8 @@
   "nav": {
     "onboarding": "Accounting onboarding",
     "clients": "Clients",
-    "recurring": "Recurring"
+    "recurring": "Recurring",
+    "alerts": "Alerts"
   },
   "clients_page": {
     "title": "Clients",
