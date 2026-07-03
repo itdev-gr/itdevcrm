@@ -30,6 +30,10 @@ const ResetPasswordPage = lazyPage(
   () => import('@/features/auth/ResetPasswordPage'),
   'ResetPasswordPage',
 );
+const HostingListPage = lazyPage(
+  () => import('@/features/hosting/HostingListPage'),
+  'HostingListPage',
+);
 const UsersListPage = lazyPage(() => import('@/features/users/UsersListPage'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/UserDetailPage'), 'UserDetailPage');
 const GroupsListPage = lazyPage(
@@ -282,7 +286,7 @@ export const router = createBrowserRouter([
               { path: 'local-seo', element: <JobsKanbanPage serviceType="local_seo" /> },
               { path: 'web-dev', element: <JobsKanbanPage serviceType="web_dev" /> },
               { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
-              { path: 'hosting', element: <JobsKanbanPage serviceType="hosting" /> },
+              { path: 'hosting', element: <HostingListPage /> },
               { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
               { path: ':serviceType/clients', element: <TechMyClientsPage /> },
               { path: ':serviceType/docs', element: <TechBoardDocsPage /> },
