@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { alertLink, groupAlerts, severityClass, type AlertRow } from './alertPresenters';
+import {
+  alertLink,
+  alertLinkLabel,
+  groupAlerts,
+  severityClass,
+  severityLabel,
+  type AlertRow,
+} from './alertPresenters';
 import { useIntegrityAlerts } from './hooks/useIntegrityAlerts';
 import {
   useDismissAlert,
@@ -93,7 +100,7 @@ export default function AccountingAlertsPage() {
                               severityClass(row.severity),
                             )}
                           >
-                            {row.severity}
+                            {severityLabel(row.severity)}
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-baseline gap-x-2">
@@ -107,9 +114,7 @@ export default function AccountingAlertsPage() {
                           <div className="flex shrink-0 items-center gap-2">
                             {link && (
                               <Button asChild variant="outline" size="sm">
-                                <Link to={link}>
-                                  {t('accounting:alerts.fix', { defaultValue: 'Fix' })}
-                                </Link>
+                                <Link to={link}>{alertLinkLabel(row)}</Link>
                               </Button>
                             )}
                             <Button
