@@ -172,6 +172,17 @@ begin
      where not c.archived and coalesce(c.status,'')<>'done'
        and (c.name ilike '%test%' or c.name ilike '%δοκιμ%' or c.name ilike '%asdf%'
             or c.name ilike '%xxx%' or c.name ilike '%qwerty%')
+    union all
+    -- 20 off_board_job: active service job on a Paid-In-Full deal with no board stage
+    -- (invisible on its kanban board). Auto-healed by the reconcile_offboard_jobs cron;
+    -- surfaced here too so it is visible in the window before the cron runs.
+    select 'off_board_job','red','lifecycle','job', j.id, j.code, 'Job not on its board',
+           'Active job on a Paid-In-Full deal has no board stage (off-board)',
+           j.deal_id, j.id, ''
+      from jobs j join deals d on d.id=j.deal_id join pipeline_stages ps on ps.id=d.accounting_stage_id
+     where not j.archived and j.status='active' and coalesce(j.billing_only,false)=false
+       and j.stage_id is null and ps.code='paid_in_full'
+       and j.service_type in ('local_seo','web_seo','web_dev','social_media','hosting','ads')
   )
   select a.* from alerts a
    where not exists (
