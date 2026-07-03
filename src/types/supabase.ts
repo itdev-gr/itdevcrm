@@ -5096,6 +5096,118 @@ export type Database = {
         }
         Relationships: []
       }
+      pro_formas: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deal_id: string | null
+          discount_amount: number
+          id: string
+          items: Json
+          lead_id: string | null
+          notes: string | null
+          paid_at: string | null
+          pdf_path: string | null
+          pro_forma_number: string | null
+          sent_at: string | null
+          source_offer_id: string | null
+          status: string
+          totals: Json
+          updated_at: string
+          validity_days: number
+          vat_percent: number
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          discount_amount?: number
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          pdf_path?: string | null
+          pro_forma_number?: string | null
+          sent_at?: string | null
+          source_offer_id?: string | null
+          status?: string
+          totals?: Json
+          updated_at?: string
+          validity_days?: number
+          vat_percent?: number
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          discount_amount?: number
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          pdf_path?: string | null
+          pro_forma_number?: string | null
+          sent_at?: string | null
+          source_offer_id?: string | null
+          status?: string
+          totals?: Json
+          updated_at?: string
+          validity_days?: number
+          vat_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_formas_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pro_formas_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "pro_formas_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pro_formas_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pro_formas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pro_formas_source_offer_id_fkey"
+            columns: ["source_offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           archived: boolean
