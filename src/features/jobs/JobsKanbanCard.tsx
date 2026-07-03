@@ -11,6 +11,7 @@ import { relativeFromNow } from '@/lib/datetime';
 import { industryLabel } from '@/lib/industries';
 import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
+import { jobCardHeading } from './jobCardTitle';
 import { formatJobPeriodChip } from './jobPeriodChip';
 import { canViewJobPricing } from './permissions';
 import { groupIdForServiceType } from './serviceTaskMatch';
@@ -48,11 +49,8 @@ export function JobsKanbanCard({
     ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }
     : undefined;
 
-  const contactName = [job.client?.contact_first_name, job.client?.contact_last_name]
-    .filter(Boolean)
-    .join(' ');
-  const headline = contactName || job.client?.name || job.deal?.title || '—';
-  const subtitle = [contactName ? job.client?.name : null, industryLabel(job.client?.industry, lang)]
+  const { headline, subtitleParts } = jobCardHeading(job);
+  const subtitle = [...subtitleParts, industryLabel(job.client?.industry, lang)]
     .filter(Boolean)
     .join(' · ');
   const amountLabel = jobAmountLabel(job.billing_type, job.amount_net, lang);
