@@ -14,6 +14,7 @@ export const queryKeys = {
   client: (id: string) => ['client', id] as const,
   myClients: () => ['my-clients'] as const,
   clientSearch: (term: string) => ['client-search', term] as const,
+  leadSearch: (term: string) => ['lead-search', term] as const,
   deals: (filters?: Record<string, string | undefined>) =>
     filters ? (['deals', filters] as const) : (['deals'] as const),
   deal: (id: string) => ['deal', id] as const,
