@@ -31,6 +31,7 @@ export function UserTaskDetailDialog({
   if (created) rows.push({ label: c('tasks_page.created_label'), value: created });
   if (due) rows.push({ label: c('tasks_page.due_label'), value: due });
   if (card.clientName) rows.push({ label: c('tasks_page.client_label'), value: card.clientName });
+  if (card.leadName) rows.push({ label: c('tasks_page.lead_label'), value: card.leadName });
 
   return (
     <Dialog open onOpenChange={onOpenChange}>

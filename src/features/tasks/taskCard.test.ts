@@ -26,6 +26,23 @@ describe('taskCard', () => {
     expect(c).toMatchObject({ kind: 'user', id: 'u1', importance: 'low', relation: 'delegated', resolved: false, link: null, sourceCode: null, key: 'user:u1' });
   });
 
+  it('maps a lead-linked user task to a lead code chip + link', () => {
+    const c = userTaskToCard(
+      userRow({ lead: { id: 'L1', title: 'Bakery Lead', code: '001234' } }),
+      me,
+    );
+    expect(c.sourceCode).toBe('001234');
+    expect(c.link).toBe('/leads/L1');
+    expect(c.leadName).toBe('Bakery Lead');
+  });
+
+  it('user task without a lead keeps the personal chip (no link)', () => {
+    const c = userTaskToCard(userRow(), me);
+    expect(c.sourceCode).toBeNull();
+    expect(c.link).toBeNull();
+    expect(c.leadName).toBeNull();
+  });
+
   it('maps an assigned task to a card with a deal link', () => {
     const c = assignedTaskToCard(assignedRow(), me);
     expect(c).toMatchObject({ kind: 'assigned', relation: 'mine', link: '/deals/d1', sourceCode: 'D-1', key: 'assigned:a1' });

@@ -6,6 +6,8 @@ export type TaskRelation = 'mine' | 'delegated' | 'other';
 export type ColumnKey = ImportanceCode | 'resolved';
 export type BoardFilter = 'to_me' | 'by_me' | 'all';
 
+export type TaskLeadJoin = { id: string; title: string; code: string | null };
+
 /** Left→right column order on the board. */
 export const BOARD_COLUMNS: ColumnKey[] = ['urgent', 'high', 'medium', 'low', 'resolved'];
 
@@ -27,6 +29,7 @@ export type TaskCard = {
   link: string | null;    // deal/job link, or null for personal
   notes: string | null;
   clientName: string | null;
+  leadName: string | null;
 };
 
 export function relationOf(assigneeId: string, creatorId: string | null, meId: string): TaskRelation {
@@ -35,7 +38,10 @@ export function relationOf(assigneeId: string, creatorId: string | null, meId: s
   return 'other';
 }
 
-export function userTaskToCard(row: UserTaskRow, meId: string): TaskCard {
+export function userTaskToCard(
+  row: UserTaskRow & { lead?: TaskLeadJoin | null },
+  meId: string,
+): TaskCard {
   const creatorId = row.created_by ?? null;
   return {
     key: `user:${row.id}`,
@@ -51,10 +57,11 @@ export function userTaskToCard(row: UserTaskRow, meId: string): TaskCard {
     dueAt: row.due_at ?? null,
     resolvedAt: row.completed_at ?? null,
     startedAtIso: row.started_at ?? null,
-    sourceCode: null,
-    link: null,
+    sourceCode: row.lead?.code ?? null,
+    link: row.lead ? `/leads/${row.lead.id}` : null,
     notes: row.notes ?? null,
     clientName: null,
+    leadName: row.lead?.title ?? null,
   };
 }
 
@@ -78,6 +85,7 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
     link,
     notes: row.description ?? null,
     clientName: row.client?.name ?? null,
+    leadName: null,
   };
 }
 
@@ -90,7 +98,7 @@ export function isDraggable(card: TaskCard): boolean {
   return card.relation === 'mine';
 }
 
-export function buildBoardCards(userRows: UserTaskRow[], assignedRows: AssignedTaskRow[], meId: string): TaskCard[] {
+export function buildBoardCards(userRows: Array<UserTaskRow & { lead?: TaskLeadJoin | null }>, assignedRows: AssignedTaskRow[], meId: string): TaskCard[] {
   return [
     ...userRows.map((r) => userTaskToCard(r, meId)),
     ...assignedRows.map((r) => assignedTaskToCard(r, meId)),

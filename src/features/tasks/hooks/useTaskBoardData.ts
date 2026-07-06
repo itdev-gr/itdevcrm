@@ -9,20 +9,24 @@ export function isoDaysAgo(days: number): string {
   return new Date(Date.now() - days * 86_400_000).toISOString();
 }
 
+export type BoardUserTaskRow = UserTaskRow & {
+  lead?: { id: string; title: string; code: string | null } | null;
+};
+
 export function useTaskBoardData(params: { meId: string; allTeam: boolean; cutoffIso: string }) {
   const { meId, allTeam, cutoffIso } = params;
   const scope = allTeam ? 'all' : meId;
 
-  const userTasks = useQuery<UserTaskRow[]>({
+  const userTasks = useQuery<BoardUserTaskRow[]>({
     queryKey: queryKeys.tasksBoardUser(scope, cutoffIso),
     queryFn: async () => {
-      let q = supabase.from('user_tasks').select('*');
+      let q = supabase.from('user_tasks').select('*, lead:leads(id, title, code)');
       if (!allTeam) q = q.or(`user_id.eq.${meId},created_by.eq.${meId}`);
       // open, or resolved within the window
       q = q.or(`completed_at.is.null,completed_at.gte.${cutoffIso}`);
       const { data, error } = await q.order('due_at', { ascending: true });
       if (error) throw new Error(error.message);
-      return (data ?? []) as UserTaskRow[];
+      return (data ?? []) as unknown as BoardUserTaskRow[];
     },
   });
 
