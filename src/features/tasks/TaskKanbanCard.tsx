@@ -22,6 +22,9 @@ export function TaskKanbanCard({
 }) {
   const { t } = useTranslation('common');
   const draggable = isDraggable(card, unreadComments > 0);
+  // Resolve/Reopen is gated on assignment, not drag: a card parked in Replies is
+  // non-draggable but its owner must still be able to act on it (spec line ~36).
+  const canAct = card.relation === 'mine';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.key, data: { card }, disabled: !draggable,
   });
@@ -77,7 +80,7 @@ export function TaskKanbanCard({
           </span>
         )}
       </div>
-      {draggable && (
+      {canAct && (
         <div className="mt-2">
           {card.resolved ? (
             <Button type="button" size="sm" variant="outline" className="h-7"

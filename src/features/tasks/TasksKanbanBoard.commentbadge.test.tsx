@@ -6,8 +6,9 @@ const { useTaskBoardData } = vi.hoisted(() => ({ useTaskBoardData: vi.fn() }));
 const { useMentionableUsers } = vi.hoisted(() => ({ useMentionableUsers: vi.fn() }));
 const { useUnreadCommentNotifs } = vi.hoisted(() => ({ useUnreadCommentNotifs: vi.fn() }));
 const markRead = vi.fn();
+const apply = vi.fn();
 vi.mock('./hooks/useTaskBoardData', () => ({ useTaskBoardData, isoDaysAgo: () => '2026-05-23T00:00:00Z' }));
-vi.mock('./hooks/useTaskBoardActions', () => ({ useTaskBoardActions: () => ({ mutate: vi.fn() }) }));
+vi.mock('./hooks/useTaskBoardActions', () => ({ useTaskBoardActions: () => ({ mutate: apply }) }));
 vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({ useMentionableUsers }));
 vi.mock('@/features/notifications/hooks/useUnreadCommentNotifs', () => ({ useUnreadCommentNotifs }));
 vi.mock('@/features/notifications/hooks/useMarkNotificationsRead', () => ({
@@ -111,5 +112,15 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     render(<TasksKanbanBoard />);
     const cols = screen.getAllByTestId(/tasks-col-/);
     expect(cols[0]).toHaveAttribute('data-testid', 'tasks-col-replies');
+  });
+
+  it('a card in Replies keeps its Resolve button (not draggable, still actionable)', () => {
+    useUnreadCommentNotifs.mockReturnValue({ data: [
+      { id: 'n1', payload: { task_kind: 'assigned_task', task_id: 'a1' } },
+    ] });
+    render(<TasksKanbanBoard />);
+    const replies = screen.getByTestId('tasks-col-replies');
+    fireEvent.click(within(replies).getByRole('button', { name: /tasks_page.resolve/ }));
+    expect(apply).toHaveBeenCalledWith({ card: expect.objectContaining({ id: 'a1' }), action: { type: 'resolve' } });
   });
 });
