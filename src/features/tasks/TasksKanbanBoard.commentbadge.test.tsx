@@ -74,4 +74,16 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     fireEvent.click(within(screen.getByTestId('tasks-col-urgent')).getByText('Mine urgent'));
     expect(markRead).not.toHaveBeenCalled();
   });
+
+  it('marks comments read when notifications resolve after the card was opened', () => {
+    useUnreadCommentNotifs.mockReturnValue({ data: [] });
+    const { rerender } = render(<TasksKanbanBoard />);
+    fireEvent.click(within(screen.getByTestId('tasks-col-urgent')).getByText('Mine urgent'));
+    expect(markRead).not.toHaveBeenCalled();
+    useUnreadCommentNotifs.mockReturnValue({ data: [
+      { id: 'nLate', payload: { task_kind: 'assigned_task', task_id: 'a1' } },
+    ] });
+    rerender(<TasksKanbanBoard />);
+    expect(markRead).toHaveBeenCalledWith(['nLate']);
+  });
 });

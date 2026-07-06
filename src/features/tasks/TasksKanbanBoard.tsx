@@ -57,7 +57,7 @@ export function TasksKanbanBoard() {
 
   // Unread-comment badge: derived from unread task_comment bell notifications.
   const { data: unreadNotifs = [] } = useUnreadCommentNotifs();
-  const markRead = useMarkNotificationsRead();
+  const { mutate: markCommentsRead } = useMarkNotificationsRead();
   const commentIndex = useMemo(() => unreadCommentIndex(unreadNotifs), [unreadNotifs]);
 
   const cards = useMemo(
@@ -77,13 +77,20 @@ export function TasksKanbanBoard() {
   const openCard = openKey ? (cards.find((c) => c.key === openKey) ?? null) : null;
 
   // Shared open handler for both paths (card click + deep link): clear the
-  // new-task highlight and mark this card's unread-comment notifications read.
+  // new-task highlight and open the dialog. Marking comment notifications read
+  // is handled by the effect below so it also covers notifs that resolve late.
   const openCardByKey = useCallback((card: TaskCard) => {
     if (meId) markOpened(meId, card.id);
-    const unread = commentIndex.get(card.key);
-    if (unread) markRead.mutate(unread.notifIds);
     setOpenKey(card.key);
-  }, [meId, markOpened, commentIndex, markRead]);
+  }, [meId, markOpened]);
+
+  // While a task's dialog is open its comment thread is on screen — clear its
+  // unread comment notifications, including ones that resolve or arrive late.
+  useEffect(() => {
+    if (!openKey) return;
+    const unread = commentIndex.get(openKey);
+    if (unread) markCommentsRead(unread.notifIds);
+  }, [openKey, commentIndex, markCommentsRead]);
 
   // Deep-link: ?open=<kind>:<id> opens the matching card's dialog once. We
   // strip the param after consuming it so closing the dialog doesn't reopen
