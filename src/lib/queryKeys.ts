@@ -27,6 +27,9 @@ export const queryKeys = {
   activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
   clientActivity: (clientId: string) => ['activity', 'client', clientId] as const,
   notifications: () => ['notifications'] as const,
+  // Shares the ['notifications'] prefix: the bell's realtime invalidation
+  // (useNotificationsRealtime) refreshes this key too.
+  unreadCommentNotifs: () => ['notifications', 'unread-comments'] as const,
   announcements: () => ['announcements'] as const,
   myAnnouncements: () => ['my-announcements'] as const,
   assignedTasksOpen: (assigneeId: string | null) =>
