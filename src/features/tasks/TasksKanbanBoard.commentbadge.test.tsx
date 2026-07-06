@@ -49,7 +49,8 @@ describe('TasksKanbanBoard unread-comment badge', () => {
       { id: 'n2', payload: { task_kind: 'assigned_task', task_id: 'a1' } },
     ] });
     render(<TasksKanbanBoard />);
-    expect(within(screen.getByTestId('tasks-col-urgent')).getByText('💬 2')).toBeInTheDocument();
+    // A card with unread comments now lives in the derived Replies column.
+    expect(within(screen.getByTestId('tasks-col-replies')).getByText('💬 2')).toBeInTheDocument();
   });
 
   it('shows no badge without unread comments', () => {
@@ -64,7 +65,8 @@ describe('TasksKanbanBoard unread-comment badge', () => {
       { id: 'nOther', payload: { task_kind: 'assigned_task', task_id: 'zzz' } },
     ] });
     render(<TasksKanbanBoard />);
-    fireEvent.click(within(screen.getByTestId('tasks-col-urgent')).getByText('Mine urgent'));
+    // 'a1' has an unread reply, so its card sits in the Replies column now.
+    fireEvent.click(within(screen.getByTestId('tasks-col-replies')).getByText('Mine urgent'));
     expect(markRead).toHaveBeenCalledWith(['n1']);
   });
 
@@ -85,5 +87,29 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     ] });
     rerender(<TasksKanbanBoard />);
     expect(markRead).toHaveBeenCalledWith(['nLate']);
+  });
+
+  it('a card with unread replies sits in the Replies column, not its importance column', () => {
+    useUnreadCommentNotifs.mockReturnValue({ data: [
+      { id: 'n1', payload: { task_kind: 'assigned_task', task_id: 'a1' } },
+    ] });
+    render(<TasksKanbanBoard />);
+    const replies = screen.getByTestId('tasks-col-replies');
+    expect(within(replies).getByText('Mine urgent')).toBeInTheDocument();
+    expect(within(screen.getByTestId('tasks-col-urgent')).queryByText('Mine urgent')).not.toBeInTheDocument();
+  });
+
+  it('returns to its importance column once the replies are read', () => {
+    useUnreadCommentNotifs.mockReturnValue({ data: [] });
+    render(<TasksKanbanBoard />);
+    expect(within(screen.getByTestId('tasks-col-urgent')).getByText('Mine urgent')).toBeInTheDocument();
+    expect(within(screen.getByTestId('tasks-col-replies')).queryByText('Mine urgent')).not.toBeInTheDocument();
+  });
+
+  it('renders Replies as the leftmost column', () => {
+    useUnreadCommentNotifs.mockReturnValue({ data: [] });
+    render(<TasksKanbanBoard />);
+    const cols = screen.getAllByTestId(/tasks-col-/);
+    expect(cols[0]).toHaveAttribute('data-testid', 'tasks-col-replies');
   });
 });

@@ -46,6 +46,7 @@
     "filter_by_me": "By me",
     "filter_all": "All",
     "column_resolved": "Resolved",
+    "column_replies": "💬 Replies",
     "assigned_to": "→ {{name}}",
     "personal": "Personal",
     "resolve": "Resolve",

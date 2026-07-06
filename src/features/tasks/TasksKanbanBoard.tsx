@@ -68,10 +68,11 @@ export function TasksKanbanBoard() {
   const byColumn = useMemo(() => {
     const map = new Map<ColumnKey, TaskCard[]>(BOARD_COLUMNS.map((c) => [c, []]));
     for (const card of cards) {
-      if (matchesFilter(card, filter)) map.get(columnOf(card))!.push(card);
+      const hasUnread = (commentIndex.get(card.key)?.count ?? 0) > 0;
+      if (matchesFilter(card, filter)) map.get(columnOf(card, hasUnread))!.push(card);
     }
     return map;
-  }, [cards, filter]);
+  }, [cards, filter, commentIndex]);
 
   // Live card behind the open dialog (re-derived each render from fresh rows).
   const openCard = openKey ? (cards.find((c) => c.key === openKey) ?? null) : null;
@@ -125,7 +126,10 @@ export function TasksKanbanBoard() {
     fire(card, resolveDrag(card, target));
   }
 
-  const columnLabel = (c: ColumnKey) => (c === 'resolved' ? t('tasks_page.column_resolved') : t(`importance.${c}`));
+  const columnLabel = (c: ColumnKey) =>
+    c === 'resolved' ? t('tasks_page.column_resolved')
+    : c === 'replies' ? t('tasks_page.column_replies')
+    : t(`importance.${c}`);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">

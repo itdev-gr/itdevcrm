@@ -21,7 +21,7 @@ export function TaskKanbanCard({
   unreadComments?: number;
 }) {
   const { t } = useTranslation('common');
-  const draggable = isDraggable(card);
+  const draggable = isDraggable(card, unreadComments > 0);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.key, data: { card }, disabled: !draggable,
   });
