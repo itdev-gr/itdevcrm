@@ -54,13 +54,19 @@ New optional prop `unreadComments?: number`. When > 0, renders a chip in the met
 (next to the Personal/code chip): `💬 N`, primary-tinted like the existing delegated
 badge. No layout change otherwise.
 
-### Clearing — `TasksKanbanBoard` open handler
+### Clearing — `TasksKanbanBoard` open paths
 
-The existing `onOpen` (also used by deep-link auto-open) already calls
-`markOpened(meId, card.id)`. Extend it: look up the card's `notifIds` in the index and
-call a new bulk `useMarkNotificationsRead()` (single `update … in('id', ids)`,
-invalidates the `['notifications']` prefix → bell + badge refresh together). Opening a
-task with no unread comments does nothing extra.
+Two open paths exist and BOTH must clear:
+1. `onOpen` (card click) — already calls `markOpened(meId, card.id)`; extend it to look
+   up the card's `notifIds` in the index and call a new bulk
+   `useMarkNotificationsRead()` (single `update … in('id', ids)`, invalidates the
+   `['notifications']` prefix → bell + badge refresh together).
+2. The `?open=<key>` deep-link effect — it currently calls `setOpenKey` directly and
+   bypasses `onOpen` (pre-existing gap: it never cleared the new-task highlight
+   either). Extend the effect to also `markOpened` + mark the comment notifications
+   read — fixing both in one place.
+
+Opening a task with no unread comments does nothing extra.
 
 ### Board wiring
 
