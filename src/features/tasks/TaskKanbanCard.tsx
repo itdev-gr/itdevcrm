@@ -11,13 +11,14 @@ import { NEW_TASK_RING, NewTaskDot } from './taskHighlightStyle';
 import { isDraggable, type TaskCard, type DragAction } from './taskCard';
 
 export function TaskKanbanCard({
-  card, assigneeName, onAction, onOpen, highlight = false,
+  card, assigneeName, onAction, onOpen, highlight = false, unreadComments = 0,
 }: {
   card: TaskCard;
   assigneeName: string;
   onAction: (action: DragAction) => void;
   onOpen: (card: TaskCard) => void;
   highlight?: boolean;
+  unreadComments?: number;
 }) {
   const { t } = useTranslation('common');
   const draggable = isDraggable(card);
@@ -59,6 +60,11 @@ export function TaskKanbanCard({
           </Link>
         ) : (
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">{t('tasks_page.personal')}</span>
+        )}
+        {unreadComments > 0 && (
+          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+            💬 {unreadComments}
+          </span>
         )}
         {card.relation === 'delegated' && (
           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">

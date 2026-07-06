@@ -5,7 +5,7 @@ import { TaskKanbanCard } from './TaskKanbanCard';
 import type { ColumnKey, TaskCard, DragAction } from './taskCard';
 
 export function TasksKanbanColumn({
-  column, label, cards, nameFor, onAction, onOpen, isNew,
+  column, label, cards, nameFor, onAction, onOpen, isNew, unreadCount,
 }: {
   column: ColumnKey;
   label: string;
@@ -14,6 +14,7 @@ export function TasksKanbanColumn({
   onAction: (card: TaskCard, action: DragAction) => void;
   onOpen: (card: TaskCard) => void;
   isNew?: (card: TaskCard) => boolean;
+  unreadCount?: (card: TaskCard) => number;
 }) {
   const { t } = useTranslation('common');
   const { setNodeRef, isOver } = useDroppable({ id: column });
@@ -44,6 +45,7 @@ export function TasksKanbanColumn({
               onAction={(a) => onAction(c, a)}
               onOpen={onOpen}
               highlight={isNew?.(c) ?? false}
+              unreadComments={unreadCount?.(c) ?? 0}
             />
           ))
         )}

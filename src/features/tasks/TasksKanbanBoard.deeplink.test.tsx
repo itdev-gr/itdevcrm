@@ -12,6 +12,17 @@ vi.mock('./hooks/useTaskBoardActions', () => ({
   useTaskBoardActions: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({ useMentionableUsers }));
+// Stable references: the board memoises the comment index / open handler off
+// these hooks' results, so returning fresh objects each render would churn the
+// deep-link effect into an update loop.
+vi.mock('@/features/notifications/hooks/useUnreadCommentNotifs', () => {
+  const stub = { data: [] as { id: string; payload: Record<string, unknown> }[] };
+  return { useUnreadCommentNotifs: () => stub };
+});
+vi.mock('@/features/notifications/hooks/useMarkNotificationsRead', () => {
+  const stub = { mutate: () => {} };
+  return { useMarkNotificationsRead: () => stub };
+});
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (k: string) => k,

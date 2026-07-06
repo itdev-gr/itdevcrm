@@ -8,6 +8,15 @@ const apply = vi.fn();
 vi.mock('./hooks/useTaskBoardData', () => ({ useTaskBoardData, isoDaysAgo: () => '2026-05-23T00:00:00Z' }));
 vi.mock('./hooks/useTaskBoardActions', () => ({ useTaskBoardActions: () => ({ mutate: apply }) }));
 vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({ useMentionableUsers }));
+// Stable references so the board's memoised comment index / open handler don't churn.
+vi.mock('@/features/notifications/hooks/useUnreadCommentNotifs', () => {
+  const stub = { data: [] as { id: string; payload: Record<string, unknown> }[] };
+  return { useUnreadCommentNotifs: () => stub };
+});
+vi.mock('@/features/notifications/hooks/useMarkNotificationsRead', () => {
+  const stub = { mutate: () => {} };
+  return { useMarkNotificationsRead: () => stub };
+});
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string, o?: Record<string, unknown>) => (o?.name ? `${k}:${o.name}` : k), i18n: { resolvedLanguage: 'en' } }),
 }));

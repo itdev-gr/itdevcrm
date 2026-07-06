@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -16,6 +16,9 @@ import { isTaskHighlighted, HIGHLIGHT_WINDOW_DAYS } from './taskHighlight';
 import { TasksKanbanColumn } from './TasksKanbanColumn';
 import { AssignedTaskDetailDialog } from '@/features/assigned_tasks/AssignedTaskDetailDialog';
 import { UserTaskDetailDialog } from './UserTaskDetailDialog';
+import { useUnreadCommentNotifs } from '@/features/notifications/hooks/useUnreadCommentNotifs';
+import { useMarkNotificationsRead } from '@/features/notifications/hooks/useMarkNotificationsRead';
+import { unreadCommentIndex } from './commentBadge';
 import {
   BOARD_COLUMNS, buildBoardCards, columnOf, matchesFilter, resolveDrag,
   type BoardFilter, type ColumnKey, type TaskCard, type DragAction,
@@ -52,6 +55,11 @@ export function TasksKanbanBoard() {
   const { userRows, assignedRows, isLoading } = useTaskBoardData({ meId, allTeam: isAdmin && allTeam, cutoffIso });
   const apply = useTaskBoardActions();
 
+  // Unread-comment badge: derived from unread task_comment bell notifications.
+  const { data: unreadNotifs = [] } = useUnreadCommentNotifs();
+  const markRead = useMarkNotificationsRead();
+  const commentIndex = useMemo(() => unreadCommentIndex(unreadNotifs), [unreadNotifs]);
+
   const cards = useMemo(
     () => buildBoardCards(userRows, assignedRows, meId),
     [userRows, assignedRows, meId],
@@ -68,6 +76,15 @@ export function TasksKanbanBoard() {
   // Live card behind the open dialog (re-derived each render from fresh rows).
   const openCard = openKey ? (cards.find((c) => c.key === openKey) ?? null) : null;
 
+  // Shared open handler for both paths (card click + deep link): clear the
+  // new-task highlight and mark this card's unread-comment notifications read.
+  const openCardByKey = useCallback((card: TaskCard) => {
+    if (meId) markOpened(meId, card.id);
+    const unread = commentIndex.get(card.key);
+    if (unread) markRead.mutate(unread.notifIds);
+    setOpenKey(card.key);
+  }, [meId, markOpened, commentIndex, markRead]);
+
   // Deep-link: ?open=<kind>:<id> opens the matching card's dialog once. We
   // strip the param after consuming it so closing the dialog doesn't reopen
   // it on the next render. Notifications use this to land service-team users
@@ -77,12 +94,13 @@ export function TasksKanbanBoard() {
   useEffect(() => {
     const raw = searchParams.get('open');
     if (!raw) return;
-    if (!cards.some((c) => c.key === raw)) return;
-    setOpenKey(raw);
+    const card = cards.find((c) => c.key === raw);
+    if (!card) return;
+    openCardByKey(card);
     const next = new URLSearchParams(searchParams);
     next.delete('open');
     setSearchParams(next, { replace: true });
-  }, [searchParams, cards, setSearchParams]);
+  }, [searchParams, cards, setSearchParams, openCardByKey]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -148,11 +166,9 @@ export function TasksKanbanBoard() {
                 cards={byColumn.get(c) ?? []}
                 nameFor={nameFor}
                 onAction={fire}
-                onOpen={(card) => {
-                  if (meId) markOpened(meId, card.id);
-                  setOpenKey(card.key);
-                }}
+                onOpen={openCardByKey}
                 isNew={isNew}
+                unreadCount={(c) => commentIndex.get(c.key)?.count ?? 0}
               />
             ))}
           </div>
