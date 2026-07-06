@@ -21,6 +21,8 @@ import type { UserTaskRow } from './hooks/useUserTasks';
 import { ImportanceSelect } from '@/features/tasks/ImportanceSelect';
 import { importanceOf, type ImportanceCode } from '@/features/tasks/importance';
 import { ClientPicker, type PickedClient } from '@/features/clients/ClientPicker';
+import { LeadPicker, type PickedLead } from '@/features/leads/LeadPicker';
+import { taskLinkMode, filterTaskAssignees } from './taskDialogRules';
 
 type Props = {
   open: boolean;
@@ -31,6 +33,8 @@ type Props = {
   defaultDueAt?: Date | null;
   /** Pre-select a client when creating (e.g. from a client's Tasks tab). */
   defaultClient?: PickedClient | null;
+  /** Pre-select a lead when creating (e.g. from a lead's Tasks tab). */
+  defaultLead?: PickedLead | null;
 };
 
 function toLocalInputValue(d: Date): string {
@@ -38,11 +42,15 @@ function toLocalInputValue(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClient }: Props) {
+export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClient, defaultLead }: Props) {
   const { t } = useTranslation('home');
   const userId = useAuthStore((s) => s.user?.id ?? '');
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const isSales = groupCodes.includes('sales') && !isAdmin;
   // Assign to = full staff directory (incl. service teams), not sales-only owners.
   const { data: owners = [] } = useMentionableUsers();
+  const assignees = filterTaskAssignees(owners, isSales);
   const upsert = useUpsertTask();
   const del = useDeleteTask();
 
@@ -53,7 +61,15 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
   const [assigneeId, setAssigneeId] = useState('');
   const [importance, setImportance] = useState<ImportanceCode | ''>('');
   const [client, setClient] = useState<PickedClient | null>(null);
+  const [lead, setLead] = useState<PickedLead | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const mode = taskLinkMode({
+    isSales,
+    editLeadId: task?.lead_id ?? null,
+    editClientId: task?.client_id ?? null,
+    hasDefaultLead: !!defaultLead,
+  });
 
   // Reset state every time the dialog opens with a different target.
    
@@ -67,6 +83,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
       setAssigneeId(task.user_id);
       setImportance(importanceOf(task));
       setClient(task.client_id ? { id: task.client_id, name: '' } : null);
+      setLead(task.lead_id ? { id: task.lead_id, name: '' } : null);
     } else {
       setTitle('');
       setNotes('');
@@ -75,8 +92,9 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
       setAssigneeId(userId);
       setImportance('');
       setClient(defaultClient ?? null);
+      setLead(defaultLead ?? null);
     }
-  }, [open, task, defaultDueAt, defaultClient, userId]);
+  }, [open, task, defaultDueAt, defaultClient, defaultLead, userId]);
 
   async function onSave() {
     if (!userId || !title.trim() || !dueAt || !importance) return;
@@ -89,7 +107,9 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
       due_at: new Date(dueAt).toISOString(),
       importance,
       completed_at: completed ? task?.completed_at ?? new Date().toISOString() : null,
-      client_id: client?.id ?? null,
+      ...(mode === 'lead'
+        ? { lead_id: lead?.id ?? null, client_id: null }
+        : { client_id: client?.id ?? null, lead_id: null }),
     };
     await upsert.mutateAsync(task?.id ? { ...payload, id: task.id } : payload);
     onOpenChange(false);
@@ -135,12 +155,12 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
               onChange={(e) => setAssigneeId(e.target.value)}
               className="block h-9 w-full rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
             >
-              {!owners.some((o) => o.user_id === (assigneeId || userId)) && (
+              {!assignees.some((o) => o.user_id === (assigneeId || userId)) && (
                 <option value={assigneeId || userId}>
                   {t('task.assignee_me', { defaultValue: 'Me' })}
                 </option>
               )}
-              {owners.map((o) => (
+              {assignees.map((o) => (
                 <option key={o.user_id} value={o.user_id}>
                   {o.user_id === userId
                     ? t('task.assignee_me', { defaultValue: 'Me' })
@@ -163,7 +183,11 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
             <Label htmlFor="task-importance">{t('importance.label', { ns: 'common', defaultValue: 'Importance' })}</Label>
             <ImportanceSelect id="task-importance" value={importance} onChange={setImportance} />
           </div>
-          <ClientPicker value={client} onChange={setClient} id="task-client" />
+          {mode === 'lead' ? (
+            <LeadPicker value={lead} onChange={setLead} id="task-lead" />
+          ) : (
+            <ClientPicker value={client} onChange={setClient} id="task-client" />
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="task-notes">{t('task.notes', { defaultValue: 'Notes' })}</Label>
             <textarea

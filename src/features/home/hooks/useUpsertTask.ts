@@ -15,6 +15,7 @@ type Input = {
   importance: ImportanceCode;
   completed_at?: string | null;
   client_id?: string | null;
+  lead_id?: string | null;
 };
 
 export function useUpsertTask() {
@@ -33,6 +34,7 @@ export function useUpsertTask() {
           completed_at: input.completed_at ?? null,
           ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
           ...(input.client_id !== undefined ? { client_id: input.client_id } : {}),
+          ...(input.lead_id !== undefined ? { lead_id: input.lead_id } : {}),
         };
         if (input.id) {
           const { data, error } = await supabase
@@ -56,6 +58,7 @@ export function useUpsertTask() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['user-tasks'] });
       void qc.invalidateQueries({ queryKey: ['client-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['lead-tasks'] });
     },
   });
 }
