@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useDealJobs, type DealJob } from './hooks/useDealJobs';
 import type { DealRow } from './hooks/useDeals';
 
-function noteFrom(
+export function noteFrom(
   jobs: DealJob[],
   types: string[],
   key: string,
@@ -34,6 +34,7 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
   const webSeo = noteFrom(jobs, ['web_seo', 'ai_seo'], 'seo_notes');
   const local = noteFrom(jobs, ['local_seo', 'ai_seo'], 'local_notes');
   const website = noteFrom(jobs, ['web_dev'], 'webdev_notes');
+  const ads = noteFrom(jobs, ['ads'], 'ads_notes');
 
   const patch = useMemo(
     () => ({
@@ -104,6 +105,7 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
       {webSeo.present && readOnlyNote(t('notes_area.web_seo_notes'), webSeo.value)}
       {local.present && readOnlyNote(t('notes_area.local_notes'), local.value)}
       {website.present && readOnlyNote(t('notes_area.website_notes'), website.value)}
+      {ads.present && readOnlyNote(t('notes_area.ads_notes'), ads.value)}
       <div className="flex h-5 items-center text-xs text-muted-foreground">
         {autoSaveLabel(status, lang)}
       </div>
