@@ -37,6 +37,9 @@ export function TaskKanbanCard({
       ref={setNodeRef}
       style={style}
       {...attributes}
+      // dnd-kit marks non-draggable cards aria-disabled, but every card stays
+      // clickable (opens the dialog) and Replies cards keep their action button.
+      aria-disabled={undefined}
       {...listeners}
       // dnd-kit makes the draggable wrapper a role="button"; label it by the
       // task title so its accessible name doesn't swallow the inner buttons.

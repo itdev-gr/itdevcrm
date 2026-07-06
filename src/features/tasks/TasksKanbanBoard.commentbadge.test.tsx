@@ -120,6 +120,8 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     ] });
     render(<TasksKanbanBoard />);
     const replies = screen.getByTestId('tasks-col-replies');
+    const card = within(replies).getByLabelText('Mine urgent');
+    expect(card).not.toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(within(replies).getByRole('button', { name: /tasks_page.resolve/ }));
     expect(apply).toHaveBeenCalledWith({ card: expect.objectContaining({ id: 'a1' }), action: { type: 'resolve' } });
   });
