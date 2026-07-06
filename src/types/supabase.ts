@@ -5633,6 +5633,7 @@ export type Database = {
           due_at: string
           id: string
           importance: string
+          lead_id: string | null
           notes: string | null
           started_at: string | null
           title: string
@@ -5647,6 +5648,7 @@ export type Database = {
           due_at: string
           id?: string
           importance?: string
+          lead_id?: string | null
           notes?: string | null
           started_at?: string | null
           title: string
@@ -5661,6 +5663,7 @@ export type Database = {
           due_at?: string
           id?: string
           importance?: string
+          lead_id?: string | null
           notes?: string | null
           started_at?: string | null
           title?: string
@@ -5688,6 +5691,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_tasks_user_id_fkey"
