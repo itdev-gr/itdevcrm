@@ -80,8 +80,8 @@ describe('taskCard', () => {
     expect(cards.map((c) => c.key).sort()).toEqual(['assigned:a1', 'user:u1']);
   });
 
-  it('exposes the five columns urgent→resolved', () => {
-    expect(BOARD_COLUMNS).toEqual(['urgent', 'high', 'medium', 'low', 'resolved']);
+  it('exposes the six columns replies→resolved', () => {
+    expect(BOARD_COLUMNS).toEqual(['replies', 'urgent', 'high', 'medium', 'low', 'resolved']);
   });
 
   describe('resolveDrag', () => {
@@ -104,5 +104,35 @@ describe('taskCard', () => {
     it('resolved card dropped on Resolved → noop', () => {
       expect(resolveDrag(mine({ status: 'resolved' }), 'resolved')).toEqual({ type: 'noop' });
     });
+  });
+});
+
+describe('replies column', () => {
+  it('unread replies win over importance', () => {
+    const c = userTaskToCard(userRow(), me);
+    expect(columnOf(c, true)).toBe('replies');
+    expect(columnOf(c, false)).toBe(columnOf(c)); // legacy default unchanged
+  });
+
+  it('unread replies win over resolved (resurfacing)', () => {
+    const c = userTaskToCard(userRow({ completed_at: '2026-07-01T00:00:00Z' }), me);
+    expect(columnOf(c)).toBe('resolved');
+    expect(columnOf(c, true)).toBe('replies');
+  });
+
+  it('cards with unread replies are not draggable', () => {
+    const c = userTaskToCard(userRow(), me); // relation mine -> normally draggable
+    expect(isDraggable(c)).toBe(true);
+    expect(isDraggable(c, true)).toBe(false);
+  });
+
+  it('dropping onto the replies column is a noop', () => {
+    const c = userTaskToCard(userRow(), me);
+    expect(resolveDrag(c, 'replies')).toEqual({ type: 'noop' });
+  });
+
+  it('replies is the first board column', () => {
+    expect(BOARD_COLUMNS[0]).toBe('replies');
+    expect(BOARD_COLUMNS).toHaveLength(6);
   });
 });

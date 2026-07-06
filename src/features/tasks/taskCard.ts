@@ -3,13 +3,14 @@ import type { UserTaskRow } from '@/features/home/hooks/useUserTasks';
 import type { AssignedTaskRow } from '@/features/assigned_tasks/hooks/useAssignedTasksOpen';
 
 export type TaskRelation = 'mine' | 'delegated' | 'other';
-export type ColumnKey = ImportanceCode | 'resolved';
+export type ColumnKey = ImportanceCode | 'resolved' | 'replies';
 export type BoardFilter = 'to_me' | 'by_me' | 'all';
 
 export type TaskLeadJoin = { id: string; title: string; code: string | null };
 
-/** Left→right column order on the board. */
-export const BOARD_COLUMNS: ColumnKey[] = ['urgent', 'high', 'medium', 'low', 'resolved'];
+/** Left→right column order on the board. Replies is derived (unread comment
+ *  notifications), not a stored state — see columnOf. */
+export const BOARD_COLUMNS: ColumnKey[] = ['replies', 'urgent', 'high', 'medium', 'low', 'resolved'];
 
 export type TaskCard = {
   key: string;            // 'user:<id>' | 'assigned:<id>'
@@ -89,13 +90,18 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
   };
 }
 
-export function columnOf(card: TaskCard): ColumnKey {
+/** hasUnreadReplies (derived from unread comment notifications) wins over
+ *  everything — including resolved, so a reply resurfaces a resolved task.
+ *  Optional so non-board callers (client/lead tabs) keep legacy behavior. */
+export function columnOf(card: TaskCard, hasUnreadReplies = false): ColumnKey {
+  if (hasUnreadReplies) return 'replies';
   return card.resolved ? 'resolved' : card.importance;
 }
 
-/** Only tasks where I'm the assignee can be moved/resolved from my board. */
-export function isDraggable(card: TaskCard): boolean {
-  return card.relation === 'mine';
+/** Only tasks where I'm the assignee can be moved/resolved from my board.
+ *  Cards sitting in Replies are read-first: not draggable until opened. */
+export function isDraggable(card: TaskCard, hasUnreadReplies = false): boolean {
+  return card.relation === 'mine' && !hasUnreadReplies;
 }
 
 export function buildBoardCards(userRows: Array<UserTaskRow & { lead?: TaskLeadJoin | null }>, assignedRows: AssignedTaskRow[], meId: string): TaskCard[] {
@@ -119,6 +125,7 @@ export type DragAction =
 
 /** Decide what dropping `card` onto column `target` should do. */
 export function resolveDrag(card: TaskCard, target: ColumnKey): DragAction {
+  if (target === 'replies') return { type: 'noop' };
   if (!isDraggable(card)) return { type: 'noop' };
   if (target === 'resolved') {
     return card.resolved ? { type: 'noop' } : { type: 'resolve' };
