@@ -59,6 +59,7 @@ export const queryKeys = {
   tasksArchive: (meId: string, limit: number) =>
     ['tasks', 'archive', meId, limit] as const,
   clientTasks: (clientId: string) => ['client-tasks', clientId] as const,
+  leadTasks: (leadId: string) => ['lead-tasks', leadId] as const,
   servicePackages: () => ['service-packages'] as const,
   serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,

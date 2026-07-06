@@ -183,7 +183,14 @@
     "attachments": "Attachments",
     "activity": "Activity",
     "offers": "Offers",
-    "proformas": "Pro Formas"
+    "proformas": "Pro Formas",
+    "tasks": "Tasks"
+  },
+  "tasks_tab": {
+    "open": "Open",
+    "resolved": "Resolved",
+    "empty": "No tasks for this lead yet.",
+    "new": "New task"
   },
   "convert": {
     "errors": {

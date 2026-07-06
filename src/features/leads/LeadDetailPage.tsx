@@ -30,6 +30,7 @@ import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { OffersTab } from '@/features/offers/OffersTab';
 import { ProFormasTab } from '@/features/proformas/ProFormasTab';
+import { LeadTasksTab } from './LeadTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
 import { buildOfferDraft } from '@/features/email/buildDraft';
 
@@ -305,6 +306,9 @@ export function LeadDetailPage() {
           <TabsTrigger value="attachments" className={detailTabTriggerClass}>
             {t('tabs.attachments')}
           </TabsTrigger>
+          <TabsTrigger value="tasks" className={detailTabTriggerClass}>
+            {t('tabs.tasks')}
+          </TabsTrigger>
           <TabsTrigger value="activity" className={detailTabTriggerClass}>
             {t('tabs.activity')}
           </TabsTrigger>
@@ -354,6 +358,11 @@ export function LeadDetailPage() {
         <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <AttachmentsPanel parentType="lead" parentId={leadId} />
+          </div>
+        </TabsContent>
+        <TabsContent value="tasks" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <LeadTasksTab leadId={leadId} leadTitle={lead.title} />
           </div>
         </TabsContent>
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
