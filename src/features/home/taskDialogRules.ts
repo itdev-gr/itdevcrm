@@ -1,16 +1,20 @@
 export type TaskLinkMode = 'lead' | 'client';
 
 /** Which record picker the task dialog shows. An existing link wins (so any
- *  role can edit any task faithfully); otherwise sales work leads. */
+ *  role can edit any task faithfully); then a default lead or default client
+ *  the dialog was opened with (e.g. a lead's or client's Tasks tab); otherwise
+ *  sales work leads. */
 export function taskLinkMode(params: {
   isSales: boolean;
   editLeadId: string | null;
   editClientId: string | null;
   hasDefaultLead: boolean;
+  hasDefaultClient: boolean;
 }): TaskLinkMode {
   if (params.editLeadId) return 'lead';
   if (params.editClientId) return 'client';
   if (params.hasDefaultLead) return 'lead';
+  if (params.hasDefaultClient) return 'client';
   return params.isSales ? 'lead' : 'client';
 }
 

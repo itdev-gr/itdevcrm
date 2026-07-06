@@ -69,6 +69,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
     editLeadId: task?.lead_id ?? null,
     editClientId: task?.client_id ?? null,
     hasDefaultLead: !!defaultLead,
+    hasDefaultClient: !!defaultClient,
   });
 
   // Reset state every time the dialog opens with a different target.

@@ -52,4 +52,12 @@ describe('TaskDialog for sales users', () => {
     expect(names).toContain('Nia Accounting');
     expect(names).not.toContain('Ted Tech');
   });
+
+  it('keeps the client picker when opened from a client Tasks tab', () => {
+    render(
+      wrap(<TaskDialog open onOpenChange={() => {}} defaultClient={{ id: 'C1', name: 'ACME' }} />),
+    );
+    expect(screen.getByText('ACME')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/search lead/i)).not.toBeInTheDocument();
+  });
 });
