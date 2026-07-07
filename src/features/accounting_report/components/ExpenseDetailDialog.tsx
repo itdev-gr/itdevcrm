@@ -17,6 +17,7 @@ function formatPaidAt(iso: string | null, locale: string): string {
 import { useMarkExpensePaid } from '../hooks/useMarkExpensePaid';
 import { useDeleteExpense } from '../hooks/useDeleteExpense';
 import { useUploadReceipt } from '../hooks/useUploadReceipt';
+import { useSetExpenseAutopay } from '../hooks/useSetExpenseAutopay';
 
 export type ExpenseDetailDialogProps = {
   open: boolean;
@@ -30,9 +31,13 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
   const markPaid = useMarkExpensePaid();
   const del = useDeleteExpense();
   const upload = useUploadReceipt();
+  const autopayMut = useSetExpenseAutopay();
 
   const [showPaidForm, setShowPaidForm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [autopayMethod, setAutopayMethod] = useState('');
+  const [showAutopayMethod, setShowAutopayMethod] = useState(false);
+  const [autopayError, setAutopayError] = useState<string | null>(null);
 
   if (!open || !id) return null;
   const e = detail.data;
@@ -49,6 +54,37 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
     await markPaid.mutateAsync({ id, paymentMethod });
     setShowPaidForm(false);
     setPaymentMethod('');
+  }
+
+  async function onEnableAutopay() {
+    if (!id || !e) return;
+    setAutopayError(null);
+    // A method must exist somewhere: on the row or typed just now.
+    if (!e.payment_method && !autopayMethod.trim()) {
+      setShowAutopayMethod(true);
+      return;
+    }
+    try {
+      await autopayMut.mutateAsync({
+        id,
+        enabled: true,
+        paymentMethod: autopayMethod.trim() || null,
+      });
+      setShowAutopayMethod(false);
+      setAutopayMethod('');
+    } catch (err) {
+      setAutopayError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function onDisableAutopay() {
+    if (!id) return;
+    setAutopayError(null);
+    try {
+      await autopayMut.mutateAsync({ id, enabled: false });
+    } catch (err) {
+      setAutopayError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   async function onDelete() {
@@ -87,6 +123,54 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
               {t('transaction_drawer.status')}: {t(`status.${e.status}`)}
               {e.status === 'paid' && e.paid_at && ` (${formatPaidAt(e.paid_at, i18n.language)})`}
             </p>
+
+            {e.billing_type !== 'one_time' && (
+              <div className="mt-3 rounded border p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">⚡ {t('autopay.label')}</span>
+                  <span className={e.autopay ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}>
+                    {e.autopay ? t('autopay.on') : t('autopay.off')}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{t('autopay.hint')}</p>
+                <div className="mt-2 flex items-end gap-2">
+                  {showAutopayMethod && !e.payment_method && (
+                    <label className="text-sm">
+                      {t('expense_form.payment_method')}
+                      <input
+                        aria-label="Autopay payment method"
+                        value={autopayMethod}
+                        onChange={(ev) => setAutopayMethod(ev.target.value)}
+                        className="mt-1 block rounded border px-2 py-1"
+                      />
+                    </label>
+                  )}
+                  {e.autopay ? (
+                    <button
+                      type="button"
+                      onClick={onDisableAutopay}
+                      disabled={autopayMut.isPending}
+                      className="rounded border px-3 py-1.5 text-sm"
+                    >
+                      {t('autopay.disable')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onEnableAutopay}
+                      disabled={autopayMut.isPending}
+                      className="rounded border px-3 py-1.5 text-sm"
+                    >
+                      {t('autopay.enable')}
+                    </button>
+                  )}
+                </div>
+                {autopayError && (
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">{autopayError}</p>
+                )}
+              </div>
+            )}
+
             {e.notes && <p className="mt-2 text-sm">{e.notes}</p>}
 
             <div className="mt-4 flex items-center gap-3">
