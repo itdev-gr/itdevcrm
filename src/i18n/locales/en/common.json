@@ -67,6 +67,7 @@
     "comment_placeholder": "Write a comment…",
     "comment_post": "Post",
     "comments_empty": "No comments yet.",
+    "comments_participants_only": "Comments are visible to the task's participants only.",
     "status_label": "Status",
     "client_label": "Client",
     "lead_label": "Lead",

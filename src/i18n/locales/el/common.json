@@ -67,6 +67,7 @@
     "comment_placeholder": "Γράψτε ένα σχόλιο…",
     "comment_post": "Αποστολή",
     "comments_empty": "Δεν υπάρχουν σχόλια ακόμη.",
+    "comments_participants_only": "Τα σχόλια είναι ορατά μόνο στους συμμετέχοντες της εργασίας.",
     "status_label": "Κατάσταση",
     "client_label": "Πελάτης",
     "lead_label": "Lead",

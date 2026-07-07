@@ -39,6 +39,10 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const { data: task, isLoading, error } = useAssignedTaskDetail(taskId);
   const resolve = useResolveAssignedTask();
 
+  // Accounting can open any task read-only; Resolve + the comment thread stay gated
+  // to the task's parties (assignee, creator, or an admin).
+  const isParty = !!task && (isAdmin || task.assignee_user_id === meId || task.created_by_user_id === meId);
+
   // Technical groups can't open the deal page; for a deal-scoped task, point them at
   // the deal's matching service job instead.
   const needJobLink = !!task?.deal_id && !task?.job_id && !canOpenDeal;
@@ -122,9 +126,16 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
             commentsKind="assigned"
             commentsTaskId={task.id}
             locale={locale}
+            commentsReplacement={
+              isParty ? undefined : (
+                <p className="text-xs italic text-muted-foreground">
+                  {c('tasks_page.comments_participants_only')}
+                </p>
+              )
+            }
             footer={
               <div className="flex flex-wrap justify-end gap-2">
-                {task.status === 'open' && (
+                {task.status === 'open' && isParty && (
                   <Button type="button" onClick={onResolve} disabled={resolve.isPending}>
                     {c('tasks_page.resolve')}
                   </Button>
