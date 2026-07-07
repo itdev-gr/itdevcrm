@@ -24,6 +24,14 @@ vi.mock('../hooks/useUploadReceipt', () => ({
 vi.mock('../hooks/useSetExpenseAutopay', () => ({
   useSetExpenseAutopay: () => ({ mutateAsync: autopayMutateAsync, isPending: false }),
 }));
+vi.mock('./ExpenseEditForm', () => ({
+  ExpenseEditForm: ({ onDone }: { onDone: () => void }) => (
+    <div>
+      <p>EDIT_FORM_STUB</p>
+      <button type="button" onClick={onDone}>stub-done</button>
+    </div>
+  ),
+}));
 
 import { ExpenseDetailDialog } from './ExpenseDetailDialog';
 
@@ -105,5 +113,30 @@ describe('ExpenseDetailDialog — Autopay', () => {
     render(wrap(<ExpenseDetailDialog open id="e1" onClose={() => {}} />));
     fireEvent.click(screen.getByRole('button', { name: 'Disable autopay' }));
     expect(autopayMutateAsync).toHaveBeenCalledWith({ id: 'e1', enabled: false });
+  });
+});
+
+describe('ExpenseDetailDialog — Edit mode', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows an Edit button and swaps to the edit form', () => {
+    detailData.current = baseExpense();
+    render(wrap(<ExpenseDetailDialog open id="e1" onClose={() => {}} />));
+    expect(screen.queryByText('EDIT_FORM_STUB')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.getByText('EDIT_FORM_STUB')).toBeTruthy();
+    // read-only actions hidden while editing
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+  });
+
+  it('returns to the read-only view when the form signals done', () => {
+    detailData.current = baseExpense();
+    render(wrap(<ExpenseDetailDialog open id="e1" onClose={() => {}} />));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.click(screen.getByRole('button', { name: 'stub-done' }));
+    expect(screen.queryByText('EDIT_FORM_STUB')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
   });
 });

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useExpenseDetail } from '../hooks/useExpenseDetail';
+import { ExpenseEditForm } from './ExpenseEditForm';
 
 function formatPaidAt(iso: string | null, locale: string): string {
   if (!iso) return '';
@@ -38,6 +39,8 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
   const [autopayMethod, setAutopayMethod] = useState('');
   const [showAutopayMethod, setShowAutopayMethod] = useState(false);
   const [autopayError, setAutopayError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  useEffect(() => setEditing(false), [id]);
 
   if (!open || !id) return null;
   const e = detail.data;
@@ -100,6 +103,8 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
         <h2 className="mb-2 text-lg font-semibold">{t('expense_detail.title')}</h2>
         {detail.isLoading || !e ? (
           <p>…</p>
+        ) : editing ? (
+          <ExpenseEditForm key={e.id} expense={e} onDone={() => setEditing(false)} />
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
@@ -220,9 +225,14 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
             )}
 
             <div className="mt-6 flex justify-between">
-              <button type="button" onClick={onDelete} className="rounded border px-3 py-1.5 text-sm text-red-600 dark:text-red-400">
-                {t('expense_detail.delete')}
-              </button>
+              <div className="flex gap-2">
+                <button type="button" onClick={onDelete} className="rounded border px-3 py-1.5 text-sm text-red-600 dark:text-red-400">
+                  {t('expense_detail.delete')}
+                </button>
+                <button type="button" onClick={() => setEditing(true)} className="rounded border px-3 py-1.5 text-sm">
+                  {t('expense_detail.edit')}
+                </button>
+              </div>
               <button type="button" onClick={onClose} className="rounded border px-3 py-1.5 text-sm">
                 {t('expense_form.cancel')}
               </button>
