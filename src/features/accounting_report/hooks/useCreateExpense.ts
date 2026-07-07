@@ -13,6 +13,7 @@ export type CreateExpenseInput = {
   paidByUserId?: string | null;
   notes?: string | null;
   markPaid?: boolean;
+  autopay?: boolean;
 };
 
 export function useCreateExpense() {
@@ -35,6 +36,7 @@ export function useCreateExpense() {
           paid_by: isPaid ? (input.paidByUserId ?? null) : null,
           paid_at: isPaid ? new Date().toISOString() : null,
           status: isPaid ? 'paid' : 'pending',
+          autopay: input.autopay === true,
         })
         .select()
         .single();

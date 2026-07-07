@@ -89,8 +89,18 @@
       "end_date_after_start": "End date must be on or after start date.",
       "payment_method_required": "Add a payment method to mark this expense as paid.",
       "file_too_large": "File is larger than 10 MB.",
-      "file_wrong_type": "Only PDF / PNG / JPEG / WebP are allowed."
+      "file_wrong_type": "Only PDF / PNG / JPEG / WebP are allowed.",
+      "autopay_requires_method": "A payment method is required for autopay"
     }
+  },
+  "autopay": {
+    "label": "Autopay",
+    "badge": "Autopay",
+    "hint": "Each period is automatically marked paid on its start date",
+    "on": "On",
+    "off": "Off",
+    "enable": "Enable autopay",
+    "disable": "Disable autopay"
   },
   "expense_detail": {
     "title": "Expense",

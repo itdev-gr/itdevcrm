@@ -2253,6 +2253,7 @@ export type Database = {
         Row: {
           amount_gross: number | null
           amount_net: number
+          autopay: boolean
           billing_type: string
           category_id: string
           created_at: string
@@ -2275,6 +2276,7 @@ export type Database = {
         Insert: {
           amount_gross?: number | null
           amount_net: number
+          autopay?: boolean
           billing_type: string
           category_id: string
           created_at?: string
@@ -2297,6 +2299,7 @@ export type Database = {
         Update: {
           amount_gross?: number | null
           amount_net?: number
+          autopay?: boolean
           billing_type?: string
           category_id?: string
           created_at?: string
@@ -6240,6 +6243,14 @@ export type Database = {
       set_announcement_active: {
         Args: { p_active: boolean; p_id: string }
         Returns: Json
+      }
+      set_expense_autopay: {
+        Args: {
+          p_enabled: boolean
+          p_expense_id: string
+          p_payment_method?: string | null
+        }
+        Returns: number
       }
       set_job_monthly_task: {
         Args: { p_code: string; p_completed: boolean; p_job_id: string }

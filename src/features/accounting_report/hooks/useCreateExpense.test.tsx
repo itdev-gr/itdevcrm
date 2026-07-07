@@ -56,6 +56,7 @@ describe('useCreateExpense', () => {
       paid_by: null,
       paid_at: null,
       status: 'pending',
+      autopay: false,
     });
   });
 
