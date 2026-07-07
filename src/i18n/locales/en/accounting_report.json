@@ -82,6 +82,7 @@
     "submit": "Save",
     "submit_and_mark_paid": "Save & mark paid",
     "cancel": "Cancel",
+    "edit_chain_hint": "Future periods copy the newest row of this expense — edit the latest one to change upcoming amounts.",
     "validation": {
       "category_required": "Pick a category.",
       "amount_required": "Net amount is required.",
@@ -104,6 +105,7 @@
   },
   "expense_detail": {
     "title": "Expense",
+    "edit": "Edit",
     "mark_paid": "Mark paid",
     "delete": "Delete",
     "delete_confirm": "Delete this expense? This cannot be undone.",
