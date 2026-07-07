@@ -39,9 +39,7 @@ Stable recurring expenses (rent, COSMOTE, CLAUDE, Google Workspace, Local Viking
    - Updates `autopay = p_enabled` on **all rows of the chain**; if `p_payment_method` is provided, sets it on rows where it is null (never overwrites an existing method on a paid row).
    - When enabling: validate the chain tip has a `payment_method` (else raise exception with a clear message), then settle the chain's due pending rows inline (same predicate as `settle_autopay_expenses`, scoped to the chain).
    - When disabling: flag update only; paid rows stay paid, pending rows stay pending for manual handling.
-5. **Cron:** update the existing `daily_ensure_recurring_expenses` job command to run both steps in order:
-   `select public.ensure_recurring_expenses(); select public.settle_autopay_expenses();`
-   (unschedule + reschedule under the same name; no new cron entry).
+5. **Cron:** a small wrapper `run_daily_expenses()` chains the two steps (spawn → settle), matching the `run_daily_payment_reminders` precedent; the existing `daily_ensure_recurring_expenses` job is rescheduled under the same name to call the wrapper. No new cron entry.
 
 Autopay is a **chain-level property**: the toggle RPC stamps every row so the spawner (which copies from the row being renewed) always inherits the current setting.
 
