@@ -47,6 +47,11 @@ export function ExpenseRow({ row, onClick }: ExpenseRowProps) {
         >
           {t(`status.${row.status}`)}
         </span>
+        {row.autopay && (
+          <span className="ml-1.5 inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-950/50 dark:text-sky-300">
+            ⚡ {t('autopay.badge')}
+          </span>
+        )}
       </td>
     </tr>
   );
