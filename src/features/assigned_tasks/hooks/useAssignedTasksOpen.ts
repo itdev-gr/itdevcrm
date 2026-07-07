@@ -28,6 +28,7 @@ export type AssignedTaskRow = {
   department_group_id: string | null;
   client: { id: string; name: string } | null;
   department: AssignedTaskDepartment | null;
+  job?: { id: string; code: string | null } | null;
 };
 
 export const ASSIGNED_TASK_SELECT = `

@@ -12,7 +12,8 @@ const SELECT = `
   status, resolved_at, resolved_by_user_id, created_at,
   department_group_id,
   client:client_id ( id, name ),
-  department:department_group_id ( id, code, display_names, position )
+  department:department_group_id ( id, code, display_names, position ),
+  job:job_id ( id, code )
 `;
 
 export function useAssignedTasksForSource(
@@ -36,6 +37,19 @@ export function useAssignedTasksForSource(
         q = q.or(
           `job_id.eq.${source.id},and(deal_id.eq.${deptMatch!.dealId},department_group_id.eq.${deptMatch!.departmentGroupId})`,
         );
+      } else if (source.kind === 'deal') {
+        // A deal's Tasks tab shows deal tasks AND its jobs' tasks.
+        const { data: jobs, error: jobsError } = await supabase
+          .from('jobs')
+          .select('id')
+          .eq('deal_id', source.id);
+        if (jobsError) throw new Error(jobsError.message);
+        const jobIds = (jobs ?? []).map((j) => j.id);
+        if (jobIds.length > 0) {
+          q = q.or(`deal_id.eq.${source.id},job_id.in.(${jobIds.join(',')})`);
+        } else {
+          q = q.eq('deal_id', source.id);
+        }
       } else {
         q = q.eq(column, source.id);
       }

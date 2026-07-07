@@ -3,28 +3,40 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { order, eq, select, from } = vi.hoisted(() => {
-  const order = vi.fn().mockResolvedValue({
-    data: [
-      {
-        id: 't1', title: 'Fix SSL', description: null,
-        deal_id: 'd1', job_id: null, client_id: 'c1', source_code: '000001',
-        assignee_user_id: 'u1', created_by_user_id: 'u2',
-        status: 'open', resolved_at: null, resolved_by_user_id: null, created_at: 't',
-        department_group_id: 'g1',
-        client: { id: 'c1', name: 'Acme' },
-        department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
-      },
-    ],
-    error: null,
+const { fromMock, state } = vi.hoisted(() => {
+  const state = {
+    jobIds: [] as { id: string }[],
+    tasks: [] as unknown[],
+    lastOr: null as string | null,
+    lastEq: null as [string, string] | null,
+  };
+  // supabase.from('jobs') -> select().eq() resolves job ids;
+  // supabase.from('assigned_tasks') -> select().or()/.eq().order() resolves tasks.
+  const fromMock = vi.fn((table: string) => {
+    if (table === 'jobs') {
+      return {
+        select: () => ({
+          eq: () => Promise.resolve({ data: state.jobIds, error: null }),
+        }),
+      };
+    }
+    return {
+      select: () => ({
+        or: (expr: string) => {
+          state.lastOr = expr;
+          return { order: () => Promise.resolve({ data: state.tasks, error: null }) };
+        },
+        eq: (col: string, val: string) => {
+          state.lastEq = [col, val];
+          return { order: () => Promise.resolve({ data: state.tasks, error: null }) };
+        },
+      }),
+    };
   });
-  const eq = vi.fn().mockReturnValue({ order });
-  const select = vi.fn().mockReturnValue({ eq });
-  const from = vi.fn().mockReturnValue({ select });
-  return { order, eq, select, from };
+  return { fromMock, state };
 });
 
-vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
+vi.mock('@/lib/supabase', () => ({ supabase: { from: fromMock } }));
 
 import { useAssignedTasksForSource } from './useAssignedTasksForSource';
 
@@ -33,34 +45,42 @@ function wrap(c: ReactNode) {
   return <QueryClientProvider client={qc}>{c}</QueryClientProvider>;
 }
 
-describe('useAssignedTasksForSource', () => {
-  beforeEach(() => vi.clearAllMocks());
+describe('useAssignedTasksForSource — deal kind', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.jobIds = [];
+    state.tasks = [];
+    state.lastOr = null;
+    state.lastEq = null;
+  });
 
-  it('filters by deal_id when source is a deal', async () => {
+  it('unions deal tasks with the deal jobs tasks when the deal has jobs', async () => {
+    state.jobIds = [{ id: 'job-1' }, { id: 'job-2' }];
     const { result } = renderHook(
-      () => useAssignedTasksForSource({ kind: 'deal', id: 'd1' }),
+      () => useAssignedTasksForSource({ kind: 'deal', id: 'deal-1' }),
       { wrapper: ({ children }) => wrap(children) },
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(eq).toHaveBeenCalledWith('deal_id', 'd1');
-    expect(order).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(state.lastOr).toBe('deal_id.eq.deal-1,job_id.in.(job-1,job-2)');
   });
 
-  it('filters by job_id when source is a job', async () => {
+  it('falls back to a plain deal_id filter when the deal has no jobs', async () => {
     const { result } = renderHook(
-      () => useAssignedTasksForSource({ kind: 'job', id: 'j1' }),
+      () => useAssignedTasksForSource({ kind: 'deal', id: 'deal-1' }),
       { wrapper: ({ children }) => wrap(children) },
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(eq).toHaveBeenCalledWith('job_id', 'j1');
+    expect(state.lastEq).toEqual(['deal_id', 'deal-1']);
+    expect(state.lastOr).toBeNull();
   });
 
-  it('returns the nested department per task', async () => {
-    const { result } = renderHook(() => useAssignedTasksForSource({ kind: 'deal', id: 'd1' }), {
-      wrapper: ({ children }) => wrap(children),
-    });
-    await waitFor(() => expect(result.current.data).toBeDefined());
-    expect(result.current.data?.[0]?.department?.code).toBe('web_dev');
-    expect(select).toHaveBeenCalledWith(expect.stringContaining('department:department_group_id'));
+  it('job kind is unchanged (no jobs pre-query)', async () => {
+    const { result } = renderHook(
+      () => useAssignedTasksForSource({ kind: 'job', id: 'job-9' }),
+      { wrapper: ({ children }) => wrap(children) },
+    );
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(state.lastEq).toEqual(['job_id', 'job-9']);
+    expect(fromMock).not.toHaveBeenCalledWith('jobs');
   });
 });

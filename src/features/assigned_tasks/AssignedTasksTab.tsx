@@ -30,11 +30,13 @@ function TaskRow({
   onOpen,
   fromDeal = false,
   isNew = false,
+  jobChip = false,
 }: {
   task: AssignedTaskRow;
   onOpen: (id: string) => void;
   fromDeal?: boolean;
   isNew?: boolean;
+  jobChip?: boolean;
 }) {
   const { t } = useTranslation('jobs');
   const userId = useAuthStore((s) => s.user?.id ?? '');
@@ -56,6 +58,11 @@ function TaskRow({
             {isNew && <NewTaskDot />}
             <span className="text-sm font-medium">{task.title}</span>
             <DepartmentChip department={task.department} />
+            {jobChip && task.job?.code && (
+              <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                {task.job.code}
+              </span>
+            )}
             {fromDeal && (
               <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold text-sky-800 dark:bg-sky-950/50 dark:text-sky-200">
                 {t('assigned_tasks.from_deal')}
@@ -160,6 +167,7 @@ export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId, onIniti
               onOpen={handleOpen}
               fromDeal={source.kind === 'job' && task.job_id == null}
               isNew={newFor(task)}
+              jobChip={source.kind === 'deal' && task.job_id != null}
             />
           ))}
         </ul>
@@ -177,6 +185,7 @@ export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId, onIniti
               onOpen={handleOpen}
               fromDeal={source.kind === 'job' && task.job_id == null}
               isNew={newFor(task)}
+              jobChip={source.kind === 'deal' && task.job_id != null}
             />
           ))}
         </ul>
