@@ -4,7 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 import '@/lib/i18n';
 
-const { mutateAsync } = vi.hoisted(() => ({ mutateAsync: vi.fn() }));
+const { mutateAsync, autopayMutateAsync } = vi.hoisted(() => ({
+  mutateAsync: vi.fn(),
+  autopayMutateAsync: vi.fn(),
+}));
 
 vi.mock('../hooks/useExpenseCategories', () => ({
   useExpenseCategories: () => ({
@@ -13,6 +16,9 @@ vi.mock('../hooks/useExpenseCategories', () => ({
 }));
 vi.mock('../hooks/useCreateExpense', () => ({
   useCreateExpense: () => ({ mutateAsync, isPending: false }),
+}));
+vi.mock('../hooks/useSetExpenseAutopay', () => ({
+  useSetExpenseAutopay: () => ({ mutateAsync: autopayMutateAsync, isPending: false }),
 }));
 
 import { NewExpenseDialog } from './NewExpenseDialog';
@@ -80,5 +86,64 @@ describe('NewExpenseDialog — monthly auto end-date', () => {
 
     // Jan 31 + 1 month must clamp to Feb 28, not overflow into March.
     expect((screen.getByLabelText('End date') as HTMLInputElement).value).toBe('2026-02-28');
+  });
+});
+
+describe('NewExpenseDialog — Autopay', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mutateAsync.mockResolvedValue({ id: 'e1' });
+    autopayMutateAsync.mockResolvedValue(1);
+  });
+
+  it('hides the autopay toggle for one_time billing', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    expect(screen.queryByLabelText('Autopay')).toBeNull();
+  });
+
+  it('shows the autopay toggle for recurring billing', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
+    expect(screen.getByLabelText('Autopay')).toBeTruthy();
+  });
+
+  it('blocks Save when autopay is on but payment method is empty', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
+    fireEvent.click(screen.getByLabelText('Autopay'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText('A payment method is required for autopay')).toBeTruthy();
+  });
+
+  it('creates with autopay=true and settles via RPC when method provided', async () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
+    fireEvent.click(screen.getByLabelText('Autopay'));
+    fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: 'CARD' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await screen.findByRole('button', { name: 'Save' }); // let async submit settle
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ autopay: true }));
+    expect(autopayMutateAsync).toHaveBeenCalledWith({
+      id: 'e1',
+      enabled: true,
+      paymentMethod: 'CARD',
+    });
+  });
+
+  it('switching back to one_time drops autopay from the payload', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly' }));
+    fireEvent.click(screen.getByLabelText('Autopay'));
+    fireEvent.click(screen.getByRole('button', { name: 'One-time' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ autopay: false }));
+    expect(autopayMutateAsync).not.toHaveBeenCalled();
   });
 });

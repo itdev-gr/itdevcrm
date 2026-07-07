@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useExpenseCategories } from '../hooks/useExpenseCategories';
 import { useCreateExpense } from '../hooks/useCreateExpense';
+import { useSetExpenseAutopay } from '../hooks/useSetExpenseAutopay';
 
 export type NewExpenseDialogProps = {
   open: boolean;
@@ -33,6 +34,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
   const { t, i18n } = useTranslation('accounting_report');
   const cats = useExpenseCategories();
   const create = useCreateExpense();
+  const autopayMut = useSetExpenseAutopay();
   const isEl = i18n.language.startsWith('el');
 
   const [categoryId, setCategoryId] = useState('');
@@ -44,6 +46,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
   const [endDate, setEndDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
+  const [autopayOn, setAutopayOn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const grossNum =
@@ -71,8 +74,11 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
       return setError(t('expense_form.validation.end_date_after_start'));
     if (markPaid && !paymentMethod.trim())
       return setError(t('expense_form.validation.payment_method_required'));
+    const wantsAutopay = billingType !== 'one_time' && autopayOn;
+    if (wantsAutopay && !paymentMethod.trim())
+      return setError(t('expense_form.validation.autopay_requires_method'));
     try {
-      await create.mutateAsync({
+      const created = await create.mutateAsync({
         categoryId,
         vendor: vendor || null,
         billingType,
@@ -83,7 +89,17 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
         paymentMethod: paymentMethod || null,
         notes: notes || null,
         markPaid,
+        autopay: wantsAutopay,
       });
+      if (wantsAutopay && created?.id) {
+        // Settles an already-due first period now; if it fails, the nightly
+        // sweep settles it — the flag is already on the row.
+        await autopayMut.mutateAsync({
+          id: created.id as string,
+          enabled: true,
+          paymentMethod: paymentMethod.trim() || null,
+        }).catch(() => undefined);
+      }
       onClose();
     } catch {
       setError(t('errors.save_failed'));
@@ -137,6 +153,19 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
             ))}
           </div>
         </div>
+
+        {billingType !== 'one_time' && (
+          <label className="mt-3 flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              aria-label={t('autopay.label')}
+              checked={autopayOn}
+              onChange={(ev) => setAutopayOn(ev.target.checked)}
+            />
+            <span>⚡ {t('autopay.label')}</span>
+            <span className="text-xs text-muted-foreground">{t('autopay.hint')}</span>
+          </label>
+        )}
 
         <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
           <label>
