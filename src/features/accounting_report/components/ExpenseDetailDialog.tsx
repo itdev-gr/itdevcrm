@@ -68,7 +68,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
       await autopayMut.mutateAsync({
         id,
         enabled: true,
-        paymentMethod: autopayMethod.trim() || null,
+        paymentMethod: autopayMethod.trim() || e.payment_method || null,
       });
       setShowAutopayMethod(false);
       setAutopayMethod('');

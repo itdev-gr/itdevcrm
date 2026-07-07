@@ -76,10 +76,11 @@ describe('ExpenseDetailDialog — Autopay', () => {
     detailData.current = baseExpense();
     render(wrap(<ExpenseDetailDialog open id="e1" onClose={() => {}} />));
     fireEvent.click(screen.getByRole('button', { name: 'Enable autopay' }));
+    // row method passed as fallback; RPC only fills null methods on the chain
     expect(autopayMutateAsync).toHaveBeenCalledWith({
       id: 'e1',
       enabled: true,
-      paymentMethod: null,
+      paymentMethod: 'CARD',
     });
   });
 
