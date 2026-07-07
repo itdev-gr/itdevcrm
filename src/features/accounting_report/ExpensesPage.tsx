@@ -10,6 +10,8 @@ import { useExpensesRealtime } from './hooks/useExpensesRealtime';
 import { ExpenseDetailDialog } from './components/ExpenseDetailDialog';
 import { NewExpenseDialog } from './components/NewExpenseDialog';
 import { ExpenseRow } from './components/ExpenseRow';
+import { ExpensesSummaryBar } from './components/ExpensesSummaryBar';
+import { monthOptions, monthRange } from './utils/monthFilter';
 
 type StatusFilter = 'all' | 'pending' | 'paid';
 
@@ -20,16 +22,20 @@ export function ExpensesPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [categoryId, setCategoryId] = useState<string>('');
   const [vendor, setVendor] = useState('');
+  const [month, setMonth] = useState('');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
 
   const cats = useExpenseCategories();
   const isEl = i18n.language.startsWith('el');
+  const months = monthOptions(new Date());
+  const range = month ? monthRange(month) : null;
 
   const expenses = useExpenses({
     ...(status !== 'all' ? { status } : {}),
     ...(categoryId ? { categoryId } : {}),
     ...(vendor ? { vendor } : {}),
+    ...(range ? { from: range.from, to: range.to } : {}),
   });
 
   const rows = expenses.data ?? [];
@@ -63,6 +69,17 @@ export function ExpensesPage() {
             </option>
           ))}
         </FilterSelect>
+        <FilterSelect
+          aria-label={t('expenses_list.month_all')}
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
+          className="min-w-[140px]"
+        >
+          <option value="">{t('expenses_list.month_all')}</option>
+          {months.map((m) => (
+            <option key={m.value} value={m.value}>{m.label}</option>
+          ))}
+        </FilterSelect>
         <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -77,6 +94,8 @@ export function ExpensesPage() {
           {rows.length}
         </span>
       </FilterBar>
+
+      <ExpensesSummaryBar rows={rows} />
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
         {expenses.isLoading ? (

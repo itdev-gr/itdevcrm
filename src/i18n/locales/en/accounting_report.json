@@ -118,6 +118,7 @@
     "status_pending": "Pending",
     "status_paid": "Paid",
     "category_all": "All categories",
+    "month_all": "All time",
     "empty": "No expenses match these filters.",
     "bulk_mark_paid": "Mark selected paid"
   },
