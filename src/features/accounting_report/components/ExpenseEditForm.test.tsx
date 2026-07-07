@@ -127,4 +127,20 @@ describe('ExpenseEditForm', () => {
     expect(updateMutateAsync).not.toHaveBeenCalled();
     expect(onDone).toHaveBeenCalled();
   });
+
+  it('blocks clearing the payment method on a paid expense', () => {
+    render(wrap(<ExpenseEditForm expense={expense({ status: 'paid', paid_at: '2026-07-01T00:00:00Z' })} onDone={() => {}} />));
+    fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText('Add a payment method to mark this expense as paid.')).toBeTruthy();
+  });
+
+  it('blocks clearing the payment method on an autopay expense', () => {
+    render(wrap(<ExpenseEditForm expense={expense({ autopay: true })} onDone={() => {}} />));
+    fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: '  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText('A payment method is required for autopay')).toBeTruthy();
+  });
 });

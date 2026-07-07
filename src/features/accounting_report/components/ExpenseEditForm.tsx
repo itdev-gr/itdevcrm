@@ -35,6 +35,10 @@ export function ExpenseEditForm({ expense, onDone }: ExpenseEditFormProps) {
     if (!startDate) return setError(t('expense_form.validation.start_date_required'));
     if (endDate && endDate < startDate)
       return setError(t('expense_form.validation.end_date_after_start'));
+    if (expense.status === 'paid' && !paymentMethod.trim())
+      return setError(t('expense_form.validation.payment_method_required'));
+    if (expense.autopay && !paymentMethod.trim())
+      return setError(t('expense_form.validation.autopay_requires_method'));
     try {
       await update.mutateAsync({
         id: expense.id,
