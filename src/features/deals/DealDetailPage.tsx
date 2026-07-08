@@ -21,16 +21,13 @@ import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { PaymentsPanel } from './PaymentsPanel';
 import { JobsBillingPanel } from './JobsBillingPanel';
 import type { PlannedService } from './ServicesPlannedField';
-import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
+import { CombinedAttachmentsTab } from '@/features/attachments/CombinedAttachmentsTab';
 import { ClientActivityPanel } from '@/features/activity/ClientActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
-import { OffersTab } from '@/features/offers/OffersTab';
-import { ProFormasTab } from '@/features/proformas/ProFormasTab';
-import { ContractsTab } from '@/features/contracts/ContractsTab';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
@@ -56,7 +53,6 @@ export function DealDetailPage() {
   const { t: tLeads } = useTranslation('leads');
   const { t: tAccounting } = useTranslation('accounting');
   const { t: tClients } = useTranslation('clients');
-  const { t: tContracts } = useTranslation('contracts');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: deal, isLoading, error } = useDeal(dealId);
   const moveAccounting = useMoveAccountingStage();
@@ -328,15 +324,6 @@ export function DealDetailPage() {
           <TabsTrigger value="activity" className={detailTabTriggerClass}>
             {t('tabs.activity')}
           </TabsTrigger>
-          <TabsTrigger value="offers" className={detailTabTriggerClass}>
-            {t('tabs.offers', { defaultValue: 'Offers' })}
-          </TabsTrigger>
-          <TabsTrigger value="proformas" className={detailTabTriggerClass}>
-            {t('tabs.proformas', { defaultValue: 'Pro Formas' })}
-          </TabsTrigger>
-          <TabsTrigger value="contracts" className={detailTabTriggerClass}>
-            {tContracts('tab.title')}
-          </TabsTrigger>
         </DetailTabsList>
 
         <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
@@ -407,28 +394,16 @@ export function DealDetailPage() {
           </div>
         </TabsContent>
         <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <AttachmentsPanel parentType="deal" parentId={dealId} />
-          </div>
+          <CombinedAttachmentsTab
+            parentType="deal"
+            parentId={dealId}
+            dealId={dealId}
+            clientId={deal.client_id ?? undefined}
+          />
         </TabsContent>
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             {deal.client_id && <ClientActivityPanel clientId={deal.client_id} />}
-          </div>
-        </TabsContent>
-        <TabsContent value="offers" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <OffersTab dealId={dealId} />
-          </div>
-        </TabsContent>
-        <TabsContent value="proformas" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <ProFormasTab dealId={dealId} />
-          </div>
-        </TabsContent>
-        <TabsContent value="contracts" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            {deal.client_id && <ContractsTab clientId={deal.client_id} />}
           </div>
         </TabsContent>
       </Tabs>
