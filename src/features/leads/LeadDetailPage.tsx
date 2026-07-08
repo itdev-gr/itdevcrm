@@ -22,14 +22,13 @@ import { isLeadDeletable } from './leadDeletable';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
+import { CombinedAttachmentsTab } from '@/features/attachments/CombinedAttachmentsTab';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
-import { OffersTab } from '@/features/offers/OffersTab';
-import { ProFormasTab } from '@/features/proformas/ProFormasTab';
 import { LeadTasksTab } from './LeadTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
 import { buildOfferDraft } from '@/features/email/buildDraft';
@@ -312,12 +311,6 @@ export function LeadDetailPage() {
           <TabsTrigger value="activity" className={detailTabTriggerClass}>
             {t('tabs.activity')}
           </TabsTrigger>
-          <TabsTrigger value="offers" className={detailTabTriggerClass}>
-            {t('tabs.offers')}
-          </TabsTrigger>
-          <TabsTrigger value="proformas" className={detailTabTriggerClass}>
-            {t('tabs.proformas')}
-          </TabsTrigger>
         </DetailTabsList>
 
         <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
@@ -356,9 +349,7 @@ export function LeadDetailPage() {
           </div>
         </TabsContent>
         <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <AttachmentsPanel parentType="lead" parentId={leadId} />
-          </div>
+          <CombinedAttachmentsTab parentType="lead" parentId={leadId} leadId={leadId} />
         </TabsContent>
         <TabsContent value="tasks" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
@@ -368,16 +359,6 @@ export function LeadDetailPage() {
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
             <ActivityPanel entityType="leads" entityId={leadId} />
-          </div>
-        </TabsContent>
-        <TabsContent value="offers" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <OffersTab leadId={leadId} />
-          </div>
-        </TabsContent>
-        <TabsContent value="proformas" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
-          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <ProFormasTab leadId={leadId} />
           </div>
         </TabsContent>
       </Tabs>
