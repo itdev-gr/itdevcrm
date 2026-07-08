@@ -1,8 +1,9 @@
-import { useState, type FormEvent, type KeyboardEvent } from 'react';
+import { type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUp } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
+import { useCommentDraft, taskThreadKey } from '@/features/comments/commentDraftStore';
 import { useTaskComments, type TaskCommentRow } from './hooks/useTaskComments';
 import { usePostTaskComment } from './hooks/usePostTaskComment';
 
@@ -40,12 +41,12 @@ export function TaskComments({ kind, taskId, locale }: {
   const meId = useAuthStore((s) => s.user?.id ?? '');
   const { data: comments = [] } = useTaskComments(kind, taskId);
   const post = usePostTaskComment();
-  const [body, setBody] = useState('');
+  const { text: body, setText: setBody, clear: clearDraft } = useCommentDraft(taskThreadKey(kind, taskId));
 
   function submit() {
     const text = body.trim();
     if (!text || post.isPending) return;
-    post.mutate({ kind, taskId, body: text }, { onSuccess: () => setBody('') });
+    post.mutate({ kind, taskId, body: text }, { onSuccess: () => clearDraft() });
   }
   function onSubmit(e: FormEvent) {
     e.preventDefault();
