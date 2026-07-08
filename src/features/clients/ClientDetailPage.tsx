@@ -11,8 +11,7 @@ import { useJobsForClient } from '@/features/jobs/hooks/useJobsForClient';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass } from '@/components/layout/page-shell';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
-import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
-import { ContractsTab } from '@/features/contracts/ContractsTab';
+import { CombinedAttachmentsTab } from '@/features/attachments/CombinedAttachmentsTab';
 import { ClientActivityPanel } from '@/features/activity/ClientActivityPanel';
 import { ClientTasksTab } from './ClientTasksTab';
 import { useClientBlock } from '@/features/client_blocks/hooks/useClientBlock';
@@ -27,7 +26,6 @@ export function ClientDetailPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const { t } = useTranslation('clients');
   const { t: tAcc } = useTranslation('accounting');
-  const { t: tContracts } = useTranslation('contracts');
   const { data: client, isLoading, error } = useClient(clientId);
   const { data: deals = [], isLoading: dealsLoading } = useDeals({ clientId });
   const { data: jobs = [] } = useJobsForClient(clientId);
@@ -113,7 +111,6 @@ export function ClientDetailPage() {
           <TabsTrigger value="comments">{t('tabs.comments')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
           <TabsTrigger value="tasks">{t('tabs.tasks')}</TabsTrigger>
-          <TabsTrigger value="contracts">{tContracts('tab.title')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
         </TabsList>
 
@@ -136,13 +133,10 @@ export function ClientDetailPage() {
           </div>
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
-          <AttachmentsPanel parentType="client" parentId={clientId} />
+          <CombinedAttachmentsTab parentType="client" parentId={clientId} clientId={clientId} />
         </TabsContent>
         <TabsContent value="tasks" className="pt-4">
           <ClientTasksTab clientId={clientId} clientName={client?.name ?? ''} />
-        </TabsContent>
-        <TabsContent value="contracts" className="pt-4">
-          <ContractsTab clientId={clientId} />
         </TabsContent>
         <TabsContent value="activity" className="pt-4">
           <ClientActivityPanel clientId={clientId} />
