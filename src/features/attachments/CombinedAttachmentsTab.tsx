@@ -27,13 +27,13 @@ export function CombinedAttachmentsTab({ parentType, parentId, leadId, dealId, c
       {showOffers && (
         <section className={sectionClass}>
           <h2 className={headerClass}>{t('attachments.sections.offers')}</h2>
-          <OffersTab leadId={leadId} dealId={dealId} />
+          <OffersTab {...(leadId ? { leadId } : {})} {...(dealId ? { dealId } : {})} />
         </section>
       )}
       {showOffers && (
         <section className={sectionClass}>
           <h2 className={headerClass}>{t('attachments.sections.proformas')}</h2>
-          <ProFormasTab leadId={leadId} dealId={dealId} />
+          <ProFormasTab {...(leadId ? { leadId } : {})} {...(dealId ? { dealId } : {})} />
         </section>
       )}
       {clientId && (
