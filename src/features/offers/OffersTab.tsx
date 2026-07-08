@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/offers/calculate';
+import { openPdfInNewTab } from '@/lib/openPdfInNewTab';
+import { useDownloadOfferPdf } from './hooks/useDownloadOfferPdf';
 import { useOffersForLead, useOffersForDeal } from './hooks/useOffersForLeadOrDeal';
 
 type Props = { leadId?: string; dealId?: string };
@@ -8,6 +11,7 @@ type Props = { leadId?: string; dealId?: string };
 export function OffersTab({ leadId, dealId }: Props) {
   const lead = useOffersForLead(leadId ?? '');
   const deal = useOffersForDeal(dealId ?? '');
+  const download = useDownloadOfferPdf();
   const offers = (leadId ? lead.data : deal.data) ?? [];
   const isLoading = leadId ? lead.isLoading : deal.isLoading;
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
@@ -17,7 +21,7 @@ export function OffersTab({ leadId, dealId }: Props) {
       {offers.map((o) => {
         const total = (o.totals as { total?: number } | null)?.total ?? 0;
         return (
-          <li key={o.id} className="flex items-center justify-between px-4 py-2 text-sm">
+          <li key={o.id} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
             <div>
               <div className="font-medium">
                 {o.offer_number ?? o.id.slice(0, 8)}{' '}
@@ -29,7 +33,18 @@ export function OffersTab({ leadId, dealId }: Props) {
                 {formatDate(o.created_at)} · {formatEur(Number(total))}
               </div>
             </div>
-            <Link to={`/offers/${o.id}`} className="text-blue-600 underline text-xs dark:text-blue-400">View →</Link>
+            <div className="flex shrink-0 items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={download.isPending}
+                onClick={() => void openPdfInNewTab(() => download.mutateAsync(o.id))}
+              >
+                {download.isPending ? '…' : 'PDF'}
+              </Button>
+              <Link to={`/offers/${o.id}`} className="text-blue-600 underline text-xs dark:text-blue-400">View →</Link>
+            </div>
           </li>
         );
       })}
