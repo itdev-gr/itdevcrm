@@ -2,12 +2,15 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/datetime';
+import { openPdfInNewTab } from '@/lib/openPdfInNewTab';
 import { useContractsForClient } from './hooks/useContracts';
+import { useDownloadContractPdf } from './hooks/useDownloadContractPdf';
 import { ContractStatusBadge } from './ContractStatusBadge';
 
 export function ContractsTab({ clientId }: { clientId: string }) {
   const { t } = useTranslation('contracts');
   const { data: contracts = [], isLoading, error } = useContractsForClient(clientId);
+  const download = useDownloadContractPdf();
 
   return (
     <div className="space-y-3">
@@ -23,7 +26,7 @@ export function ContractsTab({ clientId }: { clientId: string }) {
       ) : (
         <ul className="divide-y rounded-md border">
           {contracts.map((c) => (
-            <li key={c.id} className="flex items-center justify-between px-4 py-2 text-sm">
+            <li key={c.id} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
               <div>
                 <div className="font-medium">
                   {c.contract_number ?? c.id.slice(0, 8)}
@@ -33,9 +36,20 @@ export function ContractsTab({ clientId }: { clientId: string }) {
                   {c.title} · {formatDate(c.created_at)}
                 </div>
               </div>
-              <Link to={`/contracts/${c.id}`} className="text-xs text-blue-600 underline dark:text-blue-400">
-                {t('actions.view')} →
-              </Link>
+              <div className="flex shrink-0 items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={download.isPending}
+                  onClick={() => void openPdfInNewTab(() => download.mutateAsync(c.id))}
+                >
+                  {download.isPending ? '…' : 'PDF'}
+                </Button>
+                <Link to={`/contracts/${c.id}`} className="text-xs text-blue-600 underline dark:text-blue-400">
+                  {t('actions.view')} →
+                </Link>
+              </div>
             </li>
           ))}
         </ul>
