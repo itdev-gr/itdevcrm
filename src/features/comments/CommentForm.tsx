@@ -91,7 +91,14 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (query == null || matches.length === 0) return;
+    if (query == null || matches.length === 0) {
+      // No mention dropdown open — Enter posts, Shift+Enter inserts a newline.
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        void submit();
+      }
+      return;
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActiveIndex((i) => (i + 1) % matches.length);
@@ -126,9 +133,8 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
     return [...ids];
   }
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!body.trim()) return;
+  async function submit() {
+    if (!body.trim() || create.isPending) return;
     await create.mutateAsync({
       parent_type: parentType,
       parent_id: parentId,
@@ -140,6 +146,11 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
     setQuery(null);
     tokenToUserId.current.clear();
     if (replyToId) onCancelReply?.();
+  }
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    await submit();
   }
 
   return (
