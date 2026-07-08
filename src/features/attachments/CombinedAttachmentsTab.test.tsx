@@ -1,0 +1,51 @@
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import '@/lib/i18n';
+
+vi.mock('./AttachmentsPanel', () => ({
+  AttachmentsPanel: () => <div data-testid="files-panel" />,
+}));
+vi.mock('@/features/offers/OffersTab', () => ({
+  OffersTab: () => <div data-testid="offers-panel" />,
+}));
+vi.mock('@/features/proformas/ProFormasTab', () => ({
+  ProFormasTab: () => <div data-testid="proformas-panel" />,
+}));
+vi.mock('@/features/contracts/ContractsTab', () => ({
+  ContractsTab: () => <div data-testid="contracts-panel" />,
+}));
+
+import { CombinedAttachmentsTab } from './CombinedAttachmentsTab';
+
+describe('CombinedAttachmentsTab', () => {
+  it('deal: shows files, offers, pro formas and contracts', () => {
+    render(
+      <CombinedAttachmentsTab parentType="deal" parentId="d1" dealId="d1" clientId="c1" />,
+    );
+    expect(screen.getByTestId('files-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('offers-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('proformas-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('contracts-panel')).toBeInTheDocument();
+  });
+
+  it('lead: shows files, offers, pro formas — no contracts', () => {
+    render(<CombinedAttachmentsTab parentType="lead" parentId="l1" leadId="l1" />);
+    expect(screen.getByTestId('files-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('offers-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('proformas-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('contracts-panel')).not.toBeInTheDocument();
+  });
+
+  it('client: shows files and contracts — no offers or pro formas', () => {
+    render(<CombinedAttachmentsTab parentType="client" parentId="c1" clientId="c1" />);
+    expect(screen.getByTestId('files-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('contracts-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('offers-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('proformas-panel')).not.toBeInTheDocument();
+  });
+
+  it('deal without client: no contracts section', () => {
+    render(<CombinedAttachmentsTab parentType="deal" parentId="d1" dealId="d1" />);
+    expect(screen.queryByTestId('contracts-panel')).not.toBeInTheDocument();
+  });
+});

@@ -51,7 +51,13 @@
       "invoice": "Invoice",
       "other": "Other"
     },
-    "empty": "No attachments yet."
+    "empty": "No attachments yet.",
+    "sections": {
+      "files": "Files",
+      "offers": "Offers",
+      "proformas": "Pro Formas",
+      "contracts": "Contracts"
+    }
   },
   "activity": {
     "empty": "No activity yet."
