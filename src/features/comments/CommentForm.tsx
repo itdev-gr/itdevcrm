@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useMentionableUsers, type MentionableUser } from './hooks/useMentionableUsers';
 import { useCreateComment } from './hooks/useCreateComment';
 import { CommentAvatar } from './comment-utils';
+import { useCommentDraft, commentThreadKey } from './commentDraftStore';
 
 type Props = {
   parentType: 'client' | 'deal' | 'job' | 'lead';
@@ -37,7 +38,8 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   const me = useAuthStore((s) => s.user);
 
   const taRef = useRef<HTMLTextAreaElement | null>(null);
-  const [body, setBody] = useState('');
+  const draftKey = commentThreadKey(parentType, parentId, replyToId);
+  const { text: body, setText: setBody, clear: clearDraft } = useCommentDraft(draftKey);
   const [query, setQuery] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const tokenToUserId = useRef<Map<string, string>>(new Map());
@@ -134,7 +136,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
       mentioned_user_ids: resolveMentions(body),
       reply_to_id: replyToId ?? null,
     });
-    setBody('');
+    clearDraft();
     setQuery(null);
     tokenToUserId.current.clear();
     if (replyToId) onCancelReply?.();
