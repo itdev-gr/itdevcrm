@@ -8,6 +8,12 @@
 
 **Tech Stack:** Supabase Postgres + RLS, Deno edge functions, Gmail REST API, TypeScript/vitest for pure helpers.
 
+## ✅ Phase A1 — BUILT & VALIDATED (2026-07-09)
+
+All 5 tasks done and live in prod (`email_messages`/`user_google_sync` tables, `resolve_email_filing` RPC, Gmail helpers, `gmail-sync` edge fn). Backfill run for mkifokeris: **88 scanned → 19 client emails stored** (all on a deal, 13 on their job via code, 11 clients, 9 in / 10 out, **0 internal/noise**). RLS verified: sales-only user sees **0**, accounting user sees **19**, admin/participant sees **19**. During validation the RPC was fixed to make the **code authoritative** (a coded email files on its job/deal even when the other party's address isn't the client's registered email — the upd8/Orthohouse agency case).
+
+**Observation for the owner:** every one of mkifokeris's emails is tagged `accounting` because he is in the accounting group — including WEBDEV/technical threads. That's the agreed "tag by the staff person's department" rule; confirm it's the intent, or we switch coded emails to tag by the job's service (technical for WEBDEV) instead.
+
 ## Global Constraints
 
 - **Test target only:** mkifokeris — `user_id = 61b53075-398f-43a0-86f6-8bce177b669b`. No other mailbox is read in this phase.
