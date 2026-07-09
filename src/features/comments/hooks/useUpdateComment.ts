@@ -2,11 +2,12 @@ import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { captureMutation } from '@/lib/sentry/captureMutation';
+import type { CommentParentType } from '../commentChannels';
 
 type Vars = {
   id: string;
   body: string;
-  parent_type: 'client' | 'deal' | 'job' | 'lead';
+  parent_type: CommentParentType;
   parent_id: string;
 };
 

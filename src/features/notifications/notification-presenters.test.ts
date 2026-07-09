@@ -134,3 +134,10 @@ describe('payment_integrity_alert presenter', () => {
     expect(markup).not.toContain('1 issues');
   });
 });
+
+describe('readPath — deal comment channels', () => {
+  it('routes deal_dev and deal_seo mentions to the deal page', () => {
+    expect(readPath({ parent_type: 'deal_dev', parent_id: 'D1' })).toBe('/deals/D1');
+    expect(readPath({ parent_type: 'deal_seo', parent_id: 'D1' })).toBe('/deals/D1');
+  });
+});

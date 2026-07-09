@@ -41,6 +41,10 @@ export function readPath(payload: NotifPayload): string | null {
       return `/clients/${parentId}`;
     case 'deal':
       return `/deals/${parentId}`;
+    case 'deal_dev':
+    case 'deal_seo':
+      // Deal comment channels live on the deal page's Comments panel.
+      return `/deals/${parentId}`;
     case 'job':
       return `/jobs/${parentId}`;
     case 'user_task':

@@ -4,9 +4,10 @@ import { useComments, type CommentRow } from './hooks/useComments';
 import { CommentItem } from './CommentItem';
 import { CommentForm } from './CommentForm';
 import { CommentEmptyState } from './comment-utils';
+import type { CommentParentType } from './commentChannels';
 
 type Props = {
-  parentType: 'client' | 'deal' | 'job' | 'lead';
+  parentType: CommentParentType;
   parentId: string;
 };
 

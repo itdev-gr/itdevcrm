@@ -8,9 +8,10 @@ import { useMentionableUsers, type MentionableUser } from './hooks/useMentionabl
 import { useCreateComment } from './hooks/useCreateComment';
 import { CommentAvatar } from './comment-utils';
 import { useCommentDraft, commentThreadKey } from './commentDraftStore';
+import type { CommentParentType } from './commentChannels';
 
 type Props = {
-  parentType: 'client' | 'deal' | 'job' | 'lead';
+  parentType: CommentParentType;
   parentId: string;
   replyToId?: string;
   onCancelReply?: () => void;

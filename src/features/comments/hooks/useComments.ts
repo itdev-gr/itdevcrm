@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import type { CommentParentType } from '../commentChannels';
 
 export type CommentRow = {
   id: string;
-  parent_type: 'client' | 'deal' | 'job' | 'lead';
+  parent_type: CommentParentType;
   parent_id: string;
   author_id: string;
   body: string;
@@ -15,7 +16,7 @@ export type CommentRow = {
   author: { user_id: string; full_name: string; email: string } | null;
 };
 
-export function useComments(parentType: 'client' | 'deal' | 'job' | 'lead', parentId: string) {
+export function useComments(parentType: CommentParentType, parentId: string) {
   return useQuery({
     queryKey: queryKeys.comments(parentType, parentId),
     queryFn: async (): Promise<CommentRow[]> => {

@@ -3,10 +3,11 @@ import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { captureMutation } from '@/lib/sentry/captureMutation';
+import type { CommentParentType } from '../commentChannels';
 
 type Vars = {
   id: string;
-  parent_type: 'client' | 'deal' | 'job' | 'lead';
+  parent_type: CommentParentType;
   parent_id: string;
 };
 
