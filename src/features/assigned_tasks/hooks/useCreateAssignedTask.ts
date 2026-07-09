@@ -48,6 +48,7 @@ export function useCreateAssignedTask() {
       } else {
         qc.invalidateQueries({ queryKey: queryKeys.assignedTasksForJob(input.source.id) });
       }
+      qc.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }

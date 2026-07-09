@@ -41,6 +41,7 @@ export function useTaskBoardActions() {
       void qc.invalidateQueries({ queryKey: ['user-tasks'] });
       void qc.invalidateQueries({ queryKey: ['assigned-tasks'] });
       void qc.invalidateQueries({ queryKey: ['tasks'] }); // archive
+      void qc.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }

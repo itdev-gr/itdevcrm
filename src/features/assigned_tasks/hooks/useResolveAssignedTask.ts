@@ -15,6 +15,7 @@ export function useResolveAssignedTask() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['assigned-tasks'] });
       qc.invalidateQueries({ queryKey: ['client-tasks'] });
+      qc.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }

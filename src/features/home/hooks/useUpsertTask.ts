@@ -59,6 +59,7 @@ export function useUpsertTask() {
       void qc.invalidateQueries({ queryKey: ['user-tasks'] });
       void qc.invalidateQueries({ queryKey: ['client-tasks'] });
       void qc.invalidateQueries({ queryKey: ['lead-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }
