@@ -368,7 +368,7 @@ const EMAIL_TEMPLATE_LABELS: Record<string, string> = {
   offer_followup_day2: 'Offer follow-up', offer_followup_day5: 'Offer follow-up', offer_followup_day10: 'Offer follow-up',
   custom: 'Email',
 };
-function emailTemplateLabel(key: string): string {
+export function emailTemplateLabel(key: string): string {
   if (EMAIL_TEMPLATE_LABELS[key]) return EMAIL_TEMPLATE_LABELS[key]!;
   const s = key.replace(/_/g, ' ').trim();
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Email';
