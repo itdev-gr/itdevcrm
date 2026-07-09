@@ -127,3 +127,66 @@ export async function sendGmail(accessToken: string, rawBase64Url: string): Prom
   const j = await r.json();
   return { ok: true, id: j.id };
 }
+
+export function parseAddress(v: string): { email: string; name: string } {
+  const m = (v ?? '').match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
+  if (m) return { name: m[1].trim(), email: m[2].trim().toLowerCase() };
+  return { name: '', email: (v ?? '').trim().toLowerCase() };
+}
+
+export function extractJobCode(subject: string): string | null {
+  const m = (subject ?? '').match(/(\d{6}-[A-Z]{3,})/);
+  return m ? m[1] : null;
+}
+
+export type GmailMessage = {
+  message_id: string; gmail_id: string; thread_id: string;
+  from_email: string; from_name: string; to_email: string;
+  subject: string; date: string; internal_date: number;
+  body_text: string; body_html: string; snippet: string;
+};
+
+function b64urlDecodeUtf8(s: string): string {
+  const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+// deno-lint-ignore no-explicit-any
+function collectBody(payload: any, acc: { text: string[]; html: string[] }): void {
+  if (!payload) return;
+  const mime = payload.mimeType ?? '';
+  if (mime === 'text/plain' && payload.body?.data) acc.text.push(b64urlDecodeUtf8(payload.body.data));
+  else if (mime === 'text/html' && payload.body?.data) acc.html.push(b64urlDecodeUtf8(payload.body.data));
+  for (const p of payload.parts ?? []) collectBody(p, acc);
+}
+
+export async function listGmailMessageIds(accessToken: string, query: string, max: number): Promise<string[]> {
+  const u = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
+  u.searchParams.set('maxResults', String(max));
+  if (query) u.searchParams.set('q', query);
+  const r = await fetch(u, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!r.ok) throw new Error(`list_failed: ${await r.text()}`);
+  const j = await r.json();
+  return ((j.messages ?? []) as { id: string }[]).map((m) => m.id);
+}
+
+export async function getGmailMessageFull(accessToken: string, id: string): Promise<GmailMessage> {
+  const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!r.ok) throw new Error(`get_failed: ${await r.text()}`);
+  const j = await r.json();
+  const headers = (j.payload?.headers ?? []) as { name: string; value: string }[];
+  const h = (n: string) => headers.find((x) => x.name.toLowerCase() === n.toLowerCase())?.value ?? '';
+  const from = parseAddress(h('From'));
+  const to = parseAddress(h('To'));
+  const acc = { text: [] as string[], html: [] as string[] };
+  collectBody(j.payload, acc);
+  return {
+    message_id: h('Message-ID') || h('Message-Id') || j.id,
+    gmail_id: j.id, thread_id: j.threadId,
+    from_email: from.email, from_name: from.name, to_email: to.email,
+    subject: h('Subject'), date: h('Date'), internal_date: Number(j.internalDate ?? 0),
+    body_text: acc.text.join('\n'), body_html: acc.html.join('\n'), snippet: j.snippet ?? '',
+  };
+}
