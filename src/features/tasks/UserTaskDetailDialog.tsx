@@ -2,6 +2,9 @@ import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogContent, DialogDescription,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { useToggleTaskComplete } from '@/features/home/hooks/useDeleteTask';
 import { StartTaskButton } from './StartTaskButton';
 import { TaskDetailShell, type TaskMetaRow, type TaskStatusTone } from './TaskDetailShell';
 import type { TaskCard } from './taskCard';
@@ -16,6 +19,8 @@ export function UserTaskDetailDialog({
   const { t, i18n } = useTranslation('home');
   const c = (key: string, opts?: Record<string, unknown>) => t(key, { ns: 'common', ...opts });
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const toggle = useToggleTaskComplete();
   if (!card) return null;
 
   const fmt = (iso: string) =>
@@ -32,6 +37,10 @@ export function UserTaskDetailDialog({
   if (due) rows.push({ label: c('tasks_page.due_label'), value: due });
   if (card.clientName) rows.push({ label: c('tasks_page.client_label'), value: card.clientName });
   if (card.leadName) rows.push({ label: c('tasks_page.lead_label'), value: card.leadName });
+
+  // Participants + admin (matches assigned-task dialog gating; RLS enforces server-side).
+  const canResolve =
+    !card.resolved && (card.relation === 'mine' || card.relation === 'delegated' || isAdmin);
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
@@ -52,6 +61,22 @@ export function UserTaskDetailDialog({
               startedAt={card.startedAtIso}
               locale={locale}
             />
+          }
+          footer={
+            canResolve ? (
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  disabled={toggle.isPending}
+                  onClick={async () => {
+                    await toggle.mutateAsync({ id: card.id, completed: true });
+                    onOpenChange(false);
+                  }}
+                >
+                  {c('tasks_page.resolve')}
+                </Button>
+              </div>
+            ) : undefined
           }
           commentsKind="user"
           commentsTaskId={card.id}

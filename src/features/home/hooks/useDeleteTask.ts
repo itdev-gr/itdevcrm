@@ -35,6 +35,12 @@ export function useToggleTaskComplete() {
         if (error) throw new Error(error.message);
       },
     ),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['user-tasks'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['user-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['client-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['lead-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['tasks'] });
+      void qc.invalidateQueries({ queryKey: ['comments'] });
+    },
   });
 }
