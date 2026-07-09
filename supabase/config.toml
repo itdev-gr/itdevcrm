@@ -419,3 +419,7 @@ verify_jwt = false
 # its own auth (signed `state` for the callback, caller JWT for POST actions).
 [functions.google-oauth]
 verify_jwt = false
+
+# Machine-to-machine (cron/backfill); auth is a GMAIL_SYNC_SECRET Bearer token.
+[functions.gmail-sync]
+verify_jwt = false
