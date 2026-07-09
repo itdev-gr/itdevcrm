@@ -9,6 +9,8 @@ import { useUpdateComment } from './hooks/useUpdateComment';
 import { useArchiveComment } from './hooks/useArchiveComment';
 import { CommentForm } from './CommentForm';
 import { CommentAvatar, CommentBody, formatCommentTime } from './comment-utils';
+import { resolveAuthorIdentity } from './authorIdentity';
+import { useProfileDirectory } from './hooks/useProfileDirectory';
 
 type Props = {
   comment: CommentRow;
@@ -39,8 +41,12 @@ export function CommentItem({ comment, replies = [], nested = false }: Props) {
     return () => document.removeEventListener('mousedown', onDoc);
   }, [menuOpen]);
 
-  const authorName = comment.author?.full_name?.trim() || null;
-  const authorEmail = comment.author?.email || comment.author_id;
+  const { data: directory } = useProfileDirectory();
+  const { name: authorName, email: authorEmail } = resolveAuthorIdentity(
+    comment.author_id,
+    comment.author,
+    directory,
+  );
   const displayName = authorName || authorEmail;
   const time = formatCommentTime(comment.created_at, locale);
   const canEdit = isAdmin || (myId !== null && myId === comment.author_id);

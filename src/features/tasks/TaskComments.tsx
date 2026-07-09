@@ -4,12 +4,10 @@ import { ArrowUp } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useCommentDraft, taskThreadKey } from '@/features/comments/commentDraftStore';
+import { resolveAuthorIdentity } from '@/features/comments/authorIdentity';
+import { useProfileDirectory } from '@/features/comments/hooks/useProfileDirectory';
 import { useTaskComments, type TaskCommentRow } from './hooks/useTaskComments';
 import { usePostTaskComment } from './hooks/usePostTaskComment';
-
-function authorName(c: TaskCommentRow): string {
-  return c.author?.full_name || c.author?.email || '—';
-}
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -40,8 +38,16 @@ export function TaskComments({ kind, taskId, locale }: {
   const { t } = useTranslation('common');
   const meId = useAuthStore((s) => s.user?.id ?? '');
   const { data: comments = [] } = useTaskComments(kind, taskId);
+  const { data: directory } = useProfileDirectory();
   const post = usePostTaskComment();
   const { text: body, setText: setBody, clear: clearDraft } = useCommentDraft(taskThreadKey(kind, taskId));
+
+  // Resolve via the security-definer directory: profiles RLS hides other users'
+  // rows, so the embedded author is null for everyone but the viewer.
+  const nameOf = (c: TaskCommentRow): string => {
+    const { name, email } = resolveAuthorIdentity(c.author_user_id, c.author, directory);
+    return name || email;
+  };
 
   function submit() {
     const text = body.trim();
@@ -82,7 +88,7 @@ export function TaskComments({ kind, taskId, locale }: {
         ) : (
           comments.map((c) => {
             const mine = c.author_user_id === meId;
-            const name = mine ? t('tasks_page.you') : authorName(c);
+            const name = mine ? t('tasks_page.you') : nameOf(c);
             return (
               <div key={c.id} className="flex gap-2.5">
                 <div
@@ -92,7 +98,7 @@ export function TaskComments({ kind, taskId, locale }: {
                   )}
                   aria-hidden="true"
                 >
-                  {initials(authorName(c))}
+                  {initials(nameOf(c))}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="flex items-baseline gap-1.5">
