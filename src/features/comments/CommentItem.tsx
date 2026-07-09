@@ -8,6 +8,7 @@ import type { CommentRow } from './hooks/useComments';
 import { useUpdateComment } from './hooks/useUpdateComment';
 import { useArchiveComment } from './hooks/useArchiveComment';
 import { CommentForm } from './CommentForm';
+import { TaskCommentLink } from './TaskCommentLink';
 import { CommentAvatar, CommentBody, formatCommentTime } from './comment-utils';
 import { resolveAuthorIdentity } from './authorIdentity';
 import { useProfileDirectory } from './hooks/useProfileDirectory';
@@ -202,6 +203,8 @@ export function CommentItem({ comment, replies = [], nested = false }: Props) {
           ) : (
             <>
               <CommentBody body={comment.body} className="mt-3" />
+
+              {comment.task_key && <TaskCommentLink taskKey={comment.task_key} />}
 
               {!replying && (
                 <div className="mt-3">

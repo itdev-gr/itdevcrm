@@ -11,6 +11,7 @@ export type CommentRow = {
   body: string;
   mentioned_user_ids: string[];
   reply_to_id: string | null;
+  task_key: string | null;
   created_at: string;
   updated_at: string;
   author: { user_id: string; full_name: string; email: string } | null;
@@ -23,7 +24,7 @@ export function useComments(parentType: CommentParentType, parentId: string) {
       const { data, error } = await supabase
         .from('comments')
         .select(
-          'id, parent_type, parent_id, author_id, body, mentioned_user_ids, reply_to_id, created_at, updated_at, author:profiles!comments_author_id_fkey(user_id, full_name, email)',
+          'id, parent_type, parent_id, author_id, body, mentioned_user_ids, reply_to_id, task_key, created_at, updated_at, author:profiles!comments_author_id_fkey(user_id, full_name, email)',
         )
         .eq('parent_type', parentType)
         .eq('parent_id', parentId)
