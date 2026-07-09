@@ -11,7 +11,7 @@ create table if not exists public.email_messages (
   client_id uuid references public.clients(id),
   deal_id uuid references public.deals(id),
   job_id uuid references public.jobs(id),
-  department text check (department in ('sales','accounting','technical')),
+  department text,  -- a group code: web_dev/web_seo/local_seo/ai_seo/ads/social_media/hosting/sales/accounting
   staff_user_id uuid references public.profiles(user_id),
   captured_from_user_id uuid references public.profiles(user_id),
   created_at timestamptz not null default now()
@@ -20,6 +20,10 @@ create index if not exists email_messages_deal_idx on public.email_messages(deal
 create index if not exists email_messages_job_idx on public.email_messages(job_id) where job_id is not null;
 create index if not exists email_messages_client_idx on public.email_messages(client_id);
 create index if not exists email_messages_thread_idx on public.email_messages(thread_id);
+
+-- Supersede the original 3-value CHECK: department is a group code (service-based
+-- silo). Idempotent for already-applied installs.
+alter table public.email_messages drop constraint if exists email_messages_department_check;
 
 alter table public.email_messages enable row level security;
 

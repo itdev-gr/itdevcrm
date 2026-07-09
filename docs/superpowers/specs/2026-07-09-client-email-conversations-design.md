@@ -30,7 +30,7 @@ visible only to the people whose rights allow it.
 | **Code is authoritative** | A job code in the subject (`000280-WEBDEV`) files the email on that **job + deal** and derives the client from the deal — **even when the other party's address is not the client's registered email** (agencies, alternate contacts). The email still shows on the deal. |
 | **Client match (no code)** | If there's no code, the external **From/To** address must match a known client/contact/lead → the client's **newest active deal**. Unknown party + no code → **skip** (privacy). |
 | **Staff-to-staff** | Internal emails (both parties staff) are skipped even when coded. |
-| **Department tag** | One department per email — from the **staff sender/receiver's** department (`sales` / `accounting` / `technical`). CC not considered. |
+| **Department tag** | One department per email = a **group code**. Coded email → the **job's service** (`web_dev`/`web_seo`/`local_seo`/`ai_seo`/`ads`/`social_media`/`hosting`) — deterministic, NOT the person (who may be in many groups; the owner is in five). Uncoded client email → `sales`. Service `other`/no team → no department (participant + admins only). CC not considered. |
 | **Visibility (DB-enforced)** | See an email if: its **department ∈ your groups**, OR **you were the sender/receiver**, OR you're an **admin**. |
 | **Dedup** | One row per RFC822 `Message-ID` — the same email in two mailboxes is stored once. |
 | **Rollout** | Build + test with **mkifokeris only**, validate end-to-end, then enable for everyone (each reconnects for read). |
@@ -44,8 +44,7 @@ visible only to the people whose rights allow it.
   `gmail_id`, `thread_id`
 - `direction` (`inbound` | `outbound`), `from_email`, `from_name`, `to_email`,
   `subject`, `body_text`, `body_html`, `snippet`, `sent_at`
-- `client_id`, `deal_id`, `job_id` (nullable), `department`
-  (`sales`|`accounting`|`technical`)
+- `client_id`, `deal_id`, `job_id` (nullable), `department` (a group code)
 - `staff_user_id` — the internal party (the one whose department tags it; also
   the "you were sender/receiver" check)
 - `captured_from_user_id` — whose mailbox we read it from
@@ -75,8 +74,8 @@ This enforces the siloing at the database, not just the UI.
   - **Incremental:** Gmail History API from `last_history_id` (fallback:
     `newer_than:` since `last_synced_at`).
   - For each message: fetch headers + body; take **From/To** only; find a client
-    match; **if none → skip (not stored).** Parse code → job + deal; else →
-    newest active deal. Resolve department from the staff party's group. Upsert
+    match; **if none → skip (not stored).** Parse code → job + deal (department =
+    the job's service); else → newest active deal (department = `sales`). Upsert
     keyed on `message_id`. Advance the cursor.
 - **Test phase:** the sync is gated to **mkifokeris only** (allowlist). Rollout
   = remove the gate.
@@ -88,9 +87,11 @@ This enforces the siloing at the database, not just the UI.
   emails.
 - **Newest active deal:** the client's non-closed, non-archived deals ordered by
   `created_at desc`, limit 1.
-- **Department:** the staff party's group(s); if they belong to more than one,
-  tie-break by a fixed priority (proposed: `technical` > `accounting` > `sales`
-  — confirm on review).
+- **Department:** the **job's `service_type`** for coded email (it equals a group
+  code — `web_dev`/`web_seo`/`local_seo`/`ai_seo`/`ads`/`social_media`/`hosting`);
+  `sales` for uncoded client email; `null` when the service has no team
+  (`other`). NOT derived from the person — the owner is in five groups, so
+  person-based tagging is ambiguous.
 
 ### UI
 
@@ -141,5 +142,8 @@ This enforces the siloing at the database, not just the UI.
 - No-code email → **newest active deal** (default; alternatives: client-level
   only / all deals / manual tray).
 - Sync **poll ~5 min + 10-day backfill** (confirmed 2026-07-09).
-- Department **tie-break** when a staff member is in multiple groups.
+- ~~Department tie-break~~ — RESOLVED: department = the job's service (coded) or
+  `sales` (uncoded), not the person. The **uncoded → `sales`** default is still
+  open for the owner to confirm (alternatives: everyone-on-the-deal /
+  participant-only).
 - Whether to store CC addresses for *display only* (currently: not stored).

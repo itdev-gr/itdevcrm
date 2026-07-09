@@ -31,28 +31,32 @@ begin
   -- contacts). This is exactly what the deal codes are for.
   v_code := substring(coalesce(p_subject,'') from '(\d{6}-[A-Z]{3,})');
   if v_code is not null then
-    select j.id, j.deal_id, d.client_id
-      into v_job, v_deal, v_client
+    -- Department comes from the JOB'S SERVICE (deterministic), not the person: a
+    -- person may belong to many groups (the owner is in five), but the code
+    -- identifies the service, and service_type equals the group code.
+    select j.id, j.deal_id, d.client_id, j.service_type
+      into v_job, v_deal, v_client, v_dept
       from jobs j join deals d on d.id = j.deal_id
      where j.code = v_code limit 1;
   end if;
 
   -- No code (or unknown code): fall back to matching the external address to a
   -- known client, and file on that client's newest active deal. Unknown party
-  -- with no code => skip (privacy).
+  -- with no code => skip (privacy). Uncoded client mail is relationship/sales.
   if v_client is null then
     select id into v_client from clients where lower(email)=v_client_email limit 1;
     if v_client is null then return; end if;
     select d.id into v_deal from deals d
       where d.client_id=v_client and d.archived=false
       order by d.created_at desc limit 1;
+    v_dept := 'sales';
   end if;
 
-  select g.code into v_dept
-    from user_groups ug join groups g on g.id=ug.group_id
-   where ug.user_id=v_staff and g.code in ('technical','accounting','sales')
-   order by case g.code when 'technical' then 1 when 'accounting' then 2 else 3 end
-   limit 1;
+  -- Keep department only if it maps to a real team group (service_type 'other'
+  -- has none); otherwise null => visible to the participant + admins only.
+  if v_dept is not null and not exists (select 1 from groups g where g.code = v_dept) then
+    v_dept := null;
+  end if;
 
   return query select v_client, v_deal, v_job, v_dept, v_staff, v_dir;
 end $$;
