@@ -66,13 +66,16 @@ export function buildAuthUrl(clientId: string, redirectUri: string, state: strin
     response_type: 'code',
     access_type: 'offline',
     prompt: 'consent',
-    scope: 'openid email https://www.googleapis.com/auth/gmail.send',
+    // gmail.send: send as the user (existing). gmail.readonly: read the user's
+    // mail so the CRM can log client email conversations. readonly is a Google
+    // "restricted" scope; it needs no verification for an INTERNAL Workspace app.
+    scope: 'openid email https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly',
     state,
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${p}`;
 }
 
-type TokenResp = { access_token?: string; refresh_token?: string; id_token?: string; error?: string };
+type TokenResp = { access_token?: string; refresh_token?: string; id_token?: string; scope?: string; error?: string };
 
 export async function exchangeCode(code: string, clientId: string, clientSecret: string, redirectUri: string): Promise<TokenResp> {
   const r = await fetch('https://oauth2.googleapis.com/token', {

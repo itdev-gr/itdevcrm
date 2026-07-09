@@ -42,7 +42,11 @@ Deno.serve(async (req) => {
     const email = emailFromIdToken(tok.id_token) ?? 'unknown';
     const enc = await encryptToken(tok.refresh_token, TOKEN_KEY);
     await admin.from('user_google_accounts').upsert({
-      user_id: verified.uid, google_email: email, refresh_token_enc: enc, connected_at: new Date().toISOString(), revoked_at: null,
+      user_id: verified.uid, google_email: email, refresh_token_enc: enc,
+      // Store the granted scopes so we can verify read access was actually
+      // approved (send-only vs send+readonly) without decrypting the token.
+      scopes: tok.scope ?? null,
+      connected_at: new Date().toISOString(), revoked_at: null,
     });
     return Response.redirect(`${APP_URL}/profile?google=connected`, 302);
   }

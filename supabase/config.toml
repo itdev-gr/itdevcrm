@@ -412,3 +412,10 @@ verify_jwt = false
 
 [functions.resend-webhook]
 verify_jwt = false
+
+# google-oauth must NOT verify JWT at the gateway: Google's OAuth callback
+# (GET ?code&state) redirects the browser here with no Authorization header, so
+# gateway JWT verification returns UNAUTHORIZED_NO_AUTH_HEADER. The function does
+# its own auth (signed `state` for the callback, caller JWT for POST actions).
+[functions.google-oauth]
+verify_jwt = false
