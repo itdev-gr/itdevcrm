@@ -33,6 +33,7 @@ import {
   detailTabTriggerClass,
 } from '@/components/layout/page-shell';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
+import { jobCommentThread } from '@/features/comments/commentChannels';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { areasForJob, canUploadArea } from '@/features/attachments/serviceAreas';
 import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachmentsSection';
@@ -159,6 +160,12 @@ export function JobDetailPage() {
     );
   }
 
+  // web_dev / SEO jobs share their deal's comment channel; others keep a job thread.
+  const commentThread = jobCommentThread({
+    id: job.id,
+    deal_id: job.deal_id ?? '',
+    service_type: job.service_type,
+  });
   const owner = job.owner_user_id ? owners.find((o) => o.user_id === job.owner_user_id) : null;
   const boardStages = stages
     .filter((s) => s.board === job.service_type && !s.archived)
@@ -576,9 +583,14 @@ export function JobDetailPage() {
                   <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Comments
                   </h2>
+                  {commentThread.parentType !== 'job' && (
+                    <p className="text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      Shared with the deal — {commentThread.parentType === 'deal_dev' ? 'Dev' : 'SEO'} thread
+                    </p>
+                  )}
                 </div>
                 <div className={commentsPanelBodyClass}>
-                  <CommentsPanel parentType="job" parentId={job.id} />
+                  <CommentsPanel parentType={commentThread.parentType} parentId={commentThread.parentId} />
                 </div>
               </div>
             </aside>
