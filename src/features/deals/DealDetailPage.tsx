@@ -18,7 +18,7 @@ import { CloseDealDialog } from '@/features/accounting/CloseDealDialog';
 import { classifyAccountingStageMove } from './accountingStageMove';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
-import { CommentsPanel } from '@/features/comments/CommentsPanel';
+import { DealCommentsTabs } from '@/features/comments/DealCommentsTabs';
 import { PaymentsPanel } from './PaymentsPanel';
 import { JobsBillingPanel } from './JobsBillingPanel';
 import type { PlannedService } from './ServicesPlannedField';
@@ -352,7 +352,7 @@ export function DealDetailPage() {
                   </h2>
                 </div>
                 <div className={commentsPanelBodyClass}>
-                  <CommentsPanel parentType="deal" parentId={dealId} />
+                  <DealCommentsTabs dealId={dealId} />
                 </div>
               </div>
             </aside>
