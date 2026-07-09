@@ -21,6 +21,7 @@ import type { UserTaskRow } from './hooks/useUserTasks';
 import { ImportanceSelect } from '@/features/tasks/ImportanceSelect';
 import { importanceOf, type ImportanceCode } from '@/features/tasks/importance';
 import { ClientPicker, type PickedClient } from '@/features/clients/ClientPicker';
+import { ClientOpenTasksList } from '@/features/tasks/ClientOpenTasksList';
 import { LeadPicker, type PickedLead } from '@/features/leads/LeadPicker';
 import { taskLinkMode, filterTaskAssignees } from './taskDialogRules';
 
@@ -187,7 +188,10 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
           {mode === 'lead' ? (
             <LeadPicker value={lead} onChange={setLead} id="task-lead" />
           ) : (
-            <ClientPicker value={client} onChange={setClient} id="task-client" />
+            <div className="space-y-2">
+              <ClientPicker value={client} onChange={setClient} id="task-client" />
+              {!isEdit && client && <ClientOpenTasksList clientId={client.id} />}
+            </div>
           )}
           <div className="space-y-1.5">
             <Label htmlFor="task-notes">{t('task.notes', { defaultValue: 'Notes' })}</Label>
