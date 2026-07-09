@@ -18,6 +18,7 @@ export const queryKeys = {
   deals: (filters?: Record<string, string | undefined>) =>
     filters ? (['deals', filters] as const) : (['deals'] as const),
   deal: (id: string) => ['deal', id] as const,
+  dealEmails: (dealId: string) => ['deal-emails', dealId] as const,
   jobsForClient: (clientId: string) => ['jobs', 'client', clientId] as const,
   comments: (parentType: string, parentId: string) => ['comments', parentType, parentId] as const,
   taskComments: (kind: 'user' | 'assigned', taskId: string) =>
