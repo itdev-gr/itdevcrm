@@ -27,16 +27,13 @@ alter table public.email_messages drop constraint if exists email_messages_depar
 
 alter table public.email_messages enable row level security;
 
--- Department-siloed reads: admins all; you always see your own (sender/receiver);
--- otherwise the email's department must be one of your group codes.
+-- Department-siloed reads, following the CRM's board-rights model (same gate as
+-- deals): you always see your own (you were sender/receiver); otherwise you must
+-- have `view` rights on the email's department board. current_user_can already
+-- grants admins everything and honours per-user permission overrides/revocations.
 create policy email_messages_select on public.email_messages for select using (
-  current_user_is_admin()
-  or staff_user_id = auth.uid()
-  or exists (
-    select 1 from public.user_groups ug
-      join public.groups g on g.id = ug.group_id
-     where ug.user_id = auth.uid() and g.code = email_messages.department
-  )
+  staff_user_id = auth.uid()
+  or public.current_user_can(department, 'view')
 );
 -- No INSERT/UPDATE/DELETE policies: only the service-role edge function writes.
 
