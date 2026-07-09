@@ -1,7 +1,7 @@
 # Client Email Conversations — Design Spec
 
 **Date:** 2026-07-09
-**Status:** Draft for review
+**Status:** Approved 2026-07-09 — building (backfill window set to **10 days**)
 
 ## Goal
 
@@ -25,11 +25,11 @@ visible only to the people whose rights allow it.
 
 | Area | Decision |
 |---|---|
-| **Capture** | Read each connected user's Gmail; background poll ~every 5 min; backfill **last 90 days** on first connect. |
+| **Capture** | Read each connected user's Gmail; background poll ~every 5 min; backfill **last 10 days** on first connect. |
 | **Privacy filter** | Store a message **only if a From or To party is a known client/contact/lead**. **CC is ignored entirely.** Personal/internal mail is never stored. |
-| **Client match** | By the external **From/To** address → client/contact/lead. |
-| **Deal match** | Every client email lands on the **deal**. No code + multiple deals → the client's **newest active deal**. |
-| **Job match** | If the subject has a code (`000280-WEBDEV`) → attach to that **job** too, **and keep it on the deal**. |
+| **Code is authoritative** | A job code in the subject (`000280-WEBDEV`) files the email on that **job + deal** and derives the client from the deal — **even when the other party's address is not the client's registered email** (agencies, alternate contacts). The email still shows on the deal. |
+| **Client match (no code)** | If there's no code, the external **From/To** address must match a known client/contact/lead → the client's **newest active deal**. Unknown party + no code → **skip** (privacy). |
+| **Staff-to-staff** | Internal emails (both parties staff) are skipped even when coded. |
 | **Department tag** | One department per email — from the **staff sender/receiver's** department (`sales` / `accounting` / `technical`). CC not considered. |
 | **Visibility (DB-enforced)** | See an email if: its **department ∈ your groups**, OR **you were the sender/receiver**, OR you're an **admin**. |
 | **Dedup** | One row per RFC822 `Message-ID` — the same email in two mailboxes is stored once. |
@@ -71,7 +71,7 @@ This enforces the siloing at the database, not just the UI.
 - A cron (every ~5 min) invokes a `gmail-sync` edge function (service-role /
   drain-secret gated, same pattern as the email drain).
 - For each connected user holding `gmail.readonly`:
-  - **First run:** list messages `newer_than:90d`.
+  - **First run:** list messages `newer_than:10d`.
   - **Incremental:** Gmail History API from `last_history_id` (fallback:
     `newer_than:` since `last_synced_at`).
   - For each message: fetch headers + body; take **From/To** only; find a client
@@ -140,7 +140,6 @@ This enforces the siloing at the database, not just the UI.
 
 - No-code email → **newest active deal** (default; alternatives: client-level
   only / all deals / manual tray).
-- Sync **poll ~5 min + 90-day backfill** (default; alternatives: 12-month
-  backfill / push notifications / no backfill).
+- Sync **poll ~5 min + 10-day backfill** (confirmed 2026-07-09).
 - Department **tie-break** when a staff member is in multiple groups.
 - Whether to store CC addresses for *display only* (currently: not stored).
