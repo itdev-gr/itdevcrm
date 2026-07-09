@@ -14,6 +14,11 @@ vi.mock('./hooks/useTaskComments', () => ({
 vi.mock('@/lib/stores/authStore', () => ({
   useAuthStore: (sel: (s: unknown) => unknown) => sel({ user: { id: 'me' } }),
 }));
+// useProfileDirectory became a react-query hook (098826e); stub it so this
+// test needs no QueryClientProvider.
+vi.mock('@/features/comments/hooks/useProfileDirectory', () => ({
+  useProfileDirectory: () => ({ data: [] }),
+}));
 
 import { TaskComments } from './TaskComments';
 import { useCommentDraftStore, taskThreadKey } from '@/features/comments/commentDraftStore';
