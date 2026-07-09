@@ -8,12 +8,19 @@ vi.mock('./hooks/useDeleteTask', () => ({ useDeleteTask: () => ({ mutateAsync: v
 vi.mock('@/features/comments/hooks/useMentionableUsers', () => ({
   useMentionableUsers: () => ({ data: [{ user_id: 'me', full_name: 'Me', email: 'me@x.gr', is_admin: false, group_codes: [] }] }),
 }));
-vi.mock('@/lib/stores/authStore', () => ({ useAuthStore: (sel: (s: unknown) => unknown) => sel({ user: { id: 'me' } }) }));
+vi.mock('@/lib/stores/authStore', () => ({
+  useAuthStore: (sel: (s: unknown) => unknown) => sel({ user: { id: 'me' }, isAdmin: false, groupCodes: [] }),
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string, o?: { defaultValue?: string }) => o?.defaultValue ?? k }) }));
 vi.mock('@/features/clients/ClientPicker', () => ({
   ClientPicker: ({ onChange }: { onChange: (c: { id: string; name: string } | null) => void }) => (
     <button type="button" onClick={() => onChange({ id: 'c-acme', name: 'ACME' })}>pick-acme</button>
   ),
+}));
+// TaskDialog now renders ClientOpenTasksList once a client is picked (create mode);
+// stub its data hook so this test needs no QueryClientProvider / network.
+vi.mock('@/features/clients/hooks/useClientTasks', () => ({
+  useClientTasks: () => ({ cards: [], isLoading: false }),
 }));
 
 import { TaskDialog } from './TaskDialog';
