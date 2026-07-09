@@ -9,6 +9,7 @@ import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWith
 import { cn } from '@/lib/utils';
 import { effectiveVatRate } from '@/lib/countries';
 import { DealForm } from './DealForm';
+import { DealEmailsBox } from './DealEmailsBox';
 import { useDeal } from './hooks/useDeal';
 import { isNotAccessible } from '@/lib/notAccessibleError';
 import { useMoveAccountingStage } from '@/features/accounting/hooks/useMoveAccountingStage';
@@ -330,6 +331,7 @@ export function DealDetailPage() {
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <DealForm initial={deal} />
+              <DealEmailsBox dealId={deal.id} clientId={deal.client_id} />
               <DealNotesArea deal={deal} />
               <DealServiceInfo dealId={dealId} />
               <DealServiceAttachments dealId={dealId} />
