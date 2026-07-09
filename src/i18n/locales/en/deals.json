@@ -43,7 +43,8 @@
     "activity": "Activity",
     "tasks": "Tasks",
     "offers": "Offers",
-    "proformas": "Pro Formas"
+    "proformas": "Pro Formas",
+    "emails": "Emails"
   },
   "assigned_tasks": {
     "section_open": "Open",

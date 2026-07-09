@@ -22,6 +22,15 @@
     "subject": "Welcome to ITDEV",
     "body": "Dear {{name}},\n\nWe're glad to start working together! We'll be in touch shortly with next steps.\n\nBest regards,\nThe ITDEV team"
   },
+  "thread": {
+    "loading": "Loading…",
+    "empty": "No client emails yet.",
+    "count_one": "{{count}} message",
+    "count_other": "{{count}} messages",
+    "reply": "Reply",
+    "received": "Received",
+    "sent": "Sent"
+  },
   "connect": {
     "title": "Google connection",
     "connect": "Connect Google",

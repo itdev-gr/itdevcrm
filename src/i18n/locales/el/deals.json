@@ -43,7 +43,8 @@
     "activity": "Δραστηριότητα",
     "tasks": "Καθήκοντα",
     "offers": "Προσφορές",
-    "proformas": "Προτιμολόγια"
+    "proformas": "Προτιμολόγια",
+    "emails": "Email"
   },
   "assigned_tasks": {
     "section_open": "Ανοιχτές",

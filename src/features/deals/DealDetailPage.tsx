@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
+import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { buildWonDraft } from '@/features/email/buildDraft';
 import { DealServiceInfo } from './DealServiceInfo';
 import { DealServiceAttachments } from './DealServiceAttachments';
@@ -322,6 +323,9 @@ export function DealDetailPage() {
           <TabsTrigger value="attachments" className={detailTabTriggerClass}>
             {t('tabs.attachments')}
           </TabsTrigger>
+          <TabsTrigger value="emails" className={detailTabTriggerClass}>
+            {t('tabs.emails')}
+          </TabsTrigger>
           <TabsTrigger value="activity" className={detailTabTriggerClass}>
             {t('tabs.activity')}
           </TabsTrigger>
@@ -402,6 +406,11 @@ export function DealDetailPage() {
             dealId={dealId}
             clientId={deal.client_id ?? undefined}
           />
+        </TabsContent>
+        <TabsContent value="emails" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+            <EmailThreadList dealId={deal.id} clientEmail={deal.client?.email ?? ''} />
+          </div>
         </TabsContent>
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
