@@ -38,6 +38,8 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
   const [draft, setDraft] = useState<Draft | null>(null);
   // Explicit user toggles; untouched sections default to open-when-non-empty.
   const [toggled, setToggled] = useState<Partial<Record<EmailCategory, boolean>>>({});
+  // Threads are collapsed by default.
+  const [openThreads, setOpenThreads] = useState<Partial<Record<string, boolean>>>({});
 
   if (isLoading) {
     return (
@@ -100,41 +102,75 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
 
             {isOpen(cat) && grouped[cat].length > 0 && (
               <div className="mt-2 space-y-3">
-                {grouped[cat].map((thread) => (
-                  <article
-                    key={thread.key}
-                    className="min-w-0 overflow-visible rounded-xl border border-border/50 bg-card px-4 py-4 shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="truncate text-[15px] font-semibold text-foreground">
-                          {thread.subject}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {t('thread.count', {
-                            count: thread.messages.length,
-                            defaultValue_one: '{{count}} message',
-                            defaultValue_other: '{{count}} messages',
-                          })}
-                        </p>
+                {grouped[cat].map((thread) => {
+                  const threadOpen = openThreads[thread.key] ?? false;
+                  const lastTime = thread.last_at
+                    ? formatCommentTime(thread.last_at, locale)
+                    : null;
+                  return (
+                    <article
+                      key={thread.key}
+                      className="min-w-0 overflow-visible rounded-xl border border-border/50 bg-card px-4 py-4 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          type="button"
+                          aria-expanded={threadOpen}
+                          onClick={() =>
+                            setOpenThreads((s) => ({ ...s, [thread.key]: !threadOpen }))
+                          }
+                          className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                        >
+                          <ChevronDown
+                            className={cn(
+                              'mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform',
+                              !threadOpen && '-rotate-90',
+                            )}
+                          />
+                          <div className="min-w-0">
+                            <h3 className="truncate text-[15px] font-semibold text-foreground">
+                              {thread.subject}
+                            </h3>
+                            <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                              <span>
+                                {t('thread.count', {
+                                  count: thread.messages.length,
+                                  defaultValue_one: '{{count}} message',
+                                  defaultValue_other: '{{count}} messages',
+                                })}
+                              </span>
+                              {lastTime && (
+                                <time
+                                  className="shrink-0 text-muted-foreground"
+                                  dateTime={thread.last_at ?? undefined}
+                                  title={lastTime.title}
+                                >
+                                  {lastTime.label}
+                                </time>
+                              )}
+                            </p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          onClick={() => openReply(thread)}
+                        >
+                          <Reply className="size-3.5" />
+                          {t('thread.reply', { defaultValue: 'Reply' })}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        onClick={() => openReply(thread)}
-                      >
-                        <Reply className="size-3.5" />
-                        {t('thread.reply', { defaultValue: 'Reply' })}
-                      </button>
-                    </div>
 
-                    <div className="mt-3 space-y-3">
-                      {thread.messages.map((m) => (
-                        <EmailMessage key={m.id} message={m} locale={locale} t={t} />
-                      ))}
-                    </div>
-                  </article>
-                ))}
+                      {threadOpen && (
+                        <div className="mt-3 space-y-3">
+                          {thread.messages.map((m) => (
+                            <EmailMessage key={m.id} message={m} locale={locale} t={t} />
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>

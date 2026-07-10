@@ -128,4 +128,32 @@ describe('EmailThreadList', () => {
     fireEvent.click(header);
     expect(screen.getByText('Prospect chat')).toBeInTheDocument();
   });
+
+  it('renders threads collapsed by default', () => {
+    ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ lead_id: 'l1' }} clientEmail="c@x.gr" />);
+    expect(screen.getByText('Prospect chat')).toBeInTheDocument();
+    expect(screen.queryByText('body of s1')).not.toBeInTheDocument();
+  });
+
+  it('clicking a thread header shows and hides its messages', () => {
+    ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ lead_id: 'l1' }} clientEmail="c@x.gr" />);
+    const header = screen.getByRole('button', { name: /prospect chat/i });
+    fireEvent.click(header);
+    expect(screen.getByText('body of s1')).toBeInTheDocument();
+    fireEvent.click(header);
+    expect(screen.queryByText('body of s1')).not.toBeInTheDocument();
+  });
+
+  it('replying on a collapsed thread opens the dialog without expanding it', () => {
+    ref.data = [thread({ key: 't1', category: 'technical', subject: 'Re: 000280-WEBDEV' })];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" />);
+    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
+    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: 'Re: 000280-WEBDEV' });
+    expect(screen.queryByText('body of t1')).not.toBeInTheDocument();
+  });
 });
