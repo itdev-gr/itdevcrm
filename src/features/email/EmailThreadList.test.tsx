@@ -11,7 +11,7 @@ describe('EmailThreadList', () => {
   it('shows an empty state when there are no threads', () => {
     ref.data = [];
     ref.isLoading = false;
-    render(<EmailThreadList dealId="d1" clientEmail="c@x.gr" />);
+    render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" />);
     expect(screen.getByText(/no client emails/i)).toBeInTheDocument();
   });
 
@@ -41,7 +41,7 @@ describe('EmailThreadList', () => {
       },
     ];
     ref.isLoading = false;
-    render(<EmailThreadList dealId="d1" clientEmail="a@upd8.gr" />);
+    render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="a@upd8.gr" />);
     expect(screen.getByText('Re: 000280-WEBDEV')).toBeInTheDocument();
     expect(screen.getByText(/hello there/)).toBeInTheDocument();
   });

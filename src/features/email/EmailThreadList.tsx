@@ -7,20 +7,25 @@ import {
   CommentEmptyState,
   formatCommentTime,
 } from '@/features/comments/comment-utils';
-import { useEmailThreads, type EmailMessageRow, type EmailThread } from './hooks/useEmailThreads';
+import {
+  useEmailThreads,
+  type EmailMessageRow,
+  type EmailScope,
+  type EmailThread,
+} from './hooks/useEmailThreads';
 import { SendEmailDialog } from './SendEmailDialog';
 
 type Props = {
-  dealId: string;
+  scope: EmailScope;
   clientEmail: string;
 };
 
 type ReplyTarget = { to: string; subject: string };
 
-export function EmailThreadList({ dealId, clientEmail }: Props) {
+export function EmailThreadList({ scope, clientEmail }: Props) {
   const { t, i18n } = useTranslation('email');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-GB';
-  const { data: threads = [], isLoading } = useEmailThreads({ deal_id: dealId });
+  const { data: threads = [], isLoading } = useEmailThreads(scope);
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
 
   if (isLoading) {

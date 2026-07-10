@@ -409,7 +409,7 @@ export function DealDetailPage() {
         </TabsContent>
         <TabsContent value="emails" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <EmailThreadList dealId={deal.id} clientEmail={deal.client?.email ?? ''} />
+            <EmailThreadList scope={{ deal_id: deal.id }} clientEmail={deal.client?.email ?? ''} />
           </div>
         </TabsContent>
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
