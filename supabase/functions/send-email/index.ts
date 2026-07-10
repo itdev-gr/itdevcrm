@@ -93,14 +93,18 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
   }
 
   let rendered;
+  // Hoisted so the success branch can read `client_facing` when deciding
+  // whether to mirror the send into the captured-email threads.
+  let dbTpl: { subject: string; body: string; client_facing: boolean } | null = null;
   try {
     // Admin-edited templates take precedence; built-ins are the fallback
     // (and the only path for `custom` / internal_* keys without a row).
-    const { data: dbTpl } = await admin
+    const { data: dbRow } = await admin
       .from('email_templates')
       .select('subject, body, client_facing')
       .eq('key', templateKey)
       .maybeSingle();
+    dbTpl = dbRow;
     rendered = dbTpl ? renderDbTemplate(dbTpl, data) : renderTemplate(templateKey, data);
   } catch (e) {
     await admin.from('email_log').insert({ identity, to_email: to, template_key: templateKey, status: 'failed', dedupe_key: dedupeKey, error: String(e) });
@@ -140,6 +144,30 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
   }
   const body = await res.json().catch(() => ({}));
   await admin.from('email_log').insert({ identity, to_email: to, template_key: templateKey, status: 'sent', resend_id: body.id ?? null, dedupe_key: dedupeKey });
+
+  // Mirror client-facing sends into the captured-email threads (spec 07-10):
+  // filing decides ownership; unknown parties are skipped, errors never
+  // affect the send result.
+  if (identity !== 'internal' && dbTpl?.client_facing !== false) {
+    try {
+      const fromEmail = (fromOverride ?? id.from).replace(/^.*<([^>]+)>.*$/, '$1').toLowerCase();
+      const { data: fil } = await admin.rpc('resolve_email_filing', {
+        p_from: fromEmail, p_to: to, p_subject: rendered.subject,
+      });
+      const f = Array.isArray(fil) ? fil[0] : null;
+      if (f) {
+        await admin.from('email_messages').upsert({
+          message_id: `resend:${body.id ?? crypto.randomUUID()}`,
+          direction: 'outbound', from_email: fromEmail, from_name: 'ITDEV (automated)',
+          to_email: to, subject: rendered.subject, body_text: rendered.text ?? null,
+          sent_at: new Date().toISOString(),
+          client_id: f.client_id, deal_id: f.deal_id, job_id: f.job_id, lead_id: f.lead_id,
+          department: f.department, staff_user_id: f.staff_user_id,
+        }, { onConflict: 'message_id', ignoreDuplicates: true });
+      }
+    } catch (_e) { /* thread mirroring must never fail a send */ }
+  }
+
   return { status: 'sent', resendId: body.id };
 }
 
