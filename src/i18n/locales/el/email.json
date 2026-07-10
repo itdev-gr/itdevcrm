@@ -27,6 +27,7 @@
     "empty": "Δεν υπάρχουν ακόμη email πελάτη.",
     "count_one": "{{count}} μήνυμα",
     "count_other": "{{count}} μηνύματα",
+    "new_email": "Νέο email",
     "reply": "Απάντηση",
     "received": "Ελήφθη",
     "sent": "Εστάλη"

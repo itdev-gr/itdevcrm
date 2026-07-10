@@ -27,6 +27,7 @@
     "empty": "No client emails yet.",
     "count_one": "{{count}} message",
     "count_other": "{{count}} messages",
+    "new_email": "New email",
     "reply": "Reply",
     "received": "Received",
     "sent": "Sent"

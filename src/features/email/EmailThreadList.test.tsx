@@ -1,10 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { EmailThread } from './hooks/useEmailThreads';
 
 const ref: { data: EmailThread[]; isLoading: boolean } = { data: [], isLoading: false };
+let dialogProps: Record<string, unknown> | null = null;
 vi.mock('./hooks/useEmailThreads', () => ({ useEmailThreads: () => ref }));
-vi.mock('./SendEmailDialog', () => ({ SendEmailDialog: () => null }));
+vi.mock('./SendEmailDialog', () => ({
+  SendEmailDialog: (props: Record<string, unknown>) => {
+    dialogProps = props;
+    return null;
+  },
+}));
 import { EmailThreadList } from './EmailThreadList';
 
 function thread(p: Partial<EmailThread> & Pick<EmailThread, 'key' | 'category'>): EmailThread {
@@ -34,11 +40,60 @@ function thread(p: Partial<EmailThread> & Pick<EmailThread, 'key' | 'category'>)
 }
 
 describe('EmailThreadList', () => {
+  beforeEach(() => {
+    dialogProps = null;
+  });
+
   it('shows an empty state when there are no threads', () => {
     ref.data = [];
     ref.isLoading = false;
     render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" />);
     expect(screen.getByText(/no client emails/i)).toBeInTheDocument();
+  });
+
+  it('shows a New email button in the empty state', () => {
+    ref.data = [];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" />);
+    expect(screen.getByText(/no client emails/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /new email/i })).toBeInTheDocument();
+  });
+
+  it('composes a new email prefilled with clientEmail and the newEmailSubject prefix', () => {
+    ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
+    ref.isLoading = false;
+    render(
+      <EmailThreadList
+        scope={{ job_id: 'j1' }}
+        clientEmail="c@x.gr"
+        newEmailSubject="000280-WEBDEV - "
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /new email/i }));
+    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: '000280-WEBDEV - ' });
+  });
+
+  it('composes a new email with an empty subject when no prefix is provided', () => {
+    ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" />);
+    fireEvent.click(screen.getByRole('button', { name: /new email/i }));
+    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: '' });
+  });
+
+  it('replying prefills a Re: subject without doubling the prefix', () => {
+    ref.data = [thread({ key: 't1', category: 'technical', subject: 'Re: 000280-WEBDEV' })];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" />);
+    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
+    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: 'Re: 000280-WEBDEV' });
+  });
+
+  it('does not mount the send dialog until a draft is started', () => {
+    ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" />);
+    expect(dialogProps).toBeNull();
   });
 
   it('renders category headers with thread counts', () => {
