@@ -194,7 +194,7 @@ with
 ```sql
       -- Uncoded client mail: a shared company mailbox has a fixed department
       -- (registry); a person tags by their groups (sales > accounting > sales).
-      select department into v_dept from shared_mailboxes where user_id = v_staff;
+      select sm.department into v_dept from shared_mailboxes sm where sm.user_id = v_staff;
       if v_dept is null then
         if exists (select 1 from user_groups ug join groups g on g.id = ug.group_id
                     where ug.user_id = v_staff and g.code = 'sales') then
