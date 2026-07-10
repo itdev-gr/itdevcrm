@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowDownLeft, ArrowUpRight, Reply } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ChevronDown, Reply } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   CommentAvatar,
@@ -9,11 +9,19 @@ import {
 } from '@/features/comments/comment-utils';
 import {
   useEmailThreads,
+  type EmailCategory,
   type EmailMessageRow,
   type EmailScope,
   type EmailThread,
 } from './hooks/useEmailThreads';
 import { SendEmailDialog } from './SendEmailDialog';
+
+const CATEGORY_ORDER: readonly EmailCategory[] = ['sales', 'accounting', 'technical'];
+const CATEGORY_LABEL: Record<EmailCategory, { key: string; defaultValue: string }> = {
+  sales: { key: 'category.sales', defaultValue: 'Sales' },
+  accounting: { key: 'category.accounting', defaultValue: 'Accounting' },
+  technical: { key: 'category.technical', defaultValue: 'Technical' },
+};
 
 type Props = {
   scope: EmailScope;
@@ -27,6 +35,8 @@ export function EmailThreadList({ scope, clientEmail }: Props) {
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-GB';
   const { data: threads = [], isLoading } = useEmailThreads(scope);
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  // Explicit user toggles; untouched sections default to open-when-non-empty.
+  const [toggled, setToggled] = useState<Partial<Record<EmailCategory, boolean>>>({});
 
   if (isLoading) {
     return (
@@ -44,6 +54,10 @@ export function EmailThreadList({ scope, clientEmail }: Props) {
     );
   }
 
+  const grouped: Record<EmailCategory, EmailThread[]> = { sales: [], accounting: [], technical: [] };
+  for (const th of threads) grouped[th.category].push(th);
+  const isOpen = (cat: EmailCategory) => toggled[cat] ?? grouped[cat].length > 0;
+
   function openReply(thread: EmailThread) {
     setReplyTo({
       to: clientEmail,
@@ -53,40 +67,68 @@ export function EmailThreadList({ scope, clientEmail }: Props) {
 
   return (
     <div className="space-y-3">
-      {threads.map((thread) => (
-        <article
-          key={thread.key}
-          className="min-w-0 overflow-visible rounded-xl border border-border/50 bg-card px-4 py-4 shadow-sm"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="truncate text-[15px] font-semibold text-foreground">
-                {thread.subject}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {t('thread.count', {
-                  count: thread.messages.length,
-                  defaultValue_one: '{{count}} message',
-                  defaultValue_other: '{{count}} messages',
-                })}
-              </p>
-            </div>
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              onClick={() => openReply(thread)}
-            >
-              <Reply className="size-3.5" />
-              {t('thread.reply', { defaultValue: 'Reply' })}
-            </button>
-          </div>
+      {CATEGORY_ORDER.map((cat) => (
+        <section key={cat}>
+          <button
+            type="button"
+            aria-expanded={isOpen(cat)}
+            onClick={() => setToggled((s) => ({ ...s, [cat]: !isOpen(cat) }))}
+            className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-muted/40 px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted/60"
+          >
+            <span>
+              {t(CATEGORY_LABEL[cat].key, { defaultValue: CATEGORY_LABEL[cat].defaultValue })}{' '}
+              <span className="text-xs font-normal text-muted-foreground">
+                ({grouped[cat].length})
+              </span>
+            </span>
+            <ChevronDown
+              className={cn(
+                'size-4 text-muted-foreground transition-transform',
+                !isOpen(cat) && '-rotate-90',
+              )}
+            />
+          </button>
 
-          <div className="mt-3 space-y-3">
-            {thread.messages.map((m) => (
-              <EmailMessage key={m.id} message={m} locale={locale} t={t} />
-            ))}
-          </div>
-        </article>
+          {isOpen(cat) && grouped[cat].length > 0 && (
+            <div className="mt-2 space-y-3">
+              {grouped[cat].map((thread) => (
+                <article
+                  key={thread.key}
+                  className="min-w-0 overflow-visible rounded-xl border border-border/50 bg-card px-4 py-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-[15px] font-semibold text-foreground">
+                        {thread.subject}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {t('thread.count', {
+                          count: thread.messages.length,
+                          defaultValue_one: '{{count}} message',
+                          defaultValue_other: '{{count}} messages',
+                        })}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      onClick={() => openReply(thread)}
+                    >
+                      <Reply className="size-3.5" />
+                      {t('thread.reply', { defaultValue: 'Reply' })}
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    {thread.messages.map((m) => (
+                      <EmailMessage key={m.id} message={m} locale={locale} t={t} />
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       ))}
 
       <SendEmailDialog
