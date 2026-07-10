@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupThreads, type EmailMessageRow } from './useEmailThreads';
+import { groupThreads, categoryOf, type EmailMessageRow } from './useEmailThreads';
 
 function row(p: Partial<EmailMessageRow>): EmailMessageRow {
   return {
@@ -16,6 +16,7 @@ function row(p: Partial<EmailMessageRow>): EmailMessageRow {
     sent_at: p.sent_at ?? null,
     department: p.department ?? null,
     job_id: p.job_id ?? null,
+    lead_id: p.lead_id ?? null,
   };
 }
 
@@ -63,5 +64,25 @@ describe('groupThreads', () => {
       row({ id: 'b', subject: 'X' }),
     ]);
     expect(th).toHaveLength(2);
+  });
+});
+
+describe('categoryOf', () => {
+  it('maps sales and accounting directly, everything else to technical', () => {
+    expect(categoryOf('sales')).toBe('sales');
+    expect(categoryOf('accounting')).toBe('accounting');
+    expect(categoryOf('web_dev')).toBe('technical');
+    expect(categoryOf('local_seo')).toBe('technical');
+    expect(categoryOf(null)).toBe('technical');
+  });
+});
+
+describe('thread category', () => {
+  it('derives the category from the newest message in the thread', () => {
+    const th = groupThreads([
+      row({ id: 'a', thread_id: 't1', department: 'web_dev', sent_at: '2026-07-01T10:00:00Z' }),
+      row({ id: 'b', thread_id: 't1', department: 'sales', sent_at: '2026-07-02T10:00:00Z' }),
+    ]);
+    expect(th[0]!.category).toBe('sales');
   });
 });

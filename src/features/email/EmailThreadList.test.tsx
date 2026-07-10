@@ -21,6 +21,7 @@ describe('EmailThreadList', () => {
         key: 't1',
         subject: 'Re: 000280-WEBDEV',
         last_at: '2026-07-09T10:00:00Z',
+        category: 'technical',
         messages: [
           {
             id: 'm1',
@@ -36,6 +37,7 @@ describe('EmailThreadList', () => {
             sent_at: '2026-07-09T10:00:00Z',
             department: 'web_dev',
             job_id: 'j1',
+            lead_id: null,
           },
         ],
       },

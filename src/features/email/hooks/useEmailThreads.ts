@@ -15,17 +15,28 @@ export type EmailMessageRow = {
   sent_at: string | null;
   department: string | null;
   job_id: string | null;
+  lead_id: string | null;
 };
+
+export type EmailCategory = 'sales' | 'accounting' | 'technical';
+
+/** UI bucket for a department code (groups.parent_label mirrors this in the DB). */
+export function categoryOf(department: string | null): EmailCategory {
+  if (department === 'sales') return 'sales';
+  if (department === 'accounting') return 'accounting';
+  return 'technical';
+}
 
 export type EmailThread = {
   key: string;
   subject: string;
   last_at: string | null;
+  category: EmailCategory;
   messages: EmailMessageRow[];
 };
 
 const COLS =
-  'id, message_id, thread_id, direction, from_email, from_name, to_email, subject, body_text, snippet, sent_at, department, job_id';
+  'id, message_id, thread_id, direction, from_email, from_name, to_email, subject, body_text, snippet, sent_at, department, job_id, lead_id';
 
 /** Grouping key: real thread when known; otherwise fold Re:/Fwd: chains of the
  *  same subject together (queries are single-scoped so this is safe); blank
@@ -45,7 +56,13 @@ export function groupThreads(rows: EmailMessageRow[]): EmailThread[] {
     const key = threadKey(r);
     let th = map.get(key);
     if (!th) {
-      th = { key, subject: r.subject ?? '(no subject)', last_at: r.sent_at, messages: [] };
+      th = {
+        key,
+        subject: r.subject ?? '(no subject)',
+        last_at: r.sent_at,
+        category: categoryOf(r.department),
+        messages: [],
+      };
       map.set(key, th);
     }
     th.messages.push(r);
@@ -57,20 +74,23 @@ export function groupThreads(rows: EmailMessageRow[]): EmailThread[] {
   for (const th of threads) {
     // Newest message first — the collapsed card summarizes messages[0].
     th.messages.sort((a, b) => (b.sent_at ?? '').localeCompare(a.sent_at ?? ''));
+    // Category follows the newest message (a chain can gain a job code later).
+    th.category = categoryOf(th.messages[0]!.department);
   }
   threads.sort((a, b) => (b.last_at ?? '').localeCompare(a.last_at ?? ''));
   return threads;
 }
 
-export type EmailScope = { deal_id?: string; job_id?: string; client_id?: string };
+export type EmailScope = { deal_id?: string; job_id?: string; client_id?: string; lead_id?: string };
 
 /** Resolve the single active filter column/value from a scope. Precedence:
- *  deal_id → job_id → client_id. Value is '' when nothing is set (query stays
- *  disabled). */
+ *  deal_id → job_id → client_id → lead_id. Value is '' when nothing is set
+ *  (query stays disabled). */
 function scopeFilter(scope: EmailScope): readonly [column: string, value: string] {
   if (scope.deal_id) return ['deal_id', scope.deal_id];
   if (scope.job_id) return ['job_id', scope.job_id];
-  return ['client_id', scope.client_id ?? ''];
+  if (scope.client_id) return ['client_id', scope.client_id];
+  return ['lead_id', scope.lead_id ?? ''];
 }
 
 export function useEmailThreads(scope: EmailScope): UseQueryResult<EmailThread[]> {
