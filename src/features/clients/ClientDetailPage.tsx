@@ -13,6 +13,7 @@ import { commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyCla
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { CombinedAttachmentsTab } from '@/features/attachments/CombinedAttachmentsTab';
 import { ClientActivityPanel } from '@/features/activity/ClientActivityPanel';
+import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { ClientTasksTab } from './ClientTasksTab';
 import { useClientBlock } from '@/features/client_blocks/hooks/useClientBlock';
 import { useUnblockClient } from '@/features/client_blocks/hooks/useUnblockClient';
@@ -110,6 +111,7 @@ export function ClientDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="comments">{t('tabs.comments')}</TabsTrigger>
           <TabsTrigger value="attachments">{t('tabs.attachments')}</TabsTrigger>
+          <TabsTrigger value="emails">{t('tabs.emails')}</TabsTrigger>
           <TabsTrigger value="tasks">{t('tabs.tasks')}</TabsTrigger>
           <TabsTrigger value="activity">{t('tabs.activity')}</TabsTrigger>
         </TabsList>
@@ -134,6 +136,9 @@ export function ClientDetailPage() {
         </TabsContent>
         <TabsContent value="attachments" className="pt-4">
           <CombinedAttachmentsTab parentType="client" parentId={clientId} clientId={clientId} />
+        </TabsContent>
+        <TabsContent value="emails" className="pt-4">
+          <EmailThreadList scope={{ client_id: clientId }} clientEmail={client.email ?? ''} />
         </TabsContent>
         <TabsContent value="tasks" className="pt-4">
           <ClientTasksTab clientId={clientId} clientName={client?.name ?? ''} />

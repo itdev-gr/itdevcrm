@@ -49,6 +49,7 @@
     "tasks": "Tasks",
     "comments": "Comments",
     "attachments": "Attachments",
+    "emails": "Emails",
     "activity": "Activity"
   },
   "tasks_tab": { "open": "Open", "resolved": "Resolved", "empty": "No tasks for this client yet.", "new": "New task" },
