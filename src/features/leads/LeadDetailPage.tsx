@@ -31,6 +31,7 @@ import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { LeadTasksTab } from './LeadTasksTab';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
+import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { buildOfferDraft } from '@/features/email/buildDraft';
 
 const UNASSIGNED = '__unassigned__';
@@ -305,6 +306,9 @@ export function LeadDetailPage() {
           <TabsTrigger value="attachments" className={detailTabTriggerClass}>
             {t('tabs.attachments')}
           </TabsTrigger>
+          <TabsTrigger value="emails" className={detailTabTriggerClass}>
+            {t('tabs.emails')}
+          </TabsTrigger>
           <TabsTrigger value="tasks" className={detailTabTriggerClass}>
             {t('tabs.tasks')}
           </TabsTrigger>
@@ -350,6 +354,11 @@ export function LeadDetailPage() {
         </TabsContent>
         <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <CombinedAttachmentsTab parentType="lead" parentId={leadId} leadId={leadId} />
+        </TabsContent>
+        <TabsContent value="emails" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <EmailThreadList scope={{ lead_id: leadId }} clientEmail={lead.email ?? ''} />
+          </div>
         </TabsContent>
         <TabsContent value="tasks" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
