@@ -60,7 +60,7 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         direction: f.direction, from_email: m.from_email, from_name: m.from_name, to_email: m.to_email,
         subject: m.subject, body_text: m.body_text, body_html: m.body_html, snippet: m.snippet,
         sent_at: m.internal_date ? new Date(m.internal_date).toISOString() : null,
-        client_id: f.client_id, deal_id: f.deal_id, job_id: f.job_id, department: f.department,
+        client_id: f.client_id, deal_id: f.deal_id, job_id: f.job_id, lead_id: f.lead_id, department: f.department,
         staff_user_id: f.staff_user_id, captured_from_user_id: uid,
       }, { onConflict: 'message_id', ignoreDuplicates: true });
       if (!error) stored++; else errors++;
