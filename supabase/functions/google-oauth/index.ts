@@ -53,9 +53,21 @@ Deno.serve(async (req) => {
 
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   const auth = req.headers.get('Authorization') ?? '';
-  const uid = await callerUserId(auth);
-  if (!uid) return json({ error: 'Unauthorized' }, 401);
-  const body = (await req.json().catch(() => ({}))) as { action?: string };
+  const caller = await callerUserId(auth);
+  if (!caller) return json({ error: 'Unauthorized' }, 401);
+  const body = (await req.json().catch(() => ({}))) as { action?: string; target_user_id?: string };
+
+  // Resolve the identity this request acts on. Everyone may act as themselves;
+  // an admin may additionally act for a *registered shared mailbox* (never for
+  // another person), so company inboxes are connected/disconnected centrally.
+  const target = typeof body.target_user_id === 'string' ? body.target_user_id : null;
+  let uid = caller;
+  if (target && target !== caller) {
+    const { data: prof } = await admin.from('profiles').select('is_admin').eq('user_id', caller).maybeSingle();
+    const { data: shared } = await admin.from('shared_mailboxes').select('user_id').eq('user_id', target).maybeSingle();
+    if (!prof?.is_admin || !shared) return json({ error: 'forbidden' }, 403);
+    uid = target;
+  }
 
   if (body.action === 'start') {
     const state = await signState({ uid }, STATE_SECRET, 600);

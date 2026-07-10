@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 type GoogleStatusRow = { google_email: string; connected: boolean };
 
-export function useGoogleConnection() {
+export function useGoogleConnection(targetUserId?: string) {
   const qc = useQueryClient();
   const status = useQuery({
     queryKey: ['google-connection'] as const,
@@ -18,7 +18,7 @@ export function useGoogleConnection() {
   });
   const connect = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('google-oauth', { body: { action: 'start' } });
+      const { data, error } = await supabase.functions.invoke('google-oauth', { body: { action: 'start', ...(targetUserId ? { target_user_id: targetUserId } : {}) } });
       if (error) throw new Error(error.message);
       const url = (data as { url?: string })?.url;
       if (url) window.location.href = url;
@@ -26,7 +26,7 @@ export function useGoogleConnection() {
   });
   const disconnect = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.functions.invoke('google-oauth', { body: { action: 'disconnect' } });
+      const { error } = await supabase.functions.invoke('google-oauth', { body: { action: 'disconnect', ...(targetUserId ? { target_user_id: targetUserId } : {}) } });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['google-connection'] }),
