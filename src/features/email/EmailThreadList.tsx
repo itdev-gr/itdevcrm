@@ -20,7 +20,7 @@ type ReplyTarget = { to: string; subject: string };
 export function EmailThreadList({ dealId, clientEmail }: Props) {
   const { t, i18n } = useTranslation('email');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-GB';
-  const { data: threads = [], isLoading } = useEmailThreads(dealId);
+  const { data: threads = [], isLoading } = useEmailThreads({ deal_id: dealId });
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
 
   if (isLoading) {
