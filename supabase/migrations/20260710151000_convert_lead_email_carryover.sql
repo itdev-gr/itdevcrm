@@ -1,9 +1,11 @@
 -- 2026-07-10: convert_lead_to_client also reparents captured lead emails
 -- (same pattern as the existing comments/attachments reparents).
 -- Base body: live prod def (drift-checked), repo ref 20260703120000_business_profile_name.sql.
--- ROLLBACK: re-apply the previous body (snapshot it in this file's PR-of-record
--- by pasting the pg_get_functiondef output below before applying):
--- <live pre-change body pasted here at apply time by the controller>
+-- ROLLBACK: re-apply the previous body.
+-- Drift-checked 2026-07-10 pre-apply: the live pg_get_functiondef body was
+-- byte-equivalent to the convert_lead_to_client block in
+-- 20260703120000_business_profile_name.sql (formatting-only differences) —
+-- that block is the authoritative rollback body.
 
 create or replace function public.convert_lead_to_client(target_lead_id uuid)
  returns jsonb language plpgsql security definer set search_path to 'public'
