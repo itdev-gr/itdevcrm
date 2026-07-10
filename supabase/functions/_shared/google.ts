@@ -160,14 +160,20 @@ function collectBody(payload: any, acc: { text: string[]; html: string[] }): voi
   for (const p of payload.parts ?? []) collectBody(p, acc);
 }
 
-export async function listGmailMessageIds(accessToken: string, query: string, max: number): Promise<string[]> {
+export async function listGmailMessageIds(
+  accessToken: string, query: string, max: number, pageToken?: string,
+): Promise<{ ids: string[]; nextPageToken: string | null }> {
   const u = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
   u.searchParams.set('maxResults', String(max));
   if (query) u.searchParams.set('q', query);
+  if (pageToken) u.searchParams.set('pageToken', pageToken);
   const r = await fetch(u, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!r.ok) throw new Error(`list_failed: ${await r.text()}`);
   const j = await r.json();
-  return ((j.messages ?? []) as { id: string }[]).map((m) => m.id);
+  return {
+    ids: ((j.messages ?? []) as { id: string }[]).map((m) => m.id),
+    nextPageToken: (j.nextPageToken as string | undefined) ?? null,
+  };
 }
 
 export async function getGmailMessageFull(accessToken: string, id: string): Promise<GmailMessage> {

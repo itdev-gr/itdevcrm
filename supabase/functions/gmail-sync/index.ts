@@ -33,16 +33,25 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
   const access = await refreshAccessToken(refresh, CLIENT_ID, CLIENT_SECRET);
   if (!access) return { skip: 'token_refresh_failed' };
 
+  const { data: shared } = await admin.from('shared_mailboxes')
+    .select('user_id').eq('user_id', uid).maybeSingle();
+
   // Incremental once backfilled: only messages since the last run (minus overlap).
   const { data: cur } = await admin.from('user_google_sync')
-    .select('last_synced_at, backfilled_at').eq('user_id', uid).maybeSingle();
-  let q = 'newer_than:10d';
-  if (cur?.backfilled_at && cur?.last_synced_at) {
+    .select('last_synced_at, backfilled_at, backfill_page_token').eq('user_id', uid).maybeSingle();
+
+  // Shared boxes backfill 90 days, paged 200/run; staff keep the single-run 10d.
+  const backfillQ = shared ? 'newer_than:90d' : 'newer_than:10d';
+  const backfilling = !cur?.backfilled_at || cur?.backfill_page_token;
+  let q = backfillQ;
+  let pageToken: string | undefined = cur?.backfill_page_token ?? undefined;
+  if (!backfilling && cur?.last_synced_at) {
     const since = Math.floor(new Date(cur.last_synced_at as string).getTime() / 1000) - OVERLAP_SEC;
     q = `after:${since}`;
+    pageToken = undefined;
   }
 
-  const ids = await listGmailMessageIds(access, q, 200);
+  const { ids, nextPageToken } = await listGmailMessageIds(access, q, 200, pageToken);
   let matched = 0, stored = 0, errors = 0;
   for (const id of ids) {
     // Isolate per-message failures so one malformed message can't abort the run.
@@ -64,14 +73,35 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         staff_user_id: f.staff_user_id, captured_from_user_id: uid,
       }, { onConflict: 'message_id', ignoreDuplicates: true });
       if (!error) stored++; else errors++;
+      if (!error && m.thread_id && f.direction === 'inbound' && (f.client_id || f.lead_id)) {
+        // Automated sends (thread_id null) adopt the reply's Gmail thread so the
+        // conversation folds together. Normalized-subject match, same client/lead.
+        const norm = (m.subject ?? '').replace(/^((re|fwd?):\s*)+/i, '').trim().toLowerCase();
+        if (norm) {
+          let adopt = admin.from('email_messages')
+            .update({ thread_id: m.thread_id })
+            .is('thread_id', null)
+            .ilike('subject', `%${norm.replace(/[%_]/g, '\\$&')}`);
+          adopt = f.client_id ? adopt.eq('client_id', f.client_id) : adopt.eq('lead_id', f.lead_id);
+          await adopt;
+        }
+      }
     } catch (_e) {
       errors++;
     }
   }
+  const morePages = backfilling && !!nextPageToken;
+  // During a multi-run backfill, pin last_synced_at to the backfill's START so
+  // the first incremental re-covers mail that arrived mid-backfill (pages walk
+  // newest→oldest; dedup absorbs the overlap). Incremental runs advance it.
+  const lastSynced = backfilling
+    ? ((cur?.last_synced_at as string | null) ?? new Date().toISOString())
+    : new Date().toISOString();
   await admin.from('user_google_sync').upsert({
     user_id: uid,
-    last_synced_at: new Date().toISOString(),
-    backfilled_at: (cur?.backfilled_at as string | null) ?? new Date().toISOString(),
+    last_synced_at: lastSynced,
+    backfilled_at: morePages ? null : ((cur?.backfilled_at as string | null) ?? new Date().toISOString()),
+    backfill_page_token: morePages ? nextPageToken : null,
   });
   return { scanned: ids.length, matched, stored, errors };
 }
