@@ -143,6 +143,10 @@ const EmailHealthPage = lazyPage(
   () => import('@/features/system_health/EmailHealthPage'),
   'EmailHealthPage',
 );
+const SharedMailboxesPage = lazyPage(
+  () => import('@/features/admin/SharedMailboxesPage'),
+  'SharedMailboxesPage',
+);
 const OfferBuilderPage = lazyPage(
   () => import('@/features/offers/OfferBuilderPage'),
   'OfferBuilderPage',
@@ -212,6 +216,7 @@ export const router = createBrowserRouter([
               { path: 'service-packages', element: <ServicePackagesPage /> },
               { path: 'email-automations', element: <EmailAutomationsPage /> },
               { path: 'email-health', element: <EmailHealthPage /> },
+              { path: 'shared-mailboxes', element: <SharedMailboxesPage /> },
               { path: 'contract-templates', element: <ContractTemplatesPage /> },
               { path: 'announcements', element: <AnnouncementsAdminPage /> },
               { path: 'documentation', element: <DocumentationPage /> },

@@ -9,6 +9,7 @@
     "permissions_test": "Δοκιμή δικαιωμάτων",
     "email_automations": "Αυτοματισμοί email",
     "email_health": "Κατάσταση email",
+    "shared_mailboxes": "Κοινά γραμματοκιβώτια",
     "contract_templates": "Πρότυπα συμβάσεων",
     "announcements": "Ανακοινώσεις",
     "documentation": "Τεκμηρίωση"
@@ -158,5 +159,14 @@
     "client_facing": "Αποστολή σε πελάτες",
     "internal": "Μόνο εσωτερικό",
     "close": "Κλείσιμο"
+  },
+  "shared_mailboxes": {
+    "title": "Κοινά γραμματοκιβώτια",
+    "subtitle": "Εταιρικά inbox που καταγράφονται στις συνομιλίες email πελατών.",
+    "connect": "Σύνδεση με Google",
+    "disconnect": "Αποσύνδεση",
+    "not_connected": "Μη συνδεδεμένο",
+    "syncing": "Συγχρονίζεται",
+    "backfilling": "Φόρτωση ιστορικού…"
   }
 }

@@ -9,6 +9,7 @@
     "permissions_test": "Permissions test page",
     "email_automations": "Email automations",
     "email_health": "Email health",
+    "shared_mailboxes": "Shared mailboxes",
     "contract_templates": "Contract templates",
     "announcements": "Announcements",
     "documentation": "Documentation"
@@ -158,5 +159,14 @@
     "client_facing": "Sent to clients",
     "internal": "Internal only",
     "close": "Close"
+  },
+  "shared_mailboxes": {
+    "title": "Shared mailboxes",
+    "subtitle": "Company inboxes captured into client email threads.",
+    "connect": "Connect Google",
+    "disconnect": "Disconnect",
+    "not_connected": "Not connected",
+    "syncing": "Syncing",
+    "backfilling": "Backfilling history…"
   }
 }
