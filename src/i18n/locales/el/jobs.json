@@ -22,7 +22,8 @@
     "completed_by": "από {{name}} {{when}}"
   },
   "tabs": {
-    "tasks": "Καθήκοντα"
+    "tasks": "Καθήκοντα",
+    "emails": "Email"
   },
   "assigned_tasks": {
     "section_open": "Ανοιχτές",

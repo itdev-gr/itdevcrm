@@ -22,7 +22,8 @@
     "completed_by": "by {{name}} {{when}}"
   },
   "tabs": {
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "emails": "Emails"
   },
   "assigned_tasks": {
     "section_open": "Open",

@@ -38,6 +38,7 @@ import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { areasForJob, canUploadArea } from '@/features/attachments/serviceAreas';
 import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachmentsSection';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
+import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { useJob } from './hooks/useJob';
 import { JobEmailStatusBadge } from './JobEmailStatusBadge';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
@@ -408,6 +409,9 @@ export function JobDetailPage() {
           <TabsTrigger value="attachments" className={detailTabTriggerClass}>
             Attachments
           </TabsTrigger>
+          <TabsTrigger value="emails" className={detailTabTriggerClass}>
+            {t('tabs.emails')}
+          </TabsTrigger>
           <TabsTrigger value="activity" className={detailTabTriggerClass}>
             Activity
           </TabsTrigger>
@@ -642,6 +646,11 @@ export function JobDetailPage() {
               parentId={job.id}
               hideKinds={['svc_local', 'svc_web', 'svc_webdev']}
             />
+          </div>
+        </TabsContent>
+        <TabsContent value="emails" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
+          <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+            <EmailThreadList scope={{ job_id: job.id }} clientEmail={job.client?.email ?? ''} />
           </div>
         </TabsContent>
         <TabsContent value="activity" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
