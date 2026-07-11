@@ -86,7 +86,71 @@ describe('EmailThreadList', () => {
     ref.isLoading = false;
     render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" />);
     fireEvent.click(screen.getByRole('button', { name: /reply/i }));
-    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: 'Re: 000280-WEBDEV' });
+    expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280-WEBDEV' });
+  });
+
+  it('replying defaults to the inbound sender when clientEmail is blank', () => {
+    ref.data = [
+      thread({
+        key: 'i1',
+        category: 'sales',
+        subject: 'Hello',
+        messages: [
+          {
+            id: 'i1-m1',
+            message_id: 'i1-x',
+            thread_id: 'i1',
+            direction: 'inbound',
+            from_email: 'client@x.gr',
+            from_name: 'Client',
+            to_email: 'me@itdev.gr',
+            subject: 'Hello',
+            body_text: 'hi',
+            snippet: null,
+            sent_at: '2026-07-09T10:00:00Z',
+            department: null,
+            job_id: null,
+            lead_id: null,
+          },
+        ],
+      }),
+    ];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="" />);
+    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
+    expect(dialogProps).toMatchObject({ to: 'client@x.gr' });
+  });
+
+  it('replying defaults to the outbound recipient when clientEmail is blank', () => {
+    ref.data = [
+      thread({
+        key: 'o1',
+        category: 'sales',
+        subject: 'Hello',
+        messages: [
+          {
+            id: 'o1-m1',
+            message_id: 'o1-x',
+            thread_id: 'o1',
+            direction: 'outbound',
+            from_email: 'me@itdev.gr',
+            from_name: 'Me',
+            to_email: 'client@y.gr',
+            subject: 'Hello',
+            body_text: 'hi',
+            snippet: null,
+            sent_at: '2026-07-09T10:00:00Z',
+            department: null,
+            job_id: null,
+            lead_id: null,
+          },
+        ],
+      }),
+    ];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="" />);
+    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
+    expect(dialogProps).toMatchObject({ to: 'client@y.gr' });
   });
 
   it('does not mount the send dialog until a draft is started', () => {
@@ -153,7 +217,7 @@ describe('EmailThreadList', () => {
     ref.isLoading = false;
     render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" />);
     fireEvent.click(screen.getByRole('button', { name: /reply/i }));
-    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: 'Re: 000280-WEBDEV' });
+    expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280-WEBDEV' });
     expect(screen.queryByText('body of t1')).not.toBeInTheDocument();
   });
 });

@@ -54,8 +54,14 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
   const isOpen = (cat: EmailCategory) => toggled[cat] ?? grouped[cat].length > 0;
 
   function openReply(thread: EmailThread) {
+    const newest = thread.messages[0];
+    const counterparty = newest
+      ? newest.direction === 'inbound'
+        ? newest.from_email
+        : newest.to_email
+      : '';
     setDraft({
-      to: clientEmail,
+      to: counterparty || clientEmail,
       subject: `Re: ${thread.subject.replace(/^Re:\s*/i, '')}`,
     });
   }

@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Sidebar, SidebarNav } from './Sidebar';
 import { Topbar } from './Topbar';
 import { EmailHealthBanner } from '@/features/system_health/EmailHealthBanner';
+import { GmailSyncBanner } from '@/features/system_health/GmailSyncBanner';
 import { BackButton } from '@/components/BackButton';
 import { ScrollRestorer } from '@/components/ScrollRestorer';
 
@@ -13,6 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex h-screen flex-col bg-background">
       <Topbar onMenuClick={() => setMobileNavOpen(true)} />
       <EmailHealthBanner />
+      <GmailSyncBanner />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <main
