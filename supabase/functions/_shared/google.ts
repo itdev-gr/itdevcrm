@@ -103,6 +103,7 @@ export function emailFromIdToken(idToken: string): string | null {
   }
 }
 
+// cc/bcc must be pre-validated by parseRecipientList (no CR/LF) — headers are emitted verbatim.
 export function buildMime(m: { from: string; to: string; subject: string; html: string; cc?: string[]; bcc?: string[] }): string {
   const subj = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(m.subject)))}?=`;
   const lines = [

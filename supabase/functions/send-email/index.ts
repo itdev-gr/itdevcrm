@@ -6,6 +6,7 @@ import { renderSignatureHtml } from '../_shared/signature.ts';
 import { validateAttachmentRefs, fetchAttachments, type AttachmentRef, type ResendAttachment } from './attachments.ts';
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 import { timingSafeEqual } from '../_shared/timing.ts';
+import { parseRecipientList } from '../_shared/recipients.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,10 +36,14 @@ type SendInput = {
   dedupeKey?: string | null;
   dryRun?: boolean;
   attachments?: AttachmentRef[];
+  cc?: string[] | string;
+  bcc?: string[] | string;
 };
 
 async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 'skipped'; resendId?: string; error?: string }> {
   const { identity, to, templateKey, data = {}, dedupeKey = null } = input;
+  const userCc = parseRecipientList(input.cc) ?? [];
+  const userBcc = parseRecipientList(input.bcc) ?? [];
   // Idempotency: never send the same dedupe_key twice.
   if (dedupeKey) {
     const { data: prior } = await admin
@@ -133,7 +138,10 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: fromOverride ?? id.from, reply_to: replyToOverride ?? id.replyTo, to,
-      ...(cc ? { cc } : {}),
+      ...((cc || userCc.length > 0)
+        ? { cc: [...(cc ? [cc] : []), ...userCc] }
+        : {}),
+      ...(userBcc.length > 0 ? { bcc: userBcc } : {}),
       subject: rendered.subject, html: rendered.html, text: rendered.text,
       ...(attachments.length > 0 ? { attachments } : {}),
     }),
@@ -157,14 +165,29 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
       });
       const f = Array.isArray(fil) ? fil[0] : null;
       if (f) {
+        const mirrorMessageId = `resend:${body.id ?? crypto.randomUUID()}`;
         await admin.from('email_messages').upsert({
-          message_id: `resend:${body.id ?? crypto.randomUUID()}`,
+          message_id: mirrorMessageId,
           direction: 'outbound', from_email: fromEmail, from_name: 'ITDEV (automated)',
           to_email: to, subject: rendered.subject, body_text: rendered.text ?? null,
           sent_at: new Date().toISOString(),
           client_id: f.client_id, deal_id: f.deal_id, job_id: f.job_id, lead_id: f.lead_id,
           department: f.department, staff_user_id: f.staff_user_id,
+          cc_emails: [...(cc ? [cc.toLowerCase()] : []), ...userCc].join(',') || null,
         }, { onConflict: 'message_id', ignoreDuplicates: true });
+        if (userBcc.length > 0) {
+          const { data: mrow } = await admin
+            .from('email_messages')
+            .select('id')
+            .eq('message_id', mirrorMessageId)
+            .maybeSingle();
+          if (mrow) {
+            await admin.from('email_message_bcc').upsert(
+              { message_pk: mrow.id, bcc_emails: userBcc.join(',') },
+              { onConflict: 'message_pk' },
+            );
+          }
+        }
       }
     } catch (_e) { /* thread mirroring must never fail a send */ }
   }
@@ -204,7 +227,7 @@ async function drain(): Promise<{ processed: number; sent: number; failed: numbe
   return { processed: (rows ?? []).length, sent, failed };
 }
 
-async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
+async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null, cc: string[] = [], bcc: string[] = []): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
   // Reject header injection / malformed recipients before building the MIME message.
   if (/[\r\n]/.test(to) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
     return { status: 'failed', error: 'invalid_recipient' };
@@ -248,7 +271,7 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
     await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'failed', dedupe_key: dedupeKey, error: 'token_refresh_failed' });
     return { status: 'failed', error: 'token_refresh_failed' };
   }
-  const raw = buildMime({ from: acct.google_email, to, subject, html });
+  const raw = buildMime({ from: acct.google_email, to, subject, html, cc, bcc });
   const res = await sendGmail(access, raw);
   // Keep the raw Gmail error in email_log for debugging; return a generic code to the client.
   await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: res.ok ? 'sent' : 'failed', resend_id: res.id ?? null, dedupe_key: dedupeKey, error: res.ok ? null : res.error });
@@ -282,7 +305,14 @@ Deno.serve(async (req) => {
     const caller = createClient(URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const { data: u } = await caller.auth.getUser();
     if (!u?.user) return json({ error: 'Unauthorized' }, 401);
-    const r = await sendPersonal(u.user.id, body.to, body.data ?? {}, body.dedupeKey ?? null);
+    const cc = parseRecipientList(body.cc);
+    const bcc = parseRecipientList(body.bcc);
+    if (cc === null || bcc === null) return json({ error: 'invalid_recipient' }, 400);
+    if (bcc.length > 0) {
+      const { data: prof } = await admin.from('profiles').select('is_admin').eq('user_id', u.user.id).maybeSingle();
+      if (!prof?.is_admin) return json({ error: 'bcc_admin_only' }, 403);
+    }
+    const r = await sendPersonal(u.user.id, body.to, body.data ?? {}, body.dedupeKey ?? null, cc, bcc);
     if (r.status === 'not_connected') return json({ status: 'not_connected' }, 409);
     return json({ status: r.status, id: r.id, error: r.error }, r.status === 'failed' ? 502 : 200);
   }
@@ -299,6 +329,20 @@ Deno.serve(async (req) => {
     if (/[\r\n,;]/.test(body.to) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.to)) {
       return json({ error: 'invalid_recipient' }, 400);
     }
+
+    // cc/bcc are compose-time fields: honored only on ad-hoc `custom` sends.
+    if (String(body.templateKey) !== 'custom' && (body.cc || body.bcc)) {
+      return json({ error: 'invalid_recipient' }, 400);
+    }
+    const ccList = parseRecipientList(body.cc);
+    const bccList = parseRecipientList(body.bcc);
+    if (ccList === null || bccList === null) return json({ error: 'invalid_recipient' }, 400);
+    if (bccList.length > 0) {
+      const { data: bccProf } = await admin.from('profiles').select('is_admin').eq('user_id', uid).maybeSingle();
+      if (!bccProf?.is_admin) return json({ error: 'bcc_admin_only' }, 403);
+    }
+    body.cc = ccList;
+    body.bcc = bccList;
 
     // Ad-hoc `custom` composition: lock the sending identity to the caller's own
     // department so a rep can't compose mail as another team. Admins may use any
