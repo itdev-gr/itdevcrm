@@ -8,7 +8,9 @@
     "cancel": "Cancel",
     "sent": "Email sent.",
     "failed": "Sending failed.",
-    "to_required": "Recipient email is required."
+    "to_required": "Recipient email is required.",
+    "signature_hint": "Your IT DEV signature is added automatically when the email is sent.",
+    "signature_preview": "Preview signature"
   },
   "offer": {
     "subject": "Your offer from ITDEV",

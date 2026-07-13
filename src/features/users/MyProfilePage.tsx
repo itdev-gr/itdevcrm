@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { useGoogleConnection } from '@/features/email/useGoogleConnection';
+import { SignaturePreview } from '@/features/email/SignaturePreview';
 import { useChangePassword } from '@/features/auth/hooks/useChangePassword';
 import type { Database } from '@/types/supabase';
 
@@ -170,6 +171,27 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
                 'When you create an offer, the lead moves to Offer Sent and a calendar follow-up is scheduled this many days later. 0 disables it.',
             })}
           </p>
+        </div>
+      </div>
+      <div className="rounded-md border p-4">
+        <h2 className="text-sm font-medium">
+          {t('profile.signature_title', { defaultValue: 'Email signature' })}
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {t('profile.signature_hint', {
+            defaultValue:
+              'Added automatically to emails you send through the CRM. It is built from your name, job title, phone and email above — edit those fields to change it. The layout is the same for everyone.',
+          })}
+        </p>
+        <div className="mt-3">
+          <SignaturePreview
+            person={{
+              name: fullName.trim() || email.trim(),
+              title: jobTitle.trim() || null,
+              phone: phone.trim() || null,
+              email: email.trim() || null,
+            }}
+          />
         </div>
       </div>
       <div className="rounded-md border p-4">

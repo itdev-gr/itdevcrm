@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSendEmail, type SendEmailVars } from './useSendEmail';
 import { useGoogleConnection } from './useGoogleConnection';
+import { MySignaturePreview } from './SignaturePreview';
 
 export type SendEmailDialogProps = {
   open: boolean;
@@ -57,6 +58,19 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
               <textarea aria-label={t('dialog.body')} value={text} onChange={(e) => setText(e.target.value)}
                 rows={8} className="mt-1 block w-full rounded border px-2 py-1" />
             </label>
+            {identity === 'personal' && (
+              <div className="mt-3">
+                <p className="text-xs text-muted-foreground">{t('dialog.signature_hint')}</p>
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-xs text-muted-foreground underline">
+                    {t('dialog.signature_preview')}
+                  </summary>
+                  <div className="mt-2">
+                    <MySignaturePreview />
+                  </div>
+                </details>
+              </div>
+            )}
             {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
             {needsConnect && <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">{t('connect.needed')}</p>}
           </>

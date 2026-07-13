@@ -8,7 +8,9 @@
     "cancel": "Άκυρο",
     "sent": "Το email στάλθηκε.",
     "failed": "Η αποστολή απέτυχε.",
-    "to_required": "Απαιτείται email παραλήπτη."
+    "to_required": "Απαιτείται email παραλήπτη.",
+    "signature_hint": "Η υπογραφή σας IT DEV προστίθεται αυτόματα κατά την αποστολή.",
+    "signature_preview": "Προεπισκόπηση υπογραφής"
   },
   "offer": {
     "subject": "Η προσφορά σας από την ITDEV",
