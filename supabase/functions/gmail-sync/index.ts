@@ -78,8 +78,20 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         const { data: mrow } = await admin
           .from('email_messages').select('id').eq('message_id', m.message_id).maybeSingle();
         if (mrow) {
+          // Union-merge, never overwrite: every Gmail copy carries a PARTIAL
+          // Bcc view (a bcc recipient's delivered copy lists only themselves),
+          // so the last-swept mailbox would otherwise clobber the sender's
+          // full list (found live 2026-07-13 during dept-auto-bcc rollout).
+          const { data: prior } = await admin
+            .from('email_message_bcc').select('bcc_emails').eq('message_pk', mrow.id).maybeSingle();
+          const merged = [
+            ...new Set([
+              ...(prior?.bcc_emails ? String(prior.bcc_emails).split(',') : []),
+              ...m.bcc_emails.split(','),
+            ]),
+          ].join(',');
           await admin.from('email_message_bcc').upsert(
-            { message_pk: mrow.id, bcc_emails: m.bcc_emails },
+            { message_pk: mrow.id, bcc_emails: merged },
             { onConflict: 'message_pk' },
           );
         }
