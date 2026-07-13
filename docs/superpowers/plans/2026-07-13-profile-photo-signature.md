@@ -465,7 +465,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```sql
 select id, public from storage.buckets where id = 'avatars';                     -- avatars / true
 select policyname from pg_policies where tablename = 'objects'
-  and policyname like 'avatars_%';                                              -- 3 rows
+  and policyname like 'avatars_%';                                              -- 4 rows (select/insert/update/delete)
 ```
 
 - [ ] **Step 2: Push** (`git pull --rebase && git push`) and wait for Vercel; then deploy the edge fn:
