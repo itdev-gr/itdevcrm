@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { useGoogleConnection } from '@/features/email/useGoogleConnection';
 import { SignaturePreview } from '@/features/email/SignaturePreview';
+import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import { useChangePassword } from '@/features/auth/hooks/useChangePassword';
 import type { Database } from '@/types/supabase';
 
@@ -145,13 +146,18 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
           </select>
         </div>
         <div className="md:col-span-2">
-          <Label htmlFor="av">{t('profile.avatar_url')}</Label>
-          <Input
-            id="av"
-            type="url"
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
+          <Label>{t('profile.photo_title', { defaultValue: 'Profile photo' })}</Label>
+          <ProfilePhotoUpload
+            userId={userId}
+            value={avatarUrl.trim() || null}
+            onChange={(url) => setAvatarUrl(url ?? '')}
           />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {t('profile.photo_hint', {
+              defaultValue:
+                'Shown in your email signature. Without a photo, the IT DEV logo is used.',
+            })}
+          </p>
         </div>
         <div className="md:col-span-2">
           <Label htmlFor="ofd">
@@ -185,6 +191,7 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
         </p>
         <div className="mt-3">
           <SignaturePreview
+            logoUrl={avatarUrl.trim() || null}
             person={{
               name: fullName.trim() || email.trim(),
               title: jobTitle.trim() || null,

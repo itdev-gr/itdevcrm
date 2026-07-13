@@ -5,13 +5,23 @@ import { renderSignatureHtml } from '../../../supabase/functions/_shared/signatu
 import type { SignaturePerson } from '../../../supabase/functions/_shared/signature.ts';
 
 // Same fixed layout for everyone — the preview is the renderer the emails use.
-export function SignaturePreview({ person }: { person: SignaturePerson }) {
-  const logoUrl = `${window.location.origin}/email-assets/itdev-logo-round.png`;
+// logoUrl: the user's avatar (honored only when https), else the IT DEV logo.
+export function SignaturePreview({
+  person,
+  logoUrl,
+}: {
+  person: SignaturePerson;
+  logoUrl?: string | null;
+}) {
+  const src =
+    logoUrl && logoUrl.startsWith('https://')
+      ? logoUrl
+      : `${window.location.origin}/email-assets/itdev-logo-round.png`;
   return (
     <iframe
       title="signature-preview"
       sandbox=""
-      srcDoc={`<body style="margin:8px;background:#ffffff">${renderSignatureHtml(logoUrl, person)}</body>`}
+      srcDoc={`<body style="margin:8px;background:#ffffff">${renderSignatureHtml(src, person)}</body>`}
       className="h-72 w-full rounded border bg-white"
     />
   );
@@ -26,7 +36,7 @@ export function MySignaturePreview() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('full_name, job_title, phone, email')
+        .select('full_name, job_title, phone, email, avatar_url')
         .eq('user_id', userId!)
         .single();
       if (error) throw new Error(error.message);
@@ -36,6 +46,7 @@ export function MySignaturePreview() {
   if (!q.data) return null;
   return (
     <SignaturePreview
+      logoUrl={q.data.avatar_url}
       person={{
         name: q.data.full_name ?? '',
         title: q.data.job_title,
