@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { AttachmentsPanel } from './AttachmentsPanel';
+import { DealJobFiles } from '@/features/deals/DealJobFiles';
 import { OffersTab } from '@/features/offers/OffersTab';
 import { ProFormasTab } from '@/features/proformas/ProFormasTab';
 import { ContractsTab } from '@/features/contracts/ContractsTab';
@@ -24,6 +25,7 @@ export function CombinedAttachmentsTab({ parentType, parentId, leadId, dealId, c
         <h2 className={headerClass}>{t('attachments.sections.files')}</h2>
         <AttachmentsPanel parentType={parentType} parentId={parentId} />
       </section>
+      {parentType === 'deal' && dealId && <DealJobFiles dealId={dealId} />}
       {showOffers && (
         <section className={sectionClass}>
           <h2 className={headerClass}>{t('attachments.sections.offers')}</h2>

@@ -14,6 +14,9 @@ vi.mock('@/features/proformas/ProFormasTab', () => ({
 vi.mock('@/features/contracts/ContractsTab', () => ({
   ContractsTab: () => <div data-testid="contracts-panel" />,
 }));
+vi.mock('@/features/deals/DealJobFiles', () => ({
+  DealJobFiles: () => <div data-testid="job-files-panel" />,
+}));
 
 import { CombinedAttachmentsTab } from './CombinedAttachmentsTab';
 
