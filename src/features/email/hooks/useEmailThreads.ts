@@ -16,6 +16,7 @@ export type EmailMessageRow = {
   department: string | null;
   job_id: string | null;
   lead_id: string | null;
+  cc_emails: string | null;
 };
 
 export type EmailCategory = 'sales' | 'accounting' | 'technical';
@@ -36,7 +37,7 @@ export type EmailThread = {
 };
 
 const COLS =
-  'id, message_id, thread_id, direction, from_email, from_name, to_email, subject, body_text, snippet, sent_at, department, job_id, lead_id';
+  'id, message_id, thread_id, direction, from_email, from_name, to_email, subject, body_text, snippet, sent_at, department, job_id, lead_id, cc_emails';
 
 /** Grouping key: real thread when known; otherwise fold Re:/Fwd: chains of the
  *  same subject together (queries are single-scoped so this is safe); blank

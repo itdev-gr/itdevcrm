@@ -2,6 +2,10 @@
   "dialog": {
     "title": "Αποστολή email",
     "to": "Προς",
+    "cc": "Κοιν. (Cc)",
+    "bcc": "Κρυφή κοιν. (Bcc — μόνο διαχειριστές)",
+    "recipients_hint": "email, email — έως 10",
+    "invalid_recipients": "Μη έγκυρη διεύθυνση Cc/Bcc (χωρισμένες με κόμμα, έως 10).",
     "subject": "Θέμα",
     "body": "Μήνυμα",
     "send": "Αποστολή",
@@ -32,7 +36,9 @@
     "new_email": "Νέο email",
     "reply": "Απάντηση",
     "received": "Ελήφθη",
-    "sent": "Εστάλη"
+    "sent": "Εστάλη",
+    "cc": "Cc",
+    "bcc": "Bcc"
   },
   "category": {
     "sales": "Πωλήσεις",

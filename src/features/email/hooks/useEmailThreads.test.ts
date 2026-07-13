@@ -17,6 +17,7 @@ function row(p: Partial<EmailMessageRow>): EmailMessageRow {
     department: p.department ?? null,
     job_id: p.job_id ?? null,
     lead_id: p.lead_id ?? null,
+    cc_emails: p.cc_emails ?? null,
   };
 }
 

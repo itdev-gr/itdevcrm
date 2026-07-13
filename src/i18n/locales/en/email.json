@@ -2,6 +2,10 @@
   "dialog": {
     "title": "Send email",
     "to": "To",
+    "cc": "Cc",
+    "bcc": "Bcc (admins only)",
+    "recipients_hint": "email, email — up to 10",
+    "invalid_recipients": "Invalid Cc/Bcc address (comma-separated, max 10).",
     "subject": "Subject",
     "body": "Message",
     "send": "Send",
@@ -32,7 +36,9 @@
     "new_email": "New email",
     "reply": "Reply",
     "received": "Received",
-    "sent": "Sent"
+    "sent": "Sent",
+    "cc": "Cc",
+    "bcc": "Bcc"
   },
   "category": {
     "sales": "Sales",

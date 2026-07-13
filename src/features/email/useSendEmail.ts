@@ -6,6 +6,8 @@ export type SendEmailVars = {
   to: string;
   subject: string;
   body: string; // plain text; newlines become <br/> in html
+  cc?: string[] | undefined;
+  bcc?: string[] | undefined;
   dedupeKey?: string | undefined;
 };
 
@@ -20,6 +22,8 @@ export function useSendEmail() {
           templateKey: 'custom',
           data: { subject: vars.subject, html, text: vars.body },
           dedupeKey: vars.dedupeKey ?? null,
+          ...(vars.cc && vars.cc.length > 0 ? { cc: vars.cc } : {}),
+          ...(vars.bcc && vars.bcc.length > 0 ? { bcc: vars.bcc } : {}),
         },
       });
       if (error) throw new Error(error.message);

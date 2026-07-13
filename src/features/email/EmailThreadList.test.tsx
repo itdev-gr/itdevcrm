@@ -5,6 +5,7 @@ import type { EmailThread } from './hooks/useEmailThreads';
 const ref: { data: EmailThread[]; isLoading: boolean } = { data: [], isLoading: false };
 let dialogProps: Record<string, unknown> | null = null;
 vi.mock('./hooks/useEmailThreads', () => ({ useEmailThreads: () => ref }));
+vi.mock('./hooks/useBccEmails', () => ({ useBccEmails: () => new Map() }));
 vi.mock('./SendEmailDialog', () => ({
   SendEmailDialog: (props: Record<string, unknown>) => {
     dialogProps = props;
@@ -33,6 +34,7 @@ function thread(p: Partial<EmailThread> & Pick<EmailThread, 'key' | 'category'>)
         department: null,
         job_id: null,
         lead_id: null,
+        cc_emails: null,
       },
     ],
     ...p,
@@ -111,6 +113,7 @@ describe('EmailThreadList', () => {
             department: null,
             job_id: null,
             lead_id: null,
+            cc_emails: null,
           },
         ],
       }),
@@ -143,6 +146,7 @@ describe('EmailThreadList', () => {
             department: null,
             job_id: null,
             lead_id: null,
+            cc_emails: null,
           },
         ],
       }),

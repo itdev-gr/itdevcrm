@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useSendEmail, type SendEmailVars } from './useSendEmail';
 import { useGoogleConnection } from './useGoogleConnection';
 import { MySignaturePreview } from './SignaturePreview';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { parseRecipientList } from '../../../supabase/functions/_shared/recipients.ts';
 
 export type SendEmailDialogProps = {
   open: boolean;
@@ -19,7 +21,10 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
   const send = useSendEmail();
   const google = useGoogleConnection();
   const needsConnect = identity === 'personal' && !google.connected && !google.isLoading;
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const [toEmail, setToEmail] = useState(to);
+  const [ccText, setCcText] = useState('');
+  const [bccText, setBccText] = useState('');
   const [subj, setSubj] = useState(subject);
   const [text, setText] = useState(body);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +35,13 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
   async function submit() {
     setError(null);
     if (!toEmail.trim()) return setError(t('dialog.to_required'));
+    const cc = parseRecipientList(ccText);
+    const bcc = parseRecipientList(bccText);
+    if (cc === null || bcc === null) {
+      return setError(t('dialog.invalid_recipients', { defaultValue: 'Invalid Cc/Bcc address (comma-separated, max 10).' }));
+    }
     try {
-      await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, dedupeKey });
+      await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, cc, bcc, dedupeKey });
       setDone(true);
     } catch {
       setError(t('dialog.failed'));
@@ -50,6 +60,18 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
               <input aria-label={t('dialog.to')} value={toEmail} onChange={(e) => setToEmail(e.target.value)}
                 className="mt-1 block w-full rounded border px-2 py-1" />
             </label>
+            <label className="mt-3 block text-sm">{t('dialog.cc', { defaultValue: 'Cc' })}
+              <input aria-label={t('dialog.cc', { defaultValue: 'Cc' })} value={ccText} onChange={(e) => setCcText(e.target.value)}
+                placeholder={t('dialog.recipients_hint', { defaultValue: 'email, email — up to 10' })}
+                className="mt-1 block w-full rounded border px-2 py-1" />
+            </label>
+            {isAdmin && (
+              <label className="mt-3 block text-sm">{t('dialog.bcc', { defaultValue: 'Bcc (admins only)' })}
+                <input aria-label={t('dialog.bcc', { defaultValue: 'Bcc (admins only)' })} value={bccText} onChange={(e) => setBccText(e.target.value)}
+                  placeholder={t('dialog.recipients_hint', { defaultValue: 'email, email — up to 10' })}
+                  className="mt-1 block w-full rounded border px-2 py-1" />
+              </label>
+            )}
             <label className="mt-3 block text-sm">{t('dialog.subject')}
               <input aria-label={t('dialog.subject')} value={subj} onChange={(e) => setSubj(e.target.value)}
                 className="mt-1 block w-full rounded border px-2 py-1" />

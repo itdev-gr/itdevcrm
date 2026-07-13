@@ -15,6 +15,7 @@ import {
   type EmailThread,
 } from './hooks/useEmailThreads';
 import { SendEmailDialog } from './SendEmailDialog';
+import { useBccEmails } from './hooks/useBccEmails';
 
 const CATEGORY_ORDER: readonly EmailCategory[] = ['sales', 'accounting', 'technical'];
 const CATEGORY_LABEL: Record<EmailCategory, { key: string; defaultValue: string }> = {
@@ -35,6 +36,8 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
   const { t, i18n } = useTranslation('email');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-GB';
   const { data: threads = [], isLoading } = useEmailThreads(scope);
+  const allIds = threads.flatMap((th) => th.messages.map((m) => m.id));
+  const bccMap = useBccEmails(allIds);
   const [draft, setDraft] = useState<Draft | null>(null);
   // Explicit user toggles; untouched sections default to open-when-non-empty.
   const [toggled, setToggled] = useState<Partial<Record<EmailCategory, boolean>>>({});
@@ -170,7 +173,7 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
                       {threadOpen && (
                         <div className="mt-3 space-y-3">
                           {thread.messages.map((m) => (
-                            <EmailMessage key={m.id} message={m} locale={locale} t={t} />
+                            <EmailMessage key={m.id} message={m} locale={locale} t={t} bccMap={bccMap} />
                           ))}
                         </div>
                       )}
@@ -201,10 +204,12 @@ function EmailMessage({
   message,
   locale,
   t,
+  bccMap,
 }: {
   message: EmailMessageRow;
   locale: string;
   t: ReturnType<typeof useTranslation>['t'];
+  bccMap: Map<string, string>;
 }) {
   const inbound = message.direction === 'inbound';
   const time = message.sent_at ? formatCommentTime(message.sent_at, locale) : null;
@@ -258,6 +263,20 @@ function EmailMessage({
               </time>
             )}
           </div>
+          {(message.cc_emails || bccMap.get(message.id)) && (
+            <div className="mt-0.5 space-y-0.5 text-xs text-muted-foreground">
+              {message.cc_emails && (
+                <div className="truncate">
+                  {t('thread.cc', { defaultValue: 'Cc' })}: {message.cc_emails.split(',').join(', ')}
+                </div>
+              )}
+              {bccMap.get(message.id) && (
+                <div className="truncate">
+                  {t('thread.bcc', { defaultValue: 'Bcc' })}: {bccMap.get(message.id)!.split(',').join(', ')}
+                </div>
+              )}
+            </div>
+          )}
           <div className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
             {bodyText}
           </div>
