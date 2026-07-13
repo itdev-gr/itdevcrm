@@ -32,7 +32,7 @@
 - Produces: `deptBccFor(parentLabels: string[]): string[]` exported from `_shared/recipients.ts`.
 - Consumes: existing `sendPersonal(uid, to, data, dedupeKey, cc = [], bcc = [])` and its `buildMime({ from, to, subject, html, cc, bcc })` call.
 
-- [ ] **Step 1: Write the failing test** — append to `src/features/email/recipients.test.ts`:
+- [x] **Step 1: Write the failing test** — append to `src/features/email/recipients.test.ts`:
 
 ```ts
 describe('deptBccFor', () => {
@@ -55,12 +55,12 @@ describe('deptBccFor', () => {
 ```
 Also add `deptBccFor` to the import list at the top of the test file.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npm run test:run -- src/features/email/recipients.test.ts`
 Expected: FAIL — `deptBccFor` is not exported.
 
-- [ ] **Step 3: Implement** — append to `supabase/functions/_shared/recipients.ts`:
+- [x] **Step 3: Implement** — append to `supabase/functions/_shared/recipients.ts`:
 
 ```ts
 /** Department archive mailboxes, keyed by groups.parent_label (owner rule
@@ -82,12 +82,12 @@ export function deptBccFor(parentLabels: string[]): string[] {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npm run test:run -- src/features/email/recipients.test.ts`
 Expected: PASS (13 tests).
 
-- [ ] **Step 5: Wire into `sendPersonal`** — in `supabase/functions/send-email/index.ts`:
+- [x] **Step 5: Wire into `sendPersonal`** — in `supabase/functions/send-email/index.ts`:
 
 Extend the recipients import:
 ```ts
@@ -122,12 +122,12 @@ Then change the `buildMime` call from `..., cc, bcc });` to:
 ```
 (NOTE: only the `buildMime` call changes to `mergedBcc` — the `bcc` parameter and the earlier admin gate in the handler stay exactly as they are. The Supabase embed returns `groups` as an object under this FK; if `deno check` insists it's an array, adapt the extraction with `Array.isArray` handling and say so in your report.)
 
-- [ ] **Step 6: Gates**
+- [x] **Step 6: Gates**
 
 Run: `deno check --node-modules-dir=auto supabase/functions/send-email/index.ts` — clean.
 Run: `npm run build` — exit 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/functions/_shared/recipients.ts supabase/functions/send-email/index.ts src/features/email/recipients.test.ts
@@ -146,7 +146,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 **Interfaces:** none new.
 
-- [ ] **Step 1: Add the hint line**
+- [x] **Step 1: Add the hint line**
 
 In `SendEmailDialog.tsx`, inside the existing `{identity === 'personal' && (…)}` block, directly under the signature-hint `<p>` (`{t('dialog.signature_hint')}`), add:
 
@@ -154,7 +154,7 @@ In `SendEmailDialog.tsx`, inside the existing `{identity === 'personal' && (…)
                 <p className="text-xs text-muted-foreground">{t('dialog.dept_bcc_hint')}</p>
 ```
 
-- [ ] **Step 2: i18n keys** — inside `"dialog"`:
+- [x] **Step 2: i18n keys** — inside `"dialog"`:
 
 `en/email.json`:
 ```json
@@ -166,12 +166,12 @@ In `SendEmailDialog.tsx`, inside the existing `{identity === 'personal' && (…)
 ```
 Validate both parse: `python3 -c "import json;json.load(open('src/i18n/locales/en/email.json'));json.load(open('src/i18n/locales/el/email.json'));print('OK')"`
 
-- [ ] **Step 3: Gates**
+- [x] **Step 3: Gates**
 
 Run: `npm run build && npm run test:run -- src/features/email/SendEmailDialog.ccbcc.test.tsx`
 Expected: build exit 0; existing dialog tests still PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/features/email/SendEmailDialog.tsx src/i18n/locales/en/email.json src/i18n/locales/el/email.json
@@ -186,15 +186,15 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ⚠️ Needs a valid `sbp_` token and the owner's/inbox eyeballs. No migration this time.
 
-- [ ] **Step 1: Push** (`git pull --rebase && git push`; Vercel picks up the hint) and deploy:
+- [x] **Step 1: Push** (`git pull --rebase && git push`; Vercel picks up the hint) and deploy:
 ```bash
 SUPABASE_ACCESS_TOKEN=<sbp> npx supabase functions deploy send-email --project-ref xujlrclyzxrvxszepquy --no-verify-jwt
 ```
 (`--no-verify-jwt` REQUIRED — drain auth.)
 
-- [ ] **Step 2: sales@ existence probe (ROLLOUT GATE).** From the CRM as a Gmail-connected user, send a short email To `sales@itdev.gr` (subject `sales@ probe`). Wait ~3 minutes, then check the sender's mailbox for a Mailer-Daemon bounce (owner eyeball, or check whether gmail-sync captured a `mailer-daemon@` message for that user). No bounce = the box exists. If it bounces: STOP, tell the owner to create sales@itdev.gr (or alias) before this feature is considered live for the sales department — accounting@/support@ paths are live regardless.
+- [x] **Step 2: sales@ existence probe (ROLLOUT GATE).** From the CRM as a Gmail-connected user, send a short email To `sales@itdev.gr` (subject `sales@ probe`). Wait ~3 minutes, then check the sender's mailbox for a Mailer-Daemon bounce (owner eyeball, or check whether gmail-sync captured a `mailer-daemon@` message for that user). No bounce = the box exists. If it bounces: STOP, tell the owner to create sales@itdev.gr (or alias) before this feature is considered live for the sales department — accounting@/support@ paths are live regardless.
 
-- [ ] **Step 3: E2E — technical sender.** As mkifokeris (web_dev → support@), send a normal email from a lead (To an owner-controlled address, e.g. itdevgr24@gmail.com via a throwaway/test context if needed). After gmail-sync captures the sent copy, verify:
+- [x] **Step 3: E2E — technical sender.** As mkifokeris (web_dev → support@), send a normal email from a lead (To an owner-controlled address, e.g. itdevgr24@gmail.com via a throwaway/test context if needed). After gmail-sync captures the sent copy, verify:
 ```sql
 select b.bcc_emails from public.email_message_bcc b
   join public.email_messages m on m.id = b.message_pk
@@ -202,11 +202,11 @@ select b.bcc_emails from public.email_message_bcc b
 ```
 Expected: contains `support@itdev.gr`. Also: support@'s inbox receives the copy (owner eyeball or support@ capture shows it).
 
-- [ ] **Step 4: E2E — sales sender.** As a Gmail-connected sales rep (e.g. azazas@itdev.gr, standard test pw), send one email from one of HIS leads. Verify the captured sent copy's bcc row contains `sales@itdev.gr` (same query with his from_email). Requires Step 2 passing.
+- [x] **Step 4: E2E — sales sender.** As a Gmail-connected sales rep (e.g. azazas@itdev.gr, standard test pw), send one email from one of HIS leads. Verify the captured sent copy's bcc row contains `sales@itdev.gr` (same query with his from_email). Requires Step 2 passing.
 
-- [ ] **Step 5: E2E — merge with manual bcc.** As an admin sender, send with a manual Bcc (e.g. itdevgr24@gmail.com): captured bcc row must contain BOTH the manual address AND the department box, no duplicates.
+- [x] **Step 5: E2E — merge with manual bcc.** As an admin sender, send with a manual Bcc (e.g. itdevgr24@gmail.com): captured bcc row must contain BOTH the manual address AND the department box, no duplicates.
 
-- [ ] **Step 6: Close out** — remind sbp_ rotation; update memory (`project_email_conversations.md` cc/bcc paragraph gains the auto-bcc rule + the sales@ gate outcome); mark plan checkboxes; ledger entry.
+- [x] **Step 6: Close out** — remind sbp_ rotation; update memory (`project_email_conversations.md` cc/bcc paragraph gains the auto-bcc rule + the sales@ gate outcome); mark plan checkboxes; ledger entry.
 
 ---
 
