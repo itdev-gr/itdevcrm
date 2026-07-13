@@ -103,11 +103,13 @@ export function emailFromIdToken(idToken: string): string | null {
   }
 }
 
-export function buildMime(m: { from: string; to: string; subject: string; html: string }): string {
+export function buildMime(m: { from: string; to: string; subject: string; html: string; cc?: string[]; bcc?: string[] }): string {
   const subj = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(m.subject)))}?=`;
   const lines = [
     `From: ${m.from}`,
     `To: ${m.to}`,
+    ...(m.cc && m.cc.length > 0 ? [`Cc: ${m.cc.join(', ')}`] : []),
+    ...(m.bcc && m.bcc.length > 0 ? [`Bcc: ${m.bcc.join(', ')}`] : []),
     `Subject: ${subj}`,
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=UTF-8',
