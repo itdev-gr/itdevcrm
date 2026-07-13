@@ -63,9 +63,14 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
         ? newest.from_email
         : newest.to_email
       : '';
+    const base = thread.subject.replace(/^Re:\s*/i, '');
+    // newEmailSubject looks like "<code> - "; extract the bare code token.
+    const codeToken = newEmailSubject.replace(/\s*-\s*$/, '').trim();
+    const subject =
+      codeToken && !base.includes(codeToken) ? `Re: ${newEmailSubject}${base}` : `Re: ${base}`;
     setDraft({
       to: counterparty || clientEmail,
-      subject: `Re: ${thread.subject.replace(/^Re:\s*/i, '')}`,
+      subject,
     });
   }
 

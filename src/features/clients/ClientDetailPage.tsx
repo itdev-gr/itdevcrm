@@ -138,7 +138,11 @@ export function ClientDetailPage() {
           <CombinedAttachmentsTab parentType="client" parentId={clientId} clientId={clientId} />
         </TabsContent>
         <TabsContent value="emails" className="pt-4">
-          <EmailThreadList scope={{ client_id: clientId }} clientEmail={client.email ?? ''} />
+          <EmailThreadList
+            scope={{ client_id: clientId }}
+            clientEmail={client.email ?? ''}
+            newEmailSubject={client.code ? `${client.code} - ` : ''}
+          />
         </TabsContent>
         <TabsContent value="tasks" className="pt-4">
           <ClientTasksTab clientId={clientId} clientName={client?.name ?? ''} />

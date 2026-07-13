@@ -91,6 +91,30 @@ describe('EmailThreadList', () => {
     expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280-WEBDEV' });
   });
 
+  it('replying prepends the entity code when the base subject lacks it', () => {
+    ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
+    ref.isLoading = false;
+    render(
+      <EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" newEmailSubject="000280 - " />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
+    expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280 - Prospect chat' });
+  });
+
+  it('replying does not re-prepend the code when the base subject already carries it', () => {
+    ref.data = [thread({ key: 't1', category: 'technical', subject: 'Re: 000280-WEBDEV update' })];
+    ref.isLoading = false;
+    render(
+      <EmailThreadList
+        scope={{ job_id: 'j1' }}
+        clientEmail="c@x.gr"
+        newEmailSubject="000280-WEBDEV - "
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
+    expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280-WEBDEV update' });
+  });
+
   it('replying defaults to the inbound sender when clientEmail is blank', () => {
     ref.data = [
       thread({

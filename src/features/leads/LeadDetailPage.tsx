@@ -357,7 +357,11 @@ export function LeadDetailPage() {
         </TabsContent>
         <TabsContent value="emails" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-            <EmailThreadList scope={{ lead_id: leadId }} clientEmail={lead.email ?? ''} />
+            <EmailThreadList
+              scope={{ lead_id: leadId }}
+              clientEmail={lead.email ?? ''}
+              newEmailSubject={lead.code ? `${lead.code} - ` : ''}
+            />
           </div>
         </TabsContent>
         <TabsContent value="tasks" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
