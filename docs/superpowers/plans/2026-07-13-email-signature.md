@@ -32,7 +32,7 @@
 **Interfaces:**
 - Produces: `renderSignatureHtml(logoUrl: string, person?: SignaturePerson): string`, `renderSignatureText(person?: SignaturePerson): string`, `SIGNATURE_COMPANY: SignaturePerson`, `type SignaturePerson = { name: string; title?: string | null; phone?: string | null; email?: string | null }`. Later tasks import these from `../_shared/signature.ts` (Deno) and `../../../supabase/functions/_shared/signature.ts` (frontend).
 
-- [ ] **Step 1: Crop the logo from the owner's screenshot**
+- [x] **Step 1: Crop the logo from the owner's screenshot**
 
 ```bash
 python3 -c "
@@ -45,7 +45,7 @@ print(crop.size)"
 ```
 Expected: `(83, 84)`. Then view the PNG (Read tool) — it must be the round dark "IT DEV" logo on white, nothing clipped, no surrounding text.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `src/features/email/emailSignature.test.ts`:
 
@@ -127,12 +127,12 @@ describe('SIGNATURE_COMPANY', () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `npm run test:run -- src/features/email/emailSignature.test.ts`
 Expected: FAIL — cannot resolve `../../../supabase/functions/_shared/signature.ts`.
 
-- [ ] **Step 4: Implement the renderer**
+- [x] **Step 4: Implement the renderer**
 
 Create `supabase/functions/_shared/signature.ts`:
 
@@ -223,12 +223,12 @@ export function renderSignatureText(person: SignaturePerson = SIGNATURE_COMPANY)
 
 ⚠️ TRANSCRIPTION CHECK: the two Greek disclaimer strings must match the spec (`docs/superpowers/specs/2026-07-13-email-signature-design.md`, "Signature content" section) word-for-word — diff them by eye after writing the file.
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm run test:run -- src/features/email/emailSignature.test.ts`
 Expected: PASS (all tests).
 
-- [ ] **Step 6: Verify the whole build accepts the cross-tree import**
+- [x] **Step 6: Verify the whole build accepts the cross-tree import**
 
 Run: `npm run build`
 Expected: exit 0. Also run `deno check supabase/functions/_shared/signature.ts` — expected: no errors.
@@ -245,7 +245,7 @@ it('frontend copy is byte-identical to the edge-function copy', () => {
 ```
 Then Tasks 2/4 import from `../_shared/signature.ts` (unchanged) and Task 5 imports from `@/lib/emailSignature` instead.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add public/email-assets/itdev-logo-round.png supabase/functions/_shared/signature.ts src/features/email/emailSignature.test.ts
@@ -265,7 +265,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: `renderSignatureHtml`, `renderSignatureText` from Task 1.
 - Produces: `export const LOGO_URL` from `templates.ts` (Task 4 imports it); `shell(bodyHtml, sig?)` stays module-private.
 
-- [ ] **Step 1: Wire the signature into `templates.ts`**
+- [x] **Step 1: Wire the signature into `templates.ts`**
 
 (No local test harness exists for edge functions; `deno check` + the deployed E2E in Task 6 are the verification. The renderer itself is unit-tested in Task 1.)
 
@@ -314,17 +314,17 @@ Then give the company signature to every CLIENT-FACING render path, leaving `int
   };
 ```
 
-- [ ] **Step 2: Typecheck the function**
+- [x] **Step 2: Typecheck the function**
 
 Run: `deno check supabase/functions/send-email/index.ts`
 Expected: no errors.
 
-- [ ] **Step 3: Lint/build still green**
+- [x] **Step 3: Lint/build still green**
 
 Run: `npm run build`
 Expected: exit 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/functions/send-email/templates.ts
@@ -343,7 +343,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: backup table `email_templates_backup_20260713` (Task 6 verifies against it; the Revert section restores from it).
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 Bodies are plain text; the code-level signature now supplies `Με εκτίμηση,` + branding, so trailing sign-off blocks must go or every email signs twice. DB bodies may have drifted from migration seeds (admins edit them in prod), hence the defensive tail-anchored pattern instead of exact-string replaces. Observed tail variants: `Με εκτίμηση,\n{{owner_name}}\nITDev` · `Με εκτίμηση,\nΗ ομάδα της ITDev` · `Με εκτίμηση,\nITDev` · `Με εκτίμηση,\nITDEV Λογιστήριο` (brand casing varies).
 
@@ -383,7 +383,7 @@ update public.email_templates
 -- ---------------------------------------------------------------------------
 ```
 
-- [ ] **Step 2: Sanity-check the regex against the known seed variants**
+- [x] **Step 2: Sanity-check the regex against the known seed variants**
 
 Run this locally (no DB needed — same regex engine class; catches pattern typos):
 
@@ -405,7 +405,7 @@ print('regex OK')"
 ```
 Expected: `regex OK`.
 
-- [ ] **Step 3: Commit** (migration is applied to prod in Task 6, not here)
+- [x] **Step 3: Commit** (migration is applied to prod in Task 6, not here)
 
 ```bash
 git add supabase/migrations/20260713100000_strip_template_signoffs.sql
@@ -424,7 +424,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: `renderSignatureHtml` (Task 1), `LOGO_URL` (Task 2).
 
-- [ ] **Step 1: Append the sender's signature in `sendPersonal`**
+- [x] **Step 1: Append the sender's signature in `sendPersonal`**
 
 Add to the imports at the top of `index.ts`:
 
@@ -466,17 +466,17 @@ with:
 
 (`buildMime` and everything downstream is unchanged — it already sends whatever `html` contains.)
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `deno check supabase/functions/send-email/index.ts`
 Expected: no errors.
 
-- [ ] **Step 3: Build gate**
+- [x] **Step 3: Build gate**
 
 Run: `npm run build`
 Expected: exit 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/functions/send-email/index.ts
@@ -500,7 +500,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: `renderSignatureHtml`, `SignaturePerson` from Task 1 (import path `../../../supabase/functions/_shared/signature.ts` — or `@/lib/emailSignature` if Task 1's contingency fired; check which exists).
 - Produces: `SignaturePreview({ person })` (pure, for MyProfilePage) and `MySignaturePreview()` (self-fetching, for the dialog).
 
-- [ ] **Step 1: Write the failing component test**
+- [x] **Step 1: Write the failing component test**
 
 Create `src/features/email/SignaturePreview.test.tsx`:
 
@@ -526,12 +526,12 @@ describe('SignaturePreview', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:run -- src/features/email/SignaturePreview.test.tsx`
 Expected: FAIL — `./SignaturePreview` not found.
 
-- [ ] **Step 3: Implement `SignaturePreview.tsx`**
+- [x] **Step 3: Implement `SignaturePreview.tsx`**
 
 ```tsx
 import { useQuery } from '@tanstack/react-query';
@@ -583,12 +583,12 @@ export function MySignaturePreview() {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:run -- src/features/email/SignaturePreview.test.tsx`
 Expected: PASS. (jsdom renders the iframe attribute; no real Supabase call is made — the pure component doesn't fetch.)
 
-- [ ] **Step 5: Add i18n keys (all four files)**
+- [x] **Step 5: Add i18n keys (all four files)**
 
 `src/i18n/locales/en/users.json` — inside the `"profile"` object add:
 ```json
@@ -611,7 +611,7 @@ Expected: PASS. (jsdom renders the iframe attribute; no real Supabase call is ma
 "signature_preview": "Προεπισκόπηση υπογραφής"
 ```
 
-- [ ] **Step 6: My Profile section**
+- [x] **Step 6: My Profile section**
 
 In `src/features/users/MyProfilePage.tsx`, add the import:
 ```tsx
@@ -645,7 +645,7 @@ Insert between the closing `</div>` of the fields grid (line 174) and the Google
 
 (The preview reads the live form state, so it updates as the user types — before autosave even fires.)
 
-- [ ] **Step 7: Compose-dialog hint**
+- [x] **Step 7: Compose-dialog hint**
 
 In `src/features/email/SendEmailDialog.tsx`, add the import:
 ```tsx
@@ -669,12 +669,12 @@ Insert directly after the body `<label>…</label>` (line 59), before the `{erro
             )}
 ```
 
-- [ ] **Step 8: Full gate**
+- [x] **Step 8: Full gate**
 
 Run: `npm run build && npm run test:run -- src/features/email/SignaturePreview.test.tsx src/features/email/emailSignature.test.ts`
 Expected: build exit 0, both test files PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/features/email/SignaturePreview.tsx src/features/email/SignaturePreview.test.tsx \
@@ -692,7 +692,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 **Files:** none new — deploys and prod SQL. ⚠️ Needs the owner: a fresh `sbp_` Management-API token (ask in chat; remind rotation after) and a final inbox eyeball.
 
-- [ ] **Step 1: Push → Vercel deploys frontend + logo**
+- [x] **Step 1: Push → Vercel deploys frontend + logo**
 
 ```bash
 git pull --rebase && git push
@@ -703,7 +703,7 @@ curl -sI https://www.itdevcrm.com/email-assets/itdev-logo-round.png | grep -i '^
 ```
 Expected: the `content-type: image/png` header line prints. Do not proceed until it does — automated emails hot-link this URL. A plain `HTTP/2 200` with NO `image/png` content-type means the SPA rewrite served `index.html` (a soft-200 HTML response) and the asset is actually MISSING; investigate the `email-assets/` rewrite exclusion (vercel.json) and the deploy before continuing.
 
-- [ ] **Step 2: Apply the strip migration to prod (Management API)**
+- [x] **Step 2: Apply the strip migration to prod (Management API)**
 
 **⚠️ Steps 2 and 3 MUST run back-to-back.** The migration strips the DB sign-offs but the code that re-adds the branded signature only goes live when Step 3 deploys the function. The drain fires every minute, so any client-facing email sent in the gap between Step 2 and Step 3 goes out completely UNSIGNED. Before posting the migration, pre-stage the Step 3 deploy command in a second terminal (token exported, command typed, ready to press Enter) and run it the instant the migration query returns.
 
@@ -727,7 +727,7 @@ select count(*) as backed_up from public.email_templates_backup_20260713;
 ```
 Expected: `still_signed = 0`; every `tail` ends mid-content (no orphan "Με εκτίμηση,"); `backed_up` equals the email_templates row count (~30).
 
-- [ ] **Step 3: Deploy the edge function**
+- [x] **Step 3: Deploy the edge function**
 
 ```bash
 SUPABASE_ACCESS_TOKEN=<sbp_TOKEN_FROM_OWNER> npx supabase functions deploy send-email \
@@ -737,7 +737,7 @@ Expected: deploy success. `--no-verify-jwt` is REQUIRED — the drain cron authe
 
 - Confirm the function's `APP_URL` secret equals `https://www.itdevcrm.com` (`LOGO_URL` derives from it — `${APP_BASE}/email-assets/itdev-logo-round.png`; a wrong value means every automated email hot-links a broken logo). Check with `SUPABASE_ACCESS_TOKEN=<sbp_TOKEN_FROM_OWNER> npx supabase secrets list --project-ref xujlrclyzxrvxszepquy` and eyeball the `APP_URL` digest / value.
 
-- [ ] **Step 4: E2E — automated email carries the company signature**
+- [x] **Step 4: E2E — automated email carries the company signature**
 
 Enqueue a real client-facing template to the owner's test inbox via the Management API (`auth.uid()` is null there, so RLS doesn't block):
 
@@ -758,17 +758,17 @@ select body_text from public.email_messages
 ```
 Expected: body ends with the full signature text block (Με εκτίμηση, / IT DEV / Tel / ΑΠΟΠΟΙΗΣΗ ΕΥΘΥΝΗΣ …) and contains it exactly ONCE (no double sign-off). If the select returns no row, that only means `resolve_email_filing` didn't know the test address (mirroring skips unknown parties) — the send still happened; verify content in the inbox at Step 6 instead.
 
-- [ ] **Step 5: E2E — personal CRM send carries the personal signature**
+- [x] **Step 5: E2E — personal CRM send carries the personal signature**
 
 Playwright (or the owner by hand): log in to https://www.itdevcrm.com as `info@itdev.gr` / `123456789`, open any client → Emails tab → New email → to `itdevgr24@gmail.com`, subject `Signature E2E`, any body → confirm the dialog shows the "signature added automatically" hint and the preview expands → Send. (409 `not_connected` means that account has no Gmail linked — use an account that does, or have the owner run it.)
 
-- [ ] **Step 6: Inbox eyeball (owner)**
+- [x] **Step 6: Inbox eyeball (owner)**
 
 Ask the owner to open both messages in Gmail (`itdevgr24@gmail.com`) and confirm: logo renders round, layout matches the reference image, links work (`mailto:`, itdev.gr), disclaimer legible, no double signature. Fix-forward anything visual (spacing/size tweaks → redeploy function).
 
 Additionally, send ONE offer email through the real Send-offer flow (open a deal → Offers → Send offer to `itdevgr24@gmail.com`) to exercise the compose draft body (`offer.body`). The scripted E2Es (Steps 4–5) do not touch the i18n draft bodies, so this is the only check that the Fix-1 sign-off removal actually prevents a double signature: confirm the delivered offer email carries the branded signature EXACTLY ONCE (no `Με εκτίμηση,` / `Best regards,` appearing twice).
 
-- [ ] **Step 7: Close out**
+- [x] **Step 7: Close out**
 
 - Remind the owner to rotate the `sbp_` token.
 - Update the memory files: mark the signature feature SHIPPED in a new `project_email_signature.md` + one-line MEMORY.md index entry; note in `project_email_pipeline.md` that send-email now appends signatures.
