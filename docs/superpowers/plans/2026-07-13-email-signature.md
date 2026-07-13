@@ -699,11 +699,13 @@ git pull --rebase && git push
 ```
 Then poll until live (typically 1–3 min):
 ```bash
-curl -sI https://www.itdevcrm.com/email-assets/itdev-logo-round.png | head -1
+curl -sI https://www.itdevcrm.com/email-assets/itdev-logo-round.png | grep -i '^content-type: image/png'
 ```
-Expected: `HTTP/2 200`. Do not proceed until it is — automated emails hot-link this URL.
+Expected: the `content-type: image/png` header line prints. Do not proceed until it does — automated emails hot-link this URL. A plain `HTTP/2 200` with NO `image/png` content-type means the SPA rewrite served `index.html` (a soft-200 HTML response) and the asset is actually MISSING; investigate the `email-assets/` rewrite exclusion (vercel.json) and the deploy before continuing.
 
 - [ ] **Step 2: Apply the strip migration to prod (Management API)**
+
+**⚠️ Steps 2 and 3 MUST run back-to-back.** The migration strips the DB sign-offs but the code that re-adds the branded signature only goes live when Step 3 deploys the function. The drain fires every minute, so any client-facing email sent in the gap between Step 2 and Step 3 goes out completely UNSIGNED. Before posting the migration, pre-stage the Step 3 deploy command in a second terminal (token exported, command typed, ready to press Enter) and run it the instant the migration query returns.
 
 Write the migration body into a JSON file and POST it (pattern from `docs` / prior sessions; curl user-agent required):
 
@@ -733,6 +735,8 @@ SUPABASE_ACCESS_TOKEN=<sbp_TOKEN_FROM_OWNER> npx supabase functions deploy send-
 ```
 Expected: deploy success. `--no-verify-jwt` is REQUIRED — the drain cron authenticates via `email_drain_secret`, not a JWT (see `project_email_pipeline` memory; deploying without the flag breaks all automated email).
 
+- Confirm the function's `APP_URL` secret equals `https://www.itdevcrm.com` (`LOGO_URL` derives from it — `${APP_BASE}/email-assets/itdev-logo-round.png`; a wrong value means every automated email hot-links a broken logo). Check with `SUPABASE_ACCESS_TOKEN=<sbp_TOKEN_FROM_OWNER> npx supabase secrets list --project-ref xujlrclyzxrvxszepquy` and eyeball the `APP_URL` digest / value.
+
 - [ ] **Step 4: E2E — automated email carries the company signature**
 
 Enqueue a real client-facing template to the owner's test inbox via the Management API (`auth.uid()` is null there, so RLS doesn't block):
@@ -761,6 +765,8 @@ Playwright (or the owner by hand): log in to https://www.itdevcrm.com as `info@i
 - [ ] **Step 6: Inbox eyeball (owner)**
 
 Ask the owner to open both messages in Gmail (`itdevgr24@gmail.com`) and confirm: logo renders round, layout matches the reference image, links work (`mailto:`, itdev.gr), disclaimer legible, no double signature. Fix-forward anything visual (spacing/size tweaks → redeploy function).
+
+Additionally, send ONE offer email through the real Send-offer flow (open a deal → Offers → Send offer to `itdevgr24@gmail.com`) to exercise the compose draft body (`offer.body`). The scripted E2Es (Steps 4–5) do not touch the i18n draft bodies, so this is the only check that the Fix-1 sign-off removal actually prevents a double signature: confirm the delivered offer email carries the branded signature EXACTLY ONCE (no `Με εκτίμηση,` / `Best regards,` appearing twice).
 
 - [ ] **Step 7: Close out**
 

@@ -10,6 +10,10 @@
 create table if not exists public.email_templates_backup_20260713 as
   select * from public.email_templates;
 
+-- The backup is the rollback path — deny API-role access entirely (RLS on,
+-- no policies). Management-API rollback SQL runs as postgres and bypasses.
+alter table public.email_templates_backup_20260713 enable row level security;
+
 update public.email_templates
    set body = regexp_replace(
          body,
