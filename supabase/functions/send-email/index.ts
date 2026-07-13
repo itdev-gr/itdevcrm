@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 import { IDENTITIES, type Identity } from './identities.ts';
-import { renderTemplate, renderDbTemplate } from './templates.ts';
+import { renderTemplate, renderDbTemplate, LOGO_URL } from './templates.ts';
+import { renderSignatureHtml } from '../_shared/signature.ts';
 import { validateAttachmentRefs, fetchAttachments, type AttachmentRef, type ResendAttachment } from './attachments.ts';
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 import { timingSafeEqual } from '../_shared/timing.ts';
@@ -216,7 +217,21 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
   if (!acct || acct.revoked_at) return { status: 'not_connected' };
 
   const subject = String(data.subject ?? '');
-  const html = String(data.html ?? '');
+  // Personal signature: same fixed layout for everyone, person fields from
+  // the sender's profile (owner decision 2026-07-13). Fallbacks keep sends
+  // working for a profile with gaps.
+  const { data: prof } = await admin
+    .from('profiles')
+    .select('full_name, job_title, phone, email')
+    .eq('user_id', uid)
+    .maybeSingle();
+  const sig = renderSignatureHtml(LOGO_URL, {
+    name: (prof?.full_name ?? '').trim() || acct.google_email,
+    title: prof?.job_title ?? null,
+    phone: prof?.phone ?? null,
+    email: (prof?.email ?? '').trim() || acct.google_email,
+  });
+  const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#0f172a;line-height:1.6">${String(data.html ?? '')}</div>${sig}`;
   if (DRY_RUN) {
     await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'sent', resend_id: 'dry-run', dedupe_key: dedupeKey });
     return { status: 'sent', id: 'dry-run' };
