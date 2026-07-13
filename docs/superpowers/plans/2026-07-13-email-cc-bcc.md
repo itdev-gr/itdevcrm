@@ -31,7 +31,7 @@
 **Interfaces:**
 - Produces: `email_messages.cc_emails text` (comma-joined, visible under existing RLS); table `email_message_bcc(message_pk uuid PK → email_messages.id, bcc_emails text)` with SELECT limited to `current_user_is_admin()`. The `job_emails` RPC returns `setof public.email_messages`, so it picks up `cc_emails` automatically — no RPC change.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- =============================================================================
@@ -68,9 +68,9 @@ notify pgrst, 'reload schema';
 -- ---------------------------------------------------------------------------
 ```
 
-- [ ] **Step 2: Gate** — Run `npm run build` (exit 0; proves the tree is otherwise clean).
+- [x] **Step 2: Gate** — Run `npm run build` (exit 0; proves the tree is otherwise clean).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260713180000_email_cc_bcc.sql
@@ -91,7 +91,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: `parseRecipientList(v: unknown): string[] | null` (null = invalid input present; `[]` = empty/absent) and `parseAddressList(header: string): string[]` (lenient header→emails, for capture) from `_shared/recipients.ts`; `buildMime(m: { from: string; to: string; subject: string; html: string; cc?: string[]; bcc?: string[] })`.
 
-- [ ] **Step 1: Write the failing test** — create `src/features/email/recipients.test.ts`:
+- [x] **Step 1: Write the failing test** — create `src/features/email/recipients.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -147,12 +147,12 @@ describe('parseAddressList', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npm run test:run -- src/features/email/recipients.test.ts`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implement `supabase/functions/_shared/recipients.ts`**
+- [x] **Step 3: Implement `supabase/functions/_shared/recipients.ts`**
 
 ```ts
 // Recipient-list parsing shared by the send-email edge fn (validation), the
@@ -222,12 +222,12 @@ export function parseAddressList(header: string): string[] {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npm run test:run -- src/features/email/recipients.test.ts`
 Expected: PASS (all).
 
-- [ ] **Step 5: `buildMime` gains Cc/Bcc headers** — in `supabase/functions/_shared/google.ts` replace the current `buildMime` with:
+- [x] **Step 5: `buildMime` gains Cc/Bcc headers** — in `supabase/functions/_shared/google.ts` replace the current `buildMime` with:
 
 ```ts
 export function buildMime(m: { from: string; to: string; subject: string; html: string; cc?: string[]; bcc?: string[] }): string {
@@ -249,9 +249,9 @@ export function buildMime(m: { from: string; to: string; subject: string; html: 
 ```
 (Gmail delivers to Bcc recipients and strips the header from their copies; the sender's sent copy retains it — that's how capture records it in Task 4. The cc/bcc values are pre-validated by `parseRecipientList`, which guarantees no CR/LF injection.)
 
-- [ ] **Step 6: Gates** — `deno check --node-modules-dir=auto supabase/functions/send-email/index.ts` clean; `npm run build` exit 0.
+- [x] **Step 6: Gates** — `deno check --node-modules-dir=auto supabase/functions/send-email/index.ts` clean; `npm run build` exit 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/functions/_shared/recipients.ts supabase/functions/_shared/google.ts src/features/email/recipients.test.ts
@@ -271,7 +271,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: `parseRecipientList` (Task 2), `buildMime` with cc/bcc (Task 2).
 - Produces: request body accepts top-level `cc?: string[] | string`, `bcc?: string[] | string` for `identity==='personal'` and for single-send `templateKey==='custom'`; 400 `invalid_recipient` on bad lists; 403 `bcc_admin_only` for non-admin bcc. Mirrored rows carry `cc_emails`; bcc mirrored into `email_message_bcc`.
 
-- [ ] **Step 1: Extend `SendInput` and imports**
+- [x] **Step 1: Extend `SendInput` and imports**
 
 Add to the imports: `import { parseRecipientList } from '../_shared/recipients.ts';`
 Extend the type:
@@ -289,7 +289,7 @@ type SendInput = {
 };
 ```
 
-- [ ] **Step 2: Personal branch — validate + gate + pass through**
+- [x] **Step 2: Personal branch — validate + gate + pass through**
 
 In the `identity === 'personal'` branch of the handler (after `getUser` succeeds), replace the `sendPersonal` call block with:
 
@@ -312,7 +312,7 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
   const raw = buildMime({ from: acct.google_email, to, subject, html, cc, bcc });
 ```
 
-- [ ] **Step 3: Single-send branch — validate + gate**
+- [x] **Step 3: Single-send branch — validate + gate**
 
 In the non-service-role single-send validation section (inside `if (!isServiceRole) { … }`, after the recipient regex check), add:
 
@@ -333,7 +333,7 @@ In the non-service-role single-send validation section (inside `if (!isServiceRo
 ```
 (Service-role callers — the drain — never pass cc/bcc; `parseRecipientList(undefined)` in `sendOne` handles absence.)
 
-- [ ] **Step 4: `sendOne` — Resend payload + mirror**
+- [x] **Step 4: `sendOne` — Resend payload + mirror**
 
 At the top of `sendOne`, after the destructuring line, add:
 ```ts
@@ -375,9 +375,9 @@ NOTE: the mirror upsert currently generates `message_id: \`resend:${body.id ?? c
 ```
 and use `message_id: mirrorMessageId` in the upsert and `.eq('message_id', mirrorMessageId)` in the bcc lookup.
 
-- [ ] **Step 5: Gates** — `deno check --node-modules-dir=auto supabase/functions/send-email/index.ts` clean; `npm run build` exit 0; regression: `npm run test:run -- src/features/email/recipients.test.ts` PASS.
+- [x] **Step 5: Gates** — `deno check --node-modules-dir=auto supabase/functions/send-email/index.ts` clean; `npm run build` exit 0; regression: `npm run test:run -- src/features/email/recipients.test.ts` PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/functions/send-email/index.ts
@@ -398,7 +398,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: `parseAddressList` (Task 2); table `email_message_bcc` (Task 1).
 - Produces: captured rows carry `cc_emails`; sender-side sent copies with a Bcc header get an `email_message_bcc` row.
 
-- [ ] **Step 1: Parse the headers**
+- [x] **Step 1: Parse the headers**
 
 In `google.ts`, add to the imports: `import { parseAddressList } from './recipients.ts';`
 In `getGmailMessageFull`, after `const to = parseAddress(h('To'));` add:
@@ -416,7 +416,7 @@ Extend the `GmailMessage` type (find its declaration in the same file) with:
   bcc_emails: string | null;
 ```
 
-- [ ] **Step 2: Store on capture**
+- [x] **Step 2: Store on capture**
 
 In `gmail-sync/index.ts`, extend the `email_messages` upsert row with:
 ```ts
@@ -437,9 +437,9 @@ After the `if (!error) stored++; else errors++;` line, add the bcc side-write (s
 ```
 (The lookup-by-message_id handles the `ignoreDuplicates: true` upsert returning nothing for already-captured rows.)
 
-- [ ] **Step 3: Gates** — `deno check --node-modules-dir=auto supabase/functions/gmail-sync/index.ts` clean; `npm run build` exit 0.
+- [x] **Step 3: Gates** — `deno check --node-modules-dir=auto supabase/functions/gmail-sync/index.ts` clean; `npm run build` exit 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/functions/_shared/google.ts supabase/functions/gmail-sync/index.ts
@@ -465,7 +465,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: `parseRecipientList` from `../../../supabase/functions/_shared/recipients.ts` (client-side validation, same rules as the server); `useAuthStore((s) => s.isAdmin)`.
 - Produces: `SendEmailVars` gains `cc?: string[]`, `bcc?: string[]`; `useBccEmails(messageIds: string[]): Map<string, string>` (admin-only fetch; empty map otherwise).
 
-- [ ] **Step 1: Write the failing dialog test** — create `src/features/email/SendEmailDialog.ccbcc.test.tsx`:
+- [x] **Step 1: Write the failing dialog test** — create `src/features/email/SendEmailDialog.ccbcc.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react';
@@ -502,12 +502,12 @@ describe('SendEmailDialog cc/bcc fields', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npm run test:run -- src/features/email/SendEmailDialog.ccbcc.test.tsx`
 Expected: FAIL — no Cc field exists.
 
-- [ ] **Step 3: `useSendEmail` vars**
+- [x] **Step 3: `useSendEmail` vars**
 
 ```ts
 export type SendEmailVars = {
@@ -526,7 +526,7 @@ and in the invoke body add, after `dedupeKey`:
           ...(vars.bcc && vars.bcc.length > 0 ? { bcc: vars.bcc } : {}),
 ```
 
-- [ ] **Step 4: Dialog fields + validation**
+- [x] **Step 4: Dialog fields + validation**
 
 In `SendEmailDialog.tsx`: add imports
 ```tsx
@@ -573,9 +573,9 @@ and change `submit()` to validate + pass them:
   }
 ```
 
-- [ ] **Step 5: Run the dialog test** — `npm run test:run -- src/features/email/SendEmailDialog.ccbcc.test.tsx` — Expected: PASS.
+- [x] **Step 5: Run the dialog test** — `npm run test:run -- src/features/email/SendEmailDialog.ccbcc.test.tsx` — Expected: PASS.
 
-- [ ] **Step 6: Thread display**
+- [x] **Step 6: Thread display**
 
 `useEmailThreads.ts`: add `cc_emails: string | null;` to `EmailMessageRow` and append `, cc_emails` to `COLS`.
 
@@ -630,7 +630,7 @@ In `EmailMessage`, after the recipients row `<div className="flex flex-wrap …"
           )}
 ```
 
-- [ ] **Step 7: i18n** — inside `"dialog"` in `src/i18n/locales/en/email.json`:
+- [x] **Step 7: i18n** — inside `"dialog"` in `src/i18n/locales/en/email.json`:
 ```json
 "cc": "Cc",
 "bcc": "Bcc (admins only)",
@@ -651,12 +651,12 @@ Both files, inside `"thread"` (create keys alongside existing `thread.*`):
 ```
 (EL the same — Cc/Bcc are universal.) Validate both JSONs parse.
 
-- [ ] **Step 8: Gates**
+- [x] **Step 8: Gates**
 
 Run: `npm run build && npm run test:run -- src/features/email/SendEmailDialog.ccbcc.test.tsx src/features/email/recipients.test.ts src/features/email/EmailThreadList.test.tsx`
 Expected: build exit 0; all named tests PASS (EmailThreadList.test.tsx is pre-existing — if it fails on the new required `bccMap` prop, update ITS render calls to pass `bccMap={new Map()}`; do not change assertions).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/features/email/useSendEmail.ts src/features/email/SendEmailDialog.tsx \
@@ -674,21 +674,21 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ⚠️ Needs a valid `sbp_` token (owner) and the owner's inbox eyeball.
 
-- [ ] **Step 1: Apply the migration** via the Management API (same recipe as prior rollouts). Verify:
+- [x] **Step 1: Apply the migration** via the Management API (same recipe as prior rollouts). Verify:
 ```sql
 select column_name from information_schema.columns
  where table_name='email_messages' and column_name='cc_emails';       -- 1 row
 select policyname from pg_policies where tablename='email_message_bcc'; -- email_message_bcc_admin_select
 ```
 
-- [ ] **Step 2: Push** (`git pull --rebase && git push`), wait for Vercel, then deploy BOTH functions:
+- [x] **Step 2: Push** (`git pull --rebase && git push`), wait for Vercel, then deploy BOTH functions:
 ```bash
 SUPABASE_ACCESS_TOKEN=<sbp> npx supabase functions deploy send-email --project-ref xujlrclyzxrvxszepquy --no-verify-jwt
 SUPABASE_ACCESS_TOKEN=<sbp> npx supabase functions deploy gmail-sync --project-ref xujlrclyzxrvxszepquy --no-verify-jwt
 ```
 (BOTH `--no-verify-jwt`: send-email for the drain secret, gmail-sync for its cron — check `supabase functions list` afterwards shows `verify_jwt false` for both.)
 
-- [ ] **Step 3: E2E as a NON-admin (mkifokeris, standard test pw), via Playwright:**
+- [x] **Step 3: E2E as a NON-admin (mkifokeris, standard test pw), via Playwright:**
 1. Compose from her lead → the dialog shows **Cc** but NO **Bcc** field.
 2. Send to `mkifokeris@itdev.gr` with Cc `itdevgr24@gmail.com`, subject `CC E2E`. Expect "Email sent."; `email_log` row `sent`.
 3. Forged-bcc rejection: `window.supabase` is NOT exposed in this app, so curl is the primary path — grab her JWT from localStorage (`sb-…-auth-token` key, `access_token` field) via the browser console, then:
@@ -699,7 +699,7 @@ curl -i -X POST 'https://xujlrclyzxrvxszepquy.supabase.co/functions/v1/send-emai
 ```
 Expected: `HTTP/2 403` with `bcc_admin_only` (curl -i so the status is visible — `functions.invoke` buries it in `error.context`).
 
-- [ ] **Step 4: E2E as an admin.** info@itdev.gr has NO Gmail connected (personal sends 409) — use an admin account WITH Gmail (e.g. marios@itdev.gr if the owner is driving) OR temporarily flip `mkifokeris` to admin for the test and back:
+- [x] **Step 4: E2E as an admin.** info@itdev.gr has NO Gmail connected (personal sends 409) — use an admin account WITH Gmail (e.g. marios@itdev.gr if the owner is driving) OR temporarily flip `mkifokeris` to admin for the test and back:
 ```sql
 update public.profiles set is_admin = true  where email = 'mkifokeris@itdev.gr';
 -- …run step, then:
@@ -717,7 +717,7 @@ select b.bcc_emails from public.email_message_bcc b
 - Thread display: as admin the `BCC E2E` message shows `Bcc: itdevgr24@gmail.com`; log back in as the non-admin — the same thread shows NO Bcc line (and `select * from email_message_bcc` via her session returns 0 rows — RLS).
 - The `CC E2E` message shows `Cc: itdevgr24@gmail.com` for BOTH users.
 
-- [ ] **Step 5: Close out** — restore `is_admin=false` if flipped (VERIFY with a select); remind sbp_ rotation; update memory (`project_email_conversations.md` or new note: cc/bcc mechanics + admin-only bcc table); mark plan checkboxes; ledger entry.
+- [x] **Step 5: Close out** — restore `is_admin=false` if flipped (VERIFY with a select); remind sbp_ rotation; update memory (`project_email_conversations.md` or new note: cc/bcc mechanics + admin-only bcc table); mark plan checkboxes; ledger entry.
 
 ---
 
