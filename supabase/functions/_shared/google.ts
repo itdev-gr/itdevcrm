@@ -1,6 +1,7 @@
 // Shared Google OAuth + Gmail helpers. Pure/crypto parts are unit-tested under
 // vitest; network parts (exchangeCode/refresh/sendGmail) are exercised in dry-run.
 import { timingSafeEqual } from './timing.ts';
+import { parseAddressList } from './recipients.ts';
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -147,6 +148,8 @@ export type GmailMessage = {
   from_email: string; from_name: string; to_email: string;
   subject: string; date: string; internal_date: number;
   body_text: string; body_html: string; snippet: string;
+  cc_emails: string | null;
+  bcc_emails: string | null;
 };
 
 function b64urlDecodeUtf8(s: string): string {
@@ -189,6 +192,8 @@ export async function getGmailMessageFull(accessToken: string, id: string): Prom
   const h = (n: string) => headers.find((x) => x.name.toLowerCase() === n.toLowerCase())?.value ?? '';
   const from = parseAddress(h('From'));
   const to = parseAddress(h('To'));
+  const ccList = parseAddressList(h('Cc'));
+  const bccList = parseAddressList(h('Bcc'));
   const acc = { text: [] as string[], html: [] as string[] };
   collectBody(j.payload, acc);
   return {
@@ -197,5 +202,6 @@ export async function getGmailMessageFull(accessToken: string, id: string): Prom
     from_email: from.email, from_name: from.name, to_email: to.email,
     subject: h('Subject'), date: h('Date'), internal_date: Number(j.internalDate ?? 0),
     body_text: acc.text.join('\n'), body_html: acc.html.join('\n'), snippet: j.snippet ?? '',
+    cc_emails: ccList.join(',') || null, bcc_emails: bccList.join(',') || null,
   };
 }
