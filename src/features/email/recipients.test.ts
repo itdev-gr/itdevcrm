@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   parseRecipientList,
   parseAddressList,
+  deptBccFor,
 } from '../../../supabase/functions/_shared/recipients.ts';
 
 describe('parseRecipientList', () => {
@@ -47,5 +48,23 @@ describe('parseAddressList', () => {
   });
   it('drops unparsable fragments instead of failing', () => {
     expect(parseAddressList('m@itdev.gr, garbage')).toEqual(['m@itdev.gr']);
+  });
+});
+
+describe('deptBccFor', () => {
+  it('maps each department label to its mailbox', () => {
+    expect(deptBccFor(['Sales'])).toEqual(['sales@itdev.gr']);
+    expect(deptBccFor(['Accounting'])).toEqual(['accounting@itdev.gr']);
+    expect(deptBccFor(['Technical'])).toEqual(['support@itdev.gr']);
+  });
+  it('multi-department senders get all their boxes, deduped', () => {
+    expect(deptBccFor(['Sales', 'Technical', 'Technical'])).toEqual([
+      'sales@itdev.gr',
+      'support@itdev.gr',
+    ]);
+  });
+  it('ignores unknown labels and returns [] for empty input', () => {
+    expect(deptBccFor(['Management'])).toEqual([]);
+    expect(deptBccFor([])).toEqual([]);
   });
 });

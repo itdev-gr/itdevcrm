@@ -63,3 +63,21 @@ export function parseAddressList(header: string): string[] {
   }
   return out;
 }
+
+/** Department archive mailboxes, keyed by groups.parent_label (owner rule
+ *  2026-07-13): every personal CRM send is auto-Bcc'd to the sender's
+ *  department box(es). Unknown labels are ignored. */
+const DEPT_BCC: Record<string, string> = {
+  Sales: 'sales@itdev.gr',
+  Accounting: 'accounting@itdev.gr',
+  Technical: 'support@itdev.gr',
+};
+
+export function deptBccFor(parentLabels: string[]): string[] {
+  const out: string[] = [];
+  for (const label of parentLabels) {
+    const box = DEPT_BCC[label];
+    if (box && !out.includes(box)) out.push(box);
+  }
+  return out;
+}

@@ -6,7 +6,7 @@ import { renderSignatureHtml } from '../_shared/signature.ts';
 import { validateAttachmentRefs, fetchAttachments, type AttachmentRef, type ResendAttachment } from './attachments.ts';
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 import { timingSafeEqual } from '../_shared/timing.ts';
-import { parseRecipientList } from '../_shared/recipients.ts';
+import { parseRecipientList, deptBccFor } from '../_shared/recipients.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -239,6 +239,28 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
   const { data: acct } = await admin.from('user_google_accounts').select('google_email, refresh_token_enc, revoked_at').eq('user_id', uid).maybeSingle();
   if (!acct || acct.revoked_at) return { status: 'not_connected' };
 
+  // Department archive copy (owner rule 2026-07-13): every personal send is
+  // Bcc'd to the sender's department box(es) — Sales→sales@, Accounting→
+  // accounting@, Technical→support@. Appended AFTER the caller-bcc admin gate
+  // (system copy applies to every sender); deduped against To/Cc so a mail
+  // addressed to the box isn't double-delivered.
+  const { data: grps } = await admin
+    .from('user_groups')
+    .select('groups(parent_label)')
+    .eq('user_id', uid);
+  // The one-to-one FK embed returns `groups` as a single object at runtime, but
+  // the generated PostgREST types widen it to an array — normalise both shapes.
+  type GroupRow = { parent_label: string | null };
+  const labels = ((grps ?? []) as { groups: GroupRow | GroupRow[] | null }[])
+    .flatMap((g) => (Array.isArray(g.groups) ? g.groups : g.groups ? [g.groups] : []))
+    .map((gr) => gr.parent_label)
+    .filter((l): l is string => !!l);
+  const visible = new Set([to.toLowerCase(), ...cc.map((c) => c.toLowerCase())]);
+  const mergedBcc = [...bcc];
+  for (const box of deptBccFor(labels)) {
+    if (!visible.has(box) && !mergedBcc.includes(box)) mergedBcc.push(box);
+  }
+
   const subject = String(data.subject ?? '');
   // Personal signature: same fixed layout for everyone, person fields from
   // the sender's profile (owner decision 2026-07-13). Fallbacks keep sends
@@ -271,7 +293,7 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
     await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'failed', dedupe_key: dedupeKey, error: 'token_refresh_failed' });
     return { status: 'failed', error: 'token_refresh_failed' };
   }
-  const raw = buildMime({ from: acct.google_email, to, subject, html, cc, bcc });
+  const raw = buildMime({ from: acct.google_email, to, subject, html, cc, bcc: mergedBcc });
   const res = await sendGmail(access, raw);
   // Keep the raw Gmail error in email_log for debugging; return a generic code to the client.
   await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: res.ok ? 'sent' : 'failed', resend_id: res.id ?? null, dedupe_key: dedupeKey, error: res.ok ? null : res.error });
