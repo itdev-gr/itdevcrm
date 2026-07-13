@@ -115,9 +115,9 @@ export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
 
           {services.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {services.map((s) => (
+              {services.map((s, idx) => (
                 <span
-                  key={s.service_type}
+                  key={`${s.service_type}-${idx}`}
                   className="rounded-full bg-teal-100 px-2 py-0.5 text-[9px] font-semibold text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
                 >
                   {tDeals(`services.types.${s.service_type}`)}
