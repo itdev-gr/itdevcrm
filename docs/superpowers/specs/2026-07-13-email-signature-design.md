@@ -83,11 +83,12 @@ Personal-variant fallbacks: empty job title → omit the blue line; empty phone 
    (and a plain-text rendering to the text part). Shared-identity custom sends get the
    company variant via `shell()` (they are client-facing). Mirrored thread copies
    (`email_messages`) naturally include whatever was sent.
-5. **Logo hosting:** migration creates **public** storage bucket `email-assets`; the
-   round logo (cropped from the owner's reference screenshot, ≥160px, PNG with
-   transparency) is committed to the repo (`docs/assets/itdev-logo-round.png`) and
-   uploaded once to `email-assets/itdev-logo-round.png`; signature references
-   `<SUPABASE_URL>/storage/v1/object/public/email-assets/itdev-logo-round.png`.
+5. **Logo hosting:** the round logo (cropped from the owner's reference screenshot,
+   83×84px PNG) is committed to `public/email-assets/itdev-logo-round.png`, which
+   Vercel serves statically at `https://www.itdevcrm.com/email-assets/itdev-logo-round.png`
+   — no storage bucket, no upload step. Signature HTML references that URL (via the
+   existing `APP_URL`/`APP_BASE` base in the edge function; `window.location.origin`
+   in the frontend preview).
 6. **My Profile — "Email signature" section:** live preview (iframe/`srcDoc` with the
    rendered HTML) driven by the existing name / job title / phone / email fields on the
    page; helper text (EN/EL i18n) explains these fields feed the signature. No new
@@ -109,9 +110,8 @@ compose; quoting original message in replies; EN translation of the disclaimer.
 
 ## Changes / Revert
 
-Changes: 2 migrations (bucket; template-strip w/ backup), edge fn `send-email`
-(+`_shared/signature.ts`), `MyProfilePage`, `SendEmailDialog`, i18n en/el, logo asset,
-one-time logo upload. Revert: `update email_templates t set body = b.body, subject =
+Changes: 1 migration (template-strip w/ backup), edge fn `send-email`
+(+`_shared/signature.ts`), `MyProfilePage`, `SendEmailDialog`, i18n en/el, logo asset in
+`public/email-assets/`. Revert: `update email_templates t set body = b.body, subject =
 b.subject from email_templates_backup_20260713 b where b.key = t.key;` · redeploy
-previous `send-email` · remove profile/dialog sections (git revert) · (optional) delete
-bucket object + bucket.
+previous `send-email` · git revert frontend/asset commits.
