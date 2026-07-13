@@ -119,11 +119,32 @@ Deno.serve(async (req) => {
   if (body.mode === 'sweep') {
     const { data: users } = await admin.from('user_google_accounts')
       .select('user_id').is('revoked_at', null).ilike('scopes', '%gmail.readonly%');
-    const agg = { users: 0, scanned: 0, matched: 0, stored: 0, errors: 0 };
-    for (const u of (users ?? []) as { user_id: string }[]) {
-      const r = await syncOneUser(u.user_id);
-      if ('skip' in r) continue;
-      agg.users++; agg.scanned += r.scanned; agg.matched += r.matched; agg.stored += r.stored; agg.errors += r.errors;
+    const { data: cursors } = await admin.from('user_google_sync')
+      .select('user_id, last_synced_at, backfilled_at, backfill_page_token');
+    const cur = new Map((cursors ?? []).map((c) => [c.user_id as string, c]));
+    // Incremental mailboxes are cheap and must never be starved by a paged
+    // backfill (accounting@'s 90d backfill consumed whole runs 07-10..07-13);
+    // sync them first (stalest first), then spend what's left on backfills.
+    const backfilling = (uid: string) => {
+      const c = cur.get(uid);
+      return !c?.backfilled_at || !!c?.backfill_page_token;
+    };
+    const stamp = (uid: string) => (cur.get(uid)?.last_synced_at as string | null) ?? '';
+    const ordered = ((users ?? []) as { user_id: string }[]).slice().sort((a, b) =>
+      Number(backfilling(a.user_id)) - Number(backfilling(b.user_id))
+      || stamp(a.user_id).localeCompare(stamp(b.user_id)));
+    const agg = { users: 0, scanned: 0, matched: 0, stored: 0, errors: 0, deferred: 0 };
+    const started = Date.now();
+    const BUDGET_MS = 90_000; // leave headroom inside the wall limit + 2-min cadence
+    for (const u of ordered) {
+      if (Date.now() - started > BUDGET_MS) { agg.deferred++; continue; }
+      try {
+        const r = await syncOneUser(u.user_id);
+        if ('skip' in r) continue;
+        agg.users++; agg.scanned += r.scanned; agg.matched += r.matched; agg.stored += r.stored; agg.errors += r.errors;
+      } catch (_e) {
+        agg.errors++;
+      }
     }
     return json({ mode: 'sweep', ...agg });
   }
