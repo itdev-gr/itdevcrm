@@ -7,34 +7,20 @@ import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { cn } from '@/lib/utils';
-import { useDealJobs, type DealJob } from './hooks/useDealJobs';
 import type { DealRow } from './hooks/useDeals';
 
-export function noteFrom(
-  jobs: DealJob[],
-  types: string[],
-  key: string,
-): { present: boolean; value: string } {
-  const job = jobs.find((j) => types.includes(j.service_type));
-  if (!job) return { present: false, value: '' };
-  const v = job.details?.[key];
-  return { present: true, value: v == null ? '' : String(v) };
-}
+// Job-sourced notes (seo/local/webdev/ads) render in DealServiceInfo, which
+// walks every job — the per-key excerpts that used to live here read the empty
+// AI SEO parent first and showed "—" (removed 2026-07-13, owner decision).
 
 export function DealNotesArea({ deal }: { deal: DealRow }) {
   const { t, i18n } = useTranslation('deals');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const qc = useQueryClient();
-  const { data: jobs = [] } = useDealJobs(deal.id);
 
   const [salesNote, setSalesNote] = useState(deal.sales_note ?? '');
   const [businessProfileUrl, setBusinessProfileUrl] = useState(deal.business_profile_url ?? '');
   const [businessProfileName, setBusinessProfileName] = useState(deal.business_profile_name ?? '');
-
-  const webSeo = noteFrom(jobs, ['web_seo', 'ai_seo'], 'seo_notes');
-  const local = noteFrom(jobs, ['local_seo', 'ai_seo'], 'local_notes');
-  const website = noteFrom(jobs, ['web_dev'], 'webdev_notes');
-  const ads = noteFrom(jobs, ['ads'], 'ads_notes');
 
   const patch = useMemo(
     () => ({
@@ -56,15 +42,6 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
     if (error) throw new Error(error.message);
     void qc.invalidateQueries({ queryKey: queryKeys.deal(deal.id) });
   });
-
-  const readOnlyNote = (label: string, value: string) => (
-    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="mt-1.5 whitespace-pre-wrap text-sm text-foreground">
-        {value || <span className="text-muted-foreground/60">{t('notes_area.empty')}</span>}
-      </div>
-    </div>
-  );
 
   return (
     <section className="mt-4 space-y-4 rounded-xl border border-border/60 bg-card p-5 shadow-sm">
@@ -102,10 +79,6 @@ export function DealNotesArea({ deal }: { deal: DealRow }) {
         />
         <p className="mt-1.5 text-xs text-muted-foreground">{t('notes_area.sales_note_hint')}</p>
       </div>
-      {webSeo.present && readOnlyNote(t('notes_area.web_seo_notes'), webSeo.value)}
-      {local.present && readOnlyNote(t('notes_area.local_notes'), local.value)}
-      {website.present && readOnlyNote(t('notes_area.website_notes'), website.value)}
-      {ads.present && readOnlyNote(t('notes_area.ads_notes'), ads.value)}
       <div className="flex h-5 items-center text-xs text-muted-foreground">
         {autoSaveLabel(status, lang)}
       </div>
