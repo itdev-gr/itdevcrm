@@ -30,7 +30,7 @@
 **Interfaces:**
 - Produces: public bucket `avatars`; authenticated users can write only `auth.uid() || '.png'`. Task 3's upload code and Task 4's rollout depend on it.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- =============================================================================
@@ -71,11 +71,11 @@ create policy "avatars_delete_own" on storage.objects
 -- ---------------------------------------------------------------------------
 ```
 
-- [ ] **Step 2: Sanity gate**
+- [x] **Step 2: Sanity gate**
 
 Run: `npm run build` — Expected: exit 0 (nothing else broken in the tree).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260713150000_avatars_bucket.sql
@@ -97,7 +97,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: existing `renderSignatureHtml(logoUrl, person?)`, `LOGO_URL` export from `./templates.ts`.
 - Produces: renderer escapes `logoUrl`; `sendPersonal` selects `avatar_url` and passes `https://`-guarded avatar (else `LOGO_URL`). Task 3 mirrors the same guard client-side.
 
-- [ ] **Step 1: Write the failing test** — append to `src/features/email/emailSignature.test.ts`:
+- [x] **Step 1: Write the failing test** — append to `src/features/email/emailSignature.test.ts`:
 
 ```ts
 describe('renderSignatureHtml — logoUrl escaping', () => {
@@ -109,12 +109,12 @@ describe('renderSignatureHtml — logoUrl escaping', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:run -- src/features/email/emailSignature.test.ts`
 Expected: FAIL — the raw `" onerror="` survives (logoUrl is currently unescaped).
 
-- [ ] **Step 3: Implement** — in `supabase/functions/_shared/signature.ts` change the img line (~62):
+- [x] **Step 3: Implement** — in `supabase/functions/_shared/signature.ts` change the img line (~62):
 
 ```ts
 <td style="vertical-align:middle;padding-right:16px"><img src="${esc(logoUrl)}" width="80" height="80" alt="IT DEV" style="display:block;border-radius:50%"/></td>
@@ -122,12 +122,12 @@ Expected: FAIL — the raw `" onerror="` survives (logoUrl is currently unescape
 
 (only `${logoUrl}` → `${esc(logoUrl)}` changes on that line.)
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:run -- src/features/email/emailSignature.test.ts`
 Expected: PASS (all tests, including the pre-existing ones — `esc()` leaves normal URLs untouched).
 
-- [ ] **Step 5: Edge fn — use the sender's avatar**. In `supabase/functions/send-email/index.ts`, `sendPersonal`:
+- [x] **Step 5: Edge fn — use the sender's avatar**. In `supabase/functions/send-email/index.ts`, `sendPersonal`:
 
 change the select:
 ```ts
@@ -146,12 +146,12 @@ and replace `const sig = renderSignatureHtml(LOGO_URL, {` with:
 ```
 (the person-fields object and everything after stay unchanged.)
 
-- [ ] **Step 6: Gates**
+- [x] **Step 6: Gates**
 
 Run: `deno check --node-modules-dir=auto supabase/functions/send-email/index.ts` — Expected: clean.
 Run: `npm run build` — Expected: exit 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/functions/_shared/signature.ts supabase/functions/send-email/index.ts src/features/email/emailSignature.test.ts
@@ -175,7 +175,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: bucket `avatars` (Task 1), `SignaturePerson` type.
 - Produces: `SignaturePreview({ person, logoUrl? })` — `logoUrl?: string | null`, honored only when it starts with `https://`; `ProfilePhotoUpload({ userId, value, onChange })` — `value: string | null`, `onChange(url: string | null)`.
 
-- [ ] **Step 1: Write the failing test** — append to `src/features/email/SignaturePreview.test.tsx`:
+- [x] **Step 1: Write the failing test** — append to `src/features/email/SignaturePreview.test.tsx`:
 
 ```tsx
 describe('SignaturePreview logoUrl prop', () => {
@@ -198,12 +198,12 @@ describe('SignaturePreview logoUrl prop', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:run -- src/features/email/SignaturePreview.test.tsx`
 Expected: FAIL — `logoUrl` prop doesn't exist yet (TS/type error or default logo used).
 
-- [ ] **Step 3: Implement `SignaturePreview` changes** — replace the two components' signatures/bodies:
+- [x] **Step 3: Implement `SignaturePreview` changes** — replace the two components' signatures/bodies:
 
 ```tsx
 // Same fixed layout for everyone — the preview is the renderer the emails use.
@@ -244,12 +244,12 @@ In `MySignaturePreview`: select becomes `'full_name, job_title, phone, email, av
   );
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:run -- src/features/email/SignaturePreview.test.tsx`
 Expected: PASS (new + pre-existing tests).
 
-- [ ] **Step 5: Create `src/features/users/ProfilePhotoUpload.tsx`**
+- [x] **Step 5: Create `src/features/users/ProfilePhotoUpload.tsx`**
 
 ```tsx
 import { useRef, useState } from 'react';
@@ -382,7 +382,7 @@ export function ProfilePhotoUpload({
 ```
 (No component test — canvas/`createImageBitmap` don't exist in jsdom; the live E2E in Task 4 exercises the real path.)
 
-- [ ] **Step 6: Wire into `MyProfilePage.tsx`**
+- [x] **Step 6: Wire into `MyProfilePage.tsx`**
 
 Add imports:
 ```tsx
@@ -417,7 +417,7 @@ Then pass the live value to the signature card in the same file — the existing
 ```
 (keep the existing `person` object exactly as it is; only add the `logoUrl` prop. Do not literally write "...unchanged person object..." — keep the current code.)
 
-- [ ] **Step 7: i18n keys** — add inside the `"profile"` object:
+- [x] **Step 7: i18n keys** — add inside the `"profile"` object:
 
 `src/i18n/locales/en/users.json`:
 ```json
@@ -439,12 +439,12 @@ Then pass the live value to the signature card in the same file — the existing
 ```
 Validate both parse: `python3 -c "import json;json.load(open('src/i18n/locales/en/users.json'));json.load(open('src/i18n/locales/el/users.json'));print('OK')"`
 
-- [ ] **Step 8: Gates**
+- [x] **Step 8: Gates**
 
 Run: `npm run build && npm run test:run -- src/features/email/SignaturePreview.test.tsx src/features/email/emailSignature.test.ts`
 Expected: build exit 0; both files PASS. (The old `profile.avatar_url` i18n key may remain unused in the JSONs — leave it; removing keys risks other references.)
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/features/users/ProfilePhotoUpload.tsx src/features/users/MyProfilePage.tsx \
@@ -461,20 +461,20 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ⚠️ Needs a valid `sbp_` Management-API token (owner) and the owner's inbox eyeball.
 
-- [ ] **Step 1: Apply the bucket migration** via the Management API query endpoint (same recipe as the signature rollout: write the .sql into a `{"query": …}` JSON, POST to `/v1/projects/xujlrclyzxrvxszepquy/database/query`). Verify:
+- [x] **Step 1: Apply the bucket migration** via the Management API query endpoint (same recipe as the signature rollout: write the .sql into a `{"query": …}` JSON, POST to `/v1/projects/xujlrclyzxrvxszepquy/database/query`). Verify:
 ```sql
 select id, public from storage.buckets where id = 'avatars';                     -- avatars / true
 select policyname from pg_policies where tablename = 'objects'
   and policyname like 'avatars_%';                                              -- 4 rows (select/insert/update/delete)
 ```
 
-- [ ] **Step 2: Push** (`git pull --rebase && git push`) and wait for Vercel; then deploy the edge fn:
+- [x] **Step 2: Push** (`git pull --rebase && git push`) and wait for Vercel; then deploy the edge fn:
 ```bash
 SUPABASE_ACCESS_TOKEN=<sbp> npx supabase functions deploy send-email --project-ref xujlrclyzxrvxszepquy --no-verify-jwt
 ```
 (`--no-verify-jwt` REQUIRED — drain auth. No unsigned-email window this time: the code change is avatar-or-default, safe in any order.)
 
-- [ ] **Step 3: Live E2E via Playwright as mkifokeris@itdev.gr** (pw = standard test pw):
+- [x] **Step 3: Live E2E via Playwright as mkifokeris@itdev.gr** (pw = standard test pw):
 0. **Pre-check (clear legacy avatar):** `select avatar_url from profiles where email='mkifokeris@itdev.gr'`. If a non-null legacy value exists, clear it first (`update profiles set avatar_url = null where email='mkifokeris@itdev.gr'`) — otherwise the "default logo first" assertion in 1 fails spuriously.
 1. `/profile` → the photo control shows the DEFAULT logo; signature card shows default logo.
 2. Generate a test photo locally (e.g. PIL: 300×500 colored rectangle with a circle, PNG — non-square on purpose) and upload it via the file input (`browser_file_upload`).
@@ -485,7 +485,7 @@ SUPABASE_ACCESS_TOKEN=<sbp> npx supabase functions deploy send-email --project-r
 7. Owner eyeballs the email in Maria's inbox: photo renders round in the signature.
 8. **Remove assertion:** click Remove on /profile → preview + signature card fall back to the IT DEV logo, AND `curl -sI 'https://xujlrclyzxrvxszepquy.supabase.co/storage/v1/object/public/avatars/<maria_user_id>.png'` returns **400/404** (the object is really gone, not just unlinked from the profile).
 
-- [ ] **Step 4: Close out** — remind sbp_ rotation; update memory (`project_email_signature.md` gains the avatar mechanics + bucket; MEMORY.md line updated); mark plan checkboxes; final ledger entry.
+- [x] **Step 4: Close out** — remind sbp_ rotation; update memory (`project_email_signature.md` gains the avatar mechanics + bucket; MEMORY.md line updated); mark plan checkboxes; final ledger entry.
 
 ---
 
