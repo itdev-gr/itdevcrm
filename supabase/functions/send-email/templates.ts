@@ -1,10 +1,16 @@
 // Greek transactional templates + an editable `custom` passthrough.
 // Each template returns { subject, html, text }. Keep `data` shapes documented here.
 
+import { renderSignatureHtml, renderSignatureText } from '../_shared/signature.ts';
+
 export type Rendered = { subject: string; html: string; text: string };
 
 // Deal/offer links. Single source of truth = APP_URL secret; falls back to prod.
 const APP_BASE = Deno.env.get('APP_URL') ?? 'https://www.itdevcrm.com';
+
+export const LOGO_URL = `${APP_BASE}/email-assets/itdev-logo-round.png`;
+const COMPANY_SIG_HTML = renderSignatureHtml(LOGO_URL);
+const COMPANY_SIG_TEXT = renderSignatureText();
 
 const SERVICE_LABELS_EL: Record<string, string> = {
   web_seo: 'Web SEO',
@@ -16,11 +22,12 @@ const SERVICE_LABELS_EL: Record<string, string> = {
   ads: 'Διαφημίσεις',
 };
 
-function shell(bodyHtml: string): string {
+function shell(bodyHtml: string, sig = ''): string {
+  const footer = sig !== '' ? sig : `<p style="font-size:12px;color:#64748b">ITDEV · itdev.gr</p>`;
   return `<div style="font-family:Arial,sans-serif;font-size:14px;color:#0f172a;line-height:1.6">
 ${bodyHtml}
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0"/>
-<p style="font-size:12px;color:#64748b">ITDEV · itdev.gr</p>
+${footer}
 </div>`;
 }
 
@@ -39,7 +46,7 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
         ? String(d.text)
         : String(d.html ?? '').replace(/<[^>]+>/g, '');
     const bodyHtml = linkify(escapeHtml(raw)).replace(/\n/g, '<br/>');
-    return { subject, html: shell(bodyHtml), text: raw };
+    return { subject, html: shell(bodyHtml, COMPANY_SIG_HTML), text: raw + '\n\n' + COMPANY_SIG_TEXT };
   },
 
   payment_due_soon: (d) => {
@@ -51,6 +58,7 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
       `<p>Αγαπητέ/ή ${name},</p>
 <p>Σας υπενθυμίζουμε ότι η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> λήγει στις <b>${due}</b>.</p>
 <p>Ευχαριστούμε για τη συνεργασία.</p>`,
+      COMPANY_SIG_HTML,
     );
     return { subject, html, text: `Υπενθύμιση: πληρωμή ${eur(Number(d.amount_gross))} (${svc}) λήγει ${String(d.due_date ?? '')}.` };
   },
@@ -63,6 +71,7 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
     const html = shell(
       `<p>Αγαπητέ/ή ${name},</p>
 <p>Η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> λήγει <b>σήμερα</b> (${due}).</p>`,
+      COMPANY_SIG_HTML,
     );
     return { subject, html, text: `Η πληρωμή ${eur(Number(d.amount_gross))} (${svc}) λήγει σήμερα.` };
   },
@@ -76,6 +85,7 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
       `<p>Αγαπητέ/ή ${name},</p>
 <p>Η πληρωμή για την υπηρεσία <b>${svc}</b> ύψους <b>${eur(Number(d.amount_gross))}</b> με λήξη στις <b>${due}</b> παραμένει εκκρεμής.</p>
 <p>Παρακαλούμε επικοινωνήστε μαζί μας στο accounting@itdev.gr.</p>`,
+      COMPANY_SIG_HTML,
     );
     return { subject, html, text: `Εκπρόθεσμη πληρωμή ${eur(Number(d.amount_gross))} (${svc}), λήξη ${String(d.due_date ?? '')}.` };
   },
@@ -170,10 +180,16 @@ export function renderDbTemplate(
     const label = escapeHtml(String(data.cta_label ?? 'Άνοιγμα / Open'));
     cta = `<p style="margin:24px 0"><a href="${url}" style="background:#0f172a;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block">${label}</a></p>`;
   }
+  const sig = row.client_facing !== false ? COMPANY_SIG_HTML : '';
   const html = shell(
     `<p>${linkify(escapeHtml(bodyText)).replace(/\n/g, '<br/>')}</p>${cta}${footer}`,
+    sig,
   );
-  return { subject, html, text: bodyText + footerText };
+  return {
+    subject,
+    html,
+    text: sig !== '' ? `${bodyText}\n\n${COMPANY_SIG_TEXT}` : bodyText + footerText,
+  };
 }
 
 export function renderTemplate(templateKey: string, data: Record<string, unknown>): Rendered {
