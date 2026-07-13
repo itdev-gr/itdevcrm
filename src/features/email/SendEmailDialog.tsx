@@ -83,6 +83,7 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
             {identity === 'personal' && (
               <div className="mt-3">
                 <p className="text-xs text-muted-foreground">{t('dialog.signature_hint')}</p>
+                <p className="text-xs text-muted-foreground">{t('dialog.dept_bcc_hint')}</p>
                 <details className="mt-1">
                   <summary className="cursor-pointer text-xs text-muted-foreground underline">
                     {t('dialog.signature_preview')}
