@@ -59,7 +59,7 @@ export function renderSignatureHtml(
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px">
 <tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#0f172a;padding-bottom:14px">Με εκτίμηση,</td></tr>
 <tr><td><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="vertical-align:middle;padding-right:16px"><img src="${logoUrl}" width="80" height="80" alt="IT DEV" style="display:block;border-radius:50%"/></td>
+<td style="vertical-align:middle;padding-right:16px"><img src="${esc(logoUrl)}" width="80" height="80" alt="IT DEV" style="display:block;border-radius:50%"/></td>
 <td style="border-left:2px solid #d1d5db;padding-left:16px;font-family:Arial,sans-serif;font-size:13px;line-height:1.6;color:#0f172a">${rows.join('<br/>')}</td>
 </tr></table></td></tr>
 <tr><td style="padding-top:22px;font-family:Arial,sans-serif;font-size:10px;line-height:1.6;color:#6b7280">

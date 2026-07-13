@@ -222,10 +222,16 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
   // working for a profile with gaps.
   const { data: prof } = await admin
     .from('profiles')
-    .select('full_name, job_title, phone, email')
+    .select('full_name, job_title, phone, email, avatar_url')
     .eq('user_id', uid)
     .maybeSingle();
-  const sig = renderSignatureHtml(LOGO_URL, {
+  // Photo slot: the user's uploaded avatar when it's a real https URL,
+  // else the IT DEV logo (spec: profile-photo-signature).
+  const avatar =
+    typeof prof?.avatar_url === 'string' && prof.avatar_url.startsWith('https://')
+      ? prof.avatar_url
+      : null;
+  const sig = renderSignatureHtml(avatar ?? LOGO_URL, {
     name: (prof?.full_name ?? '').trim() || acct.google_email,
     title: prof?.job_title ?? null,
     phone: prof?.phone ?? null,

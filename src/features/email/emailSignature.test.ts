@@ -73,3 +73,11 @@ describe('SIGNATURE_COMPANY', () => {
     });
   });
 });
+
+describe('renderSignatureHtml — logoUrl escaping', () => {
+  it('escapes a hostile logoUrl instead of letting it break out of src', () => {
+    const html = renderSignatureHtml('https://x/a.png" onerror="alert(1)');
+    expect(html).not.toContain('" onerror="');
+    expect(html).toContain('src="https://x/a.png&quot; onerror=&quot;alert(1)"');
+  });
+});
