@@ -23,7 +23,7 @@ export function ProfilePhotoUpload({
   const defaultLogo = `${window.location.origin}/email-assets/itdev-logo-round.png`;
 
   async function toSquarePng(file: File): Promise<Blob> {
-    const bitmap = await createImageBitmap(file);
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
     const side = Math.min(bitmap.width, bitmap.height);
     const canvas = document.createElement('canvas');
     canvas.width = 400;
@@ -71,9 +71,20 @@ export function ProfilePhotoUpload({
     setError(false);
     setBusy(true);
     try {
-      await supabase.storage.from('avatars').remove([`${userId}.png`]);
+      // Only clear the stored URL if the object was really deleted. remove()
+      // returns { data, error }: error (or an empty data array — nothing
+      // matched/removed) means the photo is still there, so don't lie.
+      const { data, error: rmErr } = await supabase.storage
+        .from('avatars')
+        .remove([`${userId}.png`]);
+      if (rmErr || !data || data.length === 0) {
+        setError(true);
+      } else {
+        onChange(null);
+      }
+    } catch {
+      setError(true);
     } finally {
-      onChange(null);
       setBusy(false);
     }
   }

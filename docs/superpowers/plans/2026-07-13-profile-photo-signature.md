@@ -475,12 +475,15 @@ SUPABASE_ACCESS_TOKEN=<sbp> npx supabase functions deploy send-email --project-r
 (`--no-verify-jwt` REQUIRED — drain auth. No unsigned-email window this time: the code change is avatar-or-default, safe in any order.)
 
 - [ ] **Step 3: Live E2E via Playwright as mkifokeris@itdev.gr** (pw = standard test pw):
+0. **Pre-check (clear legacy avatar):** `select avatar_url from profiles where email='mkifokeris@itdev.gr'`. If a non-null legacy value exists, clear it first (`update profiles set avatar_url = null where email='mkifokeris@itdev.gr'`) — otherwise the "default logo first" assertion in 1 fails spuriously.
 1. `/profile` → the photo control shows the DEFAULT logo; signature card shows default logo.
 2. Generate a test photo locally (e.g. PIL: 300×500 colored rectangle with a circle, PNG — non-square on purpose) and upload it via the file input (`browser_file_upload`).
 3. Photo preview + signature card flip to the uploaded (center-cropped square) image; autosave label shows saved.
 4. Verify the public object: `curl -sI 'https://xujlrclyzxrvxszepquy.supabase.co/storage/v1/object/public/avatars/<maria_user_id>.png' | grep -i '^content-type: image/png'`.
 5. Compose a personal email (any lead → Emails → New email) to `mkifokeris@itdev.gr`, subject "Photo signature E2E"; expand the dialog preview — must show the photo; Send; `email_log` row `status='sent'`.
-6. Owner eyeballs the email in Maria's inbox: photo renders round in the signature; then (optional) Remove photo on /profile → preview falls back to the IT DEV logo.
+6. **Replacement (proves upsert / the SELECT policy fix):** upload a SECOND, visibly different photo via the same control — the photo preview + signature card must switch to the new image (a failed overwrite would leave the first photo showing).
+7. Owner eyeballs the email in Maria's inbox: photo renders round in the signature.
+8. **Remove assertion:** click Remove on /profile → preview + signature card fall back to the IT DEV logo, AND `curl -sI 'https://xujlrclyzxrvxszepquy.supabase.co/storage/v1/object/public/avatars/<maria_user_id>.png'` returns **400/404** (the object is really gone, not just unlinked from the profile).
 
 - [ ] **Step 4: Close out** — remind sbp_ rotation; update memory (`project_email_signature.md` gains the avatar mechanics + bucket; MEMORY.md line updated); mark plan checkboxes; final ledger entry.
 
