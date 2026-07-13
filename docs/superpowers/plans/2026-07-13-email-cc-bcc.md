@@ -691,11 +691,13 @@ SUPABASE_ACCESS_TOKEN=<sbp> npx supabase functions deploy gmail-sync --project-r
 - [ ] **Step 3: E2E as a NON-admin (mkifokeris, standard test pw), via Playwright:**
 1. Compose from her lead → the dialog shows **Cc** but NO **Bcc** field.
 2. Send to `mkifokeris@itdev.gr` with Cc `itdevgr24@gmail.com`, subject `CC E2E`. Expect "Email sent."; `email_log` row `sent`.
-3. Forged-bcc rejection: from the browser console (her session), invoke the function directly with a bcc — expect 403 `bcc_admin_only`:
-```js
-const { data, error } = await window.supabase.functions.invoke('send-email', { body: { identity: 'personal', to: 'mkifokeris@itdev.gr', templateKey: 'custom', data: { subject: 'x', html: 'x', text: 'x' }, bcc: ['itdevgr24@gmail.com'] } });
+3. Forged-bcc rejection: `window.supabase` is NOT exposed in this app, so curl is the primary path — grab her JWT from localStorage (`sb-…-auth-token` key, `access_token` field) via the browser console, then:
+```bash
+curl -i -X POST 'https://xujlrclyzxrvxszepquy.supabase.co/functions/v1/send-email' \
+  -H 'Authorization: Bearer <HER_JWT>' -H 'Content-Type: application/json' \
+  -d '{"identity":"personal","to":"mkifokeris@itdev.gr","templateKey":"custom","data":{"subject":"x","html":"x","text":"x"},"bcc":["itdevgr24@gmail.com"]}'
 ```
-(If `window.supabase` isn't exposed, run the equivalent via curl with her JWT captured from localStorage — the assertion is the 403 code.)
+Expected: `HTTP/2 403` with `bcc_admin_only` (curl -i so the status is visible — `functions.invoke` buries it in `error.context`).
 
 - [ ] **Step 4: E2E as an admin.** info@itdev.gr has NO Gmail connected (personal sends 409) — use an admin account WITH Gmail (e.g. marios@itdev.gr if the owner is driving) OR temporarily flip `mkifokeris` to admin for the test and back:
 ```sql
@@ -703,6 +705,7 @@ update public.profiles set is_admin = true  where email = 'mkifokeris@itdev.gr';
 -- …run step, then:
 update public.profiles set is_admin = false where email = 'mkifokeris@itdev.gr';
 ```
+**IMPORTANT: log out and back in (or hard-refresh) after EACH flip** — `authStore.isAdmin` loads on auth-state change/page load only; a mid-session flip changes nothing in the running SPA. Keep the admin window short (she holds full admin RLS meanwhile) and VERIFY the restore with a select.
 With the admin session: dialog now SHOWS Bcc → send to `mkifokeris@itdev.gr`, Bcc `itdevgr24@gmail.com`, subject `BCC E2E`. Verify:
 - `email_log` `sent`; the gmail inbox `itdevgr24@gmail.com` receives it WITHOUT appearing in To/Cc (owner eyeball).
 - After the next gmail-sync run (or trigger it), the captured sent copy has an `email_message_bcc` row:
