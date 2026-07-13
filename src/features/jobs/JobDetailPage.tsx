@@ -651,7 +651,11 @@ export function JobDetailPage() {
         <TabsContent value="emails" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
             <EmailThreadList
-              scope={{ job_id: job.id }}
+              scope={{
+                job_id: job.id,
+                ...(job.deal_id ? { job_deal_id: job.deal_id } : {}),
+                ...(job.service_type ? { job_department: job.service_type } : {}),
+              }}
               clientEmail={job.client?.email ?? ''}
               newEmailSubject={job.code ? `${job.code} - ` : ''}
             />

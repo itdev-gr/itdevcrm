@@ -81,7 +81,16 @@ export function groupThreads(rows: EmailMessageRow[]): EmailThread[] {
   return threads;
 }
 
-export type EmailScope = { deal_id?: string; job_id?: string; client_id?: string; lead_id?: string };
+export type EmailScope = {
+  deal_id?: string;
+  job_id?: string;
+  /** With job_id: also fold in the deal's emails tagged with the job's
+   *  service (only ~2% of mail carries an explicit job code). */
+  job_deal_id?: string;
+  job_department?: string;
+  client_id?: string;
+  lead_id?: string;
+};
 
 /** Resolve the single active filter column/value from a scope. Precedence:
  *  deal_id → job_id → client_id → lead_id. Value is '' when nothing is set
@@ -95,15 +104,19 @@ function scopeFilter(scope: EmailScope): readonly [column: string, value: string
 
 export function useEmailThreads(scope: EmailScope): UseQueryResult<EmailThread[]> {
   const [column, value] = scopeFilter(scope);
+  const jobWiden =
+    column === 'job_id' && scope.job_deal_id && scope.job_department
+      ? { deal: scope.job_deal_id, dept: scope.job_department }
+      : null;
   return useQuery({
-    queryKey: ['email-threads', column, value] as const,
+    queryKey: ['email-threads', column, value, jobWiden?.deal ?? '', jobWiden?.dept ?? ''] as const,
     enabled: !!value,
     queryFn: async (): Promise<EmailThread[]> => {
-      const { data, error } = await supabase
-        .from('email_messages' as never)
-        .select(COLS)
-        .eq(column, value)
-        .order('sent_at', { ascending: true });
+      const base = supabase.from('email_messages' as never).select(COLS);
+      const filtered = jobWiden
+        ? base.or(`job_id.eq.${value},and(deal_id.eq.${jobWiden.deal},department.eq.${jobWiden.dept})`)
+        : base.eq(column, value);
+      const { data, error } = await filtered.order('sent_at', { ascending: true });
       if (error) throw new Error(error.message);
       return groupThreads((data ?? []) as unknown as EmailMessageRow[]);
     },
