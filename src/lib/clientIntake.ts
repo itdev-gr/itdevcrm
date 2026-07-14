@@ -14,8 +14,10 @@
  */
 import { z } from 'zod';
 // Re-exported (not duplicated) because sanitizeStorageKey.ts has zero imports
-// and so is safe for the Vercel api bundler. See its own header for the rule.
-import { sanitizeStorageFileName } from './sanitizeStorageKey';
+// and so is safe for the Vercel api bundler. The `.js` extension is REQUIRED:
+// Vercel's ESM runtime resolves extensionless relative imports to nothing
+// (ERR_MODULE_NOT_FOUND at /var/task); Vite maps .js → .ts fine.
+import { sanitizeStorageFileName } from './sanitizeStorageKey.js';
 
 const trimmedString = (min = 0, max?: number) => {
   let s = z.string().trim().min(min);
