@@ -179,6 +179,9 @@ const ContractsListPage = lazyPage(
   () => import('@/features/contracts/ContractsListPage'),
   'ContractsListPage',
 );
+// Public, unauthenticated onboarding wizard — lives OUTSIDE ShellLayout (no auth,
+// no supabase in its module graph). Talks only to /api/client-intake.
+const IntakePage = lazyPage(() => import('@/features/intake/IntakePage'), 'IntakePage');
 
 export const router = createBrowserRouter([
   {
@@ -320,6 +323,7 @@ export const router = createBrowserRouter([
           { path: '*', element: <NotFoundPage /> },
         ],
       },
+      { path: '/f/:token', element: <IntakePage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
       { path: '/reset-password', element: <ResetPasswordPage /> },

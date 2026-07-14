@@ -1,0 +1,153 @@
+{
+  "meta": {
+    "title": "Project details"
+  },
+  "lang": {
+    "label": "Language",
+    "el": "ΕΛ",
+    "en": "EN"
+  },
+  "chrome": {
+    "step_of": "Step {{current}} of {{total}}",
+    "back": "Back",
+    "next": "Continue",
+    "submit": "Submit",
+    "submitting": "Submitting…"
+  },
+  "common": {
+    "optional": "(optional)",
+    "remove": "Remove",
+    "edit": "Edit",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "steps": {
+    "about": {
+      "title": "A little about you",
+      "subtitle": "Tell us about your business and how we can reach you."
+    },
+    "materials": {
+      "title": "Logo & materials",
+      "subtitle": "Upload your logo and any material you'd like us to use (photos, text, files)."
+    },
+    "website": {
+      "title": "Your website",
+      "subtitle": "A few details about the site and the domain."
+    },
+    "review": {
+      "title": "Review & submit",
+      "subtitle": "Take a last look before submitting."
+    }
+  },
+  "fields": {
+    "description": {
+      "label": "About your business",
+      "placeholder": "Tell us what your business does, the style you like, preferred colours…",
+      "help": "Anything that helps us understand your business and your vision."
+    },
+    "contact_email": {
+      "label": "Contact email",
+      "placeholder": "name@example.com"
+    },
+    "contact_phone": {
+      "label": "Phone",
+      "placeholder": "e.g. 21 0123 4567"
+    },
+    "contact_whatsapp": {
+      "label": "WhatsApp",
+      "placeholder": "e.g. +30 691 234 5678"
+    },
+    "recommended_site": {
+      "label": "Reference website",
+      "placeholder": "https://…",
+      "help": "A site you like and would want yours to resemble."
+    },
+    "wants_whatsapp_button": {
+      "label": "WhatsApp button on the website",
+      "help": "A floating button so visitors can message you directly on WhatsApp."
+    },
+    "whatsapp_button_number": {
+      "label": "WhatsApp number for the button",
+      "placeholder": "e.g. +30 691 234 5678"
+    },
+    "has_existing_domain": {
+      "label": "Do you already have a domain (website name)?",
+      "yes": "Yes, I have one",
+      "no": "No, suggest some"
+    },
+    "existing_domain": {
+      "label": "Your domain",
+      "placeholder": "e.g. mycompany.gr"
+    },
+    "domain_suggestions": {
+      "label": "Domain suggestions",
+      "help": "Give 1 to 3 names you'd like — we'll check availability.",
+      "placeholder": "e.g. mycompany.gr",
+      "add": "Add a suggestion"
+    }
+  },
+  "materials": {
+    "logo_title": "Logo",
+    "logo_hint": "Upload your logo as an image (PNG, JPG, SVG).",
+    "logo_cta": "Choose a logo image",
+    "logo_limit": "Image up to 5 MB",
+    "logo_replace": "Replace",
+    "logo_remove": "Remove logo",
+    "files_title": "Photos & files",
+    "files_hint": "Upload photos, text or any material you'd like us to use.",
+    "drop_here": "Drag files here or click to choose",
+    "files_limit": "Any file type, up to 500 MB each",
+    "logo_too_large": "The image is larger than 5 MB.",
+    "not_image": "Please choose an image file.",
+    "file_too_large": "The file is larger than 500 MB.",
+    "quota_exceeded": "The total size limit was exceeded.",
+    "rate_limited": "Too many requests — please try again shortly.",
+    "upload_failed": "Upload failed. Please try again.",
+    "remove_failed": "Couldn't remove it. Please try again."
+  },
+  "review": {
+    "empty": "—",
+    "missing_title": "Still to do",
+    "missing_intro": "You can submit now and complete these later.",
+    "no_logo": "Not uploaded",
+    "files_count": "{{count}} files"
+  },
+  "missing": {
+    "logo": "logo",
+    "files": "photos/files",
+    "description": "description",
+    "contact_email": "email",
+    "contact_phone": "phone",
+    "domain": "domain"
+  },
+  "status": {
+    "inactive_title": "This link is no longer active",
+    "inactive_body": "The form link is no longer available. Please contact us and we'll send you a new one.",
+    "error_title": "Something went wrong",
+    "error_body": "We couldn't load the form. Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "success": {
+    "title": "Thank you!",
+    "body": "We've received your details. Our team will review them and get in touch soon about the next steps.",
+    "missing_intro": "Still pending:",
+    "link_active": "The link stays active — you can come back any time to complete them.",
+    "back_to_form": "Back to the form"
+  },
+  "resubmit_banner": "You've already submitted — you can update your details.",
+  "errors": {
+    "description_required": "A description is required.",
+    "description_long": "The description is too long.",
+    "email_required": "Email is required.",
+    "email_invalid": "Invalid email.",
+    "phone_required": "Phone is required.",
+    "phone_invalid": "Invalid phone number.",
+    "whatsapp_invalid": "Invalid WhatsApp number.",
+    "url_invalid": "Invalid address (start with http:// or https://).",
+    "whatsapp_button_required": "Enter the WhatsApp number for the button.",
+    "existing_domain_required": "Enter your domain.",
+    "domain_suggestions_required": "Give at least one domain suggestion.",
+    "invalid": "Please check this field.",
+    "submit_failed": "Submission failed. Please try again."
+  }
+}
