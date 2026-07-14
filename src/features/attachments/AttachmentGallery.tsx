@@ -3,26 +3,38 @@ import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import type { AttachmentRow } from './hooks/useAttachments';
 
-export function isImageAttachment(f: AttachmentRow): boolean {
+/**
+ * The minimal file shape the gallery needs to preview a row. Assignable from
+ * `AttachmentRow` (so the existing attachment consumers pass their rows
+ * unchanged) and from the synthetic rows the client-intake card builds for a
+ * job's logo / uploaded files.
+ */
+export type GalleryFile = {
+  id: string;
+  storage_path: string;
+  file_name: string;
+  mime_type: string | null;
+};
+
+export function isImageAttachment(f: GalleryFile): boolean {
   if (f.mime_type) return f.mime_type.startsWith('image/');
   return /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(f.file_name);
 }
 
-export function isPdfAttachment(f: AttachmentRow): boolean {
+export function isPdfAttachment(f: GalleryFile): boolean {
   if (f.mime_type === 'application/pdf') return true;
   return /\.pdf$/i.test(f.file_name);
 }
 
-function useSignedUrls(paths: string[]) {
+function useSignedUrls(paths: string[], bucket: string) {
   return useQuery({
-    queryKey: ['attachment-signed-urls', paths.join('|')],
+    queryKey: ['attachment-signed-urls', bucket, paths.join('|')],
     enabled: paths.length > 0,
     staleTime: 45 * 60 * 1000,
     queryFn: async (): Promise<Record<string, string>> => {
       const { data, error } = await supabase.storage
-        .from('attachments')
+        .from(bucket)
         .createSignedUrls(paths, 3600);
       if (error) throw new Error(error.message);
       const map: Record<string, string> = {};
@@ -34,26 +46,34 @@ function useSignedUrls(paths: string[]) {
   });
 }
 
-type Props = {
-  files: AttachmentRow[];
+type Props<T extends GalleryFile> = {
+  files: T[];
+  /** Storage bucket the paths live in. Defaults to the shared `attachments` bucket. */
+  bucket?: string;
   /** Small caption rendered under each preview tile. */
-  tileCaption?: (f: AttachmentRow) => ReactNode;
+  tileCaption?: (f: T) => ReactNode;
   /** Extra inline content after the name link of non-preview files. */
-  rowMeta?: (f: AttachmentRow) => ReactNode;
+  rowMeta?: (f: T) => ReactNode;
   /** When provided, tiles get an × overlay and rows a delete button. */
-  onDelete?: (f: AttachmentRow) => void;
+  onDelete?: (f: T) => void;
 };
 
 // Images and PDFs render as preview tiles that expand in a lightbox on click;
 // any other file keeps the classic name-link that opens in a new tab.
-export function AttachmentGallery({ files, tileCaption, rowMeta, onDelete }: Props) {
+export function AttachmentGallery<T extends GalleryFile>({
+  files,
+  bucket = 'attachments',
+  tileCaption,
+  rowMeta,
+  onDelete,
+}: Props<T>) {
   const previews = files.filter((f) => isImageAttachment(f) || isPdfAttachment(f));
   const others = files.filter((f) => !isImageAttachment(f) && !isPdfAttachment(f));
-  const { data: urls = {} } = useSignedUrls(previews.map((f) => f.storage_path));
-  const [expanded, setExpanded] = useState<AttachmentRow | null>(null);
+  const { data: urls = {} } = useSignedUrls(previews.map((f) => f.storage_path), bucket);
+  const [expanded, setExpanded] = useState<T | null>(null);
 
   async function download(path: string) {
-    const { data } = await supabase.storage.from('attachments').createSignedUrl(path, 300);
+    const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener');
   }
 

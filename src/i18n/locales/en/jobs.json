@@ -42,5 +42,60 @@
     "empty_job": "No tasks yet for this job.",
     "created_by": "by",
     "resolved_by": "resolved by"
+  },
+  "client_intake": {
+    "title": "Client form",
+    "create": "Create form",
+    "status": {
+      "not_sent": "Not sent",
+      "sent": "Sent {{date}}",
+      "submitted": "Submitted {{date}}",
+      "complete": "Complete"
+    },
+    "expires": "expires {{date}}",
+    "send": "Send to client",
+    "resend": "Resend",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "regenerate": "Regenerate link",
+    "mark_complete": "Mark complete",
+    "reopen": "Reopen",
+    "no_email": "No client email on file",
+    "no_answers": "The client hasn't filled in the form yet.",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": {
+      "regenerate_title": "Regenerate the link?",
+      "regenerate_body": "The current link will stop working. Anyone who already has it won't be able to open the form.",
+      "complete_title": "Mark the form complete?",
+      "complete_body": "This locks the form so the client can no longer edit it. You can reopen it later.",
+      "send_title": "Send the form to the client?",
+      "send_body": "An email with the form link will be sent to {{email}}."
+    },
+    "missing": {
+      "label": "Missing",
+      "logo": "logo",
+      "files": "photos/files",
+      "description": "description",
+      "contact_email": "email",
+      "contact_phone": "phone",
+      "domain": "domain"
+    },
+    "sections": {
+      "contact": "Contact",
+      "description": "Description",
+      "website": "Website",
+      "logo": "Logo",
+      "files": "Client files"
+    },
+    "fields": {
+      "email": "Email",
+      "phone": "Phone",
+      "whatsapp": "WhatsApp",
+      "recommended_site": "Reference site",
+      "whatsapp_button": "WhatsApp button",
+      "domain": "Domain",
+      "suggestions": "Domain suggestions"
+    }
   }
 }

@@ -42,5 +42,60 @@
     "empty_job": "Δεν υπάρχουν ακόμα εργασίες.",
     "created_by": "από",
     "resolved_by": "επιλύθηκε από"
+  },
+  "client_intake": {
+    "title": "Φόρμα πελάτη",
+    "create": "Δημιουργία φόρμας",
+    "status": {
+      "not_sent": "Δεν στάλθηκε",
+      "sent": "Στάλθηκε {{date}}",
+      "submitted": "Υποβλήθηκε {{date}}",
+      "complete": "Ολοκληρωμένη"
+    },
+    "expires": "λήγει {{date}}",
+    "send": "Αποστολή στον πελάτη",
+    "resend": "Επαναποστολή",
+    "copy": "Αντιγραφή συνδέσμου",
+    "copied": "Αντιγράφηκε",
+    "regenerate": "Νέος σύνδεσμος",
+    "mark_complete": "Ολοκληρωμένη",
+    "reopen": "Επαναφορά",
+    "no_email": "Δεν υπάρχει email πελάτη",
+    "no_answers": "Ο πελάτης δεν έχει συμπληρώσει ακόμα τη φόρμα.",
+    "yes": "Ναι",
+    "no": "Όχι",
+    "confirm": {
+      "regenerate_title": "Δημιουργία νέου συνδέσμου;",
+      "regenerate_body": "Ο τρέχων σύνδεσμος θα πάψει να λειτουργεί. Όποιος τον έχει ήδη δεν θα μπορεί να ανοίξει τη φόρμα.",
+      "complete_title": "Σήμανση της φόρμας ως ολοκληρωμένη;",
+      "complete_body": "Η φόρμα κλειδώνει και ο πελάτης δεν θα μπορεί πλέον να την επεξεργαστεί. Μπορείτε να την επαναφέρετε αργότερα.",
+      "send_title": "Αποστολή της φόρμας στον πελάτη;",
+      "send_body": "Θα σταλεί email με τον σύνδεσμο της φόρμας στο {{email}}."
+    },
+    "missing": {
+      "label": "Λείπουν",
+      "logo": "λογότυπο",
+      "files": "φωτογραφίες/αρχεία",
+      "description": "περιγραφή",
+      "contact_email": "email",
+      "contact_phone": "τηλέφωνο",
+      "domain": "domain"
+    },
+    "sections": {
+      "contact": "Επικοινωνία",
+      "description": "Περιγραφή",
+      "website": "Ιστοσελίδα",
+      "logo": "Λογότυπο",
+      "files": "Αρχεία πελάτη"
+    },
+    "fields": {
+      "email": "Email",
+      "phone": "Τηλέφωνο",
+      "whatsapp": "WhatsApp",
+      "recommended_site": "Ιστοσελίδα αναφοράς",
+      "whatsapp_button": "Κουμπί WhatsApp",
+      "domain": "Domain",
+      "suggestions": "Προτάσεις domain"
+    }
   }
 }
