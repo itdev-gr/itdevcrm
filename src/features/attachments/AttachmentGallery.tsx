@@ -156,7 +156,7 @@ export function AttachmentGallery({ files, tileCaption, rowMeta, onDelete }: Pro
               <iframe
                 src={urls[expanded.storage_path]}
                 title={expanded.file_name}
-                className="h-[85vh] w-[90vw] max-w-4xl rounded-md bg-white"
+                className="h-[85vh] w-[90vw] rounded-md bg-white"
               />
             ) : (
               <img
