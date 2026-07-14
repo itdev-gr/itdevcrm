@@ -3,10 +3,10 @@ import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Paperclip, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
 import { useAttachments } from './hooks/useAttachments';
 import { useUploadAttachment } from './hooks/useUploadAttachment';
 import { useDeleteAttachment } from './hooks/useDeleteAttachment';
+import { AttachmentGallery } from './AttachmentGallery';
 
 type Props = {
   parentType: 'client' | 'deal' | 'job' | 'lead';
@@ -42,14 +42,6 @@ export function AttachmentsPanel({ parentType, parentId, hideKinds = [] }: Props
     } catch (err) {
       alert((err as Error).message);
     }
-  }
-
-  async function getDownloadUrl(path: string): Promise<string | null> {
-    const { data, error } = await supabase.storage
-      .from('attachments')
-      .createSignedUrl(path, 60 * 5);
-    if (error) return null;
-    return data?.signedUrl ?? null;
   }
 
   return (
@@ -108,42 +100,25 @@ export function AttachmentsPanel({ parentType, parentId, hideKinds = [] }: Props
       {list.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('attachments.empty')}</p>
       ) : (
-        <ul className="divide-y rounded-md border">
-          {list.map((a) => (
-            <li key={a.id} className="flex items-center justify-between px-4 py-2 text-sm">
-              <div>
-                <button
-                  className="text-blue-600 hover:underline"
-                  onClick={async () => {
-                    const url = await getDownloadUrl(a.storage_path);
-                    if (url) window.open(url, '_blank');
-                  }}
-                >
-                  {a.file_name}
-                </button>
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({(a.file_size ?? 0) > 0 ? `${Math.round((a.file_size ?? 0) / 1024)} KB` : ''})
-                  {' · '}
-                  {t(`attachments.kinds.${a.kind ?? 'other'}`)}
-                </span>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() =>
-                  void del.mutateAsync({
-                    id: a.id,
-                    storage_path: a.storage_path,
-                    parent_type: parentType,
-                    parent_id: parentId,
-                  })
-                }
-              >
-                ×
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <AttachmentGallery
+          files={list}
+          tileCaption={(a) => t(`attachments.kinds.${a.kind ?? 'other'}`)}
+          rowMeta={(a) => (
+            <span className="text-xs text-muted-foreground">
+              ({(a.file_size ?? 0) > 0 ? `${Math.round((a.file_size ?? 0) / 1024)} KB` : ''})
+              {' · '}
+              {t(`attachments.kinds.${a.kind ?? 'other'}`)}
+            </span>
+          )}
+          onDelete={(a) =>
+            void del.mutateAsync({
+              id: a.id,
+              storage_path: a.storage_path,
+              parent_type: parentType,
+              parent_id: parentId,
+            })
+          }
+        />
       )}
     </div>
   );

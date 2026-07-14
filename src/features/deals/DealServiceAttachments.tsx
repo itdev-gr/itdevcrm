@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Paperclip } from 'lucide-react';
 import { useDealServiceAttachments } from './hooks/useDealServiceAttachments';
 import { areaForKind, SERVICE_AREA_KINDS } from '@/features/attachments/serviceAreas';
-import { ServiceFileGallery } from '@/features/attachments/ServiceFileGallery';
+import { AttachmentGallery } from '@/features/attachments/AttachmentGallery';
 
 export function DealServiceAttachments({ dealId }: { dealId: string }) {
   const { t, i18n } = useTranslation('jobs');
@@ -25,7 +25,7 @@ export function DealServiceAttachments({ dealId }: { dealId: string }) {
               <div className="mb-1.5 text-xs font-semibold text-muted-foreground">
                 {lang === 'el' ? area.labelEl : area.labelEn}
               </div>
-              <ServiceFileGallery files={group} />
+              <AttachmentGallery files={group} />
             </div>
           );
         })}
