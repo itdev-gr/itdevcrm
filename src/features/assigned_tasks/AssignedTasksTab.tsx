@@ -49,11 +49,18 @@ function TaskRow({
 
   return (
     <li className={cn('border-t first:border-t-0', isNew && NEW_TASK_ROW)}>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         aria-label={task.title}
         onClick={() => onOpen(task.id)}
-        className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-muted"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen(task.id);
+          }
+        }}
+        className="flex w-full cursor-pointer items-start gap-3 px-3 py-3 text-left hover:bg-muted"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -101,7 +108,7 @@ function TaskRow({
             {t('assigned_tasks.resolve')}
           </Button>
         )}
-      </button>
+      </div>
     </li>
   );
 }

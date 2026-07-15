@@ -50,12 +50,19 @@ function Row({
   const resolve = useResolveAssignedTask();
   return (
     <li>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         aria-label={task.title}
         onClick={() => onOpen(task.id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen(task.id);
+          }
+        }}
         className={cn(
-          'flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5',
+          'flex w-full cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5',
           isNew && NEW_TASK_ROW,
         )}
       >
@@ -95,7 +102,7 @@ function Row({
             {t('assigned_tasks.resolve')}
           </Button>
         )}
-      </button>
+      </div>
     </li>
   );
 }
@@ -116,12 +123,19 @@ function PersonalRow({
   const dueLabel = formatDue(task.due_at, locale);
   return (
     <li>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         aria-label={task.title}
         onClick={() => onOpen(task)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen(task);
+          }
+        }}
         className={cn(
-          'flex w-full items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5',
+          'flex w-full cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-background px-3 py-3 text-left shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5',
           isNew && NEW_TASK_ROW,
         )}
       >
@@ -162,7 +176,7 @@ function PersonalRow({
             {t('assigned_tasks.resolve')}
           </Button>
         )}
-      </button>
+      </div>
     </li>
   );
 }
