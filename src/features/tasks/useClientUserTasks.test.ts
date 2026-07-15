@@ -20,7 +20,7 @@ const base = {
 
 describe('mapClientUserTasks', () => {
   it('maps rows to user TaskCards', () => {
-    const [card] = mapClientUserTasks([base], 'u1');
+    const card = mapClientUserTasks([base], 'u1')[0]!;
     expect(card.kind).toBe('user');
     expect(card.id).toBe('t1');
     expect(card.title).toBe('Call client');
@@ -30,10 +30,10 @@ describe('mapClientUserTasks', () => {
   });
 
   it('marks completed tasks resolved', () => {
-    const [card] = mapClientUserTasks(
+    const card = mapClientUserTasks(
       [{ ...base, completed_at: '2026-07-16T00:00:00Z' } as UserTaskRow],
       'u1',
-    );
+    )[0]!;
     expect(card.resolved).toBe(true);
   });
 });

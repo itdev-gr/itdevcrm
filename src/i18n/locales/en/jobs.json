@@ -38,6 +38,8 @@
     "create": "Create task",
     "resolve": "Resolve",
     "from_deal": "deal",
+    "section_client": "From this client",
+    "from_client": "client",
     "empty": "No tasks yet for this deal.",
     "empty_job": "No tasks yet for this job.",
     "created_by": "by",
