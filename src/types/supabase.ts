@@ -5633,9 +5633,11 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string | null
+          deal_id: string | null
           due_at: string
           id: string
           importance: string
+          job_id: string | null
           lead_id: string | null
           notes: string | null
           started_at: string | null
@@ -5648,9 +5650,11 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          deal_id?: string | null
           due_at: string
           id?: string
           importance?: string
+          job_id?: string | null
           lead_id?: string | null
           notes?: string | null
           started_at?: string | null
@@ -5663,9 +5667,11 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          deal_id?: string | null
           due_at?: string
           id?: string
           importance?: string
+          job_id?: string | null
           lead_id?: string | null
           notes?: string | null
           started_at?: string | null
@@ -5694,6 +5700,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_tasks_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tasks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_tasks_lead_id_fkey"
