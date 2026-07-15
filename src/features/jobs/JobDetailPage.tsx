@@ -63,6 +63,7 @@ import { useJobBillingRefCount } from './hooks/useJobBillingRefCount';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { cn } from '@/lib/utils';
+import { industryLabel } from '@/lib/industries';
 import { isNotAccessible } from '@/lib/notAccessibleError';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
@@ -486,6 +487,46 @@ export function JobDetailPage() {
                               {raw}
                             </a>
                           </dd>
+                        </div>
+                      );
+                    })()}
+                  {job.service_type === 'web_dev' &&
+                    (() => {
+                      const details = job.details ?? {};
+                      const fromDetails =
+                        typeof details.website === 'string' ? details.website.trim() : '';
+                      const fromClient = (job.client?.website ?? '').trim();
+                      const raw = fromDetails || fromClient;
+                      if (!raw) return null;
+                      const href = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+                      return (
+                        <div className="sm:col-span-2">
+                          <dt className="text-[11px] text-muted-foreground">Website</dt>
+                          <dd className="mt-0.5">
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="break-all text-sm font-medium text-primary hover:underline"
+                            >
+                              {raw}
+                            </a>
+                          </dd>
+                        </div>
+                      );
+                    })()}
+                  {job.service_type === 'web_dev' &&
+                    (() => {
+                      const details = job.details ?? {};
+                      const fromDetails =
+                        typeof details.industry === 'string' ? details.industry.trim() : '';
+                      const fromClient = (job.client?.industry ?? '').trim();
+                      const code = fromDetails || fromClient;
+                      if (!code) return null;
+                      return (
+                        <div>
+                          <dt className="text-[11px] text-muted-foreground">Industry</dt>
+                          <dd className="mt-0.5 text-sm font-medium">{industryLabel(code, lang)}</dd>
                         </div>
                       );
                     })()}
