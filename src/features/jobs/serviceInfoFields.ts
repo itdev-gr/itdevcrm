@@ -1,4 +1,7 @@
-export type InfoFieldType = 'url' | 'text' | 'textarea' | 'password';
+import { INDUSTRIES } from '@/lib/industries';
+
+export type InfoFieldType = 'url' | 'text' | 'textarea' | 'password' | 'select';
+export type InfoFieldOption = { value: string; labelEn: string; labelEl: string };
 export type InfoField = {
   key: string;
   labelEn: string;
@@ -6,6 +9,7 @@ export type InfoField = {
   type: InfoFieldType;
   section?: string;
   sharedWithDeal?: boolean;
+  options?: InfoFieldOption[];
 };
 
 const LOCAL: InfoField[] = [
@@ -24,7 +28,15 @@ const WEB_SEO: InfoField[] = [
   { key: 'seo_notes', labelEn: 'SEO Notes', labelEl: 'Σημειώσεις SEO', type: 'textarea', sharedWithDeal: true },
 ];
 
+const INDUSTRY_OPTIONS: InfoFieldOption[] = INDUSTRIES.map((i) => ({
+  value: i.code,
+  labelEn: i.labels.en,
+  labelEl: i.labels.el,
+}));
+
 const WEB_DEV: InfoField[] = [
+  { key: 'website', labelEn: 'Website', labelEl: 'Ιστοσελίδα', type: 'url' },
+  { key: 'industry', labelEn: 'Industry', labelEl: 'Κλάδος', type: 'select', options: INDUSTRY_OPTIONS },
   { key: 'webdev_notes', labelEn: 'Web Dev Notes', labelEl: 'Σημειώσεις Web Dev', type: 'textarea', sharedWithDeal: true },
   { key: 'hosting', labelEn: 'Hosting', labelEl: 'Hosting', type: 'text' },
   { key: 'supabase_name', labelEn: 'Supabase name', labelEl: 'Όνομα Supabase', type: 'text' },
@@ -73,6 +85,29 @@ export function sharedDealFields(
     const v = d[f.key];
     if (v == null || v === '') continue;
     out.push({ key: f.key, label: f.labelEn, type: f.type, value: String(v) });
+  }
+  return out;
+}
+
+/**
+ * Option list for a `select` Info field: a leading blank (empty = clear), then
+ * the field's options localized to `lang`, then a one-off "(legacy) <value>"
+ * entry when the stored value isn't a known option (so an odd/legacy value is
+ * never silently dropped — matches the fallback documented in industries.ts).
+ */
+export function selectOptions(
+  field: InfoField,
+  currentValue: string,
+  lang: 'en' | 'el',
+): { value: string; label: string }[] {
+  const opts = (field.options ?? []).map((o) => ({
+    value: o.value,
+    label: lang === 'el' ? o.labelEl : o.labelEn,
+  }));
+  const out = [{ value: '', label: '—' }, ...opts];
+  const cur = currentValue.trim();
+  if (cur !== '' && !opts.some((o) => o.value === cur)) {
+    out.push({ value: cur, label: `(legacy) ${cur}` });
   }
   return out;
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { infoFieldsFor, sharedDealFields, SERVICE_INFO_FIELDS } from './serviceInfoFields';
+import { infoFieldsFor, sharedDealFields, selectOptions, SERVICE_INFO_FIELDS } from './serviceInfoFields';
+import { INDUSTRIES } from '@/lib/industries';
 
 describe('SERVICE_INFO_FIELDS', () => {
   it('ai_seo combines local + web seo with distinct keys', () => {
@@ -10,10 +11,18 @@ describe('SERVICE_INFO_FIELDS', () => {
     ]);
     expect(new Set(keys).size).toBe(keys.length);
   });
-  it('web_dev has its six fields', () => {
+  it('web_dev leads with website + industry then its six base fields', () => {
     expect(infoFieldsFor('web_dev').map((f) => f.key)).toEqual([
-      'webdev_notes', 'hosting', 'supabase_name', 'temp_url', 'live_url', 'email',
+      'website', 'industry', 'webdev_notes', 'hosting', 'supabase_name', 'temp_url', 'live_url', 'email',
     ]);
+  });
+  it('web_dev industry is a select backed by INDUSTRIES', () => {
+    const industry = infoFieldsFor('web_dev').find((f) => f.key === 'industry');
+    expect(industry?.type).toBe('select');
+    expect(industry?.options?.map((o) => o.value)).toEqual(INDUSTRIES.map((i) => i.code));
+  });
+  it('web_dev website is a url field', () => {
+    expect(infoFieldsFor('web_dev').find((f) => f.key === 'website')?.type).toBe('url');
   });
   it('ads has a single notes field shared with the deal', () => {
     const fields = infoFieldsFor('ads');
@@ -41,5 +50,27 @@ describe('sharedDealFields', () => {
     expect(sharedDealFields('ads', { ads_notes: 'campaign paused' }).map((f) => f.key)).toEqual([
       'ads_notes',
     ]);
+  });
+});
+
+describe('selectOptions', () => {
+  const industry = infoFieldsFor('web_dev').find((f) => f.key === 'industry')!;
+
+  it('leads with a blank option and localizes labels', () => {
+    const en = selectOptions(industry, '', 'en');
+    expect(en[0]).toEqual({ value: '', label: '—' });
+    expect(en[1]).toEqual({ value: 'technology', label: 'Technology / IT' });
+    const el = selectOptions(industry, '', 'el');
+    expect(el[1]).toEqual({ value: 'technology', label: 'Τεχνολογία / IT' });
+  });
+
+  it('keeps an unknown/legacy value as a one-off trailing option', () => {
+    const out = selectOptions(industry, 'agriculture', 'en');
+    expect(out.at(-1)).toEqual({ value: 'agriculture', label: '(legacy) agriculture' });
+  });
+
+  it('adds no legacy option for a known or empty value', () => {
+    expect(selectOptions(industry, 'retail', 'en').some((o) => o.label.startsWith('(legacy)'))).toBe(false);
+    expect(selectOptions(industry, '', 'en').some((o) => o.label.startsWith('(legacy)'))).toBe(false);
   });
 });
