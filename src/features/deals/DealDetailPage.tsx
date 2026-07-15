@@ -396,7 +396,7 @@ export function DealDetailPage() {
         </TabsContent>
         <TabsContent value="tasks" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
           <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-            <AssignedTasksTab source={{ kind: 'deal', id: dealId }} />
+            <AssignedTasksTab source={{ kind: 'deal', id: dealId }} clientId={deal.client_id ?? undefined} />
           </div>
         </TabsContent>
         <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">

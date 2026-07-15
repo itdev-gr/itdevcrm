@@ -14,6 +14,7 @@ import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 import { useTasksSeenStore } from '@/features/tasks/tasksSeenStore';
 import { isTaskHighlighted, HIGHLIGHT_WINDOW_DAYS } from '@/features/tasks/taskHighlight';
 import { NEW_TASK_ROW, NewTaskDot } from '@/features/tasks/taskHighlightStyle';
+import { ClientLinkedTasksSection } from '@/features/tasks/ClientLinkedTasksSection';
 import type { AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 
 const EMPTY_OPENED: Record<string, true> = {};
@@ -23,6 +24,7 @@ type Props = {
   deptMatch?: { dealId: string; departmentGroupId: string };
   initialOpenTaskId?: string;
   onInitialOpenConsumed?: () => void;
+  clientId?: string;
 };
 
 function TaskRow({
@@ -104,7 +106,7 @@ function TaskRow({
   );
 }
 
-export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId, onInitialOpenConsumed }: Props) {
+export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId, onInitialOpenConsumed, clientId }: Props) {
   const { t } = useTranslation('jobs');
   useAssignedTasksRealtime();
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -190,6 +192,8 @@ export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId, onIniti
           ))}
         </ul>
       )}
+
+      {clientId && <ClientLinkedTasksSection clientId={clientId} />}
 
       <NewAssignedTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} source={source} />
       <AssignedTaskDetailDialog

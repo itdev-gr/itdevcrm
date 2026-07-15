@@ -628,6 +628,7 @@ export function JobDetailPage() {
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
             <AssignedTasksTab
               source={{ kind: 'job', id: job.id }}
+              clientId={job.client_id}
               {...(initialOpenTaskId ? { initialOpenTaskId } : {})}
               onInitialOpenConsumed={handleInitialOpenConsumed}
               {...(groupIdForServiceType(groups, job.service_type)
