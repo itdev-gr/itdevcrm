@@ -91,7 +91,7 @@ export function sharedDealFields(
 
 /**
  * Option list for a `select` Info field: a leading blank (empty = clear), then
- * the field's options localized to `lang`, then a one-off "(legacy) <value>"
+ * the field's options localized to `lang`, then a one-off "<value> (legacy)"
  * entry when the stored value isn't a known option (so an odd/legacy value is
  * never silently dropped — matches the fallback documented in industries.ts).
  */
