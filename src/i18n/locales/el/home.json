@@ -27,7 +27,10 @@
     "confirm_delete": "Διαγραφή αυτής της εργασίας;",
     "dialog_description": "Δημιουργία ή επεξεργασία εργασίας ημερολογίου.",
     "assignee": "Ανάθεση σε",
-    "assignee_me": "Εμένα"
+    "assignee_me": "Εμένα",
+    "deal": "Συμφωνία",
+    "job": "Έργο",
+    "target_none": "— κανένα —"
   },
   "assigned_tasks": {
     "title": "Ανατεθειμένα σε εμένα",

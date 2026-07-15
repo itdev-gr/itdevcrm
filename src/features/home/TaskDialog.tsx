@@ -23,6 +23,8 @@ import { importanceOf, type ImportanceCode } from '@/features/tasks/importance';
 import { ClientPicker, type PickedClient } from '@/features/clients/ClientPicker';
 import { ClientOpenTasksList } from '@/features/tasks/ClientOpenTasksList';
 import { LeadPicker, type PickedLead } from '@/features/leads/LeadPicker';
+import { useClientDealOptions } from '@/features/deals/hooks/useClientDealOptions';
+import { useJobsForDeal } from '@/features/jobs/hooks/useJobsForDeal';
 import { taskLinkMode, filterTaskAssignees } from './taskDialogRules';
 
 type Props = {
@@ -63,7 +65,13 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
   const [importance, setImportance] = useState<ImportanceCode | ''>('');
   const [client, setClient] = useState<PickedClient | null>(null);
   const [lead, setLead] = useState<PickedLead | null>(null);
+  const [dealId, setDealId] = useState('');
+  const [jobId, setJobId] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Optional deal/job target (client mode). Deals scoped to the client; jobs to the deal.
+  const { data: dealOptions = [] } = useClientDealOptions(client?.id);
+  const { data: jobOptions = [] } = useJobsForDeal(dealId);
 
   const mode = taskLinkMode({
     isSales,
@@ -86,6 +94,8 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
       setImportance(importanceOf(task));
       setClient(task.client_id ? { id: task.client_id, name: '' } : null);
       setLead(task.lead_id ? { id: task.lead_id, name: '' } : null);
+      setDealId(task.deal_id ?? '');
+      setJobId(task.job_id ?? '');
     } else {
       setTitle('');
       setNotes('');
@@ -95,6 +105,8 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
       setImportance('');
       setClient(defaultClient ?? null);
       setLead(defaultLead ?? null);
+      setDealId('');
+      setJobId('');
     }
   }, [open, task, defaultDueAt, defaultClient, defaultLead, userId]);
 
@@ -110,8 +122,13 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
       importance,
       completed_at: completed ? task?.completed_at ?? new Date().toISOString() : null,
       ...(mode === 'lead'
-        ? { lead_id: lead?.id ?? null, client_id: null }
-        : { client_id: client?.id ?? null, lead_id: null }),
+        ? { lead_id: lead?.id ?? null, client_id: null, deal_id: null, job_id: null }
+        : {
+            client_id: client?.id ?? null,
+            lead_id: null,
+            deal_id: client ? dealId || null : null,
+            job_id: client ? jobId || null : null,
+          }),
     };
     await upsert.mutateAsync(task?.id ? { ...payload, id: task.id } : payload);
     onOpenChange(false);
@@ -189,7 +206,55 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
             <LeadPicker value={lead} onChange={setLead} id="task-lead" />
           ) : (
             <div className="space-y-2">
-              <ClientPicker value={client} onChange={setClient} id="task-client" />
+              <ClientPicker
+                value={client}
+                onChange={(c) => {
+                  setClient(c);
+                  setDealId('');
+                  setJobId('');
+                }}
+                id="task-client"
+              />
+              {client && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="task-deal">{t('task.deal', { defaultValue: 'Deal' })}</Label>
+                    <select
+                      id="task-deal"
+                      value={dealId}
+                      onChange={(e) => {
+                        setDealId(e.target.value);
+                        setJobId('');
+                      }}
+                      className="block h-9 w-full rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
+                    >
+                      <option value="">{t('task.target_none', { defaultValue: '— none —' })}</option>
+                      {dealOptions.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.code ? `${d.code} · ${d.title ?? ''}` : d.title ?? d.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="task-job">{t('task.job', { defaultValue: 'Job' })}</Label>
+                    <select
+                      id="task-job"
+                      value={jobId}
+                      disabled={!dealId}
+                      onChange={(e) => setJobId(e.target.value)}
+                      className="block h-9 w-full rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-colors focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20 disabled:opacity-50"
+                    >
+                      <option value="">{t('task.target_none', { defaultValue: '— none —' })}</option>
+                      {jobOptions.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {j.code ?? j.service_type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
               {!isEdit && client && <ClientOpenTasksList clientId={client.id} />}
             </div>
           )}

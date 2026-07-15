@@ -16,6 +16,8 @@ type Input = {
   completed_at?: string | null;
   client_id?: string | null;
   lead_id?: string | null;
+  deal_id?: string | null;
+  job_id?: string | null;
 };
 
 export function useUpsertTask() {
@@ -35,6 +37,8 @@ export function useUpsertTask() {
           ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
           ...(input.client_id !== undefined ? { client_id: input.client_id } : {}),
           ...(input.lead_id !== undefined ? { lead_id: input.lead_id } : {}),
+          ...(input.deal_id !== undefined ? { deal_id: input.deal_id } : {}),
+          ...(input.job_id !== undefined ? { job_id: input.job_id } : {}),
         };
         if (input.id) {
           const { data, error } = await supabase

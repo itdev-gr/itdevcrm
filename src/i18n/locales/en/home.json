@@ -27,7 +27,10 @@
     "confirm_delete": "Delete this task?",
     "dialog_description": "Create or edit a calendar task.",
     "assignee": "Assign to",
-    "assignee_me": "Me"
+    "assignee_me": "Me",
+    "deal": "Deal",
+    "job": "Job",
+    "target_none": "— none —"
   },
   "assigned_tasks": {
     "title": "Assigned to me",
