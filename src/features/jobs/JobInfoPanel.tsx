@@ -1,12 +1,28 @@
 import { useState } from 'react';
-import { infoFieldsFor, type InfoField } from './serviceInfoFields';
+import { useTranslation } from 'react-i18next';
+import { infoFieldsFor, selectOptions, type InfoField } from './serviceInfoFields';
 import { useUpdateJobDetails } from './hooks/useUpdateJobDetails';
 import { useAutoSave } from '@/lib/autosave';
 
 function FieldInput({
-  field, value, onChange,
-}: { field: InfoField; value: string; onChange: (v: string) => void }) {
+  field, value, onChange, lang,
+}: { field: InfoField; value: string; onChange: (v: string) => void; lang: 'en' | 'el' }) {
   const [reveal, setReveal] = useState(false);
+  if (field.type === 'select') {
+    return (
+      <select
+        className="w-full rounded border px-2 py-1 text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {selectOptions(field, value, lang).map((o) => (
+          <option key={o.value || '__blank'} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
   if (field.type === 'textarea') {
     return (
       <textarea className="w-full rounded border px-2 py-1 text-sm" rows={4}
@@ -34,6 +50,8 @@ function FieldInput({
 export function JobInfoPanel({
   jobId, serviceType, initialDetails,
 }: { jobId: string; serviceType: string; initialDetails: Record<string, unknown> }) {
+  const { i18n } = useTranslation();
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const fields = infoFieldsFor(serviceType);
   const [values, setValues] = useState<Record<string, string>>(() => {
     const v: Record<string, string> = {};
@@ -52,7 +70,7 @@ export function JobInfoPanel({
           {fields.filter((f) => (f.section ?? '') === section).map((f) => (
             <div key={f.key}>
               <label className="mb-1 block text-xs text-muted-foreground">{f.labelEn}</label>
-              <FieldInput field={f} value={values[f.key] ?? ''}
+              <FieldInput field={f} value={values[f.key] ?? ''} lang={lang}
                 onChange={(val) => setValues((p) => ({ ...p, [f.key]: val }))} />
             </div>
           ))}
