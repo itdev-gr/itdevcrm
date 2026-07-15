@@ -107,7 +107,7 @@ export function selectOptions(
   const out = [{ value: '', label: '—' }, ...opts];
   const cur = currentValue.trim();
   if (cur !== '' && !opts.some((o) => o.value === cur)) {
-    out.push({ value: cur, label: `(legacy) ${cur}` });
+    out.push({ value: cur, label: `${cur} (legacy)` });
   }
   return out;
 }

@@ -66,11 +66,11 @@ describe('selectOptions', () => {
 
   it('keeps an unknown/legacy value as a one-off trailing option', () => {
     const out = selectOptions(industry, 'agriculture', 'en');
-    expect(out.at(-1)).toEqual({ value: 'agriculture', label: '(legacy) agriculture' });
+    expect(out.at(-1)).toEqual({ value: 'agriculture', label: 'agriculture (legacy)' });
   });
 
   it('adds no legacy option for a known or empty value', () => {
-    expect(selectOptions(industry, 'retail', 'en').some((o) => o.label.startsWith('(legacy)'))).toBe(false);
-    expect(selectOptions(industry, '', 'en').some((o) => o.label.startsWith('(legacy)'))).toBe(false);
+    expect(selectOptions(industry, 'retail', 'en').some((o) => o.label.includes('(legacy)'))).toBe(false);
+    expect(selectOptions(industry, '', 'en').some((o) => o.label.includes('(legacy)'))).toBe(false);
   });
 });
