@@ -7,11 +7,17 @@ import { useClientUserTasks, partitionClientTasks } from './useClientUserTasks';
 import type { TaskCard } from './taskCard';
 
 /** Read-only surfacing of a client's personal (user_tasks) tasks on the deal/job
- *  Tasks tabs. Renders nothing when the client has no visible user tasks. */
-export function ClientLinkedTasksSection({ clientId }: { clientId: string }) {
+ *  Tasks tabs, scoped to the current deal/job. Renders nothing when there are none. */
+export function ClientLinkedTasksSection({
+  clientId,
+  source,
+}: {
+  clientId: string;
+  source: { kind: 'deal' | 'job'; id: string };
+}) {
   const { t } = useTranslation('jobs');
   const meId = useAuthStore((s) => s.user?.id ?? '');
-  const { cards } = useClientUserTasks(clientId, meId);
+  const { cards } = useClientUserTasks(clientId, meId, source);
   const [openCard, setOpenCard] = useState<TaskCard | null>(null);
   const { open, resolved } = partitionClientTasks(cards);
 

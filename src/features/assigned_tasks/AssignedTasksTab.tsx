@@ -193,7 +193,7 @@ export function AssignedTasksTab({ source, deptMatch, initialOpenTaskId, onIniti
         </ul>
       )}
 
-      {clientId && <ClientLinkedTasksSection clientId={clientId} />}
+      {clientId && <ClientLinkedTasksSection clientId={clientId} source={source} />}
 
       <NewAssignedTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} source={source} />
       <AssignedTaskDetailDialog

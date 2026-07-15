@@ -21,12 +21,30 @@ export function partitionClientTasks(cards: TaskCard[]): {
   };
 }
 
-/** A client's personal (user_tasks) tasks, mapped to cards, for surfacing on the
- *  deal/job Tasks tabs. Bounded by user_tasks RLS (owner/creator/admin). */
-export function useClientUserTasks(clientId: string | undefined, meId: string) {
+/** Scope a client's user_tasks to a deal/job tab. Untargeted tasks (deal_id AND
+ *  job_id null) are client-level → show everywhere; a task with a deal_id shows on
+ *  that deal (its job-targeted tasks carry the parent deal_id too, so they appear on
+ *  the deal as well); a task with a job_id shows on that job. Pure. */
+export function filterUserTasksForSource(
+  rows: UserTaskRow[],
+  source: { kind: 'deal' | 'job'; id: string },
+): UserTaskRow[] {
+  return rows.filter((r) => {
+    if (r.deal_id == null && r.job_id == null) return true; // client-level
+    return source.kind === 'deal' ? r.deal_id === source.id : r.job_id === source.id;
+  });
+}
+
+/** A client's personal (user_tasks) tasks, scoped to a deal/job tab and mapped to
+ *  cards. Bounded by user_tasks RLS (owner/creator/admin). */
+export function useClientUserTasks(
+  clientId: string | undefined,
+  meId: string,
+  source: { kind: 'deal' | 'job'; id: string },
+) {
   const qc = useQueryClient();
   const query = useQuery<TaskCard[]>({
-    queryKey: queryKeys.clientUserTasks(clientId ?? ''),
+    queryKey: [...queryKeys.clientUserTasks(clientId ?? ''), source.kind, source.id],
     enabled: !!clientId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -35,7 +53,8 @@ export function useClientUserTasks(clientId: string | undefined, meId: string) {
         .eq('client_id', clientId!)
         .order('due_at', { ascending: true });
       if (error) throw new Error(error.message);
-      return mapClientUserTasks((data ?? []) as UserTaskRow[], meId);
+      const scoped = filterUserTasksForSource((data ?? []) as UserTaskRow[], source);
+      return mapClientUserTasks(scoped, meId);
     },
   });
 
