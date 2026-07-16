@@ -151,7 +151,10 @@ begin
     v_other := case when v_is_creator then v_assignee else v_creator end;
     insert into notifications (user_id, type, payload) values (v_other, 'task_confirm_pending',
       jsonb_build_object('task_kind', p_kind || '_task', 'task_id', p_task_id, 'title', v_title,
-                         'author_id', v_uid, 'source_code', v_source,
+                         'author_id', v_uid,
+                         'author_name', (select coalesce(nullif(trim(p.full_name), ''), p.email)
+                                           from profiles p where p.user_id = v_uid),
+                         'source_code', v_source,
                          'parent_type', v_ptype, 'parent_id', v_pid));
   end if;
 
