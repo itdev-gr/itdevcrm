@@ -30,6 +30,7 @@ begin
       from public.user_groups ug
       join public.profiles p on p.user_id = ug.user_id
      where ug.group_id = new.assigned_group_id
+       and p.is_active
        and p.email is not null and p.email <> ''
        and p.user_id <> coalesce(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
   loop
@@ -42,7 +43,8 @@ begin
         'service_type', new.service_type,
         'client_name', v_client_name,
         'target_job_id', new.id,
-        'parent_type', 'job'
+        'parent_type', 'job',
+        'parent_id', new.id
       )
     );
   end loop;
