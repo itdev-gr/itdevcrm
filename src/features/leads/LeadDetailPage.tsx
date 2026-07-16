@@ -16,6 +16,8 @@ import { useMoveLeadStage } from './hooks/useMoveLeadStage';
 import { useAssignableOwners } from './hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
+import { useSalesBoardSortStore } from '@/features/sales/salesBoardSortStore';
+import { orderForSort, pickNextId } from '@/features/sales/salesKanbanColumns';
 import { useDeleteLeads } from './hooks/useDeleteLeads';
 import { isNotAccessible } from '@/lib/notAccessibleError';
 import { isLeadDeletable } from './leadDeletable';
@@ -54,38 +56,28 @@ function LeadDetailContent() {
   const del = useDeleteLeads();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const newLeadStageId = stages.find(
-    (s) => s.board === 'sales' && s.code === 'new_lead' && !s.archived,
-  )?.id;
+  // "Next" walks the current lead's own kanban column, following the user's
+  // saved board sort — so it matches the board top-to-bottom. RLS scopes reps
+  // to their own leads; admins iterate the whole column.
+  const sortBy = useSalesBoardSortStore((s) => (userId ? s.byUser[userId] ?? 'newest' : 'newest'));
 
-  const nextNewLead = useQuery({
-    queryKey: ['next-new-lead', userId, newLeadStageId, leadId] as const,
+  const nextInStage = useQuery({
+    queryKey: ['next-in-stage', lead?.stage_id, sortBy, leadId] as const,
     queryFn: async (): Promise<string | null> => {
-      if (!newLeadStageId || !userId) return null;
+      if (!lead?.stage_id) return null;
+      const order = orderForSort(sortBy);
       const { data, error: e } = await supabase
         .from('leads')
-        .select('id, created_at')
-        .eq('owner_user_id', userId)
-        .eq('stage_id', newLeadStageId)
+        .select('id')
+        .eq('stage_id', lead.stage_id)
         .eq('archived', false)
         .is('converted_at', null)
-        .order('created_at', { ascending: true });
+        .order(order.column, { ascending: order.ascending })
+        .order('id', { ascending: true }); // byte-identical to the column query
       if (e) throw new Error(e.message);
-      const list = data ?? [];
-      if (list.length === 0) return null;
-      // Pick the next chronologically-after-current lead, otherwise wrap
-      // around to the first one that isn't this one. With this, "Next new
-      // lead" always lands on a different lead when the user has more than
-      // one assigned — instead of false-claiming "no more" when they're
-      // viewing the most recent of their queue.
-      const idx = list.findIndex((l) => l.id === leadId);
-      if (idx === -1) return list[0]?.id ?? null;
-      const after = list[idx + 1];
-      if (after) return after.id;
-      const wrapAround = list.find((l) => l.id !== leadId);
-      return wrapAround?.id ?? null;
+      return pickNextId(data ?? [], leadId);
     },
-    enabled: !!userId && !!newLeadStageId,
+    enabled: !!lead?.stage_id,
     staleTime: 30_000,
   });
 
@@ -140,7 +132,12 @@ function LeadDetailContent() {
     .filter((s) => s.board === 'sales' && !s.archived)
     .sort((a, b) => a.position - b.position);
   const wonStage = salesStages.find((s) => s.code === 'won');
-  const currentStageCode = salesStages.find((s) => s.id === lead.stage_id)?.code;
+  const currentStage = salesStages.find((s) => s.id === lead.stage_id);
+  const currentStageCode = currentStage?.code;
+  const stageName =
+    (currentStage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
+    currentStage?.code ??
+    '';
   const offerDraft = buildOfferDraft(
     lead.contact_first_name || lead.company_name || '',
     latestOffer.data ? `${window.location.origin}/offers/${latestOffer.data}` : window.location.origin,
@@ -278,14 +275,14 @@ function LeadDetailContent() {
               variant="outline"
               size="sm"
               className="h-7 px-2.5 text-xs"
-              onClick={() => nextNewLead.data && navigate(`/leads/${nextNewLead.data}`)}
-              disabled={!nextNewLead.data || nextNewLead.isLoading}
+              onClick={() => nextInStage.data && navigate(`/leads/${nextInStage.data}`)}
+              disabled={!nextInStage.data || nextInStage.isLoading}
             >
-              {nextNewLead.isLoading
+              {nextInStage.isLoading
                 ? '…'
-                : nextNewLead.data
-                  ? t('actions.next_new_lead')
-                  : t('actions.no_more_new_leads')}
+                : nextInStage.data
+                  ? t('actions.next_in_stage', { stage: stageName })
+                  : t('actions.no_more_in_stage', { stage: stageName })}
             </Button>
             {isAdmin &&
               isLeadDeletable({ converted_at: lead.converted_at, stage: { code: currentStageCode ?? null } }) && (

@@ -69,8 +69,8 @@
     "cancel": "Άκυρο",
     "archive": "Αρχειοθέτηση",
     "convert": "Μετατροπή σε πελάτη",
-    "next_new_lead": "Επόμενη νέα επαφή →",
-    "no_more_new_leads": "Δεν υπάρχουν άλλες νέες επαφές",
+    "next_in_stage": "Επόμενο: {{stage}} →",
+    "no_more_in_stage": "Δεν υπάρχουν άλλα σε: {{stage}}",
     "move_to": "Μετακίνηση σε"
   },
   "owner": {

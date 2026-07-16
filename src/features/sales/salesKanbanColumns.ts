@@ -21,6 +21,21 @@ export function orderForSort(sortBy: SortBy): { column: string; ascending: boole
   }
 }
 
+// Given a column's leads in board order, pick the id to navigate to after the
+// current one. Following item when there is one; wrap to the first *other* item
+// when current is last; first item when current isn't in the list; null when the
+// list is empty or holds only the current lead. So "Next" always lands on a
+// different lead when the column has more than one — never false-claims "no more".
+export function pickNextId(ids: { id: string }[], currentId: string): string | null {
+  if (ids.length === 0) return null;
+  const idx = ids.findIndex((l) => l.id === currentId);
+  if (idx === -1) return ids[0]?.id ?? null;
+  const after = ids[idx + 1];
+  if (after) return after.id;
+  const wrapAround = ids.find((l) => l.id !== currentId);
+  return wrapAround?.id ?? null;
+}
+
 // PostgREST `or=` clause for the kanban search box; null when the term is empty.
 // Strips characters that would break the filter grammar (`%` `,` `(` `)`).
 export function searchOrClause(search: string): string | null {

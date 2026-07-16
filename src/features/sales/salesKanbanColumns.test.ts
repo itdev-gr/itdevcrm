@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { KANBAN_PAGE_SIZE, orderForSort, searchOrClause } from './salesKanbanColumns';
+import { KANBAN_PAGE_SIZE, orderForSort, pickNextId, searchOrClause } from './salesKanbanColumns';
 
 describe('salesKanbanColumns', () => {
   it('maps every sort option to a server order clause', () => {
@@ -24,5 +24,29 @@ describe('salesKanbanColumns', () => {
 
   it('uses a 50-lead page size', () => {
     expect(KANBAN_PAGE_SIZE).toBe(50);
+  });
+});
+
+describe('pickNextId', () => {
+  const list = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+  it('returns the following item when current is in the middle', () => {
+    expect(pickNextId(list, 'b')).toBe('c');
+  });
+
+  it('wraps to the first other item when current is last', () => {
+    expect(pickNextId(list, 'c')).toBe('a');
+  });
+
+  it('returns the first item when current is not in the list', () => {
+    expect(pickNextId(list, 'x')).toBe('a');
+  });
+
+  it('returns null when the list holds only the current item', () => {
+    expect(pickNextId([{ id: 'a' }], 'a')).toBeNull();
+  });
+
+  it('returns null for an empty list', () => {
+    expect(pickNextId([], 'a')).toBeNull();
   });
 });

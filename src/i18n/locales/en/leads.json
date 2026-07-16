@@ -69,8 +69,8 @@
     "cancel": "Cancel",
     "archive": "Archive",
     "convert": "Convert to client",
-    "next_new_lead": "Next new lead →",
-    "no_more_new_leads": "No more new leads",
+    "next_in_stage": "Next {{stage}} →",
+    "no_more_in_stage": "No more in {{stage}}",
     "move_to": "Move to"
   },
   "owner": {
