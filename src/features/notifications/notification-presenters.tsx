@@ -1,4 +1,4 @@
-import { AlertTriangle, AtSign, Bell, CheckCircle2, MessageSquare, PlayCircle } from 'lucide-react';
+import { AlertTriangle, AtSign, Bell, Briefcase, CheckCircle2, MessageSquare, PlayCircle } from 'lucide-react';
 import { relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
@@ -78,6 +78,8 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
       return <MessageSquare className={cn(iconClass, 'text-blue-600 dark:text-blue-400')} />;
     case 'task_started':
       return <PlayCircle className={cn(iconClass, 'text-cyan-600 dark:text-cyan-400')} />;
+    case 'job_created':
+      return <Briefcase className={cn(iconClass, 'text-indigo-600 dark:text-indigo-400')} />;
     case 'payment_integrity_alert':
     case 'payment_overdue':
       return <AlertTriangle className={cn(iconClass, 'text-red-600 dark:text-red-400')} />;
@@ -221,6 +223,26 @@ export function CompactNotificationContent({
           )}
         </p>
         {title && <p className="mt-0.5 truncate text-muted-foreground">{title}</p>}
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'job_created') {
+    const service = readString(payload, 'service_type');
+    const client = readString(payload, 'client_name');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          New job
+          {client && (
+            <>
+              {' '}
+              for <span className="font-semibold">{client}</span>
+            </>
+          )}
+        </p>
+        {service && <p className="mt-0.5 truncate text-muted-foreground">{service}</p>}
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
     );
