@@ -1,4 +1,5 @@
 import { withSentry } from './_sentry.js';
+import { secretMatches } from './_secret.js';
 // api/pbx-lookup.ts
 // Public caller-ID lookup for the Yeastar PBX.
 //   GET /api/pbx-lookup?phone=<callerID>&key=<secret>
@@ -48,8 +49,11 @@ function toYeastarContact(row: ContactRow, appBase: string) {
 
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const secret = process.env.PBX_LOOKUP_SECRET;
+  // Prefer the X-PBX-Secret header; ?key= stays for back-compat with existing
+  // PBX config (reconfigure it to the header to stop leaking the key into
+  // logs/Referer, then query support can be dropped). Constant-time compare.
   const provided = String(req.headers['x-pbx-secret'] ?? req.query.key ?? '');
-  if (!secret || provided.length !== secret.length || provided !== secret) {
+  if (!secretMatches(provided, secret)) {
     res.status(401).json({ error: 'unauthorized' });
     return;
   }

@@ -1,4 +1,5 @@
 import { withSentry } from './_sentry.js';
+import { secretMatches } from './_secret.js';
 // api/meta-lead.ts
 // Public Meta lead-ad ingestion. Zapier sends each lead here (GET with query
 // params, or POST with a JSON body — both supported).
@@ -161,8 +162,11 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const data: Record<string, unknown> = { ...(req.query as Record<string, unknown>), ...bodyObj };
 
   const secret = process.env.META_LEAD_SECRET;
+  // Prefer the X-Meta-Secret header; ?key= stays for back-compat with the
+  // existing Zapier config (move it to the header to stop leaking the key,
+  // then query support can be dropped). Constant-time compare.
   const provided = String(req.headers['x-meta-secret'] ?? data.key ?? '');
-  if (!secret || provided.length !== secret.length || provided !== secret) {
+  if (!secretMatches(provided, secret)) {
     res.status(401).json({ error: 'unauthorized' });
     return;
   }
