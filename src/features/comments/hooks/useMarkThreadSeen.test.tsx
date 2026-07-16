@@ -33,13 +33,14 @@ describe('useMarkThreadSeen', () => {
   it('upserts my last_seen row for a deal channel once the thread has loaded', async () => {
     renderHook(() => useMarkThreadSeen('deal_ads', 'D1', '2026-07-16T10:00:00Z'), { wrapper });
     await waitFor(() => expect(upserts).toHaveLength(1));
-    expect(upserts[0].table).toBe('comment_thread_reads');
-    expect(upserts[0].row).toMatchObject({
+    const first = upserts[0];
+    expect(first?.table).toBe('comment_thread_reads');
+    expect(first?.row).toMatchObject({
       user_id: 'me',
       parent_type: 'deal_ads',
       parent_id: 'D1',
     });
-    expect(typeof upserts[0].row.last_seen_at).toBe('string');
+    expect(typeof first?.row.last_seen_at).toBe('string');
   });
 
   it('does nothing while the thread is still loading (newestKey null)', async () => {

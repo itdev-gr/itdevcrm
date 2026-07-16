@@ -42,6 +42,7 @@ export function useDealCommentUnread(dealId: string, tabs: ChannelTab[]) {
       const latestByTab: Partial<Record<ChannelTab, LatestComment | null>> = {};
       tabs.forEach((tab, i) => {
         const res = latest[i];
+        if (!res) return;
         if (res.error) throw new Error(res.error.message);
         latestByTab[tab] = (res.data as LatestComment | null) ?? null;
       });
