@@ -21,6 +21,11 @@ export const queryKeys = {
   dealEmails: (dealId: string) => ['deal-emails', dealId] as const,
   jobsForClient: (clientId: string) => ['jobs', 'client', clientId] as const,
   comments: (parentType: string, parentId: string) => ['comments', parentType, parentId] as const,
+  // Prefix key: mark-seen invalidates by (dealId); the query itself also keys
+  // on the visible tab set so a jobs change refetches with the right threads.
+  dealCommentUnread: (dealId: string) => ['deal-comment-unread', dealId] as const,
+  dealCommentUnreadFor: (dealId: string, tabsKey: string) =>
+    ['deal-comment-unread', dealId, tabsKey] as const,
   taskComments: (kind: 'user' | 'assigned', taskId: string) =>
     ['task-comments', kind, taskId] as const,
   attachments: (parentType: string, parentId: string) =>
