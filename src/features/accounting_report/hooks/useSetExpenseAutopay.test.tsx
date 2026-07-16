@@ -36,17 +36,18 @@ describe('useSetExpenseAutopay', () => {
     });
   });
 
-  it('passes null payment method when omitted (disable path)', async () => {
+  it('omits the payment method when not provided (disable path)', async () => {
     const { result } = renderHook(() => useSetExpenseAutopay(), {
       wrapper: ({ children }) => wrap(children),
     });
     await act(async () => {
       await result.current.mutateAsync({ id: 'e1', enabled: false });
     });
+    // Regenerated RPC types take an optional arg: the key is omitted and the
+    // server default (null) applies, same behavior as the old explicit null.
     expect(rpc).toHaveBeenCalledWith('set_expense_autopay', {
       p_expense_id: 'e1',
       p_enabled: false,
-      p_payment_method: null,
     });
   });
 
