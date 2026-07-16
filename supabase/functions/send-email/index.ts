@@ -44,10 +44,15 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
   const { identity, to, templateKey, data = {}, dedupeKey = null } = input;
   const userCc = parseRecipientList(input.cc) ?? [];
   const userBcc = parseRecipientList(input.bcc) ?? [];
-  // Idempotency: never send the same dedupe_key twice.
+  // Idempotency: never send the same dedupe_key twice. Check every already-
+  // attempted-delivery state, not just 'sent' — the Resend webhook flips a
+  // freshly-sent log row to 'delivered' (or 'bounced'/'complained') within
+  // seconds, so a crash-window re-send from the 5-min stale-claim recovery
+  // must still see it as done. (Matches the reconciler's status set.)
   if (dedupeKey) {
     const { data: prior } = await admin
-      .from('email_log').select('id').eq('dedupe_key', dedupeKey).eq('status', 'sent').limit(1);
+      .from('email_log').select('id').eq('dedupe_key', dedupeKey)
+      .in('status', ['sent', 'delivered', 'bounced', 'complained']).limit(1);
     if (prior && prior.length > 0) return { status: 'skipped' };
   }
   // Closed-client guard: never email a client whose engagement is finished.
