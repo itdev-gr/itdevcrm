@@ -140,4 +140,10 @@ describe('readPath — deal comment channels', () => {
     expect(readPath({ parent_type: 'deal_dev', parent_id: 'D1' })).toBe('/deals/D1');
     expect(readPath({ parent_type: 'deal_seo', parent_id: 'D1' })).toBe('/deals/D1');
   });
+  it('maps deal channel parents to the deal page', () => {
+    expect(readPath({ parent_type: 'deal_dev', parent_id: 'd1' })).toBe('/deals/d1');
+    expect(readPath({ parent_type: 'deal_seo', parent_id: 'd1' })).toBe('/deals/d1');
+    expect(readPath({ parent_type: 'deal_ads', parent_id: 'd1' })).toBe('/deals/d1');
+    expect(readPath({ parent_type: 'deal_social', parent_id: 'd1' })).toBe('/deals/d1');
+  });
 });
