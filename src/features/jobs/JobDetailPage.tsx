@@ -33,7 +33,7 @@ import {
   detailTabTriggerClass,
 } from '@/components/layout/page-shell';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
-import { jobCommentThread } from '@/features/comments/commentChannels';
+import { channelLabelFor, jobCommentThread } from '@/features/comments/commentChannels';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { areasForJob, canUploadArea } from '@/features/attachments/serviceAreas';
 import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachmentsSection';
@@ -631,7 +631,7 @@ function JobDetailContent() {
                   </h2>
                   {commentThread.parentType !== 'job' && (
                     <p className="text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Shared with the deal — {commentThread.parentType === 'deal_dev' ? 'Dev' : 'SEO'} thread
+                      Shared with the deal — {channelLabelFor(commentThread.parentType)} thread
                     </p>
                   )}
                 </div>
