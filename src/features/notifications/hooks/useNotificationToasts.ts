@@ -1,46 +1,47 @@
-import { useEffect, useId } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useEffect, useRef } from 'react';
 import { useToastStore } from '../toastStore';
 import { isToastable } from '../toastableTypes';
-import type { NotificationRow } from './useNotifications';
+import { useNotifications } from './useNotifications';
 
-// Pushes a toast whenever a toastable `notifications` row is INSERTed for the
-// current user. Mirrors useNotificationsRealtime's channel config exactly
-// (per-user filter + a per-instance useId() suffix so this channel never
-// collides with the bell's — two consumers cannot share a channel name), but:
-//   - listens to INSERT only (toasts are for brand-new notifications),
-//   - filters by isToastable(type) before pushing,
-//   - does NOT invalidate any react-query cache (useNotificationsRealtime
-//     already owns that; invalidating here would double the work).
+// Pushes a toast whenever a new toastable `notifications` row arrives for the
+// current user. Rather than opening its own realtime channel, this hook derives
+// toasts from the SAME react-query list the bell renders (useNotifications):
+// the bell's useNotificationsRealtime already owns the single postgres_changes
+// subscription on `notifications` and refetches that query on every change.
+// Reusing it means there is NO second postgres_changes subscription — Supabase
+// does not reliably deliver INSERT events to a second subscription on the same
+// table, so a dedicated channel here never fired and toasts never appeared.
 //
-// Note: initial page load does NOT backfill toasts — realtime only fires for
-// inserts that land after .subscribe(), which is the desired behavior.
+// On each data change we diff against a ref-held set of already-seen ids and
+// push a toast for the newly-arrived toastable ones. The first data arrival
+// only SEEDS that set (no backfill), so existing notifications never toast on
+// page load.
 export function useNotificationToasts(): void {
-  const userId = useAuthStore((s) => s.user?.id ?? null);
-  // Unique suffix per hook instance — see useNotificationsRealtime for why a
-  // shared channel name breaks postgres_changes callbacks.
-  const instanceId = useId();
+  const { data } = useNotifications();
+  // null until the first data arrival; from then on holds every id we've seen.
+  const seenRef = useRef<Set<string> | null>(null);
+
   useEffect(() => {
-    if (!userId) return;
-    const channel = supabase
-      .channel(`toast-notifications-${userId}-${instanceId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          // payload.new is the freshly inserted row; its columns match
-          // NotificationRow (id, user_id, type, payload, read_at, created_at).
-          const row = payload.new as NotificationRow;
-          if (!isToastable(row.type)) return;
-          // getState() reads the live push, avoiding a stale closure and
-          // keeping this effect's deps minimal so it doesn't re-subscribe.
-          useToastStore.getState().push(row);
-        },
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [userId, instanceId]);
+    if (!data) return;
+
+    // First data arrival: seed the seen-set with everything currently present
+    // and push nothing, so page load does not backfill toasts.
+    if (seenRef.current === null) {
+      seenRef.current = new Set(data.map((n) => n.id));
+      return;
+    }
+
+    const seen = seenRef.current;
+    // data is newest-first; iterate oldest→newest of the NEW rows so the newest
+    // is pushed last. The container is flex-col-reverse, so the last-pushed
+    // toast renders topmost — this ordering makes the newest show on top.
+    for (const n of [...data].reverse()) {
+      if (seen.has(n.id)) continue;
+      seen.add(n.id);
+      if (isToastable(n.type)) {
+        // getState() reads the live push, avoiding a stale closure.
+        useToastStore.getState().push(n);
+      }
+    }
+  }, [data]);
 }
