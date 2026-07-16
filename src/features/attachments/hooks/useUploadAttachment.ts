@@ -11,7 +11,7 @@ type Vars = {
   parent_type: 'client' | 'deal' | 'job' | 'lead';
   parent_id: string;
   file: File;
-  kind?: 'contract' | 'invoice' | 'other' | 'svc_local' | 'svc_web' | 'svc_webdev';
+  kind?: 'contract' | 'invoice' | 'other' | 'svc_local' | 'svc_web' | 'svc_webdev' | 'svc_ads' | 'svc_social';
 };
 
 export function useUploadAttachment() {
