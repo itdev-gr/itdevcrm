@@ -36,7 +36,7 @@ import { buildOfferDraft } from '@/features/email/buildDraft';
 
 const UNASSIGNED = '__unassigned__';
 
-export function LeadDetailPage() {
+function LeadDetailContent() {
   const { leadId = '' } = useParams<{ leadId: string }>();
   const { t } = useTranslation('leads');
   const { t: tSales } = useTranslation('sales');
@@ -405,4 +405,11 @@ export function LeadDetailPage() {
       />
     </div>
   );
+}
+
+// Keyed on leadId so the whole page remounts when the record changes —
+// seed-once state (form fields, dialogs) can't leak across leads on back-nav.
+export function LeadDetailPage() {
+  const { leadId = '' } = useParams<{ leadId: string }>();
+  return <LeadDetailContent key={leadId} />;
 }

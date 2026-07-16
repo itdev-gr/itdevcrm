@@ -80,7 +80,7 @@ const JOB_STATUS_STYLES: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200',
 };
 
-export function JobDetailPage() {
+function JobDetailContent() {
   const { jobId = '' } = useParams<{ jobId: string }>();
   const { t, i18n } = useTranslation('jobs');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
@@ -740,4 +740,11 @@ export function JobDetailPage() {
       />
     </div>
   );
+}
+
+// Keyed on jobId so the whole page remounts when the record changes — seed-once
+// state (titleDraft, active tab, dialogs) can't leak across jobs on back-nav.
+export function JobDetailPage() {
+  const { jobId = '' } = useParams<{ jobId: string }>();
+  return <JobDetailContent key={jobId} />;
 }

@@ -23,7 +23,7 @@ import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { supabase } from '@/lib/supabase';
 
-export function ClientDetailPage() {
+function ClientDetailContent() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const { t } = useTranslation('clients');
   const { t: tAcc } = useTranslation('accounting');
@@ -153,4 +153,11 @@ export function ClientDetailPage() {
       </Tabs>
     </div>
   );
+}
+
+// Keyed on clientId so the whole page remounts when the record changes —
+// seed-once state (form fields, dialogs) can't leak across clients on back-nav.
+export function ClientDetailPage() {
+  const { clientId = '' } = useParams<{ clientId: string }>();
+  return <ClientDetailContent key={clientId} />;
 }

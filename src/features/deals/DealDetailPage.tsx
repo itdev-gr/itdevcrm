@@ -49,7 +49,7 @@ const CLIENT_STATUS_STYLES: Record<string, string> = {
   done: 'border-border/70 bg-muted/40 dark:border-border/60 dark:bg-muted/70',
 };
 
-export function DealDetailPage() {
+function DealDetailContent() {
   const { dealId = '' } = useParams<{ dealId: string }>();
   const { t, i18n } = useTranslation('deals');
   const { t: tLeads } = useTranslation('leads');
@@ -424,4 +424,11 @@ export function DealDetailPage() {
       </Tabs>
     </div>
   );
+}
+
+// Keyed on dealId so the whole page remounts when the record changes —
+// seed-once state (form fields, dialogs) can't leak across deals on back-nav.
+export function DealDetailPage() {
+  const { dealId = '' } = useParams<{ dealId: string }>();
+  return <DealDetailContent key={dealId} />;
 }
