@@ -25,14 +25,23 @@ begin
 
   select name into v_client_name from public.clients where id = new.client_id;
 
+  -- Recipients = active members of the job's department UNION all active admins
+  -- (admins aren't department members but the owner wants to see every new job),
+  -- minus the actor who created the job.
   for m in
-    select p.user_id
-      from public.user_groups ug
-      join public.profiles p on p.user_id = ug.user_id
-     where ug.group_id = new.assigned_group_id
-       and p.is_active
-       and p.email is not null and p.email <> ''
-       and p.user_id <> coalesce(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
+    select r.user_id from (
+      select p.user_id
+        from public.user_groups ug
+        join public.profiles p on p.user_id = ug.user_id
+       where ug.group_id = new.assigned_group_id
+         and p.is_active and p.email is not null and p.email <> ''
+      union
+      select p.user_id
+        from public.profiles p
+       where p.is_admin
+         and p.is_active and p.email is not null and p.email <> ''
+    ) r
+    where r.user_id <> coalesce(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid)
   loop
     insert into public.notifications (user_id, type, payload)
     values (
