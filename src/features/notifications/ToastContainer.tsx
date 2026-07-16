@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToastStore, type ToastEntry } from './toastStore';
+import { useNotificationToasts } from './hooks/useNotificationToasts';
 import {
   CompactNotificationRow,
   readPath,
@@ -83,9 +84,11 @@ function ToastCard({ entry }: { entry: ToastEntry }) {
 
 // Bottom-left toast stack, above AppShell's z-40 drawer / z-30 topbar. Newest
 // sits on top (flex-col-reverse) and the stack grows upward from the anchor.
-// Task 3 will add a useNotificationToasts() realtime hook here to feed the
-// store; for now it renders whatever the store already holds.
+// This is the single app-wide mount point, so it also drives the realtime hook
+// that feeds the store from post-subscribe notification inserts.
 export function ToastContainer() {
+  // Subscribe once here (single mount point) to push toasts on realtime insert.
+  useNotificationToasts();
   const toasts = useToastStore((s) => s.toasts);
   if (toasts.length === 0) return null;
   return (
