@@ -7,8 +7,8 @@ export type TaskKind = 'user' | 'assigned';
  *  the caller's side was stamped but the task still awaits the other party. */
 export type ResolveTaskResult = {
   closed: boolean;
-  your_side: 'creator' | 'assignee' | null;
-  awaiting: 'creator' | 'assignee' | null;
+  your_side: 'creator' | 'assignee' | 'both';
+  awaiting: string | null; // uuid of the party still pending, or null when closed
 };
 
 type Vars = { kind: TaskKind; id: string };
