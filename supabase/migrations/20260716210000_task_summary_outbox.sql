@@ -40,6 +40,7 @@ create table public.task_summary_outbox (
   attempts   int  not null default 0,
   last_error text,
   created_at timestamptz not null default now(),
+  claimed_at timestamptz,
   sent_at    timestamptz
 );
 
@@ -60,14 +61,16 @@ set search_path to 'public'
 as $$
   -- a) Recover rows stuck in 'sending' (fn crashed after claim, before mark)
   --    back to 'pending' — same 5-minute staleness window as
-  --    recover_stale_email_claims. There is no claimed_at column here, so
-  --    created_at is the claim proxy: the pulse fires on insert, so a claimed
-  --    row's created_at ≈ its claim time, and a row still 'sending' 5 minutes
-  --    after creation is stale.
+  --    recover_stale_email_claims. Keyed off claimed_at (the actual claim time),
+  --    NOT created_at: a retried or cron-drained row keeps its old created_at, so
+  --    keying on created_at would recover a freshly re-claimed row mid-flight and
+  --    hand it to a second concurrent drain (duplicate summary + doubled spend).
+  --    Null claimed_at on recovery so a recovered row isn't instantly re-stale.
   update public.task_summary_outbox
-     set status = 'pending'
+     set status = 'pending', claimed_at = null
    where status = 'sending'
-     and created_at < now() - interval '5 minutes';
+     and claimed_at is not null
+     and claimed_at < now() - interval '5 minutes';
 
   -- b) Give up on rows that have exhausted their retries. The claim below caps
   --    at attempts < 5 (identical to claim_email_outbox); flipping the loser to
@@ -80,7 +83,7 @@ as $$
   --    disjoint row sets; the 'sending' flip + attempts bump mirror
   --    claim_email_outbox exactly.
   update public.task_summary_outbox o
-     set status = 'sending', attempts = o.attempts + 1
+     set status = 'sending', claimed_at = now(), attempts = o.attempts + 1
    where o.id in (
      select id from public.task_summary_outbox
       where status = 'pending' and attempts < 5
