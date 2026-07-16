@@ -27,6 +27,8 @@ import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useShuffleStageLeads } from './hooks/useShuffleStageLeads';
 import { isStageMoveBlocked } from './stageAccess';
+import { useSalesBoardSortStore } from './salesBoardSortStore';
+import type { SortBy } from './salesKanbanColumns';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
 
 const SHUFFLABLE_CODES = [
@@ -53,9 +55,10 @@ export function SalesKanbanPage() {
   const [activeLead, setActiveLead] = useState<LeadRow | null>(null);
   const [search, setSearch] = useState('');
   const [source, setSource] = useState<'' | 'manual' | 'meta' | 'import'>('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent'>(
-    'newest',
-  );
+  // Sort persists per user across navigation/reloads (opening a lead unmounts
+  // the board). Falls back to 'newest' when the user isn't loaded yet.
+  const sortBy = useSalesBoardSortStore((s) => (userId ? s.byUser[userId] ?? 'newest' : 'newest'));
+  const setSortByPref = useSalesBoardSortStore((s) => s.setSortBy);
   const { data: owners = [] } = useAssignableOwners();
 
   const { data: stages = [], isLoading } = usePipelineStages();
@@ -205,11 +208,9 @@ export function SalesKanbanPage() {
         </FilterSelect>
         <FilterSelect
           value={sortBy}
-          onChange={(e) =>
-            setSortBy(
-              e.target.value as 'newest' | 'oldest' | 'value_high' | 'value_low' | 'recent',
-            )
-          }
+          onChange={(e) => {
+            if (userId) setSortByPref(userId, e.target.value as SortBy);
+          }}
           title={tLeads('filters.sort_label')}
         >
           <option value="newest">{tLeads('filters.sort_newest')}</option>
