@@ -155,8 +155,12 @@ begin
   v_is_assignee := coalesce(v_uid = v_assignee, false);
   if not (v_is_creator or v_is_assignee or v_admin) then raise exception 'not a party'; end if;
 
-  -- Admin force-close and self-tasks stamp both sides; otherwise stamp own side.
-  if v_admin and not (v_is_creator or v_is_assignee) then
+  -- Solo tasks (no distinct creator, or creator == assignee) and admin
+  -- force-close both stamp both sides; otherwise stamp own side only.
+  if v_creator is null or v_creator = v_assignee then
+    v_c_at := coalesce(v_c_at, now()); v_a_at := coalesce(v_a_at, now());
+    v_first_stamp := false;
+  elsif v_admin and not (v_is_creator or v_is_assignee) then
     v_c_at := coalesce(v_c_at, now()); v_a_at := coalesce(v_a_at, now());
     v_first_stamp := false;
   else
