@@ -35,7 +35,7 @@ import {
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { channelLabelFor, jobCommentThread } from '@/features/comments/commentChannels';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
-import { areasForJob, canUploadArea } from '@/features/attachments/serviceAreas';
+import { areasForJob, canUploadArea, SERVICE_AREA_KINDS } from '@/features/attachments/serviceAreas';
 import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachmentsSection';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
@@ -688,7 +688,7 @@ function JobDetailContent() {
             <AttachmentsPanel
               parentType="job"
               parentId={job.id}
-              hideKinds={['svc_local', 'svc_web', 'svc_webdev']}
+              hideKinds={SERVICE_AREA_KINDS}
             />
           </div>
         </TabsContent>
