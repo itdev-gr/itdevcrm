@@ -5,7 +5,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useAssignedTaskDetail } from './hooks/useAssignedTaskDetail';
-import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
+import { useResolveTask, useUnresolveTask } from '@/features/tasks/hooks/useResolveTask';
+import { resolveAction, awaitingLabelParty } from '@/features/tasks/dualResolve';
 import { DepartmentChip } from './DepartmentChip';
 import { industryLabel } from '@/lib/industries';
 import { CallLink } from '@/components/CallLink';
@@ -37,11 +38,37 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canOpenDeal = isAdmin || groupCodes.includes('accounting') || groupCodes.includes('sales');
   const { data: task, isLoading, error } = useAssignedTaskDetail(taskId);
-  const resolve = useResolveAssignedTask();
+  const resolve = useResolveTask();
+  const unresolve = useUnresolveTask();
 
   // Accounting can open any task read-only; Resolve + the comment thread stay gated
   // to the task's parties (assignee, creator, or an admin).
   const isParty = !!task && (isAdmin || task.assignee_user_id === meId || task.created_by_user_id === meId);
+
+  // Dual-resolve: primary button depends on which side has stamped.
+  const dualState = task
+    ? {
+        creatorResolvedAt: task.creator_resolved_at,
+        assigneeResolvedAt: task.assignee_resolved_at,
+        creatorId: task.created_by_user_id,
+        assigneeId: task.assignee_user_id,
+        closed: task.status === 'resolved',
+      }
+    : null;
+  const resolveKind = dualState ? resolveAction(dualState, meId || null, isAdmin) : null;
+  const awaiting = dualState ? awaitingLabelParty(dualState) : null;
+  const awaitingName =
+    awaiting === 'creator'
+      ? task?.creator?.full_name || task?.creator?.email || ''
+      : awaiting === 'assignee'
+        ? task?.assignee?.full_name || task?.assignee?.email || ''
+        : '';
+  const primaryLabel =
+    resolveKind === 'withdraw'
+      ? c('tasks_page.withdraw')
+      : resolveKind === 'confirm_close'
+        ? c('tasks_page.confirm_close')
+        : c('tasks_page.resolve');
 
   // Technical groups can't open the deal page; for a deal-scoped task, point them at
   // the deal's matching service job instead.
@@ -52,10 +79,14 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
     needJobLink,
   );
 
-  async function onResolve() {
-    if (!task) return;
-    await resolve.mutateAsync({ id: task.id });
-    onOpenChange(false);
+  async function onPrimary() {
+    if (!task || !resolveKind) return;
+    if (resolveKind === 'withdraw') {
+      await unresolve.mutateAsync({ kind: 'assigned', id: task.id });
+      return; // stay open — the dialog re-renders back to the Resolve state
+    }
+    const res = await resolve.mutateAsync({ kind: 'assigned', id: task.id });
+    if (res.closed) onOpenChange(false);
   }
 
   const openLink = task
@@ -135,9 +166,13 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
             }
             footer={
               <div className="flex flex-wrap justify-end gap-2">
-                {task.status === 'open' && isParty && (
-                  <Button type="button" onClick={onResolve} disabled={resolve.isPending}>
-                    {c('tasks_page.resolve')}
+                {resolveKind && (
+                  <Button
+                    type="button"
+                    onClick={onPrimary}
+                    disabled={resolve.isPending || unresolve.isPending}
+                  >
+                    {primaryLabel}
                   </Button>
                 )}
                 {openLink && (
@@ -150,6 +185,19 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
               </div>
             }
           >
+            {awaiting && (
+              <div className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+                {c('tasks_page.awaiting_confirmation', { name: awaitingName })}
+              </div>
+            )}
+            {task.status === 'resolved' && task.summary && (
+              <section className="space-y-1 rounded-lg border border-border/60 bg-muted/40 p-3">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {c('tasks_page.summary')}
+                </h4>
+                <p className="whitespace-pre-wrap text-sm text-foreground">{task.summary}</p>
+              </section>
+            )}
             {task.description ? (
               <div className="space-y-1">
                 <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

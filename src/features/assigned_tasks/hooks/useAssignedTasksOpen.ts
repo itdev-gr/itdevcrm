@@ -26,6 +26,11 @@ export type AssignedTaskRow = {
   importance: string;
   started_at: string | null;
   department_group_id: string | null;
+  creator_resolved_at: string | null;
+  creator_resolved_by: string | null;
+  assignee_resolved_at: string | null;
+  assignee_resolved_by: string | null;
+  summary: string | null;
   client: { id: string; name: string } | null;
   department: AssignedTaskDepartment | null;
   job?: { id: string; code: string | null } | null;
@@ -37,6 +42,7 @@ export const ASSIGNED_TASK_SELECT = `
   assignee_user_id, created_by_user_id,
   status, resolved_at, resolved_by_user_id, created_at, importance, started_at,
   department_group_id,
+  creator_resolved_at, creator_resolved_by, assignee_resolved_at, assignee_resolved_by, summary,
   client:client_id ( id, name ),
   department:department_group_id ( id, code, display_names, position )
 `;

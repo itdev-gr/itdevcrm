@@ -15,6 +15,11 @@ vi.mock('./hooks/useAssignedTasksRealtime', () => ({
   useAssignedTasksRealtime: () => undefined,
 }));
 
+vi.mock('@/features/tasks/hooks/useResolveTask', () => ({
+  useResolveTask: () => ({ mutate: vi.fn(), isPending: false }),
+  useUnresolveTask: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 vi.mock('./hooks/useAssignedTasksForSource', () => ({
   useAssignedTasksForSource: () => ({
     data: [

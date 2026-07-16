@@ -8,13 +8,14 @@ import { cn } from '@/lib/utils';
 import { ImportanceBadge } from './ImportanceBadge';
 import { startedBadgeVisible } from './taskStarted';
 import { NEW_TASK_RING, NewTaskDot } from './taskHighlightStyle';
-import { isDraggable, type TaskCard, type DragAction } from './taskCard';
+import { cardDualResolveState, isDraggable, type TaskCard, type DragAction } from './taskCard';
+import { awaitingLabelParty } from './dualResolve';
 
 export function TaskKanbanCard({
-  card, assigneeName, onAction, onOpen, highlight = false, unreadComments = 0,
+  card, nameFor, onAction, onOpen, highlight = false, unreadComments = 0,
 }: {
   card: TaskCard;
-  assigneeName: string;
+  nameFor: (id: string) => string;
   onAction: (action: DragAction) => void;
   onOpen: (card: TaskCard) => void;
   highlight?: boolean;
@@ -25,6 +26,14 @@ export function TaskKanbanCard({
   // Resolve/Reopen is gated on assignment, not drag: a card parked in Replies is
   // non-draggable but its owner must still be able to act on it (spec line ~36).
   const canAct = card.relation === 'mine';
+  // Half-resolved (one side stamped) → who is still pending, for the badge.
+  const awaiting = awaitingLabelParty(cardDualResolveState(card));
+  const awaitingName =
+    awaiting === 'creator' && card.creatorId
+      ? nameFor(card.creatorId)
+      : awaiting === 'assignee'
+        ? nameFor(card.assigneeId)
+        : '';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.key, data: { card }, disabled: !draggable,
   });
@@ -74,12 +83,17 @@ export function TaskKanbanCard({
         )}
         {card.relation === 'delegated' && (
           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-            {t('tasks_page.assigned_to', { name: assigneeName })}
+            {t('tasks_page.assigned_to', { name: nameFor(card.assigneeId) })}
           </span>
         )}
         {startedBadgeVisible({ resolved: card.resolved, startedAt: card.startedAtIso }) && (
           <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-medium text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200">
             {t('tasks_page.started_short')}
+          </span>
+        )}
+        {awaiting && (
+          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+            {t('tasks_page.awaiting_confirmation', { name: awaitingName })}
           </span>
         )}
       </div>

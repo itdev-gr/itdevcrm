@@ -41,7 +41,7 @@ export function TasksKanbanColumn({
             <TaskKanbanCard
               key={c.key}
               card={c}
-              assigneeName={nameFor(c.assigneeId)}
+              nameFor={nameFor}
               onAction={(a) => onAction(c, a)}
               onOpen={onOpen}
               highlight={isNew?.(c) ?? false}

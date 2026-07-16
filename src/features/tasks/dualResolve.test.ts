@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { awaitingLabelParty, resolveAction, type DualResolveState } from './dualResolve';
+import { cardDualResolveState, type TaskCard } from './taskCard';
 
 const CREATOR = 'creator-uuid';
 const ASSIGNEE = 'assignee-uuid';
@@ -114,5 +115,39 @@ describe('awaitingLabelParty', () => {
     expect(
       awaitingLabelParty(state({ creatorResolvedAt: '2026-07-16T00:00:00Z', closed: true })),
     ).toBeNull();
+  });
+});
+
+describe('cardDualResolveState', () => {
+  const baseCard: TaskCard = {
+    key: 'user:u1', kind: 'user', id: 'u1', title: 'T', importance: 'low',
+    relation: 'mine', resolved: false, assigneeId: ASSIGNEE, creatorId: CREATOR,
+    createdAtIso: null, dueAt: null, resolvedAt: null, startedAtIso: null,
+    sourceCode: null, link: null, notes: null, clientName: null, leadName: null,
+    creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
+  };
+
+  it('projects a card onto its dual-resolve state (closed mirrors resolved)', () => {
+    const c: TaskCard = {
+      ...baseCard,
+      resolved: true,
+      creatorResolvedAt: '2026-07-16T00:00:00Z',
+      assigneeResolvedAt: '2026-07-16T00:00:00Z',
+    };
+    expect(cardDualResolveState(c)).toEqual({
+      creatorResolvedAt: '2026-07-16T00:00:00Z',
+      assigneeResolvedAt: '2026-07-16T00:00:00Z',
+      creatorId: CREATOR,
+      assigneeId: ASSIGNEE,
+      closed: true,
+    });
+  });
+
+  it('feeds resolveAction so a half-resolved card offers the right action', () => {
+    const stamped: TaskCard = { ...baseCard, assigneeResolvedAt: '2026-07-16T00:00:00Z' };
+    // assignee already stamped → withdraw; creator sees confirm_close
+    expect(resolveAction(cardDualResolveState(stamped), ASSIGNEE, false)).toBe('withdraw');
+    expect(resolveAction(cardDualResolveState(stamped), CREATOR, false)).toBe('confirm_close');
+    expect(awaitingLabelParty(cardDualResolveState(stamped))).toBe('creator');
   });
 });

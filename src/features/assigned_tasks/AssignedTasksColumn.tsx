@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useAssignedTasksOpen, type AssignedTaskRow } from './hooks/useAssignedTasksOpen';
-import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
+import { useResolveTask } from '@/features/tasks/hooks/useResolveTask';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
@@ -47,7 +47,7 @@ function Row({
   isNew?: boolean;
 }) {
   const { t } = useTranslation('home');
-  const resolve = useResolveAssignedTask();
+  const resolve = useResolveTask();
   return (
     <li>
       <div
@@ -94,7 +94,7 @@ function Row({
             className="shrink-0"
             onClick={(e) => {
               e.stopPropagation();
-              resolve.mutate({ id: task.id });
+              resolve.mutate({ kind: 'assigned', id: task.id });
             }}
             disabled={resolve.isPending}
           >

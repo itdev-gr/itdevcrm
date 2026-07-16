@@ -4,23 +4,27 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { useToggleTaskComplete } from '@/features/home/hooks/useDeleteTask';
+import { useResolveTask, useUnresolveTask } from './hooks/useResolveTask';
 import { StartTaskButton } from './StartTaskButton';
 import { TaskDetailShell, type TaskMetaRow, type TaskStatusTone } from './TaskDetailShell';
-import type { TaskCard } from './taskCard';
+import { cardDualResolveState, type TaskCard } from './taskCard';
+import { resolveAction, awaitingLabelParty } from './dualResolve';
 
 export function UserTaskDetailDialog({
-  card, creatorName, onOpenChange,
+  card, creatorName, assigneeName, onOpenChange,
 }: {
   card: TaskCard | null;
   creatorName?: string | null;
+  assigneeName?: string | null;
   onOpenChange: (open: boolean) => void;
 }) {
   const { t, i18n } = useTranslation('home');
   const c = (key: string, opts?: Record<string, unknown>) => t(key, { ns: 'common', ...opts });
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
+  const meId = useAuthStore((s) => s.user?.id ?? '');
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const toggle = useToggleTaskComplete();
+  const resolve = useResolveTask();
+  const unresolve = useUnresolveTask();
   if (!card) return null;
 
   const fmt = (iso: string) =>
@@ -38,9 +42,29 @@ export function UserTaskDetailDialog({
   if (card.clientName) rows.push({ label: c('tasks_page.client_label'), value: card.clientName });
   if (card.leadName) rows.push({ label: c('tasks_page.lead_label'), value: card.leadName });
 
-  // Participants + admin (matches assigned-task dialog gating; RLS enforces server-side).
-  const canResolve =
-    !card.resolved && (card.relation === 'mine' || card.relation === 'delegated' || isAdmin);
+  // Dual-resolve: the primary button depends on who has stamped which side.
+  const state = cardDualResolveState(card);
+  const action = resolveAction(state, meId || null, isAdmin);
+  const awaiting = awaitingLabelParty(state);
+  const awaitingName =
+    awaiting === 'creator' ? creatorName : awaiting === 'assignee' ? assigneeName : null;
+
+  const primaryLabel =
+    action === 'withdraw'
+      ? c('tasks_page.withdraw')
+      : action === 'confirm_close'
+        ? c('tasks_page.confirm_close')
+        : c('tasks_page.resolve');
+
+  async function onPrimary() {
+    if (!action || !card) return;
+    if (action === 'withdraw') {
+      await unresolve.mutateAsync({ kind: 'user', id: card.id });
+      return; // stay open — the dialog re-renders back to the Resolve state
+    }
+    const res = await resolve.mutateAsync({ kind: 'user', id: card.id });
+    if (res.closed) onOpenChange(false);
+  }
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
@@ -63,17 +87,14 @@ export function UserTaskDetailDialog({
             />
           }
           footer={
-            canResolve ? (
+            action ? (
               <div className="flex justify-end">
                 <Button
                   type="button"
-                  disabled={toggle.isPending}
-                  onClick={async () => {
-                    await toggle.mutateAsync({ id: card.id, completed: true });
-                    onOpenChange(false);
-                  }}
+                  disabled={resolve.isPending || unresolve.isPending}
+                  onClick={onPrimary}
                 >
-                  {c('tasks_page.resolve')}
+                  {primaryLabel}
                 </Button>
               </div>
             ) : undefined
@@ -82,6 +103,19 @@ export function UserTaskDetailDialog({
           commentsTaskId={card.id}
           locale={locale}
         >
+          {awaiting && (
+            <div className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+              {c('tasks_page.awaiting_confirmation', { name: awaitingName ?? '' })}
+            </div>
+          )}
+          {card.resolved && card.summary && (
+            <div className="space-y-1 rounded-lg border border-border/60 bg-muted/40 p-3">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {c('tasks_page.summary')}
+              </h4>
+              <p className="whitespace-pre-wrap text-sm text-foreground">{card.summary}</p>
+            </div>
+          )}
           {card.notes ? (
             <div className="space-y-1">
               <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

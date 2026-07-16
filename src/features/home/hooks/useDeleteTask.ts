@@ -28,9 +28,21 @@ export function useToggleTaskComplete() {
       'user_tasks',
       'toggle_complete',
       async ({ id, completed }) => {
+        if (completed) {
+          // Resolving stamps the caller's side via the RPC — a direct terminal
+          // update is blocked by the DB guard. The task closes only once both
+          // parties have stamped (or a single party for self/personal tasks).
+          const { error } = await supabase.rpc('resolve_task' as never, {
+            p_kind: 'user',
+            p_task_id: id,
+          } as never);
+          if (error) throw new Error(error.message);
+          return;
+        }
+        // Reopen (resolved→open) stays a direct update — the guard allows it.
         const { error } = await supabase
           .from('user_tasks')
-          .update({ completed_at: completed ? new Date().toISOString() : null })
+          .update({ completed_at: null })
           .eq('id', id);
         if (error) throw new Error(error.message);
       },
@@ -41,6 +53,7 @@ export function useToggleTaskComplete() {
       void qc.invalidateQueries({ queryKey: ['lead-tasks'] });
       void qc.invalidateQueries({ queryKey: ['tasks'] });
       void qc.invalidateQueries({ queryKey: ['comments'] });
+      void qc.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }

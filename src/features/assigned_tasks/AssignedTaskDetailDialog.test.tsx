@@ -6,17 +6,19 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 import '@/lib/i18n';
 
-const { taskData, authState, resolveMutate } = vi.hoisted(() => ({
+const { taskData, authState, resolveMutate, unresolveMutate } = vi.hoisted(() => ({
   taskData: { current: null as Record<string, unknown> | null },
   authState: { current: { userId: 'me', isAdmin: false, groupCodes: ['accounting'] as string[] } },
-  resolveMutate: vi.fn(),
+  resolveMutate: vi.fn().mockResolvedValue({ closed: true, your_side: 'assignee', awaiting: null }),
+  unresolveMutate: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('./hooks/useAssignedTaskDetail', () => ({
   useAssignedTaskDetail: () => ({ data: taskData.current, isLoading: false, error: null }),
 }));
-vi.mock('./hooks/useResolveAssignedTask', () => ({
-  useResolveAssignedTask: () => ({ mutateAsync: resolveMutate, isPending: false }),
+vi.mock('@/features/tasks/hooks/useResolveTask', () => ({
+  useResolveTask: () => ({ mutateAsync: resolveMutate, isPending: false }),
+  useUnresolveTask: () => ({ mutateAsync: unresolveMutate, isPending: false }),
 }));
 vi.mock('./hooks/useDealServiceJob', () => ({
   useDealServiceJob: () => ({ data: null }),
@@ -62,6 +64,11 @@ function task(overrides: Record<string, unknown> = {}) {
     importance: 'medium',
     started_at: null,
     department_group_id: null,
+    creator_resolved_at: null,
+    creator_resolved_by: null,
+    assignee_resolved_at: null,
+    assignee_resolved_by: null,
+    summary: null,
     client: null,
     department: null,
     assignee: { full_name: 'Other User', email: 'o@x.gr' },
@@ -77,6 +84,8 @@ const fullDetail = {
   status: 'open', resolved_at: null, resolved_by_user_id: null,
   created_at: new Date().toISOString(), importance: 'medium', started_at: null,
   department_group_id: 'g1',
+  creator_resolved_at: null, creator_resolved_by: null,
+  assignee_resolved_at: null, assignee_resolved_by: null, summary: null,
   client: {
     id: 'c1', name: 'Pindos Outdoor Gear', industry: 'fitness_sports',
     contact_first_name: 'Christos', contact_last_name: 'Tsilis',
@@ -115,7 +124,7 @@ describe('AssignedTaskDetailDialog — rendering + resolve (admin party)', () =>
     const onOpenChange = vi.fn();
     render(wrap(<AssignedTaskDetailDialog taskId="t1" onOpenChange={onOpenChange} />));
     await user.click(screen.getByRole('button', { name: /resolve/i }));
-    await waitFor(() => expect(resolveMutate).toHaveBeenCalledWith({ id: 't1' }));
+    await waitFor(() => expect(resolveMutate).toHaveBeenCalledWith({ kind: 'assigned', id: 't1' }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

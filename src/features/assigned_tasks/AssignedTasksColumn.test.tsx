@@ -76,6 +76,11 @@ vi.mock('@/features/home/hooks/useDeleteTask', () => ({
   useDeleteTask: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+vi.mock('@/features/tasks/hooks/useResolveTask', () => ({
+  useResolveTask: () => ({ mutate: vi.fn(), isPending: false }),
+  useUnresolveTask: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 vi.mock('@/features/home/TaskDialog', () => ({
   TaskDialog: ({ open, task }: { open: boolean; task?: unknown }) =>
     open ? (

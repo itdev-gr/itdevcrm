@@ -12,6 +12,7 @@ const card = {
   dueAt: '2026-07-01T09:00:00Z',
   resolvedAt: null, startedAtIso: null, sourceCode: null, link: null,
   notes: 'ring after lunch', clientName: 'ACME', leadName: null,
+  creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
 };
 
 function wrap(n: React.ReactNode) {

@@ -116,7 +116,20 @@ export function TasksKanbanBoard() {
     setActiveCard((e.active.data.current as { card?: TaskCard } | undefined)?.card ?? null);
   }
   function fire(card: TaskCard, action: DragAction) {
-    if (action.type !== 'noop') apply.mutate({ card, action });
+    if (action.type === 'noop') return;
+    apply.mutate(
+      { card, action },
+      {
+        onSuccess: (res) => {
+          // A resolve that only stamped the caller's side (task still awaits the
+          // other party) — tell the user; the card stays in its column because
+          // the terminal state is unchanged.
+          if (action.type === 'resolve' && res && !res.closed) {
+            window.alert(t('tasks_page.resolve_awaiting_toast'));
+          }
+        },
+      },
+    );
   }
   function onDragEnd(e: DragEndEvent) {
     setActiveCard(null);
@@ -199,6 +212,7 @@ export function TasksKanbanBoard() {
         <UserTaskDetailDialog
           card={openCard}
           creatorName={openCard.creatorId ? nameFor(openCard.creatorId) : null}
+          assigneeName={nameFor(openCard.assigneeId)}
           onOpenChange={(o) => !o && setOpenKey(null)}
         />
       )}

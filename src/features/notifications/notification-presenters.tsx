@@ -72,6 +72,8 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
     case 'task_assigned':
     case 'task_resolved':
       return <CheckCircle2 className={cn(iconClass, 'text-emerald-600 dark:text-emerald-400')} />;
+    case 'task_confirm_pending':
+      return <CheckCircle2 className={cn(iconClass, 'text-amber-600 dark:text-amber-400')} />;
     case 'task_comment':
       return <MessageSquare className={cn(iconClass, 'text-blue-600 dark:text-blue-400')} />;
     case 'task_started':
@@ -157,6 +159,28 @@ export function CompactNotificationContent({
       <>
         <p className={cn('min-w-0', titleClass)}>Task resolved</p>
         {title && <p className="mt-0.5 truncate text-muted-foreground">{title}</p>}
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'task_confirm_pending') {
+    // Payload carries author_id (not a name) — mirror the mention presenter's
+    // fallback. The deep link is resolved by readPath() from task_id/task_kind.
+    const author = readString(payload, 'author_name') ?? 'Someone';
+    const title = readString(payload, 'title');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          <span className="font-semibold">{author}</span> resolved
+          {title && (
+            <>
+              {' '}
+              &ldquo;<span className="font-semibold">{title}</span>&rdquo;
+            </>
+          )}
+          {' '}&mdash; confirm to close
+        </p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
     );

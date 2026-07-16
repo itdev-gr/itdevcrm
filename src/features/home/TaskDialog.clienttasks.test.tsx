@@ -22,6 +22,7 @@ const openCard: TaskCard = {
   relation: 'other', resolved: false, assigneeId: 'me', creatorId: 'me', createdAtIso: null,
   dueAt: null, resolvedAt: null, startedAtIso: null, sourceCode: null, link: null,
   notes: null, clientName: null, leadName: null,
+  creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
 };
 vi.mock('@/features/clients/hooks/useClientTasks', () => ({
   useClientTasks: () => ({ cards: [openCard], isLoading: false }),

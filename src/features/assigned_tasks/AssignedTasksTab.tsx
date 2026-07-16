@@ -5,7 +5,8 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { relativeFromNow } from '@/lib/datetime';
 import { useAssignedTasksForSource } from './hooks/useAssignedTasksForSource';
-import { useResolveAssignedTask } from './hooks/useResolveAssignedTask';
+import { useResolveTask, useUnresolveTask } from '@/features/tasks/hooks/useResolveTask';
+import { resolveAction, awaitingLabelParty } from '@/features/tasks/dualResolve';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { NewAssignedTaskDialog } from './NewAssignedTaskDialog';
 import { canCreateAssignedTask } from './canCreateAssignedTask';
@@ -43,9 +44,29 @@ function TaskRow({
   const { t } = useTranslation('jobs');
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const resolve = useResolveAssignedTask();
-  const isAssignee = task.assignee_user_id === userId;
-  const canResolve = task.status === 'open' && (isAssignee || isAdmin);
+  const resolve = useResolveTask();
+  const unresolve = useUnresolveTask();
+  const dualState = {
+    creatorResolvedAt: task.creator_resolved_at,
+    assigneeResolvedAt: task.assignee_resolved_at,
+    creatorId: task.created_by_user_id,
+    assigneeId: task.assignee_user_id,
+    closed: task.status === 'resolved',
+  };
+  const action = resolveAction(dualState, userId || null, isAdmin);
+  const awaiting = awaitingLabelParty(dualState);
+  const resolveLabel =
+    action === 'withdraw'
+      ? t('assigned_tasks.withdraw')
+      : action === 'confirm_close'
+        ? t('assigned_tasks.confirm_close')
+        : t('assigned_tasks.resolve');
+  // No directory hook on this row → the pending party's name isn't available;
+  // fall back to nothing after the em-dash (per the badge's documented fallback).
+  const onPrimary = () => {
+    if (action === 'withdraw') unresolve.mutate({ kind: 'assigned', id: task.id });
+    else resolve.mutate({ kind: 'assigned', id: task.id });
+  };
 
   return (
     <li className={cn('border-t first:border-t-0', isNew && NEW_TASK_ROW)}>
@@ -85,6 +106,11 @@ function TaskRow({
             {task.client && (
               <span className="text-[11px] text-muted-foreground">· {task.client.name}</span>
             )}
+            {awaiting && (
+              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+                {t('assigned_tasks.awaiting_confirmation', { name: '' })}
+              </span>
+            )}
           </div>
           {task.description && (
             <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">{task.description}</p>
@@ -94,18 +120,18 @@ function TaskRow({
             {task.resolved_at && ` · ${t('assigned_tasks.resolved_by')} ${relativeFromNow(task.resolved_at)}`}
           </p>
         </div>
-        {canResolve && (
+        {action && (
           <Button
             type="button"
             size="sm"
             variant="outline"
             onClick={(e) => {
               e.stopPropagation();
-              resolve.mutate({ id: task.id });
+              onPrimary();
             }}
-            disabled={resolve.isPending}
+            disabled={resolve.isPending || unresolve.isPending}
           >
-            {t('assigned_tasks.resolve')}
+            {resolveLabel}
           </Button>
         )}
       </div>

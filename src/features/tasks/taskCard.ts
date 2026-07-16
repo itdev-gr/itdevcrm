@@ -1,6 +1,16 @@
 import { importanceOf, type ImportanceCode } from './importance';
+import type { DualResolveState } from './dualResolve';
 import type { UserTaskRow } from '@/features/home/hooks/useUserTasks';
 import type { AssignedTaskRow } from '@/features/assigned_tasks/hooks/useAssignedTasksOpen';
+
+/** Dual-resolve side stamps that ride on the task rows. Optional here because
+ *  some list selects use `select('*')` (columns present at runtime but not in
+ *  the generated `UserTaskRow` type) and some non-board callers omit them. */
+export type TaskSideStamps = {
+  creator_resolved_at?: string | null;
+  assignee_resolved_at?: string | null;
+  summary?: string | null;
+};
 
 export type TaskRelation = 'mine' | 'delegated' | 'other';
 export type ColumnKey = ImportanceCode | 'resolved' | 'replies';
@@ -31,7 +41,23 @@ export type TaskCard = {
   notes: string | null;
   clientName: string | null;
   leadName: string | null;
+  // Dual-resolve: per-side stamps + the AI resolve-summary (null until filled).
+  creatorResolvedAt: string | null;
+  assigneeResolvedAt: string | null;
+  summary: string | null;
 };
+
+/** Build the pure dual-resolve state a card carries, for `resolveAction` /
+ *  `awaitingLabelParty`. `closed` mirrors the terminal state (`resolved`). */
+export function cardDualResolveState(card: TaskCard): DualResolveState {
+  return {
+    creatorResolvedAt: card.creatorResolvedAt,
+    assigneeResolvedAt: card.assigneeResolvedAt,
+    creatorId: card.creatorId,
+    assigneeId: card.assigneeId,
+    closed: card.resolved,
+  };
+}
 
 export function relationOf(assigneeId: string, creatorId: string | null, meId: string): TaskRelation {
   if (assigneeId === meId) return 'mine';
@@ -40,7 +66,7 @@ export function relationOf(assigneeId: string, creatorId: string | null, meId: s
 }
 
 export function userTaskToCard(
-  row: UserTaskRow & { lead?: TaskLeadJoin | null },
+  row: UserTaskRow & TaskSideStamps & { lead?: TaskLeadJoin | null },
   meId: string,
 ): TaskCard {
   const creatorId = row.created_by ?? null;
@@ -63,6 +89,9 @@ export function userTaskToCard(
     notes: row.notes ?? null,
     clientName: null,
     leadName: row.lead?.title ?? null,
+    creatorResolvedAt: row.creator_resolved_at ?? null,
+    assigneeResolvedAt: row.assignee_resolved_at ?? null,
+    summary: row.summary ?? null,
   };
 }
 
@@ -87,6 +116,9 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
     notes: row.description ?? null,
     clientName: row.client?.name ?? null,
     leadName: null,
+    creatorResolvedAt: row.creator_resolved_at ?? null,
+    assigneeResolvedAt: row.assignee_resolved_at ?? null,
+    summary: row.summary ?? null,
   };
 }
 
@@ -98,10 +130,12 @@ export function columnOf(card: TaskCard, hasUnreadReplies = false): ColumnKey {
   return card.resolved ? 'resolved' : card.importance;
 }
 
-/** Only tasks where I'm the assignee can be moved/resolved from my board.
- *  Cards sitting in Replies are read-first: not draggable until opened. */
+/** A task is draggable by either party — the assignee ('mine') OR the creator
+ *  ('delegated'), so the creator can also drag-to-stamp their side of a
+ *  dual-resolve task. Cards sitting in Replies are read-first: not draggable
+ *  until opened. */
 export function isDraggable(card: TaskCard, hasUnreadReplies = false): boolean {
-  return card.relation === 'mine' && !hasUnreadReplies;
+  return (card.relation === 'mine' || card.relation === 'delegated') && !hasUnreadReplies;
 }
 
 export function buildBoardCards(userRows: Array<UserTaskRow & { lead?: TaskLeadJoin | null }>, assignedRows: AssignedTaskRow[], meId: string): TaskCard[] {

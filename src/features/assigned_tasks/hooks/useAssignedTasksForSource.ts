@@ -11,6 +11,7 @@ const SELECT = `
   assignee_user_id, created_by_user_id,
   status, resolved_at, resolved_by_user_id, created_at,
   department_group_id,
+  creator_resolved_at, creator_resolved_by, assignee_resolved_at, assignee_resolved_by, summary,
   client:client_id ( id, name ),
   department:department_group_id ( id, code, display_names, position ),
   job:job_id ( id, code )

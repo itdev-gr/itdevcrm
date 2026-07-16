@@ -59,9 +59,14 @@ describe('taskCard', () => {
     expect(columnOf(assignedTaskToCard(assignedRow({ status: 'resolved' }), me))).toBe('resolved');
   });
 
-  it('isDraggable only for my own cards', () => {
-    expect(isDraggable(assignedTaskToCard(assignedRow(), me))).toBe(true);
-    expect(isDraggable(assignedTaskToCard(assignedRow({ assignee_user_id: 'x' }), me))).toBe(false);
+  it('isDraggable for the assignee (mine) and creator (delegated), not others', () => {
+    expect(isDraggable(assignedTaskToCard(assignedRow(), me))).toBe(true); // mine
+    // creator (created_by defaults to me) can drag-to-stamp their side too
+    expect(isDraggable(assignedTaskToCard(assignedRow({ assignee_user_id: 'x' }), me))).toBe(true);
+    // a task where I'm neither party stays non-draggable
+    expect(
+      isDraggable(assignedTaskToCard(assignedRow({ assignee_user_id: 'x', created_by_user_id: 'y' }), me)),
+    ).toBe(false);
   });
 
   it('matchesFilter: to_me / by_me / all', () => {
@@ -87,7 +92,8 @@ describe('taskCard', () => {
   describe('resolveDrag', () => {
     const mine = (o = {}) => assignedTaskToCard(assignedRow(o), me) as TaskCard;
     it('noop for non-draggable cards', () => {
-      expect(resolveDrag(mine({ assignee_user_id: 'x' }), 'urgent')).toEqual({ type: 'noop' });
+      // neither party (assignee x, creator y) → not draggable
+      expect(resolveDrag(mine({ assignee_user_id: 'x', created_by_user_id: 'y' }), 'urgent')).toEqual({ type: 'noop' });
     });
     it('open card dropped on Resolved → resolve', () => {
       expect(resolveDrag(mine(), 'resolved')).toEqual({ type: 'resolve' });
