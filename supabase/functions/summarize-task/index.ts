@@ -145,10 +145,12 @@ async function processRow(row: OutboxRow): Promise<void> {
   }
 }
 
-async function drain(): Promise<{ processed: number; sent: number; failed: number }> {
+async function drain(): Promise<{ processed: number; sent: number; failed: number; error?: string }> {
   // Atomically claim pending rows (recover-stale + attempts bump folded in).
   const { data: rows, error } = await admin.rpc('claim_task_summaries', { p_limit: 20 });
-  if (error) return { processed: 0, sent: 0, failed: 0 };
+  // Surface a claim failure so callers/logs can tell "queue empty" from "claim
+  // failed" — still HTTP 200, still never throws.
+  if (error) return { processed: 0, sent: 0, failed: 0, error: error.message };
 
   let sent = 0, failed = 0;
   for (const row of ((rows ?? []) as OutboxRow[])) {
@@ -192,6 +194,11 @@ Deno.serve(async (req) => {
 
   const body = (await req.json().catch(() => null)) as { drain?: boolean } | null;
   if (!body || body.drain !== true) return json({ error: 'Bad request' }, 400);
+
+  // Fail fast on a misconfigured deploy: without the OpenAI key every claimed row
+  // would burn an attempt on a 401. Preflight here — before any rows are claimed —
+  // so the fault is diagnosable in one call.
+  if (!OPENAI_API_KEY) return json({ error: 'OPENAI_API_KEY not configured' }, 500);
 
   return json(await drain());
 });

@@ -68,5 +68,12 @@ export function buildSummaryInput(task: SummaryTask, comments: SummaryComment[])
     bodyStr = kept.join('\n');
   }
 
-  return `${header}${OMIT_MARKER}\n${bodyStr}`;
+  // Pathological header: the title+description header plus the marker alone would
+  // already exceed MAX_INPUT (budget < 0, so bodyStr is empty). Hard-clamp the
+  // header so the returned string is always ≤ MAX_INPUT. Non-pathological output
+  // (budget ≥ 0) is left byte-identical.
+  const safeHeader = budget < 0
+    ? header.slice(0, Math.max(0, MAX_INPUT - OMIT_MARKER.length - 1))
+    : header;
+  return `${safeHeader}${OMIT_MARKER}\n${bodyStr}`;
 }
