@@ -4,6 +4,7 @@ import { useComments, type CommentRow } from './hooks/useComments';
 import { CommentItem } from './CommentItem';
 import { CommentForm } from './CommentForm';
 import { CommentEmptyState } from './comment-utils';
+import { useMarkThreadSeen } from './hooks/useMarkThreadSeen';
 import type { CommentParentType } from './commentChannels';
 
 type Props = {
@@ -17,7 +18,11 @@ function scrollCommentsToBottom(el: HTMLElement) {
 
 export function CommentsPanel({ parentType, parentId }: Props) {
   const { t } = useTranslation('sales');
-  const { data: comments = [] } = useComments(parentType, parentId);
+  const { data: comments = [], isSuccess } = useComments(parentType, parentId);
+  // Being mounted = this thread is the visible one; mark it seen once loaded
+  // and again whenever new comments arrive while it stays open.
+  const newestKey = isSuccess ? (comments[comments.length - 1]?.created_at ?? 'empty') : null;
+  useMarkThreadSeen(parentType, parentId, newestKey);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
