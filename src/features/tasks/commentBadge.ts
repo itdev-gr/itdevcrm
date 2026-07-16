@@ -22,3 +22,22 @@ export function unreadCommentIndex(rows: UnreadCommentNotif[]): Map<string, Unre
   }
   return map;
 }
+
+/** Split board card keys (`<kind>:<task_id>`, as produced by unreadCommentIndex)
+ *  into the id lists each task table needs. Keys with no kind prefix, an empty
+ *  id, or an unknown kind are ignored. UUIDs never contain `:`, so the first
+ *  colon reliably separates kind from id. */
+export function splitTaskIdsByKind(keys: string[]): { userIds: string[]; assignedIds: string[] } {
+  const userIds: string[] = [];
+  const assignedIds: string[] = [];
+  for (const key of keys) {
+    const sep = key.indexOf(':');
+    if (sep <= 0) continue; // no prefix or empty kind
+    const id = key.slice(sep + 1);
+    if (!id) continue; // empty id
+    const kind = key.slice(0, sep);
+    if (kind === 'user') userIds.push(id);
+    else if (kind === 'assigned') assignedIds.push(id);
+  }
+  return { userIds, assignedIds };
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { unreadCommentIndex } from './commentBadge';
+import { unreadCommentIndex, splitTaskIdsByKind } from './commentBadge';
 
 const notif = (id: string, task_kind: unknown, task_id: unknown) =>
   ({ id, payload: { task_kind, task_id } });
@@ -32,5 +32,24 @@ describe('unreadCommentIndex', () => {
       { id: 'n4', payload: {} },
     ]);
     expect(idx.size).toBe(0);
+  });
+});
+
+describe('splitTaskIdsByKind', () => {
+  it('splits mixed keys into per-table id lists', () => {
+    expect(splitTaskIdsByKind(['user:a', 'assigned:b', 'user:c'])).toEqual({
+      userIds: ['a', 'c'],
+      assignedIds: ['b'],
+    });
+  });
+
+  it('returns empty lists for an empty input', () => {
+    expect(splitTaskIdsByKind([])).toEqual({ userIds: [], assignedIds: [] });
+  });
+
+  it('ignores malformed or unknown-kind keys', () => {
+    expect(
+      splitTaskIdsByKind(['nope', ':x', 'user:', 'other:z', 'assigned:', 'user:d']),
+    ).toEqual({ userIds: ['d'], assignedIds: [] });
   });
 });
