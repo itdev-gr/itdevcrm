@@ -104,6 +104,41 @@ export async function deleteLeads(ids: string[]): Promise<DeleteLeadsResult> {
   return { ok: true, deletedCount: r.deleted_count ?? 0, skipped: r.skipped ?? [] };
 }
 
+export type PrepayGroup = {
+  group_key: string;
+  services: string[];
+  monthly_net: number;
+  from?: string;
+  to?: string;
+  created: number;
+  error?: string;
+};
+export type PrepayResult = {
+  ok: boolean;
+  errors?: string[];
+  dry_run?: boolean;
+  months?: number;
+  periods_created?: number;
+  skipped_duplicates?: number;
+  groups?: PrepayGroup[];
+};
+
+/** Prepay N months of every active monthly chain on a deal (accounting/admin
+ *  only — the RPC re-checks). dryRun returns the preview without inserting. */
+export async function accountingPrepayMonths(
+  dealId: string,
+  months: number,
+  dryRun: boolean,
+): Promise<PrepayResult> {
+  const { data, error } = await rpcCall('accounting_prepay_months', {
+    p_deal_id: dealId,
+    p_months: months,
+    p_dry_run: dryRun,
+  });
+  if (error) throw new Error(error.message);
+  return data as PrepayResult;
+}
+
 export type DeleteJobsResult =
   | { ok: true; deletedCount: number }
   | { ok: false; errors: string[] };

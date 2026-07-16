@@ -87,7 +87,19 @@
     },
     "card_invoiced": "Invoiced",
     "status_overdue": "Overdue",
-    "vat_mismatch": "Client's country VAT is {{rate}}%"
+    "vat_mismatch": "Client's country VAT is {{rate}}%",
+    "prepay_button": "Prepay",
+    "prepay_title": "Prepay months",
+    "prepay_desc": "Creates the future monthly periods and marks them as paid.",
+    "prepay_months": "Months",
+    "prepay_mo": "mo",
+    "prepay_total": "Total to record",
+    "prepay_confirm": "Record prepayment",
+    "prepay_cancel": "Cancel",
+    "prepay_close": "Close",
+    "prepay_done": "Recorded {{n}} period(s) as paid.",
+    "prepay_skipped": "Skipped {{n}} duplicate period(s).",
+    "prepay_no_chain": "This deal has no active monthly services."
   },
   "actions": {
     "view": "View",

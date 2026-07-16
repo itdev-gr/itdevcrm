@@ -11,6 +11,7 @@ import {
   useUpdateDealPayment,
   type DealPaymentRow,
 } from './hooks/useDealPayments';
+import { PrepayDialog } from './PrepayDialog';
 import type { PlannedService } from './ServicesPlannedField';
 
 type Props = {
@@ -217,6 +218,8 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
   const add = useAddDealPayment(dealId);
 
   const [showAdd, setShowAdd] = useState(false);
+  const [showPrepay, setShowPrepay] = useState(false);
+  const hasMonthly = payments.some((p) => p.billing_type === 'recurring_monthly');
   const [newLabel, setNewLabel] = useState('');
   const [newServiceType, setNewServiceType] = useState<PlannedService['service_type'] | ''>(
     services[0]?.service_type ?? '',
@@ -263,9 +266,16 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
           {t('payments.title')}
         </h2>
-        <Button type="button" size="sm" variant="outline" onClick={() => setShowAdd((v) => !v)}>
-          {t('payments.add')}
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasMonthly && (
+            <Button type="button" size="sm" variant="outline" onClick={() => setShowPrepay(true)}>
+              {t('payments.prepay_button', { defaultValue: 'Prepay' })}
+            </Button>
+          )}
+          <Button type="button" size="sm" variant="outline" onClick={() => setShowAdd((v) => !v)}>
+            {t('payments.add')}
+          </Button>
+        </div>
       </div>
 
       {payments.length === 0 ? (
@@ -390,6 +400,10 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
             </Button>
           </div>
         </div>
+      )}
+
+      {showPrepay && (
+        <PrepayDialog dealId={dealId} open={showPrepay} onClose={() => setShowPrepay(false)} />
       )}
     </div>
   );
