@@ -40,6 +40,7 @@
     "confirm_close": "Confirm & close",
     "withdraw": "Withdraw ✓",
     "awaiting_confirmation": "Awaiting confirmation — {{name}}",
+    "awaiting_confirmation_nameless": "Awaiting confirmation",
     "from_deal": "deal",
     "section_client": "From this client",
     "from_client": "client",

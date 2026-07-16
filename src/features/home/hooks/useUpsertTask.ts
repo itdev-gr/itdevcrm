@@ -13,7 +13,6 @@ type Input = {
   notes: string | null;
   due_at: string; // ISO
   importance: ImportanceCode;
-  completed_at?: string | null;
   client_id?: string | null;
   lead_id?: string | null;
   deal_id?: string | null;
@@ -33,7 +32,6 @@ export function useUpsertTask() {
           notes: input.notes,
           due_at: input.due_at,
           importance: input.importance,
-          completed_at: input.completed_at ?? null,
           ...(input.created_by !== undefined ? { created_by: input.created_by } : {}),
           ...(input.client_id !== undefined ? { client_id: input.client_id } : {}),
           ...(input.lead_id !== undefined ? { lead_id: input.lead_id } : {}),

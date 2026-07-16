@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/lib/supabase';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +19,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
 import { useUpsertTask } from './hooks/useUpsertTask';
 import { useDeleteTask } from './hooks/useDeleteTask';
+import { useResolveTask } from '@/features/tasks/hooks/useResolveTask';
 import type { UserTaskRow } from './hooks/useUserTasks';
 import { ImportanceSelect } from '@/features/tasks/ImportanceSelect';
 import { importanceOf, type ImportanceCode } from '@/features/tasks/importance';
@@ -56,6 +59,8 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
   const assignees = filterTaskAssignees(owners, isSales);
   const upsert = useUpsertTask();
   const del = useDeleteTask();
+  const resolveTask = useResolveTask();
+  const qc = useQueryClient();
 
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
@@ -120,7 +125,6 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
       notes: notes.trim() || null,
       due_at: new Date(dueAt).toISOString(),
       importance,
-      completed_at: completed ? task?.completed_at ?? new Date().toISOString() : null,
       ...(mode === 'lead'
         ? { lead_id: lead?.id ?? null, client_id: null, deal_id: null, job_id: null }
         : {
@@ -130,7 +134,31 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
             job_id: client ? jobId || null : null,
           }),
     };
+    // Content upsert is completion-agnostic: the DB guard rejects any direct
+    // open→terminal write, so completion state is owned by resolve_task, not here.
     await upsert.mutateAsync(task?.id ? { ...payload, id: task.id } : payload);
+    // Reconcile the completion transition only for existing tasks (a new task is
+    // never created completed, and the checkbox is hidden on create).
+    if (task?.id) {
+      const wasCompleted = !!task.completed_at;
+      if (!wasCompleted && completed) {
+        // Open → completed: stamp our side via the RPC. Honor its result — for a
+        // two-party task this half-stamps and the board shows the awaiting badge.
+        await resolveTask.mutateAsync({ kind: 'user', id: task.id });
+      } else if (wasCompleted && !completed) {
+        // Completed → open: the guard allows terminal→open, so reopen directly.
+        // This also fires the DB trigger that clears the resolve stamps.
+        const { error } = await supabase
+          .from('user_tasks')
+          .update({ completed_at: null })
+          .eq('id', task.id);
+        if (error) throw new Error(error.message);
+        void qc.invalidateQueries({ queryKey: ['user-tasks'] });
+        void qc.invalidateQueries({ queryKey: ['client-tasks'] });
+        void qc.invalidateQueries({ queryKey: ['lead-tasks'] });
+        void qc.invalidateQueries({ queryKey: ['comments'] });
+      }
+    }
     onOpenChange(false);
   }
 

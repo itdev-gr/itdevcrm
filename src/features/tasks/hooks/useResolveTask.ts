@@ -24,6 +24,7 @@ function invalidateTaskQueries(qc: QueryClient): void {
     ['assigned-task'],
     ['client-tasks'],
     ['client-user-tasks'],
+    ['lead-tasks'],
     ['comments'],
     ['notifications'],
   ];

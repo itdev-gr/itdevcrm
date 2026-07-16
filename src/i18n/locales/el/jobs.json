@@ -40,6 +40,7 @@
     "confirm_close": "Επιβεβαίωση & κλείσιμο",
     "withdraw": "Αναίρεση ✓",
     "awaiting_confirmation": "Αναμονή επιβεβαίωσης — {{name}}",
+    "awaiting_confirmation_nameless": "Αναμονή επιβεβαίωσης",
     "from_deal": "συμφωνία",
     "section_client": "Από τον πελάτη",
     "from_client": "πελάτης",

@@ -53,6 +53,7 @@
     "confirm_close": "Confirm & close",
     "withdraw": "Withdraw ✓",
     "awaiting_confirmation": "Awaiting confirmation — {{name}}",
+    "awaiting_confirmation_nameless": "Awaiting confirmation",
     "resolve_awaiting_toast": "Your side is recorded — awaiting confirmation",
     "summary": "Summary",
     "reopen": "Reopen",

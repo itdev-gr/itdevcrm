@@ -53,6 +53,7 @@
     "confirm_close": "Επιβεβαίωση & κλείσιμο",
     "withdraw": "Αναίρεση ✓",
     "awaiting_confirmation": "Αναμονή επιβεβαίωσης — {{name}}",
+    "awaiting_confirmation_nameless": "Αναμονή επιβεβαίωσης",
     "resolve_awaiting_toast": "Η πλευρά σου καταχωρήθηκε — αναμονή επιβεβαίωσης",
     "summary": "Σύνοψη",
     "reopen": "Επαναφορά",

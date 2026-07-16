@@ -187,7 +187,9 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
           >
             {awaiting && (
               <div className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
-                {c('tasks_page.awaiting_confirmation', { name: awaitingName })}
+                {awaitingName
+                  ? c('tasks_page.awaiting_confirmation', { name: awaitingName })
+                  : c('tasks_page.awaiting_confirmation_nameless')}
               </div>
             )}
             {task.status === 'resolved' && task.summary && (

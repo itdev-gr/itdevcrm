@@ -108,7 +108,7 @@ function TaskRow({
             )}
             {awaiting && (
               <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
-                {t('assigned_tasks.awaiting_confirmation', { name: '' })}
+                {t('assigned_tasks.awaiting_confirmation_nameless')}
               </span>
             )}
           </div>

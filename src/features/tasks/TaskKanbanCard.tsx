@@ -93,7 +93,9 @@ export function TaskKanbanCard({
         )}
         {awaiting && (
           <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
-            {t('tasks_page.awaiting_confirmation', { name: awaitingName })}
+            {awaitingName
+              ? t('tasks_page.awaiting_confirmation', { name: awaitingName })
+              : t('tasks_page.awaiting_confirmation_nameless')}
           </span>
         )}
       </div>
