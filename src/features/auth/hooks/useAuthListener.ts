@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { fetchProfile, fetchUserGroupCodes } from '@/lib/profile';
 import { Sentry } from '@/lib/sentry';
+import { queryClient } from '@/lib/queryClient';
+import { clearAllDrafts } from '@/features/comments/commentDraftStore';
 import type { Session, User } from '@supabase/supabase-js';
 
 // Supabase fires several auth events for one signed-in user (INITIAL_SESSION,
@@ -73,7 +75,15 @@ export function useAuthListener(): void {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        // Shared-machine privacy: drop all client-side state so the next user to
+        // sign in on this device never sees the previous user's cached rows or
+        // unsent drafts. One place covers the explicit logout button, an admin
+        // deactivation / orphan-session sign-out, and silent session expiry.
+        queryClient.clear();
+        clearAllDrafts();
+      }
       void hydrate(session, session?.user ?? null);
     });
 

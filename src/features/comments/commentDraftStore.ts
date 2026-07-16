@@ -7,6 +7,11 @@ import { persist } from 'zustand/middleware';
 
 export const DRAFT_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+// localStorage prefix for the persisted draft blob. Kept as a prefix (not the
+// full versioned key) so a future schema bump (…-v2) is still swept on logout.
+const DRAFT_STORAGE_PREFIX = 'itdevcrm-comment-drafts';
+const DRAFT_STORAGE_KEY = `${DRAFT_STORAGE_PREFIX}-v1`;
+
 export function commentThreadKey(parentType: string, parentId: string, replyToId?: string): string {
   return replyToId
     ? `comment:${parentType}:${parentId}:reply:${replyToId}`
@@ -59,7 +64,7 @@ export const useCommentDraftStore = create<State>()(
         }),
     }),
     {
-      name: 'itdevcrm-comment-drafts-v1',
+      name: DRAFT_STORAGE_KEY,
       partialize: (s) => ({ drafts: s.drafts }),
       onRehydrateStorage: () => (state) => {
         state?.pruneOldDrafts(Date.now());
@@ -67,6 +72,23 @@ export const useCommentDraftStore = create<State>()(
     },
   ),
 );
+
+/**
+ * Wipe every persisted comment/task draft from this device. Called on logout so
+ * a different user signing in on a shared machine never sees the previous user's
+ * unsent drafts. Clears both the in-memory store (so any mounted comment box
+ * empties immediately) and the localStorage blob.
+ */
+export function clearAllDrafts(): void {
+  useCommentDraftStore.setState({ drafts: {} });
+  try {
+    for (const key of Object.keys(window.localStorage)) {
+      if (key.startsWith(DRAFT_STORAGE_PREFIX)) window.localStorage.removeItem(key);
+    }
+  } catch {
+    // localStorage may be unavailable (private mode / SSR); nothing to clear.
+  }
+}
 
 export function useCommentDraft(key: string): {
   text: string;

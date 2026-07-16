@@ -106,7 +106,56 @@ export function formatCommentTime(iso: string, locale: string): { label: string;
   };
 }
 
-const MENTION_BODY_RE = /(@[\p{L}\p{N}._-]+)/gu;
+// Characters a mention token is built from: Unicode letters (incl. Greek) and
+// digits, plus `.`/`_`/`-` (spaces become `_`; dots/hyphens allow initials and
+// hyphenated names). Exported so CommentForm.resolveMentions stays in lockstep
+// with what CommentBody highlights — "shown as a mention" must imply "notified".
+export const MENTION_TOKEN_CHARS = '\\p{L}\\p{N}._-';
+
+const MENTION_BODY_RE = new RegExp(`(@[${MENTION_TOKEN_CHARS}]+)`, 'gu');
+
+function escapeMentionRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Per-token matcher used when RESOLVING a specific known token (e.g. `@Full_Name`)
+// against comment text. A token counts as mentioned when it sits on a word
+// boundary where "word" = letters/digits only (`\p{L}\p{N}`). This means:
+//   • trailing `.`/`-`/`_`/`'`/`/`/`(` etc. still resolve — so `@Full_Name.`,
+//     `@Full_Name's` and both halves of `@A/@B` notify, matching the highlight;
+//   • a following letter/digit is hard continuation — `@Nikos` never resolves
+//     inside `@Nikosxyz` (a different, longer token), avoiding over-match.
+// Greek names work because `\p{L}` (with the `u` flag) covers Greek letters.
+export function mentionTokenMatcher(token: string, caseInsensitive = false): RegExp {
+  const flags = caseInsensitive ? 'iu' : 'u';
+  return new RegExp(
+    `(?:^|[^\\p{L}\\p{N}])${escapeMentionRegex(token)}(?=$|[^\\p{L}\\p{N}])`,
+    flags,
+  );
+}
+
+// Resolve the set of user ids mentioned in `text`. Pure + shared so CommentForm
+// and tests use the exact same boundary rules as the highlighter.
+export function resolveMentionedUserIds(
+  text: string,
+  users: readonly { user_id: string; full_name?: string | null }[],
+  sessionTokens?: ReadonlyMap<string, string>,
+): string[] {
+  const ids = new Set<string>();
+  // Tokens inserted during this editing session (exact, case-sensitive).
+  if (sessionTokens) {
+    for (const [token, id] of sessionTokens) {
+      if (mentionTokenMatcher(token).test(text)) ids.add(id);
+    }
+  }
+  // `@Full_Name` typed manually (case-insensitive).
+  for (const u of users) {
+    if (!u.full_name) continue;
+    const token = '@' + u.full_name.trim().replace(/\s+/g, '_');
+    if (mentionTokenMatcher(token, true).test(text)) ids.add(u.user_id);
+  }
+  return [...ids];
+}
 
 function renderLineWithMentions(line: string, lineIndex: number) {
   const parts = line.split(MENTION_BODY_RE);

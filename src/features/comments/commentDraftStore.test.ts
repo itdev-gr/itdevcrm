@@ -3,6 +3,7 @@ import {
   useCommentDraftStore,
   commentThreadKey,
   taskThreadKey,
+  clearAllDrafts,
   DRAFT_TTL_MS,
 } from './commentDraftStore';
 
@@ -66,6 +67,22 @@ describe('commentDraftStore', () => {
     const d = useCommentDraftStore.getState().drafts;
     expect('old' in d).toBe(false);
     expect(d.fresh?.text).toBe('keep');
+  });
+
+  it('clearAllDrafts wipes every draft and its localStorage blob but spares unrelated keys', () => {
+    const s = useCommentDraftStore.getState();
+    s.setDraft('comment:deal:d1', 'A');
+    s.setDraft('task:assigned:t1', 'B');
+    // An unrelated app key on the same device must survive a logout wipe.
+    window.localStorage.setItem('itdevcrm-theme', 'dark');
+    expect(window.localStorage.getItem('itdevcrm-comment-drafts-v1')).toBeTruthy();
+
+    clearAllDrafts();
+
+    expect(useCommentDraftStore.getState().drafts).toEqual({});
+    expect(useCommentDraftStore.getState().getDraft('comment:deal:d1')).toBe('');
+    expect(window.localStorage.getItem('itdevcrm-comment-drafts-v1')).toBeNull();
+    expect(window.localStorage.getItem('itdevcrm-theme')).toBe('dark');
   });
 
   it('builds thread keys', () => {

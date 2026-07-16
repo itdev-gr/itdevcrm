@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMentionableUsers, type MentionableUser } from './hooks/useMentionableUsers';
 import { useCreateComment } from './hooks/useCreateComment';
-import { CommentAvatar } from './comment-utils';
+import { CommentAvatar, resolveMentionedUserIds } from './comment-utils';
 import { useCommentDraft, commentThreadKey } from './commentDraftStore';
 import type { CommentParentType } from './commentChannels';
 
@@ -20,10 +20,6 @@ type Props = {
 // Match the trigger token at the caret: `@` followed by 0+ name chars, no space.
 // Capture group 1 is the partial query (after `@`).
 const MENTION_RE = /(?:^|\s)@([\p{L}\p{N}._-]*)$/u;
-
-function escapeRegex(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 function buildMentionToken(user: MentionableUser): string {
   // Token persisted in the comment body. Names with spaces get underscores so
@@ -118,20 +114,9 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   }
 
   function resolveMentions(text: string): string[] {
-    const ids = new Set<string>();
-    // Tokens we generated this session (most reliable).
-    for (const [token, id] of tokenToUserId.current.entries()) {
-      const re = new RegExp('(?:^|\\s)' + escapeRegex(token) + '(?=\\s|$|[.,!?;:])');
-      if (re.test(text)) ids.add(id);
-    }
-    // Also accept @full_name typed manually (case-insensitive).
-    for (const u of users) {
-      if (!u.full_name) continue;
-      const token = '@' + u.full_name.trim().replace(/\s+/g, '_');
-      const re = new RegExp('(?:^|\\s)' + escapeRegex(token) + '(?=\\s|$|[.,!?;:])', 'i');
-      if (re.test(text)) ids.add(u.user_id);
-    }
-    return [...ids];
+    // Delegate to the shared resolver so the boundary rules stay in lockstep
+    // with what CommentBody highlights ("shown as mentioned" ⇒ "notified").
+    return resolveMentionedUserIds(text, users, tokenToUserId.current);
   }
 
   async function submit() {

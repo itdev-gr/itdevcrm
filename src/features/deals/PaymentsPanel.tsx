@@ -110,10 +110,8 @@ function PaymentRow({
         <Input
           type="date"
           value={start}
-          onChange={(e) => {
-            setStart(e.target.value);
-            commit({ start_date: e.target.value || null });
-          }}
+          onChange={(e) => setStart(e.target.value)}
+          onBlur={() => start !== (row.start_date ?? '') && commit({ start_date: start || null })}
           className="h-8 text-xs"
         />
       </td>
@@ -121,10 +119,8 @@ function PaymentRow({
         <Input
           type="date"
           value={end}
-          onChange={(e) => {
-            setEnd(e.target.value);
-            commit({ end_date: e.target.value || null });
-          }}
+          onChange={(e) => setEnd(e.target.value)}
+          onBlur={() => end !== (row.end_date ?? '') && commit({ end_date: end || null })}
           className="h-8 text-xs"
         />
       </td>

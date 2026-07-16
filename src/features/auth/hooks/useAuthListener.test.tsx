@@ -25,8 +25,18 @@ vi.mock('@/lib/profile', () => ({
   fetchUserGroupCodes: vi.fn().mockResolvedValue(['sales']),
 }));
 
+vi.mock('@/lib/queryClient', () => ({
+  queryClient: { clear: vi.fn() },
+}));
+
+vi.mock('@/features/comments/commentDraftStore', () => ({
+  clearAllDrafts: vi.fn(),
+}));
+
 import { supabase } from '@/lib/supabase';
 import { fetchProfile } from '@/lib/profile';
+import { queryClient } from '@/lib/queryClient';
+import { clearAllDrafts } from '@/features/comments/commentDraftStore';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useAuthListener, __resetAuthHydrationForTests } from './useAuthListener';
 
@@ -91,6 +101,24 @@ describe('useAuthListener', () => {
     fireAuthEvent!('TOKEN_REFRESHED', fakeSession);
     await waitFor(() => expect(useAuthStore.getState().isLoading).toBe(false));
     expect(fetchProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the query cache and comment drafts on SIGNED_OUT', async () => {
+    let fireAuthEvent: ((event: string, session: unknown) => void) | undefined;
+    (supabase.auth.onAuthStateChange as ReturnType<typeof vi.fn>).mockImplementation((cb) => {
+      fireAuthEvent = cb as typeof fireAuthEvent;
+      return { data: { subscription: { unsubscribe } } };
+    });
+    renderHook(() => useAuthListener());
+    await waitFor(() => expect(fireAuthEvent).toBeDefined());
+
+    expect(queryClient.clear).not.toHaveBeenCalled();
+    expect(clearAllDrafts).not.toHaveBeenCalled();
+
+    fireAuthEvent!('SIGNED_OUT', null);
+
+    expect(queryClient.clear).toHaveBeenCalledTimes(1);
+    expect(clearAllDrafts).toHaveBeenCalledTimes(1);
   });
 
   it('signs out when the session points at a user with no profile row', async () => {

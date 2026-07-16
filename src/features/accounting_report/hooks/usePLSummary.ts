@@ -13,33 +13,63 @@ export type PLSummary = {
   netProfitGross: number;
 };
 
-function periodOf(iso: string): string {
-  return iso.slice(0, 7);
-}
+// Only the columns needed to replicate accounting_pl_summary_v's aggregation.
+// Postgres numeric comes back as STRING over supabase-js — coerce with Number().
+type LedgerAggRow = {
+  direction: 'in' | 'out';
+  status: 'pending' | 'paid';
+  amount_net: number | string | null;
+  vat_amount: number | string | null;
+  amount_gross: number | string | null;
+};
 
 export function usePLSummary(range: { from: string; to: string }) {
   return useQuery({
     queryKey: queryKeys.accountingPLSummary(range.from, range.to),
     queryFn: async (): Promise<PLSummary> => {
+      // Derive from the SAME exact-date-filtered ledger rows as useLedger, so the
+      // header cards always agree with the breakdown tables / PDF / CSV export for
+      // ANY range (previously the cards read whole-MONTH totals via period filter).
       const { data, error } = await supabase
-        .from('accounting_pl_summary_v')
-        .select('*')
-        .gte('period', periodOf(range.from))
-        .lte('period', periodOf(range.to));
+        .from('accounting_ledger_v')
+        .select('direction, status, amount_net, vat_amount, amount_gross')
+        .gte('event_date', range.from)
+        .lte('event_date', range.to);
       if (error) throw new Error(error.message);
-      const rows = (data ?? []) as Record<string, number | string>[];
-      const sum = (key: string) =>
-        rows.reduce((acc, r) => acc + Number(r[key] ?? 0), 0);
-      return {
-        totalIncomeNet: sum('total_income_net'),
-        totalIncomeVat: sum('total_income_vat'),
-        totalIncomeGross: sum('total_income_gross'),
-        totalExpenseNet: sum('total_expense_net'),
-        totalExpenseVat: sum('total_expense_vat'),
-        totalExpenseGross: sum('total_expense_gross'),
-        netProfitNet: sum('net_profit_net'),
-        netProfitGross: sum('net_profit_gross'),
+      const rows = (data ?? []) as LedgerAggRow[];
+
+      // Replicates accounting_pl_summary_v exactly:
+      //   income  = direction='in'  AND status='paid'
+      //   expense = direction='out' AND status='paid'
+      //   net profit = income - expense (net & gross)
+      const s: PLSummary = {
+        totalIncomeNet: 0,
+        totalIncomeVat: 0,
+        totalIncomeGross: 0,
+        totalExpenseNet: 0,
+        totalExpenseVat: 0,
+        totalExpenseGross: 0,
+        netProfitNet: 0,
+        netProfitGross: 0,
       };
+      for (const r of rows) {
+        if (r.status !== 'paid') continue;
+        const net = Number(r.amount_net ?? 0);
+        const vat = Number(r.vat_amount ?? 0);
+        const gross = Number(r.amount_gross ?? 0);
+        if (r.direction === 'in') {
+          s.totalIncomeNet += net;
+          s.totalIncomeVat += vat;
+          s.totalIncomeGross += gross;
+        } else if (r.direction === 'out') {
+          s.totalExpenseNet += net;
+          s.totalExpenseVat += vat;
+          s.totalExpenseGross += gross;
+        }
+      }
+      s.netProfitNet = s.totalIncomeNet - s.totalExpenseNet;
+      s.netProfitGross = s.totalIncomeGross - s.totalExpenseGross;
+      return s;
     },
   });
 }

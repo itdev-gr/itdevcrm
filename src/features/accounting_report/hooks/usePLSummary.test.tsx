@@ -24,27 +24,39 @@ function wrap(c: ReactNode) {
 describe('usePLSummary', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('aggregates rows in range into totals', async () => {
+  it('aggregates exact-date-filtered ledger rows into paid-only totals', async () => {
+    // Ledger rows spanning paid/pending and in/out. Postgres numeric comes back
+    // as STRING over supabase-js — mix strings and numbers to exercise Number().
     lte.mockResolvedValue({
       data: [
-        { period: '2026-06',
-          total_income_net: 1000, total_income_vat: 240, total_income_gross: 1240,
-          total_expense_net: 400, total_expense_vat: 96, total_expense_gross: 496,
-          net_profit_net: 600, net_profit_gross: 744 },
-        { period: '2026-07',
-          total_income_net: 500, total_income_vat: 120, total_income_gross: 620,
-          total_expense_net: 200, total_expense_vat: 48, total_expense_gross: 248,
-          net_profit_net: 300, net_profit_gross: 372 },
+        // income, paid — counted
+        { direction: 'in', status: 'paid', amount_net: 1000, vat_amount: 240, amount_gross: 1240 },
+        { direction: 'in', status: 'paid', amount_net: '500', vat_amount: '120', amount_gross: '620' },
+        // income, pending — excluded
+        { direction: 'in', status: 'pending', amount_net: 999, vat_amount: 999, amount_gross: 999 },
+        // expense, paid — counted
+        { direction: 'out', status: 'paid', amount_net: 400, vat_amount: 96, amount_gross: 496 },
+        { direction: 'out', status: 'paid', amount_net: '200', vat_amount: '48', amount_gross: '248' },
+        // expense, pending — excluded
+        { direction: 'out', status: 'pending', amount_net: 777, vat_amount: 777, amount_gross: 777 },
       ],
       error: null,
     });
     const { result } = renderHook(
-      () => usePLSummary({ from: '2026-06-01', to: '2026-07-31' }),
+      () => usePLSummary({ from: '2026-07-01', to: '2026-07-16' }),
       { wrapper: ({ children }) => wrap(children) },
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(gte).toHaveBeenCalledWith('period', '2026-06');
-    expect(lte).toHaveBeenCalledWith('period', '2026-07');
+
+    // Reads the ledger view, filtered by EXACT event_date (same as useLedger).
+    expect(from).toHaveBeenCalledWith('accounting_ledger_v');
+    expect(gte).toHaveBeenCalledWith('event_date', '2026-07-01');
+    expect(lte).toHaveBeenCalledWith('event_date', '2026-07-16');
+
+    // Hand-computed, paid-only:
+    //   income  net 1000+500=1500, vat 240+120=360, gross 1240+620=1860
+    //   expense net 400+200=600,   vat 96+48=144,   gross 496+248=744
+    //   net profit net 1500-600=900, gross 1860-744=1116
     expect(result.current.data).toEqual({
       totalIncomeNet: 1500,
       totalIncomeVat: 360,
