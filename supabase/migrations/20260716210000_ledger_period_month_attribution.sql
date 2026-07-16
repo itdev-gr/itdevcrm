@@ -11,7 +11,8 @@
 --
 -- ROLLBACK (manual): recreate the view with the previous event date expression
 -- `COALESCE(paid_at::date, start_date)` on both arms (captured live 2026-07-16):
---   create or replace view public.accounting_ledger_v as
+--   create or replace view public.accounting_ledger_v
+--   with (security_invoker = true) as
 --   SELECT 'in'::text AS direction,
 --       COALESCE(dp.paid_at::date, dp.start_date) AS event_date,
 --       to_char(COALESCE(dp.paid_at::date, dp.start_date)::timestamptz, 'YYYY-MM') AS period,
@@ -30,7 +31,12 @@
 --       JOIN expense_categories cat ON cat.id = e.category_id;
 -- =============================================================================
 
-create or replace view public.accounting_ledger_v as
+-- SECURITY: keep security_invoker=true (from the original 20260601000006) so the
+-- view runs with the CALLER's RLS, NOT the owner's. A create-or-replace that omits
+-- this silently reverts the view to security-definer, exposing all rows (incl. to
+-- the anon role, which holds SELECT) — a cross-client financial leak. Never drop it.
+create or replace view public.accounting_ledger_v
+with (security_invoker = true) as
 select 'in'::text as direction,
        case when dp.billing_type in ('recurring_monthly','recurring_yearly')
             then dp.start_date
