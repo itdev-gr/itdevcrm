@@ -30,8 +30,14 @@ describe('SERVICE_INFO_FIELDS', () => {
     expect(fields[0]?.type).toBe('textarea');
     expect(fields[0]?.sharedWithDeal).toBe(true);
   });
+  it('social_media has a single notes field shared with the deal', () => {
+    const fields = infoFieldsFor('social_media');
+    expect(fields.map((f) => f.key)).toEqual(['social_notes']);
+    expect(fields[0]?.type).toBe('textarea');
+    expect(fields[0]?.sharedWithDeal).toBe(true);
+  });
   it('returns [] for a service without an Info tab', () => {
-    expect(infoFieldsFor('social_media')).toEqual([]);
+    expect(infoFieldsFor('hosting')).toEqual([]);
   });
 });
 
@@ -49,6 +55,11 @@ describe('sharedDealFields', () => {
   it('flows ads notes through to the deal', () => {
     expect(sharedDealFields('ads', { ads_notes: 'campaign paused' }).map((f) => f.key)).toEqual([
       'ads_notes',
+    ]);
+  });
+  it('flows social notes through to the deal', () => {
+    expect(sharedDealFields('social_media', { social_notes: 'reels scheduled' }).map((f) => f.key)).toEqual([
+      'social_notes',
     ]);
   });
 });

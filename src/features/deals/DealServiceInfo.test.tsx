@@ -9,6 +9,10 @@ vi.mock('./hooks/useDealJobs', () => ({
         id: 'j1', service_type: 'web_seo',
         details: { website_password: 'secret', web_report_url: 'https://report', seo_notes: 'looks good' },
       },
+      {
+        id: 'j2', service_type: 'social_media',
+        details: { social_notes: 'reels scheduled' },
+      },
     ],
   }),
 }));
@@ -19,5 +23,9 @@ describe('DealServiceInfo', () => {
     expect(screen.getByText('looks good')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'https://report' })).toBeInTheDocument();
     expect(screen.queryByText('secret')).toBeNull();
+  });
+  it('shows social media notes shared from a social job', () => {
+    render(<DealServiceInfo dealId="d1" />);
+    expect(screen.getByText('reels scheduled')).toBeInTheDocument();
   });
 });
