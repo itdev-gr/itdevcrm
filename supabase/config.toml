@@ -410,6 +410,11 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.send-email]
 verify_jwt = false
 
+# summarize-task authenticates itself (Bearer TASK_SUMMARY_SECRET); the pulse /
+# cron call it with no user JWT, so the gateway must not verify one.
+[functions.summarize-task]
+verify_jwt = false
+
 [functions.resend-webhook]
 verify_jwt = false
 
