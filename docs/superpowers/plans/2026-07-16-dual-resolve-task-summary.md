@@ -131,7 +131,7 @@ declare
   v_other uuid;
 begin
   if v_uid is null then raise exception 'not authenticated'; end if;
-  select coalesce(is_admin, false) into v_admin from profiles where user_id = v_uid;
+  v_admin := coalesce((select is_admin from profiles where user_id = v_uid), false);
   perform set_config('app.task_resolve_rpc', '1', true);
 
   if p_kind = 'assigned' then
@@ -151,8 +151,8 @@ begin
   end if;
   if v_assignee is null and v_creator is null then raise exception 'task not found or already closed'; end if;
 
-  v_is_creator  := v_uid = v_creator;
-  v_is_assignee := v_uid = v_assignee;
+  v_is_creator  := coalesce(v_uid = v_creator, false);
+  v_is_assignee := coalesce(v_uid = v_assignee, false);
   if not (v_is_creator or v_is_assignee or v_admin) then raise exception 'not a party'; end if;
 
   -- Admin force-close and self-tasks stamp both sides; otherwise stamp own side.
@@ -186,7 +186,7 @@ begin
   if v_first_stamp and not (v_c_at is not null and v_a_at is not null) and v_creator <> v_assignee then
     v_other := case when v_is_creator then v_assignee else v_creator end;
     insert into notifications (user_id, type, payload) values (v_other, 'task_confirm_pending',
-      jsonb_build_object('task_kind', p_kind, 'task_id', p_task_id, 'title', v_title,
+      jsonb_build_object('task_kind', p_kind || '_task', 'task_id', p_task_id, 'title', v_title,
                          'author_id', v_uid, 'source_code', v_source,
                          'parent_type', v_ptype, 'parent_id', v_pid));
   end if;
