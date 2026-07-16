@@ -17,7 +17,8 @@ import { useAssignableOwners } from './hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
 import { useSalesBoardSortStore } from '@/features/sales/salesBoardSortStore';
-import { orderForSort, pickNextId } from '@/features/sales/salesKanbanColumns';
+import { useSalesBoardFilterStore } from '@/features/sales/salesBoardFilterStore';
+import { orderForSort, pickNextId, searchOrClause } from '@/features/sales/salesKanbanColumns';
 import { useDeleteLeads } from './hooks/useDeleteLeads';
 import { isNotAccessible } from '@/lib/notAccessibleError';
 import { isLeadDeletable } from './leadDeletable';
@@ -56,35 +57,50 @@ function LeadDetailContent() {
   const del = useDeleteLeads();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // "Next" walks the current lead's own kanban column, following the user's
-  // saved board sort — so it matches the board top-to-bottom. RLS scopes reps
-  // to their own leads; admins iterate the whole column.
+  // "Next" walks the current lead's own kanban column, matching the board the
+  // user just left: the same saved sort AND the same active owner/source/search
+  // filter (mirrored via salesBoardFilterStore). RLS still scopes reps to their
+  // own leads; admins iterate whatever the board's owner filter shows.
   const sortBy = useSalesBoardSortStore((s) => (userId ? s.byUser[userId] ?? 'newest' : 'newest'));
+  const boardFilter = useSalesBoardFilterStore((s) => (userId ? s.byUser[userId] : undefined));
 
   // Fetch the whole ordered column, not just the first 1000 rows: PostgREST caps
   // each response at 1000, and busy stages (e.g. not_interested) exceed that, so
   // an un-paged fetch would strand the tail — and if the CURRENT lead sits in the
   // truncated part, pickNextId gets idx === -1 and jumps to the column's first
-  // lead. Page in 1000-row chunks until a short page ends it. The list doesn't
-  // depend on leadId, so it's kept out of the queryKey — the next id is derived
-  // below via useMemo so Next clicks / focus don't refetch the column.
+  // lead. Page in 1000-row chunks until a short page ends it. Query is a
+  // byte-identical filter+order to useColumnLeads (minus the select shape) so
+  // Next lands exactly where the board's next card is. Keyed on the filter so it
+  // refetches when the board filter changes; the next id is derived via useMemo
+  // so Next clicks / focus don't refetch the column.
   const nextInStageList = useQuery({
-    queryKey: ['next-in-stage', lead?.stage_id, sortBy] as const,
+    queryKey: [
+      'next-in-stage',
+      lead?.stage_id,
+      sortBy,
+      boardFilter?.ownerId,
+      boardFilter?.source,
+      boardFilter?.search,
+    ] as const,
     queryFn: async (): Promise<{ id: string }[]> => {
       if (!lead?.stage_id) return [];
       const order = orderForSort(sortBy);
+      const orClause = searchOrClause(boardFilter?.search ?? '');
       const PAGE = 1000;
       const ids: { id: string }[] = [];
       for (let from = 0; ; from += PAGE) {
-        const { data, error: e } = await supabase
+        let q = supabase
           .from('leads')
           .select('id')
-          .eq('stage_id', lead.stage_id)
           .eq('archived', false)
-          .is('converted_at', null)
+          .eq('stage_id', lead.stage_id)
           .order(order.column, { ascending: order.ascending })
           .order('id', { ascending: true }) // byte-identical to the column query
           .range(from, from + PAGE - 1);
+        if (boardFilter?.ownerId) q = q.eq('owner_user_id', boardFilter.ownerId);
+        if (boardFilter?.source) q = q.eq('source', boardFilter.source);
+        if (orClause) q = q.or(orClause);
+        const { data, error: e } = await q;
         if (e) throw new Error(e.message);
         const page = data ?? [];
         ids.push(...page);

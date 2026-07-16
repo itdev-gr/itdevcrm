@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DndContext,
@@ -28,6 +28,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useShuffleStageLeads } from './hooks/useShuffleStageLeads';
 import { isStageMoveBlocked } from './stageAccess';
 import { useSalesBoardSortStore } from './salesBoardSortStore';
+import { useSalesBoardFilterStore } from './salesBoardFilterStore';
 import type { SortBy } from './salesKanbanColumns';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
 
@@ -81,6 +82,20 @@ export function SalesKanbanPage() {
     ...(source ? { source } : {}),
     search,
   };
+
+  // Mirror the active board filter so "Next in stage" on the lead detail page
+  // walks the SAME rows the board shows (same owner/source/search + sort),
+  // instead of the whole stage. In-memory only — survives board -> lead
+  // navigation within the session.
+  const setBoardFilter = useSalesBoardFilterStore((s) => s.setFilter);
+  useEffect(() => {
+    if (!userId) return;
+    setBoardFilter(userId, {
+      ...(typeof filter.ownerId === 'string' ? { ownerId: filter.ownerId } : {}),
+      ...(source ? { source } : {}),
+      search,
+    });
+  }, [userId, filter.ownerId, source, search, setBoardFilter]);
   const { data: counts } = useSalesKanbanCounts(columnFilter);
 
   const shufflableStages = salesStages.filter((s) =>
