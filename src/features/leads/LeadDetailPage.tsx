@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -61,25 +61,44 @@ function LeadDetailContent() {
   // to their own leads; admins iterate the whole column.
   const sortBy = useSalesBoardSortStore((s) => (userId ? s.byUser[userId] ?? 'newest' : 'newest'));
 
-  const nextInStage = useQuery({
-    queryKey: ['next-in-stage', lead?.stage_id, sortBy, leadId] as const,
-    queryFn: async (): Promise<string | null> => {
-      if (!lead?.stage_id) return null;
+  // Fetch the whole ordered column, not just the first 1000 rows: PostgREST caps
+  // each response at 1000, and busy stages (e.g. not_interested) exceed that, so
+  // an un-paged fetch would strand the tail — and if the CURRENT lead sits in the
+  // truncated part, pickNextId gets idx === -1 and jumps to the column's first
+  // lead. Page in 1000-row chunks until a short page ends it. The list doesn't
+  // depend on leadId, so it's kept out of the queryKey — the next id is derived
+  // below via useMemo so Next clicks / focus don't refetch the column.
+  const nextInStageList = useQuery({
+    queryKey: ['next-in-stage', lead?.stage_id, sortBy] as const,
+    queryFn: async (): Promise<{ id: string }[]> => {
+      if (!lead?.stage_id) return [];
       const order = orderForSort(sortBy);
-      const { data, error: e } = await supabase
-        .from('leads')
-        .select('id')
-        .eq('stage_id', lead.stage_id)
-        .eq('archived', false)
-        .is('converted_at', null)
-        .order(order.column, { ascending: order.ascending })
-        .order('id', { ascending: true }); // byte-identical to the column query
-      if (e) throw new Error(e.message);
-      return pickNextId(data ?? [], leadId);
+      const PAGE = 1000;
+      const ids: { id: string }[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error: e } = await supabase
+          .from('leads')
+          .select('id')
+          .eq('stage_id', lead.stage_id)
+          .eq('archived', false)
+          .is('converted_at', null)
+          .order(order.column, { ascending: order.ascending })
+          .order('id', { ascending: true }) // byte-identical to the column query
+          .range(from, from + PAGE - 1);
+        if (e) throw new Error(e.message);
+        const page = data ?? [];
+        ids.push(...page);
+        if (page.length < PAGE) break;
+      }
+      return ids;
     },
     enabled: !!lead?.stage_id,
     staleTime: 30_000,
   });
+  const nextInStageId = useMemo(
+    () => pickNextId(nextInStageList.data ?? [], leadId),
+    [nextInStageList.data, leadId],
+  );
 
   const [offerEmailOpen, setOfferEmailOpen] = useState(false);
   const latestOffer = useQuery({
@@ -271,19 +290,21 @@ function LeadDetailContent() {
                 {t('automations.label')}
               </label>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2.5 text-xs"
-              onClick={() => nextInStage.data && navigate(`/leads/${nextInStage.data}`)}
-              disabled={!nextInStage.data || nextInStage.isLoading}
-            >
-              {nextInStage.isLoading
-                ? '…'
-                : nextInStage.data
-                  ? t('actions.next_in_stage', { stage: stageName })
-                  : t('actions.no_more_in_stage', { stage: stageName })}
-            </Button>
+            {currentStage && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                onClick={() => nextInStageId && navigate(`/leads/${nextInStageId}`)}
+                disabled={!nextInStageId || nextInStageList.isLoading}
+              >
+                {nextInStageList.isLoading
+                  ? '…'
+                  : nextInStageId
+                    ? t('actions.next_in_stage', { stage: stageName })
+                    : t('actions.no_more_in_stage', { stage: stageName })}
+              </Button>
+            )}
             {isAdmin &&
               isLeadDeletable({ converted_at: lead.converted_at, stage: { code: currentStageCode ?? null } }) && (
                 <Button variant="destructive" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setConfirmDelete(true)}>
