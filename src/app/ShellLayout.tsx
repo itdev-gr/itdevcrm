@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { AnnouncementPopup } from '@/features/announcements/AnnouncementPopup';
+import { ToastContainer } from '@/features/notifications/ToastContainer';
 
 export function ShellLayout() {
   return (
@@ -13,6 +14,7 @@ export function ShellLayout() {
         </Suspense>
       </AppShell>
       <AnnouncementPopup />
+      <ToastContainer />
     </RequireAuth>
   );
 }
