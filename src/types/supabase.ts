@@ -509,6 +509,60 @@ export type Database = {
         }
         Relationships: []
       }
+      business_profile_ai_backfill_backup_20260714: {
+        Row: {
+          deal_id: string | null
+          job_id: string | null
+          job_name_before: string | null
+          job_url_before: string | null
+          status: string | null
+        }
+        Insert: {
+          deal_id?: string | null
+          job_id?: string | null
+          job_name_before?: string | null
+          job_url_before?: string | null
+          status?: string | null
+        }
+        Update: {
+          deal_id?: string | null
+          job_id?: string | null
+          job_name_before?: string | null
+          job_url_before?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      business_profile_backfill_backup_20260714: {
+        Row: {
+          deal_id: string | null
+          deal_name_before: string | null
+          deal_url_before: string | null
+          job_id: string | null
+          job_name_before: string | null
+          job_url_before: string | null
+          status: string | null
+        }
+        Insert: {
+          deal_id?: string | null
+          deal_name_before?: string | null
+          deal_url_before?: string | null
+          job_id?: string | null
+          job_name_before?: string | null
+          job_url_before?: string | null
+          status?: string | null
+        }
+        Update: {
+          deal_id?: string | null
+          deal_name_before?: string | null
+          deal_url_before?: string | null
+          job_id?: string | null
+          job_name_before?: string | null
+          job_url_before?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       client_blocks: {
         Row: {
           blocked_at: string
@@ -697,6 +751,35 @@ export type Database = {
         }
         Relationships: []
       }
+      comment_thread_reads: {
+        Row: {
+          last_seen_at: string
+          parent_id: string
+          parent_type: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          parent_id: string
+          parent_type: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          parent_id?: string
+          parent_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_thread_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           archived: boolean
@@ -711,6 +794,7 @@ export type Database = {
           parent_id: string
           parent_type: string
           reply_to_id: string | null
+          task_key: string | null
           updated_at: string
         }
         Insert: {
@@ -726,6 +810,7 @@ export type Database = {
           parent_id: string
           parent_type: string
           reply_to_id?: string | null
+          task_key?: string | null
           updated_at?: string
         }
         Update: {
@@ -741,6 +826,7 @@ export type Database = {
           parent_id?: string
           parent_type?: string
           reply_to_id?: string | null
+          task_key?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -908,6 +994,24 @@ export type Database = {
           parent_type?: string | null
           reply_to_id?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      comments_reparent_backup_20260709: {
+        Row: {
+          id: string | null
+          parent_id: string | null
+          parent_type: string | null
+        }
+        Insert: {
+          id?: string | null
+          parent_id?: string | null
+          parent_type?: string | null
+        }
+        Update: {
+          id?: string | null
+          parent_id?: string | null
+          parent_type?: string | null
         }
         Relationships: []
       }
@@ -1170,6 +1274,42 @@ export type Database = {
         Relationships: []
       }
       deal_payment_lines_backup_20260619: {
+        Row: {
+          amount_gross: number | null
+          amount_net: number | null
+          created_at: string | null
+          id: string | null
+          job_id: string | null
+          label: string | null
+          payment_id: string | null
+          vat_amount: number | null
+          vat_rate: number | null
+        }
+        Insert: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          created_at?: string | null
+          id?: string | null
+          job_id?: string | null
+          label?: string | null
+          payment_id?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Update: {
+          amount_gross?: number | null
+          amount_net?: number | null
+          created_at?: string | null
+          id?: string | null
+          job_id?: string | null
+          label?: string | null
+          payment_id?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Relationships: []
+      }
+      deal_payment_lines_backup_20260714: {
         Row: {
           amount_gross: number | null
           amount_net: number | null
@@ -1865,6 +2005,21 @@ export type Database = {
         }
         Relationships: []
       }
+      deals_test_delete_backup_20260714: {
+        Row: {
+          row: Json
+          tbl: string
+        }
+        Insert: {
+          row: Json
+          tbl: string
+        }
+        Update: {
+          row?: Json
+          tbl?: string
+        }
+        Relationships: []
+      }
       deleted_test_clients_backup_20260622: {
         Row: {
           data: Json | null
@@ -1940,6 +2095,21 @@ export type Database = {
           enabled?: boolean
           key?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_dept_mkif_retag_backup_20260710: {
+        Row: {
+          department: string | null
+          id: string
+        }
+        Insert: {
+          department?: string | null
+          id: string
+        }
+        Update: {
+          department?: string | null
+          id?: string
         }
         Relationships: []
       }
@@ -2048,6 +2218,157 @@ export type Database = {
         }
         Relationships: []
       }
+      email_message_bcc: {
+        Row: {
+          bcc_emails: string
+          created_at: string
+          message_pk: string
+        }
+        Insert: {
+          bcc_emails: string
+          created_at?: string
+          message_pk: string
+        }
+        Update: {
+          bcc_emails?: string
+          created_at?: string
+          message_pk?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_message_bcc_message_pk_fkey"
+            columns: ["message_pk"]
+            isOneToOne: true
+            referencedRelation: "email_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_messages: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          captured_from_user_id: string | null
+          cc_emails: string | null
+          client_id: string | null
+          created_at: string
+          deal_id: string | null
+          department: string | null
+          direction: string
+          from_email: string
+          from_name: string | null
+          gmail_id: string | null
+          id: string
+          job_id: string | null
+          lead_id: string | null
+          message_id: string
+          sent_at: string | null
+          snippet: string | null
+          staff_user_id: string | null
+          subject: string | null
+          thread_id: string | null
+          to_email: string
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          captured_from_user_id?: string | null
+          cc_emails?: string | null
+          client_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          department?: string | null
+          direction: string
+          from_email: string
+          from_name?: string | null
+          gmail_id?: string | null
+          id?: string
+          job_id?: string | null
+          lead_id?: string | null
+          message_id: string
+          sent_at?: string | null
+          snippet?: string | null
+          staff_user_id?: string | null
+          subject?: string | null
+          thread_id?: string | null
+          to_email: string
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          captured_from_user_id?: string | null
+          cc_emails?: string | null
+          client_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          department?: string | null
+          direction?: string
+          from_email?: string
+          from_name?: string | null
+          gmail_id?: string | null
+          id?: string
+          job_id?: string | null
+          lead_id?: string | null
+          message_id?: string
+          sent_at?: string | null
+          snippet?: string | null
+          staff_user_id?: string | null
+          subject?: string | null
+          thread_id?: string | null
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_messages_captured_from_user_id_fkey"
+            columns: ["captured_from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "email_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tech_my_clients"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "email_messages_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       email_outbox: {
         Row: {
           attempts: number
@@ -2094,6 +2415,27 @@ export type Database = {
         Relationships: []
       }
       email_outbox_stage_gate_backup_20260701: {
+        Row: {
+          cancelled_at: string
+          id: string
+          prior_last_error: string | null
+          prior_status: string
+        }
+        Insert: {
+          cancelled_at?: string
+          id: string
+          prior_last_error?: string | null
+          prior_status: string
+        }
+        Update: {
+          cancelled_at?: string
+          id?: string
+          prior_last_error?: string | null
+          prior_status?: string
+        }
+        Relationships: []
+      }
+      email_outbox_stagelock_backup_20260702: {
         Row: {
           cancelled_at: string
           id: string
@@ -2187,6 +2529,66 @@ export type Database = {
         Relationships: []
       }
       email_templates: {
+        Row: {
+          body: string
+          client_facing: boolean
+          description: string
+          key: string
+          subject: string
+          updated_at: string
+          variables: string
+        }
+        Insert: {
+          body: string
+          client_facing?: boolean
+          description: string
+          key: string
+          subject: string
+          updated_at?: string
+          variables?: string
+        }
+        Update: {
+          body?: string
+          client_facing?: boolean
+          description?: string
+          key?: string
+          subject?: string
+          updated_at?: string
+          variables?: string
+        }
+        Relationships: []
+      }
+      email_templates_backup_20260713: {
+        Row: {
+          body: string | null
+          client_facing: boolean | null
+          description: string | null
+          key: string | null
+          subject: string | null
+          updated_at: string | null
+          variables: string | null
+        }
+        Insert: {
+          body?: string | null
+          client_facing?: boolean | null
+          description?: string | null
+          key?: string | null
+          subject?: string | null
+          updated_at?: string | null
+          variables?: string | null
+        }
+        Update: {
+          body?: string | null
+          client_facing?: boolean | null
+          description?: string | null
+          key?: string | null
+          subject?: string | null
+          updated_at?: string | null
+          variables?: string | null
+        }
+        Relationships: []
+      }
+      email_templates_dropped_backup_20260702: {
         Row: {
           body: string
           client_facing: boolean
@@ -2485,7 +2887,115 @@ export type Database = {
           signature?: string
           subject_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integrity_alert_dismissals_dismissed_by_fkey"
+            columns: ["dismissed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      job_intake_files: {
+        Row: {
+          file_name: string
+          file_size: number
+          id: string
+          job_id: string
+          mime_type: string | null
+          storage_path: string
+          uploaded_at: string
+        }
+        Insert: {
+          file_name: string
+          file_size: number
+          id?: string
+          job_id: string
+          mime_type?: string | null
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          file_name?: string
+          file_size?: number
+          id?: string
+          job_id?: string
+          mime_type?: string | null
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_intake_files_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_intake_forms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: Json
+          expires_at: string
+          first_submitted_at: string | null
+          job_id: string
+          locale: string
+          locked_at: string | null
+          locked_by: string | null
+          logo_path: string | null
+          sent_at: string | null
+          status: string
+          submitted_at: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          expires_at?: string
+          first_submitted_at?: string | null
+          job_id: string
+          locale?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          logo_path?: string | null
+          sent_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          expires_at?: string
+          first_submitted_at?: string | null
+          job_id?: string
+          locale?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          logo_path?: string | null
+          sent_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_intake_forms_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jobs: {
         Row: {
@@ -3286,6 +3796,24 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs_onboarded_backfill_backup_20260702: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          onboarded_at_old: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          onboarded_at_old?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          onboarded_at_old?: string | null
+        }
+        Relationships: []
+      }
       jobs_unsplit_aiseo_backup_20260629: {
         Row: {
           billing_active: boolean | null
@@ -3310,6 +3838,24 @@ export type Database = {
           id?: string | null
           owner_user_id?: string | null
           stage_id?: string | null
+        }
+        Relationships: []
+      }
+      jobs_web_dev_info_backfill_backup_20260715: {
+        Row: {
+          backed_up_at: string | null
+          job_id: string | null
+          prev_details: Json | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          job_id?: string | null
+          prev_details?: Json | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          job_id?: string | null
+          prev_details?: Json | null
         }
         Relationships: []
       }
@@ -5469,6 +6015,35 @@ export type Database = {
           },
         ]
       }
+      shared_mailboxes: {
+        Row: {
+          created_at: string
+          department: string
+          email: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          email: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          email?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_mailboxes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       task_comments: {
         Row: {
           assigned_task_id: string | null
@@ -5524,6 +6099,7 @@ export type Database = {
           google_email: string
           refresh_token_enc: string
           revoked_at: string | null
+          scopes: string | null
           user_id: string
         }
         Insert: {
@@ -5531,6 +6107,7 @@ export type Database = {
           google_email: string
           refresh_token_enc: string
           revoked_at?: string | null
+          scopes?: string | null
           user_id: string
         }
         Update: {
@@ -5538,11 +6115,41 @@ export type Database = {
           google_email?: string
           refresh_token_enc?: string
           revoked_at?: string | null
+          scopes?: string | null
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "user_google_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_google_sync: {
+        Row: {
+          backfill_page_token: string | null
+          backfilled_at: string | null
+          last_synced_at: string | null
+          user_id: string
+        }
+        Insert: {
+          backfill_page_token?: string | null
+          backfilled_at?: string | null
+          last_synced_at?: string | null
+          user_id: string
+        }
+        Update: {
+          backfill_page_token?: string | null
+          backfilled_at?: string | null
+          last_synced_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_google_sync_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
@@ -5879,6 +6486,7 @@ export type Database = {
     Functions: {
       accounting_create_deal: {
         Args: {
+          p_cash_charge_vat?: boolean
           p_client_id?: string
           p_description?: string
           p_monthly?: number
@@ -5889,6 +6497,23 @@ export type Database = {
         }
         Returns: Json
       }
+      accounting_integrity_alerts: {
+        Args: never
+        Returns: {
+          category: string
+          check_key: string
+          deal_id: string
+          detail: string
+          job_id: string
+          severity: string
+          signature: string
+          subject_code: string
+          subject_id: string
+          subject_type: string
+          title: string
+        }[]
+      }
+      accounting_integrity_alerts_count: { Args: never; Returns: number }
       accounting_mark_paid_in_full: {
         Args: { target_deal_id: string }
         Returns: Json
@@ -6004,12 +6629,35 @@ export type Database = {
         Args: { target_action: string; target_board: string }
         Returns: string
       }
+      deal_email_statuses: {
+        Args: { p_deal_id: string }
+        Returns: {
+          bounced_at: string
+          created_at: string
+          dedupe_key: string
+          delivered_at: string
+          error: string
+          id: string
+          status: string
+          template_key: string
+          to_email: string
+        }[]
+      }
       deal_next_due: { Args: { p_deal_id: string }; Returns: string }
       delete_announcement: { Args: { p_id: string }; Returns: Json }
       delete_jobs: { Args: { p_ids: string[] }; Returns: Json }
       delete_leads: { Args: { p_ids: string[] }; Returns: Json }
       discard_lead_intake: { Args: { p_id: string }; Returns: Json }
       dismiss_announcement: { Args: { p_id: string }; Returns: Json }
+      dismiss_integrity_alert: {
+        Args: {
+          p_check_key: string
+          p_note?: string
+          p_signature?: string
+          p_subject_id: string
+        }
+        Returns: string
+      }
       distribute_unassigned_leads: { Args: never; Returns: number }
       email_automation_enabled: {
         Args: { setting_key: string }
@@ -6131,6 +6779,8 @@ export type Database = {
           sublabel: string
         }[]
       }
+      gmail_sync_health: { Args: never; Returns: Json }
+      group_member_ids: { Args: { p_code: string }; Returns: string[] }
       import_leads_to_intake: { Args: { p_rows: Json }; Returns: Json }
       is_client_blocked: {
         Args: { target_client_id: string }
@@ -6141,6 +6791,41 @@ export type Database = {
         Returns: boolean
       }
       job_billing_ref_count: { Args: { p_job_id: string }; Returns: number }
+      job_emails: {
+        Args: { p_job_id: string }
+        Returns: {
+          body_html: string | null
+          body_text: string | null
+          captured_from_user_id: string | null
+          cc_emails: string | null
+          client_id: string | null
+          created_at: string
+          deal_id: string | null
+          department: string | null
+          direction: string
+          from_email: string
+          from_name: string | null
+          gmail_id: string | null
+          id: string
+          job_id: string | null
+          lead_id: string | null
+          message_id: string
+          sent_at: string | null
+          snippet: string | null
+          staff_user_id: string | null
+          subject: string | null
+          thread_id: string | null
+          to_email: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      job_pause_billing: { Args: { p_job_id: string }; Returns: Json }
+      job_resume_billing: { Args: { p_job_id: string }; Returns: Json }
       job_service_abbr: { Args: { st: string }; Returns: string }
       lead_cold_ids: {
         Args: { p_ids: string[] }
@@ -6186,6 +6871,14 @@ export type Database = {
       }
       pick_next_sales_assignee: { Args: never; Returns: string }
       process_email_sequences: { Args: never; Returns: number }
+      profile_directory: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
+        }[]
+      }
       recompute_deal_job_period_dates: {
         Args: { p_deal_id: string }
         Returns: undefined
@@ -6198,6 +6891,8 @@ export type Database = {
         Args: { p_allow_release?: boolean }
         Returns: number
       }
+      reconcile_deal_stage: { Args: { p_deal_id: string }; Returns: boolean }
+      reconcile_offboard_jobs: { Args: never; Returns: number }
       reconcile_payment_integrity: { Args: never; Returns: number }
       reconcile_seo_onboarding_emails: { Args: never; Returns: number }
       recover_stale_email_claims: {
@@ -6221,6 +6916,20 @@ export type Database = {
         Args: { p_force?: boolean; p_id: string }
         Returns: Json
       }
+      resolve_email_filing: {
+        Args: { p_from: string; p_subject: string; p_to: string }
+        Returns: {
+          client_id: string
+          deal_id: string
+          department: string
+          direction: string
+          job_id: string
+          lead_id: string
+          staff_user_id: string
+        }[]
+      }
+      run_daily_expenses: { Args: never; Returns: undefined }
+      run_daily_payment_reminders: { Args: never; Returns: number }
       run_monthly_task_reset: { Args: never; Returns: undefined }
       sales_kanban_counts: {
         Args: { p_owner?: string; p_search?: string; p_source?: string }
@@ -6254,6 +6963,7 @@ export type Database = {
           deal_id: string
           dedupe_key: string
           job_id: string
+          name: string
           service_type: string
           setting_key: string
           template_key: string
@@ -6268,13 +6978,26 @@ export type Database = {
         Args: {
           p_enabled: boolean
           p_expense_id: string
-          p_payment_method?: string | null
+          p_payment_method?: string
         }
         Returns: number
       }
       set_job_monthly_task: {
         Args: { p_code: string; p_completed: boolean; p_job_id: string }
         Returns: undefined
+      }
+      settle_autopay_expenses: { Args: never; Returns: number }
+      shared_mailbox_status: {
+        Args: never
+        Returns: {
+          backfilled: boolean
+          connected: boolean
+          department: string
+          email: string
+          google_email: string
+          last_synced_at: string
+          user_id: string
+        }[]
       }
       target_accounting_stage: {
         Args: { next_due: string; today: string }
@@ -6291,6 +7014,7 @@ export type Database = {
       team_lead_for_group: { Args: { p_group_code: string }; Returns: string }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
       unblock_job: { Args: { target_job_id: string }; Returns: Json }
+      undismiss_integrity_alert: { Args: { p_id: string }; Returns: undefined }
       update_job_billing: {
         Args: {
           p_amount_net?: number
