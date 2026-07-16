@@ -63,6 +63,10 @@ function LeadDetailContent() {
   // own leads; admins iterate whatever the board's owner filter shows.
   const sortBy = useSalesBoardSortStore((s) => (userId ? s.byUser[userId] ?? 'newest' : 'newest'));
   const boardFilter = useSalesBoardFilterStore((s) => (userId ? s.byUser[userId] : undefined));
+  // "Won" is terminal — never walk it with Next. The column is only reachable
+  // when the current lead is itself won (Next is stage-scoped), so gating on the
+  // current stage keeps Next from ever landing on a won lead.
+  const isWonStage = !!lead?.stage_id && stages.some((s) => s.id === lead.stage_id && s.code === 'won');
 
   // Fetch the whole ordered column, not just the first 1000 rows: PostgREST caps
   // each response at 1000, and busy stages (e.g. not_interested) exceed that, so
@@ -108,7 +112,7 @@ function LeadDetailContent() {
       }
       return ids;
     },
-    enabled: !!lead?.stage_id,
+    enabled: !!lead?.stage_id && !isWonStage,
     staleTime: 30_000,
   });
   const nextInStageId = useMemo(
