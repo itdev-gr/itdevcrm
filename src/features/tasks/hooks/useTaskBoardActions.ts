@@ -17,9 +17,13 @@ type AssignedUpdate = Database['public']['Tables']['assigned_tasks']['Update'];
  *  blocked by the DB guard, and the RPC stamps the caller's side — the task
  *  only closes once both parties have). The mutation surfaces the RPC's
  *  `{ closed, … }` jsonb so the board can toast when a stamp doesn't yet close
- *  the task. Set-importance and reopen stay direct per-table updates (each in
- *  its own branch so the patch keeps that table's Update type — a cross-table
- *  union breaks under exactOptionalPropertyTypes). */
+ *  the task. WITHDRAW (drag an open, my-side-stamped card out of Resolved)
+ *  un-stamps my side via the `unresolve_task` RPC (direct stamp writes are also
+ *  blocked), then lands it on the target priority via a direct `importance`
+ *  update — never touching `completed_at`/`status`. Set-importance and reopen
+ *  stay direct per-table updates (each in its own branch so the patch keeps
+ *  that table's Update type — a cross-table union breaks under
+ *  exactOptionalPropertyTypes). */
 export function useTaskBoardActions() {
   const qc = useQueryClient();
   return useMutation<Result, Error, Vars>({
@@ -32,6 +36,20 @@ export function useTaskBoardActions() {
         } as never);
         if (error) throw new Error(error.message);
         return data as ResolveTaskResult;
+      }
+      if (action.type === 'withdraw') {
+        // Un-stamp my side via the RPC (direct stamp writes are blocked), then
+        // land the card on the chosen priority column — importance writes are
+        // not guarded, so that part stays a direct per-table update.
+        const { error: rpcError } = await supabase.rpc('unresolve_task' as never, {
+          p_kind: card.kind,
+          p_task_id: card.id,
+        } as never);
+        if (rpcError) throw new Error(rpcError.message);
+        const table = card.kind === 'user' ? 'user_tasks' : 'assigned_tasks';
+        const { error } = await supabase.from(table).update({ importance: action.importance }).eq('id', card.id);
+        if (error) throw new Error(error.message);
+        return null;
       }
       if (card.kind === 'user') {
         const patch: UserUpdate =
