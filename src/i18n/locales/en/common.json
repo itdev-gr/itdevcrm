@@ -103,7 +103,8 @@
     "not_sent": "Not sent",
     "not_sent_hint": "Access email not sent — click to resend",
     "sent": "Access email sent",
-    "resend": "Resend"
+    "resend": "Resend",
+    "last_sent_line": "Last sent on {{date}}."
   },
   "client_picker": {
     "label": "Client (optional)",

@@ -31,10 +31,12 @@ function assertUnreachable(state: never): never {
  * - `variant="card"` — a small colored dot for kanban cards.
  * - `variant="detail"` — a text pill for the job detail header (sent shows the date).
  *
- * `not_sent` renders a Resend action that mirrors the SEO access-request
- * confirm-then-send flow (same `seo_access.*` copy, same `useRequestSeoAccess`
- * mutation — no new send path). AI SEO parents (and any other service without
- * an onboarding template) always resolve to `coming_soon`.
+ * `not_sent` and `sent` both render a Resend action that mirrors the SEO
+ * access-request confirm-then-send flow (same `seo_access.*` copy, same
+ * `useRequestSeoAccess` mutation — no new send path); `sent` additionally
+ * shows a last-sent line in the confirm dialog. AI SEO parents (and any
+ * other service without an onboarding template) always resolve to
+ * `coming_soon`.
  */
 export function JobEmailStatusBadge({
   job,
@@ -63,7 +65,8 @@ export function JobEmailStatusBadge({
 
   const send = useRequestSeoAccess();
   const [open, setOpen] = useState(false);
-  const canSend = state === 'not_sent' && templateKey !== null && email !== '';
+  const canSend =
+    (state === 'not_sent' || state === 'sent') && templateKey !== null && email !== '';
 
   function onSend() {
     if (!templateKey) return;
@@ -81,7 +84,15 @@ export function JobEmailStatusBadge({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t(cfg.confirmTitleKey)}</DialogTitle>
-          <DialogDescription>{t(cfg.confirmBodyKey, { email })}</DialogDescription>
+          <DialogDescription>
+            {t(cfg.confirmBodyKey, { email })}
+            {lastSent ? (
+              <>
+                <br />
+                {t('seo_access.last_sent_line', { date: formatDate(lastSent) })}
+              </>
+            ) : null}
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
@@ -164,16 +175,28 @@ export function JobEmailStatusBadge({
     case 'sent': {
       const sentDate = lastSent ? formatDate(lastSent) : null;
       return (
-        <span
-          className={cn(
-            detailHeaderStatusBadgeClass,
-            'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
-          )}
-        >
-          <CheckCircle2 className="size-2.5" />
-          {t('seo_access.sent')}
-          {sentDate ? ` · ${sentDate}` : ''}
-        </span>
+        <>
+          <span
+            className={cn(
+              detailHeaderStatusBadgeClass,
+              'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+            )}
+          >
+            <CheckCircle2 className="size-2.5" />
+            {t('seo_access.sent')}
+            {sentDate ? ` · ${sentDate}` : ''}
+          </span>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            disabled={!canSend}
+            onClick={() => setOpen(true)}
+          >
+            {t('seo_access.resend')}
+          </Button>
+          {resendDialog}
+        </>
       );
     }
 
