@@ -66,3 +66,44 @@ describe('JobEmailStatusBadge — sent state resend (detail)', () => {
     expect(screen.queryByText(/last sent on/i)).not.toBeInTheDocument();
   });
 });
+
+describe('JobEmailStatusBadge — sent state resend (card)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sentMapMock.mockReturnValue(SENT_MAP);
+  });
+
+  it('green dot is a button that opens the dialog without triggering the card', async () => {
+    const user = userEvent.setup();
+    const onCardClick = vi.fn();
+    render(
+      wrap(
+        <div onClick={onCardClick}>
+          <JobEmailStatusBadge job={webSeoJob} variant="card" />
+        </div>,
+      ),
+    );
+    await user.click(
+      screen.getByRole('button', { name: /request google search console access/i }),
+    );
+    expect(onCardClick).not.toHaveBeenCalled();
+    expect(await screen.findByText(/request gsc access/i)).toBeInTheDocument();
+  });
+
+  it('coming_soon dot stays non-interactive', () => {
+    sentMapMock.mockReturnValue({});
+    const adsJob = { ...webSeoJob, service_type: 'ads' } as unknown as JobRow;
+    render(wrap(<JobEmailStatusBadge job={adsJob} variant="card" />));
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('dot is disabled when the client has no email', () => {
+    sentMapMock.mockReturnValue({});
+    const noEmailJob = {
+      ...webSeoJob,
+      client: { id: 'c1', name: 'ACME', email: null },
+    } as unknown as JobRow;
+    render(wrap(<JobEmailStatusBadge job={noEmailJob} variant="card" />));
+    expect(screen.getByRole('button')).toBeDisabled();
+  });
+});

@@ -122,12 +122,24 @@ export function JobEmailStatusBadge({
       case 'sent': {
         const sentDate = lastSent ? formatDate(lastSent) : null;
         return (
-          <span
-            role="img"
-            className="inline-block size-2 shrink-0 rounded-full bg-emerald-500"
-            aria-label={t('seo_access.sent')}
-            title={sentDate ? `${t('seo_access.sent')} · ${sentDate}` : t('seo_access.sent')}
-          />
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (canSend) setOpen(true);
+              }}
+              disabled={!canSend}
+              aria-label={cfg ? t(cfg.requestKey) : t('seo_access.sent')}
+              title={
+                sentDate ? t('seo_access.sent_title', { date: sentDate }) : t('seo_access.sent')
+              }
+              className="shrink-0 rounded-full p-0.5 transition-colors hover:bg-muted disabled:cursor-not-allowed"
+            >
+              <span className="block size-2 rounded-full bg-emerald-500" />
+            </button>
+            {resendDialog}
+          </>
         );
       }
       case 'not_sent':
