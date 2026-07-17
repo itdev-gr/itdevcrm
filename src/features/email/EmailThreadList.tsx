@@ -18,10 +18,6 @@ import { SendEmailDialog } from './SendEmailDialog';
 import { useBccEmails } from './hooks/useBccEmails';
 import { cleanEmailBody } from './cleanEmailBody';
 
-// PILOT: render-time email cleanup (strip quoted history + signatures) is limited
-// to these deals while we validate it. Roll out site-wide by removing this gate.
-const CLEANUP_PILOT_DEAL_IDS = new Set<string>(['4fb6295f-d0bc-49b8-a4dd-f2ecf7f5f19b']);
-
 const CATEGORY_ORDER: readonly EmailCategory[] = ['sales', 'accounting', 'technical'];
 const CATEGORY_LABEL: Record<EmailCategory, { key: string; defaultValue: string }> = {
   sales: { key: 'category.sales', defaultValue: 'Sales' },
@@ -41,7 +37,6 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
   const { t, i18n } = useTranslation('email');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-GB';
   const { data: threads = [], isLoading } = useEmailThreads(scope);
-  const cleanBodies = !!scope.deal_id && CLEANUP_PILOT_DEAL_IDS.has(scope.deal_id);
   const allIds = threads.flatMap((th) => th.messages.map((m) => m.id));
   const bccMap = useBccEmails(allIds);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -184,14 +179,7 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
                       {threadOpen && (
                         <div className="mt-3 space-y-3">
                           {thread.messages.map((m) => (
-                            <EmailMessage
-                              key={m.id}
-                              message={m}
-                              locale={locale}
-                              t={t}
-                              bccMap={bccMap}
-                              cleanBodies={cleanBodies}
-                            />
+                            <EmailMessage key={m.id} message={m} locale={locale} t={t} bccMap={bccMap} />
                           ))}
                         </div>
                       )}
@@ -223,21 +211,19 @@ function EmailMessage({
   locale,
   t,
   bccMap,
-  cleanBodies,
 }: {
   message: EmailMessageRow;
   locale: string;
   t: ReturnType<typeof useTranslation>['t'];
   bccMap: Map<string, string>;
-  cleanBodies: boolean;
 }) {
   const inbound = message.direction === 'inbound';
   const time = message.sent_at ? formatCommentTime(message.sent_at, locale) : null;
   const rawBody = message.body_text ?? message.snippet ?? '';
   const [showRaw, setShowRaw] = useState(false);
 
-  const cleaned = cleanBodies ? cleanEmailBody(rawBody) : null;
-  const displayBody = cleaned && !showRaw ? cleaned.visible : rawBody;
+  const cleaned = cleanEmailBody(rawBody);
+  const displayBody = showRaw ? rawBody : cleaned.visible;
   const isEl = locale.startsWith('el');
 
   return (
@@ -305,7 +291,7 @@ function EmailMessage({
           <div className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
             {displayBody}
           </div>
-          {cleaned?.hasHidden && (
+          {cleaned.hasHidden && (
             <button
               type="button"
               onClick={() => setShowRaw((v) => !v)}
