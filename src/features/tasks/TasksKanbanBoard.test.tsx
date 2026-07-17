@@ -48,7 +48,10 @@ describe('TasksKanbanBoard', () => {
     const urgent = screen.getByTestId('tasks-col-urgent');
     expect(within(urgent).getByText('Mine urgent')).toBeInTheDocument();
     fireEvent.click(within(urgent).getByRole('button', { name: /tasks_page.resolve/ }));
-    expect(apply).toHaveBeenCalledWith({ card: expect.objectContaining({ id: 'a1' }), action: { type: 'resolve' } });
+    expect(apply).toHaveBeenCalledWith(
+      { card: expect.objectContaining({ id: 'a1' }), action: { type: 'resolve' } },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
   });
 
   it('By me filter shows delegated tasks (read-only) and hides my own', () => {
