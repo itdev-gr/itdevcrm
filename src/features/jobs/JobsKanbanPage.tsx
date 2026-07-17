@@ -35,6 +35,7 @@ const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   ai_seo: { en: 'AI SEO', el: 'AI SEO' },
   hosting: { en: 'Hosting', el: 'Hosting' },
   ads: { en: 'Ads', el: 'Διαφημίσεις' },
+  maintenance: { en: 'Support', el: 'Υποστήριξη' },
 };
 
 const SEARCH_PLACEHOLDER: { en: string; el: string } = {
@@ -45,7 +46,7 @@ const SEARCH_PLACEHOLDER: { en: string; el: string } = {
 // Sort dropdown is opt-in per board so we can roll out to Local + Web SEO first
 // and extend to the other boards (social_media, ads, web_dev, hosting) with a
 // single line change once they ask for it.
-const SORT_ENABLED_BOARDS = new Set<ServiceType>(['local_seo', 'web_seo']);
+const SORT_ENABLED_BOARDS = new Set<ServiceType>(['local_seo', 'web_seo', 'maintenance']);
 
 const SORT_LABEL: { en: string; el: string } = {
   en: 'Sort',
@@ -153,7 +154,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={SERVICE_LABELS[serviceType][lang]}>
-        {(serviceType === 'local_seo' || serviceType === 'web_seo' || serviceType === 'web_dev') && (
+        {(serviceType === 'local_seo' || serviceType === 'web_seo' || serviceType === 'web_dev' || serviceType === 'maintenance') && (
           <Input
             type="search"
             value={search}

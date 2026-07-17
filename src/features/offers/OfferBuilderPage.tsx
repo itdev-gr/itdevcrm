@@ -32,6 +32,7 @@ const CATEGORY_LABELS: Record<string, { en: string; el: string }> = {
   ai_seo: { en: 'AI SEO', el: 'AI SEO' },
   hosting: { en: 'Hosting', el: 'Φιλοξενία' },
   ads: { en: 'Ads', el: 'Διαφημίσεις' },
+  maintenance: { en: 'Support', el: 'Υποστήριξη' },
 };
 
 function categoryLabel(serviceType: string): string {

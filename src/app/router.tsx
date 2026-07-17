@@ -290,6 +290,7 @@ export const router = createBrowserRouter([
                   'ai_seo',
                   'hosting',
                   'ads',
+                  'maintenance',
                 ]}
               >
                 {/* ai_seo stays in the access list so AI-SEO members can reach
@@ -304,6 +305,7 @@ export const router = createBrowserRouter([
               { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
               { path: 'hosting', element: <HostingListPage /> },
               { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
+              { path: 'maintenance', element: <JobsKanbanPage serviceType="maintenance" /> },
               { path: ':serviceType/clients', element: <TechMyClientsPage /> },
               { path: ':serviceType/docs', element: <TechBoardDocsPage /> },
             ],

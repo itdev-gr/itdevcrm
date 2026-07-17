@@ -18,6 +18,7 @@ const SERVICE_TO_KANBAN: Record<ServiceType, string> = {
   ai_seo:       '/tech/web-seo',
   hosting:      '/tech/hosting',
   ads:          '/tech/ads',
+  maintenance:  '/tech/maintenance',
 };
 
 const BILLING_LABEL: Record<string, { en: string; el: string }> = {

@@ -79,6 +79,7 @@ const ENUM_LABELS: Record<string, Record<string, string>> = {
     social_media: 'Social Media',
     hosting: 'Hosting',
     ads: 'Ads',
+    maintenance: 'Support',
   },
   status: {
     active: 'Active',

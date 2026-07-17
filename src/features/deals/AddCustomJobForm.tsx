@@ -29,6 +29,7 @@ const DEPARTMENTS: JobDepartment[] = [
   'ai_seo',
   'hosting',
   'ads',
+  'maintenance',
 ];
 
 const CADENCES: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];

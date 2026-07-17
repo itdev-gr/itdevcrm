@@ -7,6 +7,7 @@ const ALLOWED_GROUPS = new Set([
   'ai_seo',
   'hosting',
   'ads',
+  'maintenance',
 ]);
 
 export function canCreateAssignedTask(input: {

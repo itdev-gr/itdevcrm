@@ -9,6 +9,7 @@ const SERVICE_BADGE_CLASS: Record<string, string> = {
   ai_seo: 'bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200',
   hosting: 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200',
   ads: 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-200',
+  maintenance: 'bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200',
 };
 
 export function serviceTypeBadgeClass(serviceType: string): string {

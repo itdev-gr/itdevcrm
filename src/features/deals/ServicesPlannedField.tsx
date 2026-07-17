@@ -14,7 +14,7 @@ import { useServicePackages } from '@/features/service_packages/hooks/useService
 import { useServiceSubpackages } from '@/features/service_packages/hooks/useServiceSubpackages';
 
 export type PlannedService = {
-  service_type: 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting' | 'ads';
+  service_type: 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting' | 'ads' | 'maintenance';
   billing_type: 'one_time' | 'recurring_monthly' | 'recurring_yearly';
   // Website (web_dev) only: the one-time total is collected in installments per
   // this schedule. billing_type stays 'one_time'; this drives the payment split.
@@ -49,6 +49,7 @@ const SERVICE_TYPES: PlannedService['service_type'][] = [
   'ai_seo',
   'hosting',
   'ads',
+  'maintenance',
 ];
 
 function billingOptionsFor(

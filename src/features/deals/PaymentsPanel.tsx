@@ -34,6 +34,7 @@ const SERVICE_OPTIONS: PlannedService['service_type'][] = [
   'ai_seo',
   'hosting',
   'ads',
+  'maintenance',
 ];
 
 function reportError(err: unknown) {
