@@ -62,6 +62,11 @@ export function PrepayDialog({
       void qc.invalidateQueries({ queryKey: ['accounting-deals'] });
       void qc.invalidateQueries({ queryKey: ['accounting-ledger'] });
       void qc.invalidateQueries({ queryKey: ['accounting-pl-summary'] });
+      // Prepay pushes each chain's renewal horizon out and records paid periods,
+      // which the Recurring page and MRR figures read — refresh them too so they
+      // don't show stale "next due" / collected amounts until a manual reload.
+      void qc.invalidateQueries({ queryKey: ['recurring-clients'] });
+      void qc.invalidateQueries({ queryKey: ['accounting-mrr'] });
     } catch (e) {
       setDone({ ok: false, errors: [(e as Error).message] });
     } finally {
