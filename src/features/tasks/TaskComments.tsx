@@ -1,6 +1,6 @@
-import { type FormEvent, type KeyboardEvent } from 'react';
+import { useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Check, Pencil, Trash2, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useCommentDraft, taskThreadKey } from '@/features/comments/commentDraftStore';
@@ -8,6 +8,8 @@ import { resolveAuthorIdentity } from '@/features/comments/authorIdentity';
 import { useProfileDirectory } from '@/features/comments/hooks/useProfileDirectory';
 import { useTaskComments, type TaskCommentRow } from './hooks/useTaskComments';
 import { usePostTaskComment } from './hooks/usePostTaskComment';
+import { useUpdateTaskComment } from './hooks/useUpdateTaskComment';
+import { useDeleteTaskComment } from './hooks/useDeleteTaskComment';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -37,6 +39,7 @@ export function TaskComments({ kind, taskId, locale }: {
 }) {
   const { t } = useTranslation('common');
   const meId = useAuthStore((s) => s.user?.id ?? '');
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const { data: comments = [] } = useTaskComments(kind, taskId);
   const { data: directory } = useProfileDirectory();
   const post = usePostTaskComment();
@@ -88,33 +91,19 @@ export function TaskComments({ kind, taskId, locale }: {
         ) : (
           comments.map((c) => {
             const mine = c.author_user_id === meId;
-            const name = mine ? t('tasks_page.you') : nameOf(c);
             return (
-              <div key={c.id} className="flex gap-2.5">
-                <div
-                  className={cn(
-                    'mt-0.5 flex size-7 shrink-0 select-none items-center justify-center rounded-full text-[10px] font-semibold',
-                    tintFor(c.author_user_id),
-                  )}
-                  aria-hidden="true"
-                >
-                  {initials(nameOf(c))}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-baseline gap-1.5">
-                    <span className="text-xs font-semibold text-foreground">{name}</span>
-                    <span className="text-[10px] text-muted-foreground">{fmt(c.created_at)}</span>
-                  </p>
-                  <div
-                    className={cn(
-                      'mt-1 inline-block max-w-full rounded-2xl rounded-tl-sm px-3 py-1.5 text-sm',
-                      mine ? 'bg-primary/10 text-foreground' : 'bg-muted text-foreground',
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap break-words">{c.body}</p>
-                  </div>
-                </div>
-              </div>
+              <TaskCommentBubble
+                key={c.id}
+                c={c}
+                kind={kind}
+                taskId={taskId}
+                mine={mine}
+                canModify={mine || isAdmin}
+                name={mine ? t('tasks_page.you') : nameOf(c)}
+                avatarName={nameOf(c)}
+                fmt={fmt}
+                t={t}
+              />
             );
           })
         )}
@@ -140,5 +129,166 @@ export function TaskComments({ kind, taskId, locale }: {
         </button>
       </form>
     </section>
+  );
+}
+
+function TaskCommentBubble({
+  c,
+  kind,
+  taskId,
+  mine,
+  canModify,
+  name,
+  avatarName,
+  fmt,
+  t,
+}: {
+  c: TaskCommentRow;
+  kind: 'user' | 'assigned';
+  taskId: string;
+  mine: boolean;
+  canModify: boolean;
+  name: string;
+  avatarName: string;
+  fmt: (iso: string) => string;
+  t: ReturnType<typeof useTranslation>['t'];
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(c.body);
+  const update = useUpdateTaskComment();
+  const del = useDeleteTaskComment();
+  const isEdited = !!c.updated_at && !!c.created_at && c.updated_at !== c.created_at;
+  const busy = update.isPending || del.isPending;
+
+  async function onSave() {
+    const text = draft.trim();
+    if (!text || text === c.body) {
+      setDraft(c.body);
+      setEditing(false);
+      return;
+    }
+    try {
+      await update.mutateAsync({ kind, taskId, id: c.id, body: text });
+      setEditing(false);
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  }
+
+  function onCancel() {
+    setDraft(c.body);
+    setEditing(false);
+  }
+
+  async function onDelete() {
+    if (!confirm(t('tasks_page.comment_confirm_delete', { defaultValue: 'Delete this comment?' }))) {
+      return;
+    }
+    try {
+      await del.mutateAsync({ kind, taskId, id: c.id });
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  }
+
+  return (
+    <div className="group flex gap-2.5">
+      <div
+        className={cn(
+          'mt-0.5 flex size-7 shrink-0 select-none items-center justify-center rounded-full text-[10px] font-semibold',
+          tintFor(c.author_user_id),
+        )}
+        aria-hidden="true"
+      >
+        {initials(avatarName)}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="flex items-baseline gap-1.5">
+          <span className="text-xs font-semibold text-foreground">{name}</span>
+          <span className="text-[10px] text-muted-foreground">{fmt(c.created_at)}</span>
+          {isEdited && (
+            <span className="text-[10px] italic text-muted-foreground/70">
+              {t('tasks_page.comment_edited', { defaultValue: 'edited' })}
+            </span>
+          )}
+          {canModify && !editing && (
+            <span className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft(c.body);
+                  setEditing(true);
+                }}
+                aria-label={t('tasks_page.comment_edit', { defaultValue: 'Edit' })}
+                title={t('tasks_page.comment_edit', { defaultValue: 'Edit' })}
+                className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Pencil className="size-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => void onDelete()}
+                disabled={busy}
+                aria-label={t('tasks_page.comment_delete', { defaultValue: 'Delete' })}
+                title={t('tasks_page.comment_delete', { defaultValue: 'Delete' })}
+                className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="size-3" />
+              </button>
+            </span>
+          )}
+        </p>
+
+        {editing ? (
+          <div className="mt-1 space-y-1.5">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void onSave();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  onCancel();
+                }
+              }}
+              rows={2}
+              autoFocus
+              className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
+            />
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => void onSave()}
+                disabled={busy || draft.trim().length === 0}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                <Check className="size-3" />
+                {t('tasks_page.comment_save', { defaultValue: 'Save' })}
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-3" />
+                {t('tasks_page.comment_cancel', { defaultValue: 'Cancel' })}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              'mt-1 inline-block max-w-full rounded-2xl rounded-tl-sm px-3 py-1.5 text-sm',
+              mine ? 'bg-primary/10 text-foreground' : 'bg-muted text-foreground',
+            )}
+          >
+            <p className="whitespace-pre-wrap break-words">{c.body}</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

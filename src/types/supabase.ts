@@ -6046,30 +6046,49 @@ export type Database = {
       }
       task_comments: {
         Row: {
+          archived: boolean
+          archived_at: string | null
+          archived_by: string | null
           assigned_task_id: string | null
           author_user_id: string
           body: string
           created_at: string
           id: string
+          updated_at: string
           user_task_id: string | null
         }
         Insert: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
           assigned_task_id?: string | null
           author_user_id: string
           body: string
           created_at?: string
           id?: string
+          updated_at?: string
           user_task_id?: string | null
         }
         Update: {
+          archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
           assigned_task_id?: string | null
           author_user_id?: string
           body?: string
           created_at?: string
           id?: string
+          updated_at?: string
           user_task_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "task_comments_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "task_comments_assigned_task_id_fkey"
             columns: ["assigned_task_id"]

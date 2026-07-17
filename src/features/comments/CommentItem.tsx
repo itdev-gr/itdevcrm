@@ -50,7 +50,11 @@ export function CommentItem({ comment, replies = [], nested = false }: Props) {
   );
   const displayName = authorName || authorEmail;
   const time = formatCommentTime(comment.created_at, locale);
-  const canEdit = isAdmin || (myId !== null && myId === comment.author_id);
+  // System auto-comments (the 📋/✅ rows posted by task triggers) carry a task_key
+  // and are not authored by a person — never editable/deletable, even by an admin
+  // or the user whose id happens to be on the row.
+  const isSystem = !!comment.task_key;
+  const canEdit = !isSystem && (isAdmin || (myId !== null && myId === comment.author_id));
   const canDelete = canEdit;
   const isEdited =
     !!comment.updated_at && !!comment.created_at && comment.updated_at !== comment.created_at;

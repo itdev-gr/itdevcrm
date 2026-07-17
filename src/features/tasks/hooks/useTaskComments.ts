@@ -7,11 +7,13 @@ export type TaskCommentRow = {
   id: string;
   body: string;
   created_at: string;
+  updated_at: string;
   author_user_id: string;
   author: { user_id: string; full_name: string | null; email: string } | null;
 };
 
-const SELECT = 'id, body, created_at, author_user_id, author:author_user_id ( user_id, full_name, email )';
+const SELECT =
+  'id, body, created_at, updated_at, author_user_id, author:author_user_id ( user_id, full_name, email )';
 
 /** Comments for one task (oldest first) + a realtime subscription that refreshes
  *  the thread when a new comment lands. `kind` selects which FK column to filter. */
@@ -27,6 +29,7 @@ export function useTaskComments(kind: 'user' | 'assigned', taskId: string | null
         .from('task_comments')
         .select(SELECT)
         .eq(col, taskId!)
+        .eq('archived', false)
         .order('created_at', { ascending: true });
       if (error) throw new Error(error.message);
       return (data ?? []) as unknown as TaskCommentRow[];
@@ -38,8 +41,9 @@ export function useTaskComments(kind: 'user' | 'assigned', taskId: string | null
     const channel = supabase
       .channel(`task-comments-${kind}-${taskId}`)
       .on(
+        // '*' so edits (UPDATE) and soft-deletes also refresh other viewers.
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'task_comments', filter: `${col}=eq.${taskId}` },
+        { event: '*', schema: 'public', table: 'task_comments', filter: `${col}=eq.${taskId}` },
         () => {
           void qc.invalidateQueries({ queryKey: queryKeys.taskComments(kind, taskId) });
         },
