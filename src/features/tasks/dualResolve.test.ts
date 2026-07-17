@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { awaitingLabelParty, awaitingPopupKey, resolveAction, type DualResolveState } from './dualResolve';
+import { awaitingLabelParty, awaitingPopupKey, resolveAction, sideStampedFor, type DualResolveState } from './dualResolve';
 import { cardDualResolveState, type TaskCard } from './taskCard';
 
 const CREATOR = 'creator-uuid';
@@ -124,6 +124,26 @@ describe('awaitingPopupKey', () => {
   });
   it('assignee stamped → popup says awaiting the creator', () => {
     expect(awaitingPopupKey('assignee')).toBe('tasks_page.resolve_awaiting_creator');
+  });
+});
+
+describe('sideStampedFor', () => {
+  const base = {
+    creatorResolvedAt: null, assigneeResolvedAt: null,
+    creatorId: 'C', assigneeId: 'A', closed: false,
+  };
+  it('assignee with own stamp on an open task → true', () => {
+    expect(sideStampedFor({ ...base, assigneeResolvedAt: '2026-07-01T00:00:00Z' }, 'A')).toBe(true);
+  });
+  it('creator when only the assignee stamped → false', () => {
+    expect(sideStampedFor({ ...base, assigneeResolvedAt: '2026-07-01T00:00:00Z' }, 'C')).toBe(false);
+  });
+  it('closed task → false (terminal rows are not widget rows)', () => {
+    expect(sideStampedFor({ ...base, assigneeResolvedAt: '2026-07-01T00:00:00Z', closed: true }, 'A')).toBe(false);
+  });
+  it('non-party or missing uid → false', () => {
+    expect(sideStampedFor({ ...base, creatorResolvedAt: '2026-07-01T00:00:00Z' }, 'X')).toBe(false);
+    expect(sideStampedFor(base, null)).toBe(false);
   });
 });
 

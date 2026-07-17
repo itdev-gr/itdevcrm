@@ -7,7 +7,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useAssignedTasksOpen, type AssignedTaskRow } from './hooks/useAssignedTasksOpen';
 import { useResolveTask, useUnresolveTask } from '@/features/tasks/hooks/useResolveTask';
-import { resolveAction, awaitingLabelParty, type DualResolveState } from '@/features/tasks/dualResolve';
+import { resolveAction, awaitingLabelParty, sideStampedFor, type DualResolveState } from '@/features/tasks/dualResolve';
 import type { TaskSideStamps } from '@/features/tasks/taskCard';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { DepartmentChip } from './DepartmentChip';
@@ -245,11 +245,43 @@ export function AssignedTasksColumn() {
   const { data: assignedTasks = [] } = useAssignedTasksOpen({ assigneeUserId });
   const { data: personalTasks = [] } = useOpenUserTasks({ assigneeUserId });
 
+  // Hide rows the viewer has already stamped on their own side while the task is
+  // still open — they're finished FOR THE VIEWER and only await the other party
+  // (they resurface in the board's viewer-relative Resolved column, and the
+  // other party still sees them in their own widget).
+  const meId = userId || null;
+  const visiblePersonal = (personalTasks as Array<UserTaskRow & TaskSideStamps>).filter(
+    (task) =>
+      !sideStampedFor(
+        {
+          creatorResolvedAt: task.creator_resolved_at ?? null,
+          assigneeResolvedAt: task.assignee_resolved_at ?? null,
+          creatorId: task.created_by ?? null,
+          assigneeId: task.user_id,
+          closed: task.completed_at != null,
+        },
+        meId,
+      ),
+  );
+  const visibleAssigned = assignedTasks.filter(
+    (task) =>
+      !sideStampedFor(
+        {
+          creatorResolvedAt: task.creator_resolved_at,
+          assigneeResolvedAt: task.assignee_resolved_at,
+          creatorId: task.created_by_user_id,
+          assigneeId: task.assignee_user_id,
+          closed: task.status === 'resolved',
+        },
+        meId,
+      ),
+  );
+
   // One unified "assigned to me" list: personal/calendar tasks first (already
   // soonest-due-first from the query), then deal/job tasks (newest-first).
   const items: WidgetItem[] = [
-    ...personalTasks.map((task) => ({ kind: 'personal' as const, task })),
-    ...assignedTasks.map((task) => ({ kind: 'assigned' as const, task })),
+    ...visiblePersonal.map((task) => ({ kind: 'personal' as const, task })),
+    ...visibleAssigned.map((task) => ({ kind: 'assigned' as const, task })),
   ];
 
   const opened = useTasksSeenStore((s) => s.openedByUser[userId] ?? EMPTY_OPENED);

@@ -192,15 +192,52 @@ describe('AssignedTasksColumn', () => {
 
   // --- Dual-resolve parity ---------------------------------------------------
 
-  it('shows Withdraw + awaiting badge when my (assignee) side is stamped', () => {
-    assignedData.current = [{
-      ...assignedTask,
-      assignee_user_id: 'u-me', created_by_user_id: 'u-other',
-      assignee_resolved_at: new Date().toISOString(), creator_resolved_at: null,
-    }];
+  it('hides an open assigned task whose viewer side is already stamped', () => {
+    // The viewer is the assignee and has already stamped their side while the
+    // task is still open. Task 3: that row disappears from the viewer's widget
+    // (it lives in the board's viewer-relative Resolved column instead). A row
+    // still needing the viewer stays visible as a control.
+    assignedData.current = [
+      {
+        ...assignedTask,
+        id: 't-stamped', title: 'Stamped by me',
+        assignee_user_id: 'u-me', created_by_user_id: 'u-other',
+        assignee_resolved_at: new Date().toISOString(), creator_resolved_at: null,
+      },
+      {
+        ...assignedTask,
+        id: 't-open', title: 'Still needs me',
+        assignee_user_id: 'u-me', created_by_user_id: 'u-other',
+        assignee_resolved_at: null, creator_resolved_at: null,
+      },
+    ];
+    personalData.current = [];
     render(wrap(<AssignedTasksColumn />));
-    expect(screen.getByRole('button', { name: /withdraw/i })).toBeInTheDocument();
-    expect(screen.getByText('Awaiting confirmation')).toBeInTheDocument();
+    expect(screen.queryByText('Stamped by me')).not.toBeInTheDocument();
+    expect(screen.getByText('Still needs me')).toBeInTheDocument();
+  });
+
+  it('hides an open personal task whose viewer side is already stamped', () => {
+    // Same rule for the personal/user-task list: viewer = assignee (user_id),
+    // own stamp set, still open → hidden; an unstamped personal row stays.
+    personalData.current = [
+      {
+        ...personalTask,
+        id: 'p-stamped', title: 'Personal stamped by me',
+        user_id: 'u-me', created_by: 'u-other',
+        assignee_resolved_at: new Date().toISOString(), creator_resolved_at: null,
+      },
+      {
+        ...personalTask,
+        id: 'p-open', title: 'Personal still open',
+        user_id: 'u-me', created_by: 'u-other',
+        assignee_resolved_at: null, creator_resolved_at: null,
+      },
+    ];
+    assignedData.current = [];
+    render(wrap(<AssignedTasksColumn />));
+    expect(screen.queryByText('Personal stamped by me')).not.toBeInTheDocument();
+    expect(screen.getByText('Personal still open')).toBeInTheDocument();
   });
 
   it('shows Confirm & close when the other side stamped first', () => {

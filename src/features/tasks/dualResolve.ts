@@ -57,6 +57,19 @@ export function awaitingLabelParty(s: DualResolveState): 'creator' | 'assignee' 
 }
 
 /**
+ * True when `uid`'s own side is stamped while the task is still open — i.e.
+ * finished FOR THIS USER, awaiting the other party. Open-task widgets hide
+ * such rows for that user (the board's Resolved column shows them instead).
+ * Assignee is checked first, mirroring `relationOf`.
+ */
+export function sideStampedFor(s: DualResolveState, uid: string | null): boolean {
+  if (s.closed || !uid) return false;
+  if (uid === s.assigneeId) return !!s.assigneeResolvedAt;
+  if (uid === s.creatorId) return !!s.creatorResolvedAt;
+  return false;
+}
+
+/**
  * i18n key for the popup shown when a resolve stamped only the caller's side
  * (`resolve_task` returned `closed: false`): the creator hears the assignee
  * hasn't resolved yet, and vice versa. `'both'` cannot arrive with
