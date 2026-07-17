@@ -9,8 +9,15 @@ export function useDeleteTask() {
       'user_tasks',
       'delete',
       async (id) => {
-        const { error } = await supabase.from('user_tasks').delete().eq('id', id);
+        // .select('id') so an RLS-blocked delete returns zero rows (no error) —
+        // surface that as a failure instead of a silent no-op.
+        const { data, error } = await supabase
+          .from('user_tasks')
+          .delete()
+          .eq('id', id)
+          .select('id');
         if (error) throw new Error(error.message);
+        if (!data || data.length === 0) throw new Error('Task was not deleted (no permission).');
       },
     ),
     onSuccess: () => {

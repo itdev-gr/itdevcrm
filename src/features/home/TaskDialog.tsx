@@ -28,7 +28,7 @@ import { ClientOpenTasksList } from '@/features/tasks/ClientOpenTasksList';
 import { LeadPicker, type PickedLead } from '@/features/leads/LeadPicker';
 import { useClientDealOptions } from '@/features/deals/hooks/useClientDealOptions';
 import { useJobsForDeal } from '@/features/jobs/hooks/useJobsForDeal';
-import { taskLinkMode, filterTaskAssignees } from './taskDialogRules';
+import { taskLinkMode, filterTaskAssignees, canDeleteUserTask } from './taskDialogRules';
 
 type Props = {
   open: boolean;
@@ -170,6 +170,8 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
   }
 
   const isEdit = !!task;
+  // Delegated assignees can't delete (deletion would bypass dual-resolve).
+  const canDelete = !!task && canDeleteUserTask(task, userId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -310,7 +312,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultDueAt, defaultClie
           )}
         </div>
         <DialogFooter className="justify-between sm:justify-between">
-          {isEdit ? (
+          {isEdit && canDelete ? (
             <Button
               variant="destructive"
               onClick={() => setConfirmDelete(true)}

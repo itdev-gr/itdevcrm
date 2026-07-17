@@ -18,6 +18,17 @@ export function taskLinkMode(params: {
   return params.isSales ? 'lead' : 'client';
 }
 
+/** Mirrors the user_tasks_delete RLS policy: the creator may delete; the
+ *  assignee may delete only personal/self tasks (never ones delegated to them). */
+export function canDeleteUserTask(
+  task: { user_id: string; created_by: string | null },
+  meId: string,
+): boolean {
+  if (!meId) return false;
+  if (task.created_by === meId) return true;
+  return task.user_id === meId && (task.created_by == null || task.created_by === task.user_id);
+}
+
 /** Sales allocate tasks within their circle: sales, admins, accounting. */
 export function filterTaskAssignees<T extends { is_admin: boolean; group_codes: string[] }>(
   owners: T[],
