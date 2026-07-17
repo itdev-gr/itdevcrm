@@ -45,8 +45,10 @@ full of work that is, for them, finished.
     `assigneeResolvedAt`, `'delegated'` (viewer = creator) →
     `creatorResolvedAt`, `'other'` → false.
   - `columnOf(card, hasUnreadReplies)`: precedence becomes
-    replies → terminal resolved → **viewer-side stamped → 'resolved'** →
-    importance.
+    terminal resolved → replies → **viewer-side stamped → 'resolved'** →
+    importance. (Terminal-first matches the base board behavior — a closed
+    task rests in Resolved even while discussed; an unread reply resurfaces
+    HALF-RESOLVED open cards, which is the owner's requirement #2.)
   - `resolveDrag(card, target)`:
     - onto `'resolved'`: unchanged for unstamped cards (`{type:'resolve'}`);
       a viewer-side-stamped open card is already in Resolved → `noop`.

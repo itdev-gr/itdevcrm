@@ -116,15 +116,19 @@ Replace `columnOf`'s body:
 
 ```ts
 export function columnOf(card: TaskCard, hasUnreadReplies = false): ColumnKey {
-  if (hasUnreadReplies) return 'replies';
   if (card.resolved) return 'resolved';
+  if (hasUnreadReplies) return 'replies';
   // Viewer-relative: my side is stamped → finished FOR ME, park it in Resolved
   // while it awaits the other party. Replies win above, so the other party's
-  // comment still resurfaces the card.
+  // comment still resurfaces the (still-open) card.
   if (viewerSideStamped(card)) return 'resolved';
   return card.importance;
 }
 ```
+
+(Terminal stays first — the base board's own test 'resolved wins over replies'
+defines that; replies precede the viewer stamp so requirement #2 holds for
+half-resolved cards. As built in commit d5e1f51.)
 
 Extend `DragAction`:
 
