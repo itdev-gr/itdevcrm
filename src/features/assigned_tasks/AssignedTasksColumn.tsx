@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useAssignedTasksOpen, type AssignedTaskRow } from './hooks/useAssignedTasksOpen';
-import { useResolveTask } from '@/features/tasks/hooks/useResolveTask';
+import { useResolveTask, useUnresolveTask } from '@/features/tasks/hooks/useResolveTask';
+import { resolveAction, awaitingLabelParty, type DualResolveState } from '@/features/tasks/dualResolve';
+import type { TaskSideStamps } from '@/features/tasks/taskCard';
 import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 import { TaskDialog } from '@/features/home/TaskDialog';
 import { useOpenUserTasks } from '@/features/home/hooks/useOpenUserTasks';
-import { useToggleTaskComplete } from '@/features/home/hooks/useDeleteTask';
 import { useTasksSeenStore } from '@/features/tasks/tasksSeenStore';
 import { isTaskHighlighted, HIGHLIGHT_WINDOW_DAYS } from '@/features/tasks/taskHighlight';
 import { NEW_TASK_ROW, NewTaskDot } from '@/features/tasks/taskHighlightStyle';
@@ -37,17 +38,42 @@ function formatDue(dueIso: string, locale: string): string {
   }).format(new Date(dueIso));
 }
 
+/** Amber "awaiting confirmation" chip shown next to a row title when one party
+ *  has stamped their side but the task still needs the other's confirmation. */
+function AwaitingChip({ label }: { label: string }) {
+  return (
+    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+      {label}
+    </span>
+  );
+}
+
 /** A deal/job-scoped assigned task (from the `assigned_tasks` table). */
 function Row({
-  task, canResolve, onOpen, isNew = false,
+  task, meId, isAdmin, onOpen, isNew = false,
 }: {
   task: AssignedTaskRow;
-  canResolve: boolean;
+  meId: string;
+  isAdmin: boolean;
   onOpen: (id: string) => void;
   isNew?: boolean;
 }) {
-  const { t } = useTranslation('home');
+  const { t: c } = useTranslation('common');
   const resolve = useResolveTask();
+  const unresolve = useUnresolveTask();
+  const dual: DualResolveState = {
+    creatorResolvedAt: task.creator_resolved_at,
+    assigneeResolvedAt: task.assignee_resolved_at,
+    creatorId: task.created_by_user_id,
+    assigneeId: task.assignee_user_id,
+    closed: task.status === 'resolved',
+  };
+  const action = resolveAction(dual, meId || null, isAdmin);
+  const awaiting = awaitingLabelParty(dual);
+  const label =
+    action === 'withdraw' ? c('tasks_page.withdraw')
+      : action === 'confirm_close' ? c('tasks_page.confirm_close')
+        : c('tasks_page.resolve');
   return (
     <li>
       <div
@@ -70,6 +96,7 @@ function Row({
           <div className="flex flex-wrap items-center gap-2">
             {isNew && <NewTaskDot />}
             <span className="truncate text-sm font-medium">{task.title}</span>
+            {awaiting && <AwaitingChip label={c('tasks_page.awaiting_confirmation_nameless')} />}
             <DepartmentChip department={task.department} />
             <Link
               to={sourceHref(task)}
@@ -86,7 +113,7 @@ function Row({
             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
           )}
         </div>
-        {canResolve && (
+        {action != null && (
           <Button
             type="button"
             size="sm"
@@ -94,12 +121,13 @@ function Row({
             className="shrink-0"
             onClick={(e) => {
               e.stopPropagation();
-              resolve.mutate({ kind: 'assigned', id: task.id });
+              if (action === 'withdraw') unresolve.mutate({ kind: 'assigned', id: task.id });
+              else resolve.mutate({ kind: 'assigned', id: task.id });
             }}
-            disabled={resolve.isPending}
+            disabled={resolve.isPending || unresolve.isPending}
           >
             <CheckCircle2 className="size-3.5" />
-            {t('assigned_tasks.resolve')}
+            {label}
           </Button>
         )}
       </div>
@@ -109,18 +137,34 @@ function Row({
 
 /** A personal/calendar task (from the `user_tasks` table). */
 function PersonalRow({
-  task, canResolve, onOpen, isNew = false,
+  task, meId, isAdmin, onOpen, isNew = false,
 }: {
-  task: UserTaskRow;
-  canResolve: boolean;
+  task: UserTaskRow & TaskSideStamps;
+  meId: string;
+  isAdmin: boolean;
   onOpen: (task: UserTaskRow) => void;
   isNew?: boolean;
 }) {
   const { t, i18n } = useTranslation('home');
-  const complete = useToggleTaskComplete();
+  const { t: c } = useTranslation('common');
+  const resolve = useResolveTask();
+  const unresolve = useUnresolveTask();
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
   const overdue = isTaskOverdue(task.due_at);
   const dueLabel = formatDue(task.due_at, locale);
+  const dual: DualResolveState = {
+    creatorResolvedAt: task.creator_resolved_at ?? null,
+    assigneeResolvedAt: task.assignee_resolved_at ?? null,
+    creatorId: task.created_by,
+    assigneeId: task.user_id,
+    closed: task.completed_at != null,
+  };
+  const action = resolveAction(dual, meId || null, isAdmin);
+  const awaiting = awaitingLabelParty(dual);
+  const label =
+    action === 'withdraw' ? c('tasks_page.withdraw')
+      : action === 'confirm_close' ? c('tasks_page.confirm_close')
+        : c('tasks_page.resolve');
   return (
     <li>
       <div
@@ -143,6 +187,7 @@ function PersonalRow({
           <div className="flex flex-wrap items-center gap-2">
             {isNew && <NewTaskDot />}
             <span className="truncate text-sm font-medium">{task.title}</span>
+            {awaiting && <AwaitingChip label={c('tasks_page.awaiting_confirmation_nameless')} />}
             <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
               {t('assigned_tasks.personal')}
             </span>
@@ -160,7 +205,7 @@ function PersonalRow({
             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{task.notes}</p>
           )}
         </div>
-        {canResolve && (
+        {action != null && (
           <Button
             type="button"
             size="sm"
@@ -168,12 +213,13 @@ function PersonalRow({
             className="shrink-0"
             onClick={(e) => {
               e.stopPropagation();
-              complete.mutate({ id: task.id, completed: true });
+              if (action === 'withdraw') unresolve.mutate({ kind: 'user', id: task.id });
+              else resolve.mutate({ kind: 'user', id: task.id });
             }}
-            disabled={complete.isPending}
+            disabled={resolve.isPending || unresolve.isPending}
           >
             <CheckCircle2 className="size-3.5" />
-            {t('assigned_tasks.resolve')}
+            {label}
           </Button>
         )}
       </div>
@@ -273,7 +319,8 @@ export function AssignedTasksColumn() {
                 <Row
                   key={`a-${item.task.id}`}
                   task={item.task}
-                  canResolve={isAdmin || item.task.assignee_user_id === userId}
+                  meId={userId}
+                  isAdmin={isAdmin}
                   onOpen={openAssigned}
                   isNew={newForId(item.task.id, item.task.created_at)}
                 />
@@ -281,7 +328,8 @@ export function AssignedTasksColumn() {
                 <PersonalRow
                   key={`p-${item.task.id}`}
                   task={item.task}
-                  canResolve={isAdmin || item.task.user_id === userId}
+                  meId={userId}
+                  isAdmin={isAdmin}
                   onOpen={openPersonal}
                   isNew={newForId(item.task.id, item.task.created_at)}
                 />

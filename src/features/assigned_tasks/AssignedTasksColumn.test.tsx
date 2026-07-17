@@ -15,22 +15,16 @@ vi.mock('./hooks/useAssignedTasksRealtime', () => ({
   useAssignedTasksRealtime: () => undefined,
 }));
 
+const { personalData, assignedData, resolveSpy, unresolveSpy } = vi.hoisted(() => ({
+  personalData: { current: [] as Array<Record<string, unknown>> },
+  assignedData: { current: [] as Array<Record<string, unknown>> },
+  resolveSpy: vi.fn(),
+  unresolveSpy: vi.fn(),
+}));
+
 vi.mock('./hooks/useAssignedTasksOpen', () => ({
   useAssignedTasksOpen: ({ assigneeUserId }: { assigneeUserId: string | null }) => ({
-    data:
-      assigneeUserId === 'u-me'
-        ? [
-            {
-              id: 't1', title: 'Renew domain', description: 'before May 30',
-              deal_id: 'd1', job_id: null, client_id: 'c1', source_code: '000013',
-              assignee_user_id: 'u-me', created_by_user_id: 'u-other',
-              status: 'open', resolved_at: null, resolved_by_user_id: null,
-              created_at: new Date().toISOString(),
-              client: { id: 'c1', name: 'Acme Ltd' },
-              department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
-            },
-          ]
-        : [],
+    data: assigneeUserId === 'u-me' ? assignedData.current : [],
     isLoading: false,
   }),
 }));
@@ -59,11 +53,6 @@ vi.mock('./hooks/useAssignedTaskDetail', () => ({
   }),
 }));
 
-const { personalData, togglePersonalSpy } = vi.hoisted(() => ({
-  personalData: { current: [] as Array<Record<string, unknown>> },
-  togglePersonalSpy: vi.fn(),
-}));
-
 vi.mock('@/features/home/hooks/useOpenUserTasks', () => ({
   useOpenUserTasks: ({ assigneeUserId }: { assigneeUserId: string | null }) => ({
     data: assigneeUserId === 'u-me' ? personalData.current : [],
@@ -72,13 +61,13 @@ vi.mock('@/features/home/hooks/useOpenUserTasks', () => ({
 }));
 
 vi.mock('@/features/home/hooks/useDeleteTask', () => ({
-  useToggleTaskComplete: () => ({ mutate: togglePersonalSpy, isPending: false }),
+  useToggleTaskComplete: () => ({ mutate: vi.fn(), isPending: false }),
   useDeleteTask: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/features/tasks/hooks/useResolveTask', () => ({
-  useResolveTask: () => ({ mutate: vi.fn(), isPending: false }),
-  useUnresolveTask: () => ({ mutate: vi.fn(), isPending: false }),
+  useResolveTask: () => ({ mutate: resolveSpy, isPending: false }),
+  useUnresolveTask: () => ({ mutate: unresolveSpy, isPending: false }),
 }));
 
 vi.mock('@/features/home/TaskDialog', () => ({
@@ -103,6 +92,18 @@ function wrap(children: React.ReactNode) {
   );
 }
 
+// A deal/job-scoped assigned task where I'm the assignee, no stamps yet.
+const assignedTask = {
+  id: 't1', title: 'Renew domain', description: 'before May 30',
+  deal_id: 'd1', job_id: null, client_id: 'c1', source_code: '000013',
+  assignee_user_id: 'u-me', created_by_user_id: 'u-other',
+  status: 'open', resolved_at: null, resolved_by_user_id: null,
+  creator_resolved_at: null, assignee_resolved_at: null,
+  created_at: new Date().toISOString(),
+  client: { id: 'c1', name: 'Acme Ltd' },
+  department: { id: 'g1', code: 'web_dev', display_names: { en: 'Web Dev', el: 'Web Dev' }, position: 50 },
+};
+
 const personalTask = {
   id: 'p1',
   user_id: 'u-me',
@@ -111,6 +112,8 @@ const personalTask = {
   notes: 'ring at 3pm',
   due_at: new Date(Date.now() + 3_600_000).toISOString(),
   completed_at: null,
+  creator_resolved_at: null,
+  assignee_resolved_at: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -119,6 +122,7 @@ describe('AssignedTasksColumn', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     personalData.current = [];
+    assignedData.current = [assignedTask];
   });
 
   it('shows personal calendar tasks assigned to me next to deal/job tasks', () => {
@@ -137,14 +141,13 @@ describe('AssignedTasksColumn', () => {
     expect(screen.getByRole('dialog', { name: /edit task/i })).toBeInTheDocument();
   });
 
-  it('resolving a personal task marks it complete', async () => {
+  it('resolving a personal task stamps it via resolve_task (kind user)', async () => {
     const user = userEvent.setup();
     personalData.current = [personalTask];
+    assignedData.current = [];
     render(wrap(<AssignedTasksColumn />));
-    // Personal tasks render first, so its Resolve button is the first one.
-    const resolveButtons = screen.getAllByRole('button', { name: /resolve/i });
-    await user.click(resolveButtons[0]!);
-    expect(togglePersonalSpy).toHaveBeenCalledWith({ id: 'p1', completed: true });
+    await user.click(screen.getByRole('button', { name: /resolve/i }));
+    expect(resolveSpy).toHaveBeenCalledWith({ kind: 'user', id: 'p1' });
   });
 
   it('renders the open tasks for the current user', () => {
@@ -185,5 +188,55 @@ describe('AssignedTasksColumn', () => {
     render(wrap(<AssignedTasksColumn />));
     await user.click(screen.getByRole('button', { name: /resolve/i }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  // --- Dual-resolve parity ---------------------------------------------------
+
+  it('shows Withdraw + awaiting badge when my (assignee) side is stamped', () => {
+    assignedData.current = [{
+      ...assignedTask,
+      assignee_user_id: 'u-me', created_by_user_id: 'u-other',
+      assignee_resolved_at: new Date().toISOString(), creator_resolved_at: null,
+    }];
+    render(wrap(<AssignedTasksColumn />));
+    expect(screen.getByRole('button', { name: /withdraw/i })).toBeInTheDocument();
+    expect(screen.getByText('Awaiting confirmation')).toBeInTheDocument();
+  });
+
+  it('shows Confirm & close when the other side stamped first', () => {
+    assignedData.current = [{
+      ...assignedTask,
+      assignee_user_id: 'u-me', created_by_user_id: 'u-other',
+      assignee_resolved_at: null, creator_resolved_at: new Date().toISOString(),
+    }];
+    render(wrap(<AssignedTasksColumn />));
+    expect(screen.getByRole('button', { name: /confirm & close/i })).toBeInTheDocument();
+  });
+
+  it('resolves a personal task delegated to me via resolve_task (kind user)', async () => {
+    const user = userEvent.setup();
+    personalData.current = [{
+      ...personalTask,
+      user_id: 'u-me', created_by: 'u-other',
+      creator_resolved_at: null, assignee_resolved_at: null,
+    }];
+    assignedData.current = [];
+    render(wrap(<AssignedTasksColumn />));
+    await user.click(screen.getByRole('button', { name: /resolve/i }));
+    expect(resolveSpy).toHaveBeenCalledWith({ kind: 'user', id: 'p1' });
+  });
+
+  it('shows no resolve button when I am neither party and not admin', () => {
+    assignedData.current = [{
+      ...assignedTask,
+      assignee_user_id: 'u-other', created_by_user_id: 'u-third',
+      assignee_resolved_at: null, creator_resolved_at: null,
+    }];
+    personalData.current = [];
+    render(wrap(<AssignedTasksColumn />));
+    expect(screen.getByText('Renew domain')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /resolve|withdraw|confirm/i }),
+    ).not.toBeInTheDocument();
   });
 });
