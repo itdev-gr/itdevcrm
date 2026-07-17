@@ -1,4 +1,4 @@
-import { AlertTriangle, AtSign, Bell, Briefcase, CheckCircle2, MessageSquare, PlayCircle } from 'lucide-react';
+import { AlertTriangle, AtSign, Bell, Briefcase, CheckCircle2, Clock, MessageSquare, PlayCircle } from 'lucide-react';
 import { relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
@@ -74,6 +74,8 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
       return <CheckCircle2 className={cn(iconClass, 'text-emerald-600 dark:text-emerald-400')} />;
     case 'task_confirm_pending':
       return <CheckCircle2 className={cn(iconClass, 'text-amber-600 dark:text-amber-400')} />;
+    case 'task_auto_closed':
+      return <Clock className={cn(iconClass, 'text-muted-foreground')} />;
     case 'task_comment':
       return <MessageSquare className={cn(iconClass, 'text-blue-600 dark:text-blue-400')} />;
     case 'task_started':
@@ -182,6 +184,23 @@ export function CompactNotificationContent({
             </>
           )}
           {' '}&mdash; confirm to close
+        </p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'task_auto_closed') {
+    const title = readString(payload, 'title');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          Task closed automatically after 7 days of inactivity
+          {title && (
+            <>
+              {' '}&mdash; &ldquo;<span className="font-semibold">{title}</span>&rdquo;
+            </>
+          )}
         </p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>

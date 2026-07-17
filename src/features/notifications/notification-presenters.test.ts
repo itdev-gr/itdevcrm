@@ -135,6 +135,22 @@ describe('payment_integrity_alert presenter', () => {
   });
 });
 
+describe('task_auto_closed presenter', () => {
+  it('renders the auto-close copy with the task title', () => {
+    const markup = renderToStaticMarkup(
+      CompactNotificationContent({
+        type: 'task_auto_closed',
+        payload: { task_kind: 'assigned_task', task_id: 't1', title: 'Fix logo' },
+        parentLabel: null,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      }),
+    );
+    expect(markup).toMatch(/closed automatically/i);
+    expect(markup).toContain('Fix logo');
+  });
+});
+
 describe('readPath — deal comment channels', () => {
   it('routes deal_dev and deal_seo mentions to the deal page', () => {
     expect(readPath({ parent_type: 'deal_dev', parent_id: 'D1' })).toBe('/deals/D1');
