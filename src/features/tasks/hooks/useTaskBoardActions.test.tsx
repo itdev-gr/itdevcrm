@@ -40,6 +40,16 @@ describe('useTaskBoardActions — withdraw', () => {
     );
     await waitFor(() => expect(update).toHaveBeenCalledWith({ importance: 'high' }));
     expect(from).toHaveBeenCalledWith('assigned_tasks');
+    expect(rpc.mock.invocationCallOrder[0]).toBeLessThan(update.mock.invocationCallOrder[0]!);
+  });
+
+  it('does not write importance when unresolve_task fails', async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { message: 'boom' } });
+    const card = { kind: 'assigned', id: 't1' } as TaskCard;
+    const { result } = renderHook(() => useTaskBoardActions(), { wrapper });
+    result.current.mutate({ card, action: { type: 'withdraw', importance: 'high' } });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(update).not.toHaveBeenCalled();
   });
 
   it('user card routes the importance update to user_tasks', async () => {
