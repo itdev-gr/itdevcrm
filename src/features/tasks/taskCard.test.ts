@@ -114,22 +114,24 @@ describe('taskCard', () => {
 });
 
 describe('replies column', () => {
-  it('unread replies win over importance', () => {
+  it('a reply wins over importance on open tasks', () => {
     const c = userTaskToCard(userRow(), me);
     expect(columnOf(c, true)).toBe('replies');
     expect(columnOf(c, false)).toBe(columnOf(c)); // legacy default unchanged
   });
 
-  it('unread replies win over resolved (resurfacing)', () => {
-    const c = userTaskToCard(userRow({ completed_at: '2026-07-01T00:00:00Z' }), me);
+  it('resolved wins over replies — a closed task never renders in Replies', () => {
+    const c = assignedTaskToCard(assignedRow({ status: 'resolved' }), me);
     expect(columnOf(c)).toBe('resolved');
-    expect(columnOf(c, true)).toBe('replies');
+    expect(columnOf(c, true)).toBe('resolved');
   });
 
-  it('cards with unread replies are not draggable', () => {
-    const c = userTaskToCard(userRow(), me); // relation mine -> normally draggable
-    expect(isDraggable(c)).toBe(true);
-    expect(isDraggable(c, true)).toBe(false);
+  it('cards in Replies stay draggable for both parties', () => {
+    expect(isDraggable(assignedTaskToCard(assignedRow(), me))).toBe(true); // mine
+    expect(isDraggable(assignedTaskToCard(assignedRow({ assignee_user_id: 'x' }), me))).toBe(true); // delegated
+    expect(
+      isDraggable(assignedTaskToCard(assignedRow({ assignee_user_id: 'x', created_by_user_id: 'y' }), me)),
+    ).toBe(false); // other
   });
 
   it('dropping onto the replies column is a noop', () => {

@@ -18,8 +18,8 @@ export type BoardFilter = 'to_me' | 'by_me' | 'all';
 
 export type TaskLeadJoin = { id: string; title: string; code: string | null };
 
-/** Left→right column order on the board. Replies is derived (unread comment
- *  notifications), not a stored state — see columnOf. */
+/** Left→right column order on the board. Replies is derived (foreign comments
+ *  on open party tasks), not a stored state — see columnOf. */
 export const BOARD_COLUMNS: ColumnKey[] = ['replies', 'urgent', 'high', 'medium', 'low', 'resolved'];
 
 export type TaskCard = {
@@ -122,20 +122,20 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
   };
 }
 
-/** hasUnreadReplies (derived from unread comment notifications) wins over
- *  everything — including resolved, so a reply resurfaces a resolved task.
- *  Optional so non-board callers (client/lead tabs) keep legacy behavior. */
-export function columnOf(card: TaskCard, hasUnreadReplies = false): ColumnKey {
-  if (hasUnreadReplies) return 'replies';
-  return card.resolved ? 'resolved' : card.importance;
+/** Replies membership (a foreign comment on an open task I'm party to) wins
+ *  over importance but never over resolved — a closed task rests in Resolved
+ *  even while discussed. Optional so non-board callers (client/lead tabs)
+ *  keep legacy behavior. */
+export function columnOf(card: TaskCard, hasReply = false): ColumnKey {
+  if (card.resolved) return 'resolved';
+  return hasReply ? 'replies' : card.importance;
 }
 
 /** A task is draggable by either party — the assignee ('mine') OR the creator
  *  ('delegated'), so the creator can also drag-to-stamp their side of a
- *  dual-resolve task. Cards sitting in Replies are read-first: not draggable
- *  until opened. */
-export function isDraggable(card: TaskCard, hasUnreadReplies = false): boolean {
-  return (card.relation === 'mine' || card.relation === 'delegated') && !hasUnreadReplies;
+ *  dual-resolve task. Cards in Replies drag like any other card. */
+export function isDraggable(card: TaskCard): boolean {
+  return card.relation === 'mine' || card.relation === 'delegated';
 }
 
 export function buildBoardCards(userRows: Array<UserTaskRow & { lead?: TaskLeadJoin | null }>, assignedRows: AssignedTaskRow[], meId: string): TaskCard[] {

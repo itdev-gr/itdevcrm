@@ -22,9 +22,9 @@ export function TaskKanbanCard({
   unreadComments?: number;
 }) {
   const { t } = useTranslation('common');
-  const draggable = isDraggable(card, unreadComments > 0);
-  // Resolve/Reopen is gated on assignment, not drag: a card parked in Replies is
-  // non-draggable but its owner must still be able to act on it (spec line ~36).
+  const draggable = isDraggable(card);
+  // Resolve/Reopen is gated on assignment, not drag — the button and drag
+  // coexist on every card, including ones parked in Replies.
   const canAct = card.relation === 'mine';
   // Half-resolved (one side stamped) → who is still pending, for the badge.
   const awaiting = awaitingLabelParty(cardDualResolveState(card));
