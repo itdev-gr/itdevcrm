@@ -47,13 +47,15 @@ Make Resend available in the `sent` state too, in **both** placements:
 
 ## i18n
 
-Two new keys in `seo_access` (el + en `common.json`):
+One new key in `seo_access` (el + en `common.json`):
 
-- `sent_resend_hint` — card-dot tooltip suffix, e.g. el
-  "Εστάλη · {{date}} — κλικ για επαναποστολή" / en
-  "Sent · {{date}} — click to resend".
-- `last_sent_line` — confirm-dialog line, e.g. el
+- `last_sent_line` — confirm-dialog line, el
   "Είχε σταλεί ξανά στις {{date}}." / en "Last sent on {{date}}.".
+
+The card-dot tooltip reuses the existing (currently unused) key
+`seo_access.sent_title` — "Ζητήθηκε πρόσβαση {{date}} · κλικ για
+επαναποστολή" / "Access requested {{date}} · click to resend" — left over
+from the old per-card access button, which had exactly this behavior.
 
 All other copy reuses existing keys (`seo_access.resend`, confirm
 title/body from `seoAccessConfig`).
