@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   relationOf, userTaskToCard, assignedTaskToCard, columnOf, isDraggable,
-  buildBoardCards, matchesFilter, resolveDrag, BOARD_COLUMNS, type TaskCard,
+  buildBoardCards, matchesFilter, resolveDrag, viewerSideStamped, BOARD_COLUMNS, type TaskCard,
 } from './taskCard';
 
 const me = 'me';
@@ -142,5 +142,55 @@ describe('replies column', () => {
   it('replies is the first board column', () => {
     expect(BOARD_COLUMNS[0]).toBe('replies');
     expect(BOARD_COLUMNS).toHaveLength(6);
+  });
+});
+
+const vCard = (over: Partial<TaskCard>): TaskCard => ({
+  key: 'assigned:t1', kind: 'assigned', id: 't1', title: 'T', importance: 'medium',
+  relation: 'mine', resolved: false, assigneeId: 'A', creatorId: 'C',
+  createdAtIso: null, dueAt: null, resolvedAt: null, startedAtIso: null,
+  sourceCode: null, link: null, notes: null, clientName: null, leadName: null,
+  creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
+  ...over,
+});
+
+describe('viewerSideStamped', () => {
+  it('assignee viewer with assignee stamp → true', () => {
+    expect(viewerSideStamped(vCard({ relation: 'mine', assigneeResolvedAt: '2026-07-01T00:00:00Z' }))).toBe(true);
+  });
+  it('assignee viewer with only the creator stamp → false', () => {
+    expect(viewerSideStamped(vCard({ relation: 'mine', creatorResolvedAt: '2026-07-01T00:00:00Z' }))).toBe(false);
+  });
+  it('creator viewer with creator stamp → true', () => {
+    expect(viewerSideStamped(vCard({ relation: 'delegated', creatorResolvedAt: '2026-07-01T00:00:00Z' }))).toBe(true);
+  });
+  it('non-party viewer → false', () => {
+    expect(viewerSideStamped(vCard({ relation: 'other', creatorResolvedAt: '2026-07-01T00:00:00Z', assigneeResolvedAt: '2026-07-01T00:00:00Z' }))).toBe(false);
+  });
+});
+
+describe('columnOf — viewer-relative resolved', () => {
+  const stamped = vCard({ relation: 'mine', assigneeResolvedAt: '2026-07-01T00:00:00Z', importance: 'high' });
+  it('open card with MY side stamped → resolved column', () => {
+    expect(columnOf(stamped)).toBe('resolved');
+  });
+  it('unread replies still win over my stamp', () => {
+    expect(columnOf(stamped, true)).toBe('replies');
+  });
+  it('open card with only the OTHER side stamped → stays on importance', () => {
+    expect(columnOf(vCard({ relation: 'mine', creatorResolvedAt: '2026-07-01T00:00:00Z', importance: 'high' }))).toBe('high');
+  });
+});
+
+describe('resolveDrag — withdraw', () => {
+  const stamped = vCard({ relation: 'mine', assigneeResolvedAt: '2026-07-01T00:00:00Z', importance: 'medium' });
+  it('viewer-stamped open card dropped on an importance column → withdraw with that importance', () => {
+    expect(resolveDrag(stamped, 'high')).toEqual({ type: 'withdraw', importance: 'high' });
+  });
+  it('viewer-stamped open card dropped on resolved → noop (already there for me)', () => {
+    expect(resolveDrag(stamped, 'resolved')).toEqual({ type: 'noop' });
+  });
+  it('terminal card dropped on an importance column still reopens', () => {
+    expect(resolveDrag(vCard({ resolved: true, importance: 'medium' }), 'high')).toEqual({ type: 'reopen', importance: 'high' });
   });
 });

@@ -122,13 +122,26 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
   };
 }
 
-/** Replies membership (a foreign comment on an open task I'm party to) wins
- *  over importance but never over resolved — a closed task rests in Resolved
- *  even while discussed. Optional so non-board callers (client/lead tabs)
- *  keep legacy behavior. */
-export function columnOf(card: TaskCard, hasReply = false): ColumnKey {
+/** True when the viewer's own side of the dual-resolve is stamped. The card's
+ *  `relation` already encodes the viewer ('mine' = assignee, 'delegated' =
+ *  creator); 'other' (admin observer) has no side. */
+export function viewerSideStamped(card: TaskCard): boolean {
+  if (card.relation === 'mine') return card.assigneeResolvedAt != null;
+  if (card.relation === 'delegated') return card.creatorResolvedAt != null;
+  return false;
+}
+
+/** Column placement, viewer-relative. Precedence: terminal (resolved) > unread
+ *  replies > my own dual-resolve stamp > importance. A truly-closed task rests
+ *  in Resolved even while discussed; an open card whose *my* side is stamped is
+ *  finished FOR ME so it parks in Resolved while it awaits the other party —
+ *  but an unread reply resurfaces it. `hasUnreadReplies` is optional so
+ *  non-board callers (client/lead tabs) keep legacy behavior. */
+export function columnOf(card: TaskCard, hasUnreadReplies = false): ColumnKey {
   if (card.resolved) return 'resolved';
-  return hasReply ? 'replies' : card.importance;
+  if (hasUnreadReplies) return 'replies';
+  if (viewerSideStamped(card)) return 'resolved';
+  return card.importance;
 }
 
 /** A task is draggable by either party — the assignee ('mine') OR the creator
@@ -155,6 +168,7 @@ export type DragAction =
   | { type: 'noop' }
   | { type: 'set-importance'; importance: ImportanceCode }
   | { type: 'resolve' }
+  | { type: 'withdraw'; importance: ImportanceCode }
   | { type: 'reopen'; importance: ImportanceCode };
 
 /** Decide what dropping `card` onto column `target` should do. */
@@ -162,9 +176,13 @@ export function resolveDrag(card: TaskCard, target: ColumnKey): DragAction {
   if (target === 'replies') return { type: 'noop' };
   if (!isDraggable(card)) return { type: 'noop' };
   if (target === 'resolved') {
-    return card.resolved ? { type: 'noop' } : { type: 'resolve' };
+    // Terminal, or my side already stamped → already sits in Resolved for me.
+    if (card.resolved || viewerSideStamped(card)) return { type: 'noop' };
+    return { type: 'resolve' };
   }
   if (card.resolved) return { type: 'reopen', importance: target };
+  // Open card leaving MY Resolved column = withdraw my stamp (+ new priority).
+  if (viewerSideStamped(card)) return { type: 'withdraw', importance: target };
   if (card.importance === target) return { type: 'noop' };
   return { type: 'set-importance', importance: target };
 }
