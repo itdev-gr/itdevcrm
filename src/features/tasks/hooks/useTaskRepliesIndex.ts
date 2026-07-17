@@ -46,6 +46,9 @@ export function useTaskRepliesIndex(cards: TaskCard[], meId: string): Set<string
   const query = useQuery({
     queryKey: ['task-replies', meId, userIds.join(','), assignedIds.join(','), notifSalt],
     enabled: !!meId && (userIds.length > 0 || assignedIds.length > 0),
+    // Key changes (new/cleared notifs) must not blank the Replies column while
+    // the refetch is in flight — keep showing the previous key's data.
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       const [userRows, assignedRows] = await Promise.all([
         userIds.length ? fetchForeignCommentRows('user_task_id', userIds, meId) : Promise.resolve([]),
