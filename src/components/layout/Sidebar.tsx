@@ -255,7 +255,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <p className={sidebarSectionClass()}>{t('common:nav.section.technical')}</p>
           <div className="space-y-0.5">
             {visibleTechGroups
-              .filter((g) => g !== 'hosting')
+              .filter((g) => g !== 'hosting' && g !== 'maintenance')
               .map((g) => {
               const TechIcon = TECH_ICONS[g];
               return (
@@ -282,7 +282,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       {t('common:nav.documentation')}
                     </NavLink>
                   )}
-                  {/* Hosting is a sub-category of Web Dev — nested here, not a top-level board. */}
+                  {/* Hosting + Support are sub-categories of Web Dev — nested here, not top-level boards. */}
                   {g === 'web_dev' && (
                     <NavLink
                       to={TECH_ROUTES.hosting}
@@ -290,6 +290,15 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       className={({ isActive }) => sidebarLinkClass(isActive, true)}
                     >
                       {TECH_LABELS.hosting}
+                    </NavLink>
+                  )}
+                  {g === 'web_dev' && (
+                    <NavLink
+                      to={TECH_ROUTES.maintenance}
+                      end
+                      className={({ isActive }) => sidebarLinkClass(isActive, true)}
+                    >
+                      {TECH_LABELS.maintenance}
                     </NavLink>
                   )}
                 </div>
