@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { awaitingLabelParty, resolveAction, type DualResolveState } from './dualResolve';
+import { awaitingLabelParty, awaitingPopupKey, resolveAction, type DualResolveState } from './dualResolve';
 import { cardDualResolveState, type TaskCard } from './taskCard';
 
 const CREATOR = 'creator-uuid';
@@ -115,6 +115,15 @@ describe('awaitingLabelParty', () => {
     expect(
       awaitingLabelParty(state({ creatorResolvedAt: '2026-07-16T00:00:00Z', closed: true })),
     ).toBeNull();
+  });
+});
+
+describe('awaitingPopupKey', () => {
+  it('creator stamped → popup says the assignee has not resolved yet', () => {
+    expect(awaitingPopupKey('creator')).toBe('tasks_page.resolve_awaiting_assignee');
+  });
+  it('assignee stamped → popup says awaiting the creator', () => {
+    expect(awaitingPopupKey('assignee')).toBe('tasks_page.resolve_awaiting_creator');
   });
 });
 

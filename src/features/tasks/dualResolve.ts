@@ -55,3 +55,15 @@ export function awaitingLabelParty(s: DualResolveState): 'creator' | 'assignee' 
   if (s.assigneeResolvedAt && !s.creatorResolvedAt) return 'creator';
   return null;
 }
+
+/**
+ * i18n key for the popup shown when a resolve stamped only the caller's side
+ * (`resolve_task` returned `closed: false`): the creator hears the assignee
+ * hasn't resolved yet, and vice versa. `'both'` cannot arrive with
+ * `closed: false`; it falls through to the awaiting-creator copy.
+ */
+export function awaitingPopupKey(yourSide: 'creator' | 'assignee' | 'both'): string {
+  return yourSide === 'creator'
+    ? 'tasks_page.resolve_awaiting_assignee'
+    : 'tasks_page.resolve_awaiting_creator';
+}

@@ -19,6 +19,7 @@ import { UserTaskDetailDialog } from './UserTaskDetailDialog';
 import { useUnreadCommentNotifs } from '@/features/notifications/hooks/useUnreadCommentNotifs';
 import { useMarkNotificationsRead } from '@/features/notifications/hooks/useMarkNotificationsRead';
 import { unreadCommentIndex } from './commentBadge';
+import { awaitingPopupKey } from './dualResolve';
 import {
   BOARD_COLUMNS, buildBoardCards, columnOf, matchesFilter, resolveDrag,
   type BoardFilter, type ColumnKey, type TaskCard, type DragAction,
@@ -125,7 +126,7 @@ export function TasksKanbanBoard() {
           // other party) — tell the user; the card stays in its column because
           // the terminal state is unchanged.
           if (action.type === 'resolve' && res && !res.closed) {
-            window.alert(t('tasks_page.resolve_awaiting_toast'));
+            window.alert(t(awaitingPopupKey(res.your_side)));
           }
         },
       },
