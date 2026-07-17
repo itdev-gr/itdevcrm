@@ -17,6 +17,7 @@ vi.mock('@/features/notifications/hooks/useMarkNotificationsRead', () => {
   const stub = { mutate: () => {} };
   return { useMarkNotificationsRead: () => stub };
 });
+vi.mock('./hooks/useTaskRepliesIndex', () => ({ useTaskRepliesIndex: () => new Set<string>() }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string, o?: Record<string, unknown>) => (o?.name ? `${k}:${o.name}` : k), i18n: { resolvedLanguage: 'en' } }),
 }));

@@ -19,6 +19,7 @@ import { UserTaskDetailDialog } from './UserTaskDetailDialog';
 import { useUnreadCommentNotifs } from '@/features/notifications/hooks/useUnreadCommentNotifs';
 import { useMarkNotificationsRead } from '@/features/notifications/hooks/useMarkNotificationsRead';
 import { unreadCommentIndex } from './commentBadge';
+import { useTaskRepliesIndex } from './hooks/useTaskRepliesIndex';
 import { awaitingPopupKey } from './dualResolve';
 import {
   BOARD_COLUMNS, buildBoardCards, columnOf, matchesFilter, resolveDrag,
@@ -66,14 +67,16 @@ export function TasksKanbanBoard() {
     [userRows, assignedRows, meId],
   );
 
+  // Persistent Replies membership: open party tasks with a foreign comment.
+  const replyKeys = useTaskRepliesIndex(cards, meId);
+
   const byColumn = useMemo(() => {
     const map = new Map<ColumnKey, TaskCard[]>(BOARD_COLUMNS.map((c) => [c, []]));
     for (const card of cards) {
-      const hasUnread = (commentIndex.get(card.key)?.count ?? 0) > 0;
-      if (matchesFilter(card, filter)) map.get(columnOf(card, hasUnread))!.push(card);
+      if (matchesFilter(card, filter)) map.get(columnOf(card, replyKeys.has(card.key)))!.push(card);
     }
     return map;
-  }, [cards, filter, commentIndex]);
+  }, [cards, filter, replyKeys]);
 
   // Live card behind the open dialog (re-derived each render from fresh rows).
   const openCard = openKey ? (cards.find((c) => c.key === openKey) ?? null) : null;
