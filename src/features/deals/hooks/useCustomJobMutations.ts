@@ -63,7 +63,7 @@ export function useAddWebsiteJob(dealId: string) {
     }),
     onSuccess: () => {
       invalidateBilling(qc, dealId);
-      void qc.invalidateQueries({ queryKey: ['deal-service-job', dealId, 'web_dev'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.dealServiceJobs(dealId, 'web_dev') });
     },
   });
 }

@@ -32,6 +32,18 @@ describe('resolveTaskOpenLinks', () => {
     ]);
   });
 
+  it('falls back to the source code when a matching job has no code', () => {
+    expect(
+      resolveTaskOpenLinks({
+        dealId: 'd1',
+        jobId: null,
+        sourceCode: '000042',
+        canOpenDeal: false,
+        matchingJobs: [{ id: 'jw', code: null }],
+      }),
+    ).toEqual([{ href: '/jobs/jw', labelKey: 'open_job', code: '000042' }]);
+  });
+
   it('returns [] when a technical viewer has no matching job', () => {
     expect(
       resolveTaskOpenLinks({ dealId: 'd1', jobId: null, sourceCode: '000042', canOpenDeal: false, matchingJobs: [] }),

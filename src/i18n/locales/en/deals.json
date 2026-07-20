@@ -249,6 +249,7 @@
       "recurring_yearly": "Yearly"
     },
     "plan_label": "Payment plan",
+    "edit_payments": "Edit payments",
     "plan_options": {
       "none": "Full (1 payment)",
       "50_50": "50 / 50 (2 payments)",

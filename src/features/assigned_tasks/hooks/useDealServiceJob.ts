@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { queryKeys } from '@/lib/queryKeys';
 
 /** ALL of the deal's jobs for a given service (a deal can hold several web_dev
  *  jobs — one per website) — used to send technical users to the jobs they can
@@ -10,7 +11,7 @@ export function useDealServiceJobs(
   enabled: boolean,
 ) {
   return useQuery<{ id: string; code: string | null }[]>({
-    queryKey: ['deal-service-job', dealId, serviceType],
+    queryKey: queryKeys.dealServiceJobs(dealId, serviceType),
     enabled: enabled && !!dealId && !!serviceType,
     staleTime: 60_000,
     queryFn: async () => {

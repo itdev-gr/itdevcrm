@@ -44,9 +44,17 @@ function canGroupTogether(a: JobBillingRow, b: JobBillingRow): boolean {
   return a.billing_type === b.billing_type;
 }
 
-function reportError(err: unknown) {
+type TranslateFn = (key: string, opts: { defaultValue: string }) => string;
+
+/** Translate a known billing error code (e.g. schedule_required); non-codes fall through as-is. */
+function billingErrorMessage(t: TranslateFn, code: string): string {
+  return t(`jobs_billing.billing_errors.${code}`, { defaultValue: code });
+}
+
+/** Alert an RPC failure: labelled error codes are translated, plain errors keep their message. */
+function reportError(t: TranslateFn, err: unknown) {
   const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-  alert(errors.join('\n'));
+  alert(errors.map((code) => (code ? billingErrorMessage(t, code) : String(code))).join('\n'));
 }
 
 function cadenceSuffix(t: (k: string) => string, billingType: string): string {
@@ -116,7 +124,7 @@ function JobRow({
   function commitPrice() {
     const next = Number(price || 0);
     if (next === Number(job.amount_net ?? 0)) return;
-    update.mutateAsync({ jobId: job.id, amountNet: next }).catch(reportError);
+    update.mutateAsync({ jobId: job.id, amountNet: next }).catch((err: unknown) => reportError(t, err));
   }
 
   async function onTermChange(value: string) {
@@ -130,7 +138,7 @@ function JobRow({
         ...(value === 'one_time' && job.billing_group_id ? { clearGroup: true } : {}),
       });
     } catch (err) {
-      reportError(err);
+      reportError(t, err);
     }
   }
 
@@ -149,7 +157,7 @@ function JobRow({
         await update.mutateAsync({ jobId: job.id, billingGroupId: value });
       }
     } catch (err) {
-      reportError(err);
+      reportError(t, err);
     }
   }
 
@@ -157,30 +165,40 @@ function JobRow({
   const planEligible = job.department === 'web_dev' && job.billing_type === 'one_time';
   const currentPlan = (job.installment_plan as InstallmentPlan) ?? 'none';
 
+  /** Open the custom-schedule editor, seeded from the job's saved schedule when it has one. */
+  function openScheduleEditor() {
+    const saved = job.installment_schedule;
+    setEditingSchedule(
+      saved && saved.length > 0
+        ? saved.map((r) => ({ amount_net: Number(r.amount_net ?? 0), due_date: r.due_date ?? null }))
+        : [{ amount_net: Number(job.amount_net ?? 0), due_date: null }],
+    );
+  }
+
   async function onPlanChange(value: string) {
-    if (value === currentPlan) return;
+    // 'custom' is handled before the unchanged-value guard so re-selecting it
+    // on an already-custom job opens the schedule editor instead of no-oping.
     if (value === 'custom') {
-      setEditingSchedule([{ amount_net: Number(job.amount_net ?? 0), due_date: null }]);
+      openScheduleEditor();
       return;
     }
+    if (value === currentPlan) return;
     try {
       await update.mutateAsync({ jobId: job.id, installmentPlan: value as InstallmentPlan });
     } catch (err) {
       // Translate known billing error codes (e.g. cannot_replan_paid_installment).
-      const code = (err as Error & { errors?: string[] }).errors?.[0] ?? (err as Error).message;
-      alert(t(`jobs_billing.billing_errors.${code}`, { defaultValue: code }));
+      reportError(t, err);
     }
   }
   async function saveSchedule() {
     if (!editingSchedule) return;
     const err = validateCustomSchedule(editingSchedule, Number(job.amount_net ?? 0));
-    if (err) { alert(t(`jobs_billing.billing_errors.${err}`, { defaultValue: err })); return; }
+    if (err) { alert(billingErrorMessage(t, err)); return; }
     try {
       await update.mutateAsync({ jobId: job.id, installmentPlan: 'custom', installmentSchedule: editingSchedule });
       setEditingSchedule(null);
     } catch (e) {
-      const code = (e as Error & { errors?: string[] }).errors?.[0] ?? (e as Error).message;
-      alert(t(`jobs_billing.billing_errors.${code}`, { defaultValue: code }));
+      reportError(t, e);
     }
   }
 
@@ -316,6 +334,20 @@ function JobRow({
                   </SelectContent>
                 </Select>
               )}
+              {/* A controlled Select never re-fires onValueChange for its current
+                  value, so an already-custom job needs an explicit way in. */}
+              {planEligible && currentPlan === 'custom' && !editingSchedule && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-[11px]"
+                  onClick={openScheduleEditor}
+                  disabled={ended}
+                >
+                  {t('jobs_billing.edit_payments')}
+                </Button>
+              )}
             </div>
             {planEligible && currentPlan !== 'none' && currentPlan !== 'custom' && job.amount_net != null && (
               <p className="text-[10px] text-muted-foreground">
@@ -396,7 +428,7 @@ function JobRow({
                 await end.mutateAsync(job.id);
                 setConfirmEnd(false);
               } catch (err) {
-                reportError(err);
+                reportError(t, err);
               }
             }}
           />
@@ -414,7 +446,7 @@ function JobRow({
                 await pause.mutateAsync();
                 setConfirmPause(false);
               } catch (err) {
-                reportError(err);
+                reportError(t, err);
               }
             }}
           />
@@ -432,7 +464,7 @@ function JobRow({
                 await resume.mutateAsync();
                 setConfirmResume(false);
               } catch (err) {
-                reportError(err);
+                reportError(t, err);
               }
             }}
           />
@@ -474,14 +506,14 @@ function PaymentCard({
         id: payment.id,
         patch: { status: next, paid_at: next === 'paid' ? new Date().toISOString() : null },
       })
-      .catch(reportError);
+      .catch((err: unknown) => reportError(t, err));
   }
 
   function commitInvoice() {
     if (invoice === (payment.invoice_number ?? '')) return;
     update
       .mutateAsync({ id: payment.id, patch: { invoice_number: invoice || null } })
-      .catch(reportError);
+      .catch((err: unknown) => reportError(t, err));
   }
 
   return (

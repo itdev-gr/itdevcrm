@@ -45,6 +45,7 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     department: 'web_dev',
     billing_type: 'recurring_monthly',
     installment_plan: 'none',
+    installment_schedule: null,
     amount_net: 100,
     setup_fee: null,
     vat_rate: 24,
@@ -290,6 +291,136 @@ describe('JobsBillingPanel installment plan', () => {
     render(wrap(<JobsBillingPanel dealId="d1" />));
     const cell = screen.getByText('Website').closest('tr') as HTMLElement;
     expect(within(cell).getByText(/Splits to/i)).toBeInTheDocument();
+  });
+
+  it('opens the schedule editor seeded from the saved schedule via Edit payments', async () => {
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'a',
+          title: 'Website',
+          department: 'web_dev',
+          billing_type: 'one_time',
+          installment_plan: 'custom',
+          installment_schedule: [
+            { amount_net: 600, due_date: '2026-08-01' },
+            { amount_net: 400, due_date: null },
+          ],
+          amount_net: 1000,
+        }),
+      ],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Website').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /edit payments/i }));
+
+    // Editor shows the two saved rows (amount inputs are labelled "Amount").
+    const amounts = within(row).getAllByRole('spinbutton', { name: /amount/i });
+    expect(amounts.map((el) => (el as HTMLInputElement).value)).toEqual(['600', '400']);
+    expect(within(row).getAllByLabelText(/due date/i)[0]).toHaveValue('2026-08-01');
+    expect(within(row).getByRole('button', { name: /save schedule/i })).toBeInTheDocument();
+    // The trigger hides while the editor is open.
+    expect(within(row).queryByRole('button', { name: /edit payments/i })).not.toBeInTheDocument();
+  });
+
+  it('seeds a single full-amount row when a custom job has no saved schedule', async () => {
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'a',
+          title: 'Website',
+          department: 'web_dev',
+          billing_type: 'one_time',
+          installment_plan: 'custom',
+          installment_schedule: null,
+          amount_net: 1000,
+        }),
+      ],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Website').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /edit payments/i }));
+
+    const amounts = within(row).getAllByRole('spinbutton', { name: /amount/i });
+    expect(amounts.map((el) => (el as HTMLInputElement).value)).toEqual(['1000']);
+  });
+
+  it('does not show Edit payments for non-custom plans', () => {
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'a',
+          title: 'Website',
+          department: 'web_dev',
+          billing_type: 'one_time',
+          installment_plan: '50_50',
+        }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    expect(screen.queryByRole('button', { name: /edit payments/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('JobsBillingPanel billing errors', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('alerts the translated message when a term change fails with a billing error code', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    updateMutate.mockRejectedValueOnce(
+      Object.assign(new Error('cannot_replan_paid_installment'), {
+        errors: ['cannot_replan_paid_installment'],
+      }),
+    );
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Hosting', billing_type: 'recurring_monthly' })],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    await user.click(termSelect('Hosting'));
+    await user.click(await screen.findByRole('option', { name: /yearly/i }));
+
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        "Can't change the plan — an installment is already paid or invoiced.",
+      ),
+    );
+    alertSpy.mockRestore();
+  });
+
+  it('alerts the translated message when a price edit fails with a billing error code', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    updateMutate.mockRejectedValueOnce(
+      Object.assign(new Error('schedule_total_mismatch'), {
+        errors: ['schedule_total_mismatch'],
+      }),
+    );
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Hosting', amount_net: 100 })],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    const priceInput = within(row).getByRole('spinbutton');
+    await user.clear(priceInput);
+    await user.type(priceInput, '123');
+    await user.tab();
+
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith('Payments must add up to the job price.'),
+    );
+    alertSpy.mockRestore();
   });
 });
 
