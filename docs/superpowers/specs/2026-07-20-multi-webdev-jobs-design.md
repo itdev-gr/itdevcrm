@@ -1,7 +1,7 @@
 # Multiple web_dev jobs per deal — design
 
 Date: 2026-07-20
-Status: awaiting owner review
+Status: implemented 2026-07-20 (commits ebaf34f, b7414e6, 94f77a8, d2d52e7 + fix wave 4c63503, 21795af; prod smoke passed on deal 006095)
 
 ## Goal
 
