@@ -29,6 +29,7 @@ function thread(p: Partial<EmailThread> & Pick<EmailThread, 'key' | 'category'>)
         to_email: 'me@itdev.gr',
         subject: p.subject ?? 'Subj',
         body_text: `body of ${p.key}`,
+        body_html: null,
         snippet: null,
         sent_at: '2026-07-09T10:00:00Z',
         department: null,
@@ -132,6 +133,7 @@ describe('EmailThreadList', () => {
             to_email: 'me@itdev.gr',
             subject: 'Hello',
             body_text: 'hi',
+            body_html: null,
             snippet: null,
             sent_at: '2026-07-09T10:00:00Z',
             department: null,
@@ -165,6 +167,7 @@ describe('EmailThreadList', () => {
             to_email: 'client@y.gr',
             subject: 'Hello',
             body_text: 'hi',
+            body_html: null,
             snippet: null,
             sent_at: '2026-07-09T10:00:00Z',
             department: null,
@@ -247,5 +250,74 @@ describe('EmailThreadList', () => {
     fireEvent.click(screen.getByRole('button', { name: /reply/i }));
     expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280-WEBDEV' });
     expect(screen.queryByText('body of t1')).not.toBeInTheDocument();
+  });
+
+  it('renders body_html distilled to text when body_text is empty (HTML-only inbound)', () => {
+    ref.data = [
+      thread({
+        key: 'h1',
+        category: 'technical',
+        subject: 'Photos',
+        messages: [
+          {
+            id: 'h1-m1',
+            message_id: 'h1-x',
+            thread_id: 'h1',
+            direction: 'inbound',
+            from_email: 'client@x.gr',
+            from_name: 'Client',
+            to_email: 'me@itdev.gr',
+            subject: 'Photos',
+            body_text: '',
+            body_html: '<div>Καλημέρα, οι φωτογραφίες ανέβηκαν</div>',
+            snippet: 'should not be used',
+            sent_at: '2026-07-09T10:00:00Z',
+            department: null,
+            job_id: null,
+            lead_id: null,
+            cc_emails: null,
+          },
+        ],
+      }),
+    ];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" />);
+    fireEvent.click(screen.getByRole('button', { name: /photos/i }));
+    expect(screen.getByText('Καλημέρα, οι φωτογραφίες ανέβηκαν')).toBeInTheDocument();
+    expect(screen.queryByText('should not be used')).not.toBeInTheDocument();
+  });
+
+  it('falls back to snippet when both body_text and body_html are empty', () => {
+    ref.data = [
+      thread({
+        key: 's2',
+        category: 'sales',
+        subject: 'Snippet only',
+        messages: [
+          {
+            id: 's2-m1',
+            message_id: 's2-x',
+            thread_id: 's2',
+            direction: 'inbound',
+            from_email: 'client@x.gr',
+            from_name: 'Client',
+            to_email: 'me@itdev.gr',
+            subject: 'Snippet only',
+            body_text: '',
+            body_html: null,
+            snippet: 'snippet fallback text',
+            sent_at: '2026-07-09T10:00:00Z',
+            department: null,
+            job_id: null,
+            lead_id: null,
+            cc_emails: null,
+          },
+        ],
+      }),
+    ];
+    ref.isLoading = false;
+    render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" />);
+    fireEvent.click(screen.getByRole('button', { name: /snippet only/i }));
+    expect(screen.getByText('snippet fallback text')).toBeInTheDocument();
   });
 });

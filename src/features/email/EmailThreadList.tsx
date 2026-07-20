@@ -17,6 +17,7 @@ import {
 import { SendEmailDialog } from './SendEmailDialog';
 import { useBccEmails } from './hooks/useBccEmails';
 import { cleanEmailBody } from './cleanEmailBody';
+import { htmlToText } from './htmlToText';
 
 const CATEGORY_ORDER: readonly EmailCategory[] = ['sales', 'accounting', 'technical'];
 const CATEGORY_LABEL: Record<EmailCategory, { key: string; defaultValue: string }> = {
@@ -219,7 +220,16 @@ function EmailMessage({
 }) {
   const inbound = message.direction === 'inbound';
   const time = message.sent_at ? formatCommentTime(message.sent_at, locale) : null;
-  const rawBody = message.body_text ?? message.snippet ?? '';
+  // Some inbound Gmail-captured messages are HTML-only: body_text is '' and the
+  // content lives in body_html. Prefer real plain text, else distil the HTML,
+  // else the snippet.
+  const htmlBody = htmlToText(message.body_html ?? '');
+  const rawBody =
+    message.body_text && message.body_text.trim() !== ''
+      ? message.body_text
+      : htmlBody !== ''
+        ? htmlBody
+        : (message.snippet ?? '');
   const [showRaw, setShowRaw] = useState(false);
 
   const cleaned = cleanEmailBody(rawBody);

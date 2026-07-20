@@ -12,6 +12,7 @@ function row(p: Partial<EmailMessageRow>): EmailMessageRow {
     to_email: p.to_email ?? 'c@x.gr',
     subject: p.subject ?? null,
     body_text: p.body_text ?? null,
+    body_html: p.body_html ?? null,
     snippet: p.snippet ?? null,
     sent_at: p.sent_at ?? null,
     department: p.department ?? null,
