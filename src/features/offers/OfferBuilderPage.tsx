@@ -92,8 +92,8 @@ export function OfferBuilderPage() {
   const [notes, setNotes] = useState('');
 
   // Pre-fill from lead once loaded. VAT defaults to whatever the lead's
-  // country dictates — Greece 24%, Cyprus 0%, fallback 24%. The user can
-  // still override the field manually.
+  // country dictates per the country list in src/lib/countries.ts (fallback
+  // DEFAULT_VAT_RATE). The user can still override the field manually.
   const vatSeededRef = useRef(false);
 
   useEffect(() => {

@@ -5,6 +5,10 @@ describe('vatRateFor', () => {
   it('returns the country rate', () => {
     expect(vatRateFor('Greece')).toBe(0.24);
     expect(vatRateFor('Cyprus')).toBe(0);
+    expect(vatRateFor('United Arab Emirates')).toBe(0);
+  });
+  it('is case-insensitive and trims whitespace', () => {
+    expect(vatRateFor('united arab emirates ')).toBe(0);
   });
   it('defaults when country is unknown/empty', () => {
     expect(vatRateFor(null)).toBe(DEFAULT_VAT_RATE);
@@ -28,5 +32,8 @@ describe('effectiveVatRate', () => {
     expect(effectiveVatRate('online', 'Greece', true)).toBe(0.24);
     expect(effectiveVatRate('', 'Greece', false)).toBe(0.24);
     expect(effectiveVatRate(null, 'Greece', false)).toBe(0.24);
+  });
+  it('applies the UAE 0% rate like Cyprus', () => {
+    expect(effectiveVatRate('bank', 'United Arab Emirates', false)).toBe(0);
   });
 });

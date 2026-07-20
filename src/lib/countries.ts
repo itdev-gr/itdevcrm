@@ -1,4 +1,4 @@
-export type CountryCode = 'GR' | 'CY';
+export type CountryCode = 'GR' | 'CY' | 'AE';
 
 export type CountryEntry = {
   code: CountryCode;
@@ -11,6 +11,7 @@ export type CountryEntry = {
 export const COUNTRIES: CountryEntry[] = [
   { code: 'GR', storedValue: 'Greece', vatRate: 0.24 },
   { code: 'CY', storedValue: 'Cyprus', vatRate: 0.0 },
+  { code: 'AE', storedValue: 'United Arab Emirates', vatRate: 0.0 },
 ];
 
 export const DEFAULT_VAT_RATE = 0.24;
