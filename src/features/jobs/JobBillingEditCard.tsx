@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,6 +14,7 @@ import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutation
 import { splitInstallments, type InstallmentPlan } from '@/features/deals/installmentSplit';
 import { CustomScheduleEditor } from '@/features/deals/CustomScheduleEditor';
 import { validateCustomSchedule, type ScheduleRow } from '@/features/deals/customSchedule';
+import { billingErrorMessage, reportBillingError as reportError } from '@/features/deals/billingErrors';
 import type { BillingType } from '@/lib/rpc';
 
 /** Billing-term options offered per job, in display order. */
@@ -29,12 +31,6 @@ const PLANS: { value: InstallmentPlan; label: string }[] = [
   { value: '50_25_25', label: '50 / 25 / 25' },
   { value: 'custom', label: 'Custom' },
 ];
-
-/** Surface an RPC error (its labelled `errors[]` or message) to the user. */
-function reportError(err: unknown) {
-  const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-  alert(errors.join('\n'));
-}
 
 /** The subset of a job this card needs to edit its billing. */
 export type BillingEditJob = {
@@ -55,6 +51,7 @@ export type BillingEditJob = {
  * available to admins + the accounting group.
  */
 export function JobBillingEditCard({ job }: { job: BillingEditJob }) {
+  const { t } = useTranslation('deals');
   const update = useUpdateJobBilling(job.deal_id);
 
   const [price, setPrice] = useState(
@@ -68,13 +65,13 @@ export function JobBillingEditCard({ job }: { job: BillingEditJob }) {
   function commitPrice() {
     const next = Number(price || 0);
     if (next === Number(job.amount_net ?? 0)) return;
-    update.mutateAsync({ jobId: job.id, amountNet: next }).catch(reportError);
+    update.mutateAsync({ jobId: job.id, amountNet: next }).catch((err: unknown) => reportError(t, err));
   }
 
   function commitVat() {
     const next = Number(vat || 0);
     if (next === Number(job.vat_rate ?? 0)) return;
-    update.mutateAsync({ jobId: job.id, vatRate: next }).catch(reportError);
+    update.mutateAsync({ jobId: job.id, vatRate: next }).catch((err: unknown) => reportError(t, err));
   }
 
   async function onTermChange(value: string) {
@@ -82,7 +79,7 @@ export function JobBillingEditCard({ job }: { job: BillingEditJob }) {
     try {
       await update.mutateAsync({ jobId: job.id, billingType: value as BillingType });
     } catch (err) {
-      reportError(err);
+      reportError(t, err);
     }
   }
 
@@ -90,17 +87,28 @@ export function JobBillingEditCard({ job }: { job: BillingEditJob }) {
   const planEligible = job.service_type === 'web_dev' && job.billing_type === 'one_time';
   const currentPlan = (job.installment_plan as InstallmentPlan) ?? 'none';
 
+  /** Open the custom-schedule editor, seeded from the job's saved schedule when it has one (matches JobRow). */
+  function openScheduleEditor() {
+    const saved = job.installment_schedule;
+    setEditingSchedule(
+      saved && saved.length > 0
+        ? saved.map((r) => ({ amount_net: Number(r.amount_net ?? 0), due_date: r.due_date ?? null }))
+        : [{ amount_net: Number(job.amount_net ?? 0), due_date: null }],
+    );
+  }
+
   async function onPlanChange(value: string) {
-    if (value === currentPlan) return;
+    // 'custom' is handled before the unchanged-value guard so re-selecting it
+    // on an already-custom job opens the schedule editor instead of no-oping.
     if (value === 'custom') {
-      // Seed a single row at the job total (matches JobRow).
-      setEditingSchedule([{ amount_net: Number(job.amount_net ?? 0), due_date: null }]);
+      openScheduleEditor();
       return;
     }
+    if (value === currentPlan) return;
     try {
       await update.mutateAsync({ jobId: job.id, installmentPlan: value as InstallmentPlan });
     } catch (err) {
-      reportError(err);
+      reportError(t, err);
     }
   }
 
@@ -108,7 +116,7 @@ export function JobBillingEditCard({ job }: { job: BillingEditJob }) {
     if (!editingSchedule) return;
     const err = validateCustomSchedule(editingSchedule, Number(job.amount_net ?? 0));
     if (err) {
-      alert(err);
+      alert(billingErrorMessage(t, err));
       return;
     }
     try {
@@ -119,7 +127,7 @@ export function JobBillingEditCard({ job }: { job: BillingEditJob }) {
       });
       setEditingSchedule(null);
     } catch (e) {
-      reportError(e);
+      reportError(t, e);
     }
   }
 
@@ -192,6 +200,20 @@ export function JobBillingEditCard({ job }: { job: BillingEditJob }) {
               </SelectContent>
             </Select>
           </div>
+        )}
+        {/* A controlled Select never re-fires onValueChange for its current
+            value, so an already-custom job needs an explicit way in. */}
+        {planEligible && currentPlan === 'custom' && !editingSchedule && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 px-3 text-xs"
+            onClick={openScheduleEditor}
+            disabled={update.isPending}
+          >
+            {t('jobs_billing.edit_payments')}
+          </Button>
         )}
       </div>
 

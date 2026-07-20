@@ -72,6 +72,7 @@ import { JobBillingPauseCard } from './JobBillingPauseCard';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
+import type { ScheduleRow } from '@/features/deals/customSchedule';
 import type { ServiceType } from './hooks/useJobs';
 
 const JOB_STATUS_STYLES: Record<string, string> = {
@@ -606,6 +607,9 @@ function JobDetailContent() {
                     vat_rate: job.vat_rate,
                     billing_type: job.billing_type,
                     installment_plan: job.installment_plan,
+                    installment_schedule: Array.isArray(job.installment_schedule)
+                      ? (job.installment_schedule as unknown as ScheduleRow[])
+                      : null,
                     service_type: job.service_type,
                   }}
                 />

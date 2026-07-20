@@ -24,6 +24,7 @@ import { formatEur } from '@/lib/countries';
 import { splitInstallments, type InstallmentPlan } from './installmentSplit';
 import { CustomScheduleEditor } from './CustomScheduleEditor';
 import { validateCustomSchedule, type ScheduleRow } from './customSchedule';
+import { billingErrorMessage, reportBillingError as reportError } from './billingErrors';
 import type { BillingType } from '@/lib/rpc';
 import { PauseCircle, PlayCircle } from 'lucide-react';
 import { useJobPauseBilling, useJobResumeBilling } from '@/features/jobs/hooks/useJobBillingPause';
@@ -42,19 +43,6 @@ function canGroupTogether(a: JobBillingRow, b: JobBillingRow): boolean {
   if (a.id === b.id) return false;
   if (a.billing_type !== 'recurring_monthly' && a.billing_type !== 'recurring_yearly') return false;
   return a.billing_type === b.billing_type;
-}
-
-type TranslateFn = (key: string, opts: { defaultValue: string }) => string;
-
-/** Translate a known billing error code (e.g. schedule_required); non-codes fall through as-is. */
-function billingErrorMessage(t: TranslateFn, code: string): string {
-  return t(`jobs_billing.billing_errors.${code}`, { defaultValue: code });
-}
-
-/** Alert an RPC failure: labelled error codes are translated, plain errors keep their message. */
-function reportError(t: TranslateFn, err: unknown) {
-  const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-  alert(errors.map((code) => (code ? billingErrorMessage(t, code) : String(code))).join('\n'));
 }
 
 function cadenceSuffix(t: (k: string) => string, billingType: string): string {
