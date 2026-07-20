@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AddCustomJobForm } from './AddCustomJobForm';
+import { AddWebsiteForm } from './AddWebsiteForm';
 import {
   useJobsBilling,
   type JobBillingRow,
@@ -657,6 +658,7 @@ export function JobsBillingPanel({
   const { t, i18n } = useTranslation('deals');
   const { data, isLoading } = useJobsBilling(dealId);
   const [showAdd, setShowAdd] = useState(false);
+  const [showAddWebsite, setShowAddWebsite] = useState(false);
 
   const jobs = useMemo(() => data?.jobs ?? [], [data]);
   const payments = data?.payments ?? [];
@@ -684,9 +686,26 @@ export function JobsBillingPanel({
             {t('jobs_billing.title')}
           </h2>
           {!readOnly && (
-            <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => setShowAdd((v) => !v)}>
-              {t('jobs_billing.add_job')}
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => setShowAddWebsite((v) => !v)}
+              >
+                {t('jobs_billing.add_website')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => setShowAdd((v) => !v)}
+              >
+                {t('jobs_billing.add_job')}
+              </Button>
+            </div>
           )}
         </div>
 
@@ -703,6 +722,10 @@ export function JobsBillingPanel({
             defaultVatRate={defaultVatRate}
             onDone={() => setShowAdd(false)}
           />
+        )}
+
+        {!readOnly && showAddWebsite && (
+          <AddWebsiteForm dealId={dealId} onDone={() => setShowAddWebsite(false)} />
         )}
 
         {jobs.length === 0 ? (

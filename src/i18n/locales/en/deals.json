@@ -159,6 +159,15 @@
     "title": "Jobs & billing",
     "overview_heading": "Jobs & billing",
     "add_job": "+ Add job",
+    "add_website": "+ Add website",
+    "website_form": {
+      "website": "Website URL",
+      "website_placeholder": "https://example.com",
+      "industry": "Industry",
+      "industry_placeholder": "—",
+      "submit": "Add website",
+      "submitting": "Adding…"
+    },
     "invoiced_date": "Invoiced date",
     "empty_jobs": "No jobs yet.",
     "empty_payments": "No payments yet.",
@@ -251,6 +260,7 @@
       "cannot_replan_paid_installment": "Can't change the plan — an installment is already paid or invoiced.",
       "installment_plan_web_dev_one_time_only": "Installment plans apply only to one-time Web Dev jobs.",
       "web_dev_job_exists": "This deal already has a Web Dev job.",
+      "website_required": "Website URL is required.",
       "schedule_required": "Add at least one payment.",
       "schedule_amount_positive": "Each payment must be greater than €0.",
       "schedule_total_mismatch": "Payments must add up to the job price."

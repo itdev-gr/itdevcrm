@@ -159,6 +159,15 @@
     "title": "Εργασίες & χρεώσεις",
     "overview_heading": "Εργασίες & χρεώσεις",
     "add_job": "+ Προσθήκη εργασίας",
+    "add_website": "+ Προσθήκη ιστοσελίδας",
+    "website_form": {
+      "website": "URL Ιστοσελίδας",
+      "website_placeholder": "https://example.com",
+      "industry": "Κλάδος",
+      "industry_placeholder": "—",
+      "submit": "Προσθήκη ιστοσελίδας",
+      "submitting": "Προσθήκη…"
+    },
     "invoiced_date": "Ημερομηνία τιμολόγησης",
     "empty_jobs": "Δεν υπάρχουν ακόμη εργασίες.",
     "empty_payments": "Δεν υπάρχουν ακόμη πληρωμές.",
@@ -251,6 +260,7 @@
       "cannot_replan_paid_installment": "Αδύνατη η αλλαγή πλάνου — μια δόση έχει ήδη πληρωθεί ή τιμολογηθεί.",
       "installment_plan_web_dev_one_time_only": "Τα πλάνα δόσεων ισχύουν μόνο για εφάπαξ εργασίες Web Dev.",
       "web_dev_job_exists": "Αυτή η συμφωνία έχει ήδη Web Dev εργασία.",
+      "website_required": "Το URL της ιστοσελίδας είναι υποχρεωτικό.",
       "schedule_required": "Προσθέστε τουλάχιστον μία πληρωμή.",
       "schedule_amount_positive": "Κάθε πληρωμή πρέπει να είναι μεγαλύτερη από €0.",
       "schedule_total_mismatch": "Οι πληρωμές πρέπει να αθροίζουν στην τιμή της εργασίας."
