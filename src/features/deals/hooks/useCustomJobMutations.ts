@@ -3,8 +3,10 @@ import {
   createCustomJob,
   updateJobBilling,
   endJob,
+  addWebDevJob,
   type CreateCustomJobInput,
   type UpdateJobBillingInput,
+  type AddWebsiteJobInput,
 } from '@/lib/rpc';
 import { captureMutation } from '@/lib/sentry/captureMutation';
 import { jobsBillingKey } from './useJobsBilling';
@@ -49,6 +51,20 @@ export function useUpdateJobBilling(dealId: string) {
       return throwOnFailure(result);
     }),
     onSuccess: () => invalidateBilling(qc, dealId),
+  });
+}
+
+export function useAddWebsiteJob(dealId: string) {
+  const qc = useQueryClient();
+  return useMutation<string, DefaultError, Omit<AddWebsiteJobInput, 'dealId'>>({
+    mutationFn: captureMutation('jobs', 'add_web_dev_job', async (input) => {
+      const result = await addWebDevJob({ ...input, dealId });
+      return throwOnFailure(result);
+    }),
+    onSuccess: () => {
+      invalidateBilling(qc, dealId);
+      void qc.invalidateQueries({ queryKey: ['deal-service-job', dealId, 'web_dev'] });
+    },
   });
 }
 

@@ -217,6 +217,23 @@ export async function createCustomJob(input: CreateCustomJobInput): Promise<JobB
   return data as JobBillingResult;
 }
 
+export type AddWebsiteJobInput = {
+  dealId: string;
+  /** New website's URL — becomes the job's Info-tab website + its title. */
+  website: string;
+  industry?: string | null;
+};
+
+export async function addWebDevJob(input: AddWebsiteJobInput): Promise<JobBillingResult> {
+  const { data, error } = await rpcCall('add_web_dev_job', {
+    p_deal_id: input.dealId,
+    p_website: input.website,
+    p_industry: input.industry ?? null,
+  });
+  if (error) return { ok: false, errors: [error.message] };
+  return data as JobBillingResult;
+}
+
 export type UpdateJobBillingInput = {
   jobId: string;
   title?: string | null;
