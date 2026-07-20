@@ -13,8 +13,8 @@ import { CallLink } from '@/components/CallLink';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { importanceOf } from '@/features/tasks/importance';
 import { StartTaskButton } from '@/features/tasks/StartTaskButton';
-import { resolveTaskOpenLink } from './taskOpenLink';
-import { useDealServiceJob } from './hooks/useDealServiceJob';
+import { resolveTaskOpenLinks } from './taskOpenLink';
+import { useDealServiceJobs } from './hooks/useDealServiceJob';
 import {
   TaskDetailShell, type TaskMetaRow, type TaskStatusTone,
 } from '@/features/tasks/TaskDetailShell';
@@ -73,7 +73,7 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   // Technical groups can't open the deal page; for a deal-scoped task, point them at
   // the deal's matching service job instead.
   const needJobLink = !!task?.deal_id && !task?.job_id && !canOpenDeal;
-  const { data: matchingJob } = useDealServiceJob(
+  const { data: matchingJobs } = useDealServiceJobs(
     task?.deal_id ?? null,
     task?.department?.code ?? null,
     needJobLink,
@@ -89,15 +89,15 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
     if (res.closed) onOpenChange(false);
   }
 
-  const openLink = task
-    ? resolveTaskOpenLink({
+  const openLinks = task
+    ? resolveTaskOpenLinks({
         dealId: task.deal_id,
         jobId: task.job_id,
         sourceCode: task.source_code,
         canOpenDeal,
-        matchingJob: matchingJob ?? null,
+        matchingJobs: matchingJobs ?? [],
       })
-    : null;
+    : [];
 
   const statusKey = task
     ? task.status === 'resolved' ? 'resolved' : task.started_at ? 'started' : 'open'
@@ -114,13 +114,17 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
           value: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(task.created_at)),
         },
         { label: c('tasks_page.department_label'), value: <DepartmentChip department={task.department} /> },
-        ...(openLink
+        ...(openLinks.length
           ? [{
               label: c('tasks_page.source_label'),
               value: (
-                <Link to={openLink.href} className="font-mono text-xs text-primary hover:underline">
-                  {openLink.code || task.source_code}
-                </Link>
+                <div className="flex flex-col gap-0.5">
+                  {openLinks.map((l) => (
+                    <Link key={l.href} to={l.href} className="font-mono text-xs text-primary hover:underline">
+                      {l.code || task.source_code}
+                    </Link>
+                  ))}
+                </div>
               ),
             }]
           : task.source_code
@@ -175,13 +179,13 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
                     {primaryLabel}
                   </Button>
                 )}
-                {openLink && (
-                  <Button asChild variant="outline">
-                    <Link to={openLink.href}>
-                      {t(`assigned_tasks.${openLink.labelKey}`)} {openLink.code}
+                {openLinks.map((l) => (
+                  <Button key={l.href} asChild variant="outline">
+                    <Link to={l.href}>
+                      {t(`assigned_tasks.${l.labelKey}`)} {l.code}
                     </Link>
                   </Button>
-                )}
+                ))}
               </div>
             }
           >

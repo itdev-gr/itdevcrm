@@ -1,46 +1,46 @@
 import { describe, it, expect } from 'vitest';
-import { resolveTaskOpenLink } from './taskOpenLink';
+import { resolveTaskOpenLinks } from './taskOpenLink';
 
-describe('resolveTaskOpenLink', () => {
-  it('job-scoped task → open the job', () => {
+describe('resolveTaskOpenLinks', () => {
+  it('job-scoped task always opens its job', () => {
     expect(
-      resolveTaskOpenLink({ dealId: null, jobId: 'j1', sourceCode: '000042-WEBDEV', canOpenDeal: false, matchingJob: null }),
-    ).toEqual({ href: '/jobs/j1', labelKey: 'open_job', code: '000042-WEBDEV' });
+      resolveTaskOpenLinks({ dealId: null, jobId: 'j1', sourceCode: '000042-WEBDEV', canOpenDeal: false, matchingJobs: [] }),
+    ).toEqual([{ href: '/jobs/j1', labelKey: 'open_job', code: '000042-WEBDEV' }]);
   });
 
-  it('deal-scoped + can open deal → open the deal', () => {
+  it('deal-scoped task opens the deal when the viewer can', () => {
     expect(
-      resolveTaskOpenLink({ dealId: 'd1', jobId: null, sourceCode: '000042', canOpenDeal: true, matchingJob: null }),
-    ).toEqual({ href: '/deals/d1', labelKey: 'open_deal', code: '000042' });
+      resolveTaskOpenLinks({ dealId: 'd1', jobId: null, sourceCode: '000042', canOpenDeal: true, matchingJobs: [] }),
+    ).toEqual([{ href: '/deals/d1', labelKey: 'open_deal', code: '000042' }]);
   });
 
-  it('deal-scoped + cannot open deal + matching job → open the matching JOB (with its code)', () => {
+  it('deal-scoped task links to EVERY matching service job for technical viewers', () => {
     expect(
-      resolveTaskOpenLink({
-        dealId: 'd1', jobId: null, sourceCode: '000042', canOpenDeal: false,
-        matchingJob: { id: 'jw', code: '000042-WEBDEV' },
+      resolveTaskOpenLinks({
+        dealId: 'd1',
+        jobId: null,
+        sourceCode: '000042',
+        canOpenDeal: false,
+        matchingJobs: [
+          { id: 'j1', code: '000042-WEBDEV' },
+          { id: 'j2', code: '000042-WEBDEV-2' },
+        ],
       }),
-    ).toEqual({ href: '/jobs/jw', labelKey: 'open_job', code: '000042-WEBDEV' });
+    ).toEqual([
+      { href: '/jobs/j1', labelKey: 'open_job', code: '000042-WEBDEV' },
+      { href: '/jobs/j2', labelKey: 'open_job', code: '000042-WEBDEV-2' },
+    ]);
   });
 
-  it('deal-scoped + cannot open deal + no matching job → no link', () => {
+  it('returns [] when a technical viewer has no matching job', () => {
     expect(
-      resolveTaskOpenLink({ dealId: 'd1', jobId: null, sourceCode: '000042', canOpenDeal: false, matchingJob: null }),
-    ).toBeNull();
+      resolveTaskOpenLinks({ dealId: 'd1', jobId: null, sourceCode: '000042', canOpenDeal: false, matchingJobs: [] }),
+    ).toEqual([]);
   });
 
-  it('falls back to sourceCode when the matching job has no code', () => {
+  it('returns [] with no deal and no job', () => {
     expect(
-      resolveTaskOpenLink({
-        dealId: 'd1', jobId: null, sourceCode: '000042', canOpenDeal: false,
-        matchingJob: { id: 'jw', code: null },
-      }),
-    ).toEqual({ href: '/jobs/jw', labelKey: 'open_job', code: '000042' });
-  });
-
-  it('no deal and no job → no link', () => {
-    expect(
-      resolveTaskOpenLink({ dealId: null, jobId: null, sourceCode: null, canOpenDeal: true, matchingJob: null }),
-    ).toBeNull();
+      resolveTaskOpenLinks({ dealId: null, jobId: null, sourceCode: null, canOpenDeal: true, matchingJobs: [] }),
+    ).toEqual([]);
   });
 });

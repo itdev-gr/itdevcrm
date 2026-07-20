@@ -21,7 +21,7 @@ vi.mock('@/features/tasks/hooks/useResolveTask', () => ({
   useUnresolveTask: () => ({ mutateAsync: unresolveMutate, isPending: false }),
 }));
 vi.mock('./hooks/useDealServiceJob', () => ({
-  useDealServiceJob: () => ({ data: null }),
+  useDealServiceJobs: () => ({ data: [] }),
 }));
 vi.mock('@/features/tasks/TaskComments', () => ({
   TaskComments: () => <p>COMMENTS_THREAD</p>,
