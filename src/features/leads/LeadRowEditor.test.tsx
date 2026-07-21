@@ -172,3 +172,11 @@ describe('LeadRowEditor delete button', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 });
+
+describe('LeadRowEditor source options', () => {
+  it('offers Franchise as a selectable source', () => {
+    renderRow();
+    const option = screen.getByRole('option', { name: 'Franchise' }) as HTMLOptionElement;
+    expect(option.value).toBe('franchise');
+  });
+});

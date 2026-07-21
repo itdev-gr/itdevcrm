@@ -144,7 +144,8 @@
     "source_options": {
       "manual": "Manual",
       "meta": "Meta (Facebook/Instagram)",
-      "import": "Import"
+      "import": "Import",
+      "franchise": "Franchise"
     },
     "title": "Lead title",
     "full_name": "Full name",

@@ -241,4 +241,5 @@ export const SOURCE_BADGE: Record<string, string> = {
   manual: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
   meta: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200',
   import: 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-200',
+  franchise: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200',
 };

@@ -12,7 +12,7 @@ import {
 
 export type ColumnLeadsFilter = {
   ownerId?: string;
-  source?: 'meta' | 'manual' | 'import';
+  source?: 'meta' | 'manual' | 'import' | 'franchise';
   search?: string;
 };
 

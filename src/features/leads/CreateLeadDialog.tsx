@@ -23,7 +23,7 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
   const create = useCreateLead();
   const navigate = useNavigate();
 
-  const [source, setSource] = useState<'manual' | 'meta' | 'import'>('manual');
+  const [source, setSource] = useState<'manual' | 'meta' | 'import' | 'franchise'>('manual');
   const [title, setTitle] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -71,12 +71,13 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
             <select
               id="source"
               value={source}
-              onChange={(e) => setSource(e.target.value as 'manual' | 'meta' | 'import')}
+              onChange={(e) => setSource(e.target.value as 'manual' | 'meta' | 'import' | 'franchise')}
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="manual">{t('form.source_options.manual')}</option>
               <option value="meta">{t('form.source_options.meta')}</option>
               <option value="import">{t('form.source_options.import')}</option>
+              <option value="franchise">{t('form.source_options.franchise')}</option>
             </select>
           </div>
           <div>

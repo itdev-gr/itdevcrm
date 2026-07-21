@@ -14,7 +14,7 @@ import type { AssignableOwner } from './hooks/useAssignableOwners';
 import type { StageRow } from '@/features/stages/hooks/usePipelineStages';
 
 const UNASSIGNED = '__unassigned__';
-const SOURCES = ['manual', 'meta', 'import'] as const;
+const SOURCES = ['manual', 'meta', 'import', 'franchise'] as const;
 
 const cellClass = 'px-3 py-2.5 align-middle';
 const sectionBorder = 'border-l border-border/50';

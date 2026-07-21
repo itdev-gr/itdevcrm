@@ -10,7 +10,7 @@ import { create } from 'zustand';
 
 export type SalesBoardFilter = {
   ownerId?: string;
-  source?: 'manual' | 'meta' | 'import';
+  source?: 'manual' | 'meta' | 'import' | 'franchise';
   search: string;
 };
 

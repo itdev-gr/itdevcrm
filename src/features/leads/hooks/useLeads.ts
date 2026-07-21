@@ -10,7 +10,7 @@ export type LeadRow = Database['public']['Tables']['leads']['Row'] & {
 export type LeadsFilter = {
   ownerId?: string;
   stageId?: string;
-  source?: 'meta' | 'manual' | 'import';
+  source?: 'meta' | 'manual' | 'import' | 'franchise';
   includeConverted?: boolean;
 };
 

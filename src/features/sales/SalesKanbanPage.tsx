@@ -55,7 +55,7 @@ export function SalesKanbanPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [activeLead, setActiveLead] = useState<LeadRow | null>(null);
   const [search, setSearch] = useState('');
-  const [source, setSource] = useState<'' | 'manual' | 'meta' | 'import'>('');
+  const [source, setSource] = useState<'' | 'manual' | 'meta' | 'import' | 'franchise'>('');
   // Sort persists per user across navigation/reloads (opening a lead unmounts
   // the board). Falls back to 'newest' when the user isn't loaded yet.
   const sortBy = useSalesBoardSortStore((s) => (userId ? s.byUser[userId] ?? 'newest' : 'newest'));
@@ -214,12 +214,13 @@ export function SalesKanbanPage() {
         )}
         <FilterSelect
           value={source}
-          onChange={(e) => setSource(e.target.value as '' | 'manual' | 'meta' | 'import')}
+          onChange={(e) => setSource(e.target.value as '' | 'manual' | 'meta' | 'import' | 'franchise')}
         >
           <option value="">{tLeads('filters.source_all')}</option>
           <option value="manual">{tLeads('form.source_options.manual')}</option>
           <option value="meta">{tLeads('form.source_options.meta')}</option>
           <option value="import">{tLeads('form.source_options.import')}</option>
+          <option value="franchise">{tLeads('form.source_options.franchise')}</option>
         </FilterSelect>
         <FilterSelect
           value={sortBy}

@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/queryKeys';
 
 export type KanbanCountsFilter = {
   ownerId?: string;
-  source?: 'meta' | 'manual' | 'import';
+  source?: 'meta' | 'manual' | 'import' | 'franchise';
   search?: string;
 };
 
