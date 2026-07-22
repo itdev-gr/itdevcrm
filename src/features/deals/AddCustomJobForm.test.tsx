@@ -84,6 +84,15 @@ describe('AddCustomJobForm', () => {
     );
   });
 
+  it('offers the payment plan selector for a franchise one-time job', async () => {
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+
+    await user.click(screen.getByRole('combobox', { name: /department/i }));
+    await user.click(await screen.findByRole('option', { name: /^franchise$/i }));
+    expect(screen.getByRole('combobox', { name: /payment plan/i })).toBeInTheDocument();
+  });
+
   it('hides the plan selector when the cadence is recurring', async () => {
     const user = userEvent.setup();
     render(wrap(<AddCustomJobForm dealId="d1" />));

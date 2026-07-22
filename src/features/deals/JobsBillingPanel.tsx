@@ -149,8 +149,9 @@ function JobRow({
     }
   }
 
-  // Installment plans apply only to one-time web_dev jobs.
-  const planEligible = job.department === 'web_dev' && job.billing_type === 'one_time';
+  // Installment plans apply only to one-time web_dev and franchise jobs.
+  const planEligible =
+    (job.department === 'web_dev' || job.department === 'franchise') && job.billing_type === 'one_time';
   const currentPlan = (job.installment_plan as InstallmentPlan) ?? 'none';
 
   /** Open the custom-schedule editor, seeded from the job's saved schedule when it has one. */

@@ -30,6 +30,7 @@ const DEPARTMENTS: JobDepartment[] = [
   'hosting',
   'ads',
   'maintenance',
+  'franchise',
 ];
 
 const CADENCES: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];
@@ -60,8 +61,8 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   // Hosting is billed yearly only.
   const cadences: BillingType[] = department === 'hosting' ? ['recurring_yearly'] : CADENCES;
 
-  // Installment plans apply only to one-time Web Dev jobs.
-  const planEligible = department === 'web_dev' && cadence === 'one_time';
+  // Installment plans apply only to one-time Web Dev and Franchise jobs.
+  const planEligible = (department === 'web_dev' || department === 'franchise') && cadence === 'one_time';
   const effectivePlan: InstallmentPlan = planEligible ? plan : 'none';
 
   const canSubmit = title.trim().length > 0 && priceNet.trim().length > 0;

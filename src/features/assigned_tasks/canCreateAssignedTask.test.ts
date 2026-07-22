@@ -11,7 +11,7 @@ describe('canCreateAssignedTask', () => {
     ).toBe(true);
   });
   it('allows any tech group member', () => {
-    for (const g of ['web_seo','local_seo','web_dev','social_media','ai_seo','hosting','ads']) {
+    for (const g of ['web_seo','local_seo','web_dev','social_media','ai_seo','hosting','ads','maintenance','franchise']) {
       expect(canCreateAssignedTask({ isAdmin: false, groupCodes: [g] })).toBe(true);
     }
   });

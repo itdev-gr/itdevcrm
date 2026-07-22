@@ -103,6 +103,8 @@ describe('hasBlockedColumn', () => {
     expect(hasBlockedColumn('web_seo')).toBe(true);
     expect(hasBlockedColumn('social_media')).toBe(true);
     expect(hasBlockedColumn('ads')).toBe(true);
+    expect(hasBlockedColumn('maintenance')).toBe(true);
+    expect(hasBlockedColumn('franchise')).toBe(true);
   });
 
   it('is off for the website and hosting, which are never blocked', () => {

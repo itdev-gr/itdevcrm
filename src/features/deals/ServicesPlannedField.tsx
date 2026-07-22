@@ -14,7 +14,7 @@ import { useServicePackages } from '@/features/service_packages/hooks/useService
 import { useServiceSubpackages } from '@/features/service_packages/hooks/useServiceSubpackages';
 
 export type PlannedService = {
-  service_type: 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting' | 'ads' | 'maintenance';
+  service_type: 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting' | 'ads' | 'maintenance' | 'franchise';
   billing_type: 'one_time' | 'recurring_monthly' | 'recurring_yearly';
   // Website (web_dev) only: the one-time total is collected in installments per
   // this schedule. billing_type stays 'one_time'; this drives the payment split.
@@ -50,20 +50,24 @@ const SERVICE_TYPES: PlannedService['service_type'][] = [
   'hosting',
   'ads',
   'maintenance',
+  'franchise',
 ];
 
-function billingOptionsFor(
+export function billingOptionsFor(
   serviceType: PlannedService['service_type'],
 ): PlannedService['billing_type'][] {
-  // Hosting is sold yearly only — every other service supports monthly + one-time.
+  // Hosting is sold yearly only; franchise is sold one-time only.
+  // Every other service supports monthly + one-time.
   if (serviceType === 'hosting') return ['recurring_yearly'];
+  if (serviceType === 'franchise') return ['one_time'];
   return ['recurring_monthly', 'one_time'];
 }
 
-function defaultBillingFor(
+export function defaultBillingFor(
   serviceType: PlannedService['service_type'],
 ): PlannedService['billing_type'] {
   if (serviceType === 'hosting') return 'recurring_yearly';
+  if (serviceType === 'franchise') return 'one_time';
   return 'recurring_monthly';
 }
 const NO_PACKAGE = '__none__';
@@ -206,7 +210,7 @@ function ServiceRowEditor({
           ) : (
             <Select
               value={row.billing_type}
-              disabled={isDisabled || row.service_type === 'hosting'}
+              disabled={isDisabled || row.service_type === 'hosting' || row.service_type === 'franchise'}
               onValueChange={(v) =>
                 updateRow(idx, { billing_type: v as PlannedService['billing_type'] })
               }

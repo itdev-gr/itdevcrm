@@ -15,6 +15,7 @@ export const BLOCKED_COLUMN_BOARDS = new Set([
   'social_media',
   'ads',
   'maintenance',
+  'franchise',
 ]);
 
 export function hasBlockedColumn(board: string): boolean {

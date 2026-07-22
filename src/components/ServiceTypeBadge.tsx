@@ -10,6 +10,7 @@ const SERVICE_BADGE_CLASS: Record<string, string> = {
   hosting: 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200',
   ads: 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-200',
   maintenance: 'bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200',
+  franchise: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200',
 };
 
 export function serviceTypeBadgeClass(serviceType: string): string {

@@ -69,7 +69,7 @@ function TasksBadges() {
   );
 }
 
-const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting', 'ads', 'maintenance'] as const;
+const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting', 'ads', 'maintenance', 'franchise'] as const;
 
 const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   web_seo: 'Web SEO',
@@ -79,6 +79,7 @@ const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   hosting: 'Hosting',
   ads: 'Ads',
   maintenance: 'Support',
+  franchise: 'Franchise',
 };
 
 const TECH_ICONS: Record<(typeof TECH_GROUPS)[number], typeof Globe> = {
@@ -89,6 +90,7 @@ const TECH_ICONS: Record<(typeof TECH_GROUPS)[number], typeof Globe> = {
   hosting: Server,
   ads: Megaphone,
   maintenance: LifeBuoy,
+  franchise: Building2,
 };
 
 const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -99,6 +101,7 @@ const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   hosting: '/tech/hosting',
   ads: '/tech/ads',
   maintenance: '/tech/maintenance',
+  franchise: '/tech/franchise',
 };
 
 const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -109,6 +112,7 @@ const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   hosting: '/tech/hosting/clients',
   ads: '/tech/ads/clients',
   maintenance: '/tech/maintenance/clients',
+  franchise: '/tech/franchise/clients',
 };
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {

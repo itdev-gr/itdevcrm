@@ -177,7 +177,8 @@ export type JobDepartment =
   | 'ai_seo'
   | 'hosting'
   | 'ads'
-  | 'maintenance';
+  | 'maintenance'
+  | 'franchise';
 
 export type CreateCustomJobInput = {
   dealId: string;

@@ -18,6 +18,7 @@ const SERVICE_LABELS: Record<string, { en: string; el: string }> = {
   hosting: { en: 'Hosting', el: 'Hosting' },
   ads: { en: 'Ads', el: 'Διαφημίσεις' },
   maintenance: { en: 'Support', el: 'Υποστήριξη' },
+  franchise: { en: 'Franchise', el: 'Franchise' },
 };
 
 const URL_TO_SERVICE: Record<string, string> = {
@@ -29,6 +30,7 @@ const URL_TO_SERVICE: Record<string, string> = {
   hosting: 'hosting',
   ads: 'ads',
   maintenance: 'maintenance',
+  franchise: 'franchise',
 };
 
 function ClientAvatar({ name, email }: { name: string; email: string | null }) {
