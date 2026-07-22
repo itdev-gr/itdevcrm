@@ -247,6 +247,15 @@ describe('JobsBillingPanel installment plan', () => {
     expect(planSelect('Website')).toBeInTheDocument();
   });
 
+  it('offers the plan dropdown for a one-time franchise job', () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Branch package', department: 'franchise', billing_type: 'one_time' })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    expect(planSelect('Branch package')).toBeInTheDocument();
+  });
+
   it('does not offer the plan dropdown for non-web_dev or recurring jobs', () => {
     billing.current = {
       jobs: [

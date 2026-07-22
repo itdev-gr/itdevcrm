@@ -50,3 +50,4 @@ No SEO access buttons, no Info-tab fields, no service attachment areas, no deal 
 ## Changes / Revert
 - Migration rollback: restore constraint arrays, drop franchise pipeline_stages/service_packages rows, restore RPC pre-images (saved under `.superpowers/sdd/pre-franchise-svc-*.sql`).
 - Frontend: revert commits.
+- Rollback ordering — with franchise data present: delete/retype franchise jobs before re-adding the original jobs CHECK, and delete franchise jobs before dropping the franchise stages (or re-add the constraint NOT VALID).

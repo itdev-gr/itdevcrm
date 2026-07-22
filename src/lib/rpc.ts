@@ -165,7 +165,7 @@ export async function jobBillingRefCount(jobId: string): Promise<number> {
 export type JobBillingResult = { ok: true; job_id: string } | { ok: false; errors: string[] };
 
 export type BillingType = 'one_time' | 'recurring_monthly' | 'recurring_yearly';
-/** Installment plan for one-time web_dev jobs (see features/deals/installmentSplit). */
+/** Installment plan for one-time web_dev/franchise jobs (see features/deals/installmentSplit). */
 export type InstallmentPlan = 'none' | '50_50' | '50_25_25' | 'custom';
 /** One row of a custom payment schedule (web_dev/franchise one-time only). */
 export type ScheduleRow = { amount_net: number; due_date: string | null };
