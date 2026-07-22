@@ -1,7 +1,7 @@
 # Franchise service line — design
 
 Date: 2026-07-22
-Status: approved by owner (chat) — installments YES, proposed board columns OK
+Status: implemented 2026-07-22 (commits 228fc27, 68828dd, 0dab9c4, 0c55131; prod harness + live browser smoke passed)
 
 ## Goal
 
