@@ -93,6 +93,18 @@ describe('AddCustomJobForm', () => {
     expect(screen.getByRole('combobox', { name: /payment plan/i })).toBeInTheDocument();
   });
 
+  it('restricts the franchise cadence options to one-time only', async () => {
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+
+    await user.click(screen.getByRole('combobox', { name: /department/i }));
+    await user.click(await screen.findByRole('option', { name: /^franchise$/i }));
+
+    await user.click(screen.getByRole('combobox', { name: /cadence/i }));
+    const options = await screen.findAllByRole('option');
+    expect(options.map((o) => o.textContent)).toEqual(['One-time']);
+  });
+
   it('hides the plan selector when the cadence is recurring', async () => {
     const user = userEvent.setup();
     render(wrap(<AddCustomJobForm dealId="d1" />));

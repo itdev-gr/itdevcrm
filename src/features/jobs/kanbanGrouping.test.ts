@@ -98,7 +98,7 @@ describe('groupJobsForBoard', () => {
 });
 
 describe('hasBlockedColumn', () => {
-  it('is on for every board whose jobs can be auto-held (SEO + social + ads)', () => {
+  it('is on for every board whose jobs can be auto-held (SEO + social + ads + support + franchise)', () => {
     expect(hasBlockedColumn('local_seo')).toBe(true);
     expect(hasBlockedColumn('web_seo')).toBe(true);
     expect(hasBlockedColumn('social_media')).toBe(true);

@@ -58,8 +58,13 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   const [schedule, setSchedule] = useState<ScheduleRow[]>([{ amount_net: 0, due_date: null }]);
   const [dupConfirm, setDupConfirm] = useState(false);
 
-  // Hosting is billed yearly only.
-  const cadences: BillingType[] = department === 'hosting' ? ['recurring_yearly'] : CADENCES;
+  // Hosting is billed yearly only; franchise is billed one-time only.
+  const cadences: BillingType[] =
+    department === 'hosting'
+      ? ['recurring_yearly']
+      : department === 'franchise'
+        ? ['one_time']
+        : CADENCES;
 
   // Installment plans apply only to one-time Web Dev and Franchise jobs.
   const planEligible = (department === 'web_dev' || department === 'franchise') && cadence === 'one_time';
@@ -143,6 +148,7 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
             const dep = v as JobDepartment | typeof BILLING_ONLY;
             setDepartment(dep);
             if (dep === 'hosting') setCadence('recurring_yearly');
+            if (dep === 'franchise') setCadence('one_time');
           }}
         >
           <SelectTrigger className="mt-1 h-8 w-full text-xs" aria-label={t('jobs_billing.form.department')}>
