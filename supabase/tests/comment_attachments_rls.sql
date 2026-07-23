@@ -11,7 +11,7 @@
 -- Behaviour independently proven against prod via the Management-API harness on
 -- 2026-07-23 (gen_visible_nonparty=1, task_visible_nonparty=0, task_visible_party=1).
 begin;
-select plan(7);
+select plan(8);
 
 select has_table('public', 'comment_attachments', 'table exists');
 
