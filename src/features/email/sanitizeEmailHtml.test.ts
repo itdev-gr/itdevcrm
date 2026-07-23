@@ -30,4 +30,15 @@ describe('sanitizeEmailHtml', () => {
   it('preserves Greek text', () => {
     expect(sanitizeEmailHtml('<p>Καλημέρα <strong>κόσμε</strong></p>')).toContain('Καλημέρα');
   });
+  it('strips attributes outside the allowlist (data-*/aria-*/id/class/title)', () => {
+    const out = sanitizeEmailHtml(
+      '<span data-x="1" aria-label="spoof" id="a" class="b" title="t">t</span>',
+    );
+    expect(out).not.toContain('data-x');
+    expect(out).not.toContain('aria-label');
+    expect(out).not.toContain('id=');
+    expect(out).not.toContain('class=');
+    expect(out).not.toContain('title=');
+    expect(out).toContain('t</span>');
+  });
 });

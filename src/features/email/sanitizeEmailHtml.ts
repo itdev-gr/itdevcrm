@@ -38,6 +38,10 @@ export function sanitizeEmailHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
+    // Close the attribute allowlist: DOMPurify accepts data-*/aria-* by default,
+    // bypassing ALLOWED_ATTR entirely. Deny both so only href/target/rel/style survive.
+    ALLOW_DATA_ATTR: false,
+    ALLOW_ARIA_ATTR: false,
     ALLOWED_URI_REGEXP: /^(?:https?:|mailto:)/i,
   });
 }
