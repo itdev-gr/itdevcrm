@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSendEmail, type SendEmailVars } from './useSendEmail';
+import { RichTextEditor } from './RichTextEditor';
 import { useGoogleConnection } from './useGoogleConnection';
 import { MySignaturePreview } from './SignaturePreview';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -76,10 +77,12 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
               <input aria-label={t('dialog.subject')} value={subj} onChange={(e) => setSubj(e.target.value)}
                 className="mt-1 block w-full rounded border px-2 py-1" />
             </label>
-            <label className="mt-3 block text-sm">{t('dialog.body')}
-              <textarea aria-label={t('dialog.body')} value={text} onChange={(e) => setText(e.target.value)}
-                rows={8} className="mt-1 block w-full rounded border px-2 py-1" />
-            </label>
+            <div className="mt-3 block text-sm">
+              <span>{t('dialog.body')}</span>
+              <div className="mt-1">
+                <RichTextEditor value={text} onChange={setText} disabled={send.isPending} ariaLabel={t('dialog.body')} />
+              </div>
+            </div>
             {identity === 'personal' && (
               <div className="mt-3">
                 <p className="text-xs text-muted-foreground">{t('dialog.signature_hint')}</p>
