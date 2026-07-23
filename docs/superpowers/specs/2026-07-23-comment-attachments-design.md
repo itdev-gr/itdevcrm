@@ -1,7 +1,10 @@
 # Inline attachments on comments — design
 
 Date: 2026-07-23
-Status: approved by owner (chat)
+Status: implemented 2026-07-23 (commits 425c952, 3b78b05, 731038c, cf7ca4a, 8cf4681, 9a648c2; prod RLS harness proved both privacy directions; 43 tests + build green; attach control live on prod)
+
+## Accepted scope narrowing (post-implementation)
+Per owner decision #2, the "surface in the Attachments tab" applies to **deal/lead/client** (which use `CombinedAttachmentsTab`). Job pages use `AttachmentsPanel` directly, so job-scoped comment files render **inline in the thread** but are not aggregated in the job's Attachments tab. Channel jobs (web_dev/seo/ads/social) route comments to the deal's `deal_*` channel, so their files DO appear under the deal's tab; only hosting/non-channel job comment files are inline-only. Extending `useEntityCommentFiles` to accept `'job'` is a possible future enhancement, out of scope here.
 
 ## Goal
 
