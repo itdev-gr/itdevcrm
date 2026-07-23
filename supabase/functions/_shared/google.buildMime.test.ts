@@ -100,4 +100,23 @@ describe('buildMime — with attachments (multipart/mixed)', () => {
     // no raw quote/backslash/CR/LF leaked into the disposition header line
     expect(mime).not.toContain('filename="e"vil');
   });
+
+  it('rejects a CRLF-injecting or empty mimeType, falling back to octet-stream', () => {
+    const raw = buildMime({
+      from: 'a@itdev.gr',
+      to: 'c@x.gr',
+      subject: 'Hi',
+      html: '<p>hi</p>',
+      attachments: [
+        { filename: 'a.png', mimeType: 'image/png\r\nX-Injected: evil', base64: btoa('x') },
+        { filename: 'b.bin', mimeType: '', base64: btoa('y') },
+      ],
+    });
+    const mime = decodeMime(raw);
+    expect(mime).not.toContain('X-Injected');
+    expect(mime).toContain('Content-Type: application/octet-stream; name="a.png"');
+    expect(mime).toContain('Content-Type: application/octet-stream; name="b.bin"');
+    // no malformed empty Content-Type
+    expect(mime).not.toContain('Content-Type: ; name=');
+  });
 });

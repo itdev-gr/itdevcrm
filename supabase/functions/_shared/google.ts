@@ -142,11 +142,15 @@ export function buildMime(m: {
     htmlB64,
   ];
   for (const a of m.attachments) {
-    // Sanitize against header injection: strip quotes, backslashes, CR, LF.
+    // Sanitize against header injection: strip quotes/backslashes/CR/LF from the
+    // filename, and validate the MIME type is a well-formed token — mimeType is
+    // attacker-reachable (request body), so any CRLF/quote/empty/invalid value
+    // falls back to a safe default rather than splicing into the header line.
     const name = a.filename.replace(/["\\\r\n]/g, '_');
+    const mime = /^[\w.+-]+\/[\w.+-]+$/.test(a.mimeType) ? a.mimeType : 'application/octet-stream';
     parts.push(
       `--${boundary}`,
-      `Content-Type: ${a.mimeType}; name="${name}"`,
+      `Content-Type: ${mime}; name="${name}"`,
       'Content-Transfer-Encoding: base64',
       `Content-Disposition: attachment; filename="${name}"`,
       '',
