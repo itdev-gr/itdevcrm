@@ -54,5 +54,15 @@
     "needed": "Συνδέστε το Google για αποστολή από το email σας.",
     "success": "Το Google συνδέθηκε.",
     "error": "Η σύνδεση Google απέτυχε."
+  },
+  "editor": {
+    "bold": "Έντονα",
+    "italic": "Πλάγια",
+    "underline": "Υπογράμμιση",
+    "color": "Χρώμα κειμένου",
+    "bullet_list": "Λίστα με κουκκίδες",
+    "numbered_list": "Αριθμημένη λίστα",
+    "link": "Σύνδεσμος",
+    "link_prompt": "Δώσε URL:"
   }
 }

@@ -54,5 +54,15 @@
     "needed": "Connect Google to send from your address.",
     "success": "Google connected.",
     "error": "Google connection failed."
+  },
+  "editor": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "color": "Text colour",
+    "bullet_list": "Bullet list",
+    "numbered_list": "Numbered list",
+    "link": "Link",
+    "link_prompt": "Enter URL:"
   }
 }
