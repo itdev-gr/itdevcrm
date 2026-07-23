@@ -211,6 +211,9 @@ export function CompactNotificationContent({
   if (type === 'task_comment') {
     const title = readString(payload, 'title');
     const snippet = readString(payload, 'snippet');
+    // Attachment-only comments carry no body — surface the attachment instead
+    // of a blank snippet slot (mirrors the mention presenter's fallback).
+    const snippetText = snippet?.trim() ? snippet : '📎 attachment';
     return (
       <>
         <p className={cn('min-w-0', titleClass)}>
@@ -222,7 +225,7 @@ export function CompactNotificationContent({
             </>
           )}
         </p>
-        {snippet && <p className="mt-0.5 truncate text-muted-foreground italic">&ldquo;{snippet}&rdquo;</p>}
+        <p className="mt-0.5 truncate text-muted-foreground italic">&ldquo;{snippetText}&rdquo;</p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
     );

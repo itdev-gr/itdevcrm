@@ -6,6 +6,11 @@ import { cn } from '@/lib/utils';
 import { useCommentDraft, taskThreadKey } from '@/features/comments/commentDraftStore';
 import { resolveAuthorIdentity } from '@/features/comments/authorIdentity';
 import { useProfileDirectory } from '@/features/comments/hooks/useProfileDirectory';
+import { CommentAttachButton } from '@/features/comments/CommentAttachButton';
+import { useUploadCommentAttachment } from '@/features/comments/hooks/useUploadCommentAttachment';
+import { useCommentAttachments } from '@/features/comments/hooks/useCommentAttachments';
+import { useDeleteCommentAttachment } from '@/features/comments/hooks/useDeleteCommentAttachment';
+import { AttachmentGallery } from '@/features/attachments/AttachmentGallery';
 import { useTaskComments, type TaskCommentRow } from './hooks/useTaskComments';
 import { usePostTaskComment } from './hooks/usePostTaskComment';
 import { useUpdateTaskComment } from './hooks/useUpdateTaskComment';
@@ -43,6 +48,8 @@ export function TaskComments({ kind, taskId, locale }: {
   const { data: comments = [] } = useTaskComments(kind, taskId);
   const { data: directory } = useProfileDirectory();
   const post = usePostTaskComment();
+  const uploadFile = useUploadCommentAttachment();
+  const [pending, setPending] = useState<File[]>([]);
   const { text: body, setText: setBody, clear: clearDraft } = useCommentDraft(taskThreadKey(kind, taskId));
 
   // Resolve via the security-definer directory: profiles RLS hides other users'
@@ -52,20 +59,31 @@ export function TaskComments({ kind, taskId, locale }: {
     return name || email;
   };
 
-  function submit() {
+  async function submit() {
     const text = body.trim();
-    if (!text || post.isPending) return;
-    post.mutate({ kind, taskId, body: text }, { onSuccess: () => clearDraft() });
+    if ((!text && pending.length === 0) || post.isPending) return;
+    const { id } = await post.mutateAsync({ kind, taskId, body: text });
+    // Files upload against the freshly-posted comment; a file error alerts but
+    // never rolls back the comment that already landed.
+    for (const file of pending) {
+      try {
+        await uploadFile.mutateAsync({ parent: { task_comment_id: id }, file });
+      } catch (err) {
+        alert((err as Error).message);
+      }
+    }
+    setPending([]);
+    clearDraft();
   }
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    submit();
+    void submit();
   }
   // Enter sends, Shift+Enter newlines.
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      submit();
+      void submit();
     }
   }
 
@@ -118,9 +136,15 @@ export function TaskComments({ kind, taskId, locale }: {
           placeholder={t('tasks_page.comment_placeholder')}
           className="max-h-28 min-h-9 flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm shadow-sm transition-colors focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
         />
+        <CommentAttachButton
+          pending={pending}
+          onPick={(f) => setPending((p) => [...p, ...f])}
+          onRemove={(i) => setPending((p) => p.filter((_, idx) => idx !== i))}
+          disabled={post.isPending}
+        />
         <button
           type="submit"
-          disabled={post.isPending || body.trim().length === 0}
+          disabled={post.isPending || (body.trim().length === 0 && pending.length === 0)}
           aria-label={t('tasks_page.comment_post')}
           title={t('tasks_page.comment_post')}
           className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
@@ -157,6 +181,8 @@ function TaskCommentBubble({
   const [draft, setDraft] = useState(c.body);
   const update = useUpdateTaskComment();
   const del = useDeleteTaskComment();
+  const { data: files = [] } = useCommentAttachments({ task_comment_id: c.id });
+  const delFile = useDeleteCommentAttachment();
   const isEdited = !!c.updated_at && !!c.created_at && c.updated_at !== c.created_at;
   const busy = update.isPending || del.isPending;
 
@@ -279,14 +305,36 @@ function TaskCommentBubble({
             </div>
           </div>
         ) : (
-          <div
-            className={cn(
-              'mt-1 inline-block max-w-full rounded-2xl rounded-tl-sm px-3 py-1.5 text-sm',
-              mine ? 'bg-primary/10 text-foreground' : 'bg-muted text-foreground',
+          <>
+            {c.body.trim().length > 0 && (
+              <div
+                className={cn(
+                  'mt-1 inline-block max-w-full rounded-2xl rounded-tl-sm px-3 py-1.5 text-sm',
+                  mine ? 'bg-primary/10 text-foreground' : 'bg-muted text-foreground',
+                )}
+              >
+                <p className="whitespace-pre-wrap break-words">{c.body}</p>
+              </div>
             )}
-          >
-            <p className="whitespace-pre-wrap break-words">{c.body}</p>
-          </div>
+
+            {files.length > 0 && (
+              <div className="mt-1.5">
+                <AttachmentGallery
+                  files={files}
+                  {...(canModify
+                    ? {
+                        onDelete: (f) =>
+                          void delFile.mutateAsync({
+                            id: f.id,
+                            storage_path: f.storage_path,
+                            parent: { task_comment_id: c.id },
+                          }),
+                      }
+                    : {})}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
