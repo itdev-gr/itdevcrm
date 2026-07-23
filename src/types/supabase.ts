@@ -259,10 +259,14 @@ export type Database = {
       }
       assigned_tasks: {
         Row: {
+          assignee_resolved_at: string | null
+          assignee_resolved_by: string | null
           assignee_user_id: string
           client_id: string
           created_at: string
           created_by_user_id: string
+          creator_resolved_at: string | null
+          creator_resolved_by: string | null
           deal_id: string | null
           department_group_id: string
           description: string | null
@@ -274,14 +278,19 @@ export type Database = {
           source_code: string | null
           started_at: string | null
           status: string
+          summary: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          assignee_resolved_at?: string | null
+          assignee_resolved_by?: string | null
           assignee_user_id: string
           client_id: string
           created_at?: string
           created_by_user_id: string
+          creator_resolved_at?: string | null
+          creator_resolved_by?: string | null
           deal_id?: string | null
           department_group_id: string
           description?: string | null
@@ -293,14 +302,19 @@ export type Database = {
           source_code?: string | null
           started_at?: string | null
           status?: string
+          summary?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          assignee_resolved_at?: string | null
+          assignee_resolved_by?: string | null
           assignee_user_id?: string
           client_id?: string
           created_at?: string
           created_by_user_id?: string
+          creator_resolved_at?: string | null
+          creator_resolved_by?: string | null
           deal_id?: string | null
           department_group_id?: string
           description?: string | null
@@ -312,6 +326,7 @@ export type Database = {
           source_code?: string | null
           started_at?: string | null
           status?: string
+          summary?: string | null
           title?: string
           updated_at?: string
         }
@@ -750,6 +765,64 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      comment_attachments: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          storage_path: string
+          task_comment_id: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          storage_path: string
+          task_comment_id?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          storage_path?: string
+          task_comment_id?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_attachments_task_comment_id_fkey"
+            columns: ["task_comment_id"]
+            isOneToOne: false
+            referencedRelation: "task_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       comment_thread_reads: {
         Row: {
@@ -6112,6 +6185,42 @@ export type Database = {
           },
         ]
       }
+      task_summary_outbox: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          sent_at: string | null
+          status: string
+          task_id: string
+          task_kind: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          sent_at?: string | null
+          status?: string
+          task_id: string
+          task_kind: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          sent_at?: string | null
+          status?: string
+          task_id?: string
+          task_kind?: string
+        }
+        Relationships: []
+      }
       user_google_accounts: {
         Row: {
           connected_at: string
@@ -6255,10 +6364,14 @@ export type Database = {
       }
       user_tasks: {
         Row: {
+          assignee_resolved_at: string | null
+          assignee_resolved_by: string | null
           client_id: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
+          creator_resolved_at: string | null
+          creator_resolved_by: string | null
           deal_id: string | null
           due_at: string
           id: string
@@ -6267,15 +6380,20 @@ export type Database = {
           lead_id: string | null
           notes: string | null
           started_at: string | null
+          summary: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          assignee_resolved_at?: string | null
+          assignee_resolved_by?: string | null
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          creator_resolved_at?: string | null
+          creator_resolved_by?: string | null
           deal_id?: string | null
           due_at: string
           id?: string
@@ -6284,15 +6402,20 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           started_at?: string | null
+          summary?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          assignee_resolved_at?: string | null
+          assignee_resolved_by?: string | null
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          creator_resolved_at?: string | null
+          creator_resolved_by?: string | null
           deal_id?: string | null
           due_at?: string
           id?: string
@@ -6301,6 +6424,7 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           started_at?: string | null
+          summary?: string | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -6537,6 +6661,14 @@ export type Database = {
         Args: { target_deal_id: string }
         Returns: Json
       }
+      accounting_prepay_months: {
+        Args: { p_deal_id: string; p_dry_run?: boolean; p_months: number }
+        Returns: Json
+      }
+      add_web_dev_job: {
+        Args: { p_deal_id: string; p_industry?: string; p_website: string }
+        Returns: Json
+      }
       apply_intake_merge: {
         Args: {
           p_lead_id: string
@@ -6564,6 +6696,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      auto_close_stale_tasks: { Args: never; Returns: undefined }
       block_client: {
         Args: { reason_text: string; target_client_id: string }
         Returns: Json
@@ -6600,6 +6733,26 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "email_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_task_summaries: {
+        Args: { p_limit: number }
+        Returns: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          sent_at: string | null
+          status: string
+          task_id: string
+          task_kind: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "task_summary_outbox"
           isOneToOne: false
           isSetofReturn: true
         }
@@ -6947,6 +7100,10 @@ export type Database = {
           staff_user_id: string
         }[]
       }
+      resolve_task: {
+        Args: { p_kind: string; p_task_id: string }
+        Returns: Json
+      }
       run_daily_expenses: { Args: never; Returns: undefined }
       run_daily_payment_reminders: { Args: never; Returns: number }
       run_monthly_task_reset: { Args: never; Returns: undefined }
@@ -7022,6 +7179,13 @@ export type Database = {
         Args: { next_due: string; today: string }
         Returns: string
       }
+      task_comment_target: {
+        Args: { p_kind: string; p_task_id: string }
+        Returns: {
+          parent_id: string
+          parent_type: string
+        }[]
+      }
       task_target_job_id: {
         Args: {
           p_deal_id: string
@@ -7034,6 +7198,10 @@ export type Database = {
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
       unblock_job: { Args: { target_job_id: string }; Returns: Json }
       undismiss_integrity_alert: { Args: { p_id: string }; Returns: undefined }
+      unresolve_task: {
+        Args: { p_kind: string; p_task_id: string }
+        Returns: undefined
+      }
       update_job_billing: {
         Args: {
           p_amount_net?: number
@@ -7049,6 +7217,7 @@ export type Database = {
         }
         Returns: Json
       }
+      vat_rate_for_country: { Args: { p_country: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never
