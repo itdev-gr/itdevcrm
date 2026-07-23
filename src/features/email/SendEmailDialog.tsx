@@ -146,7 +146,7 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
             </button>
           ) : (
             <button type="button" className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
-              onClick={submit} disabled={send.isPending}>{t('dialog.send')}</button>
+              onClick={submit} disabled={send.isPending || att.busy}>{t('dialog.send')}</button>
           ))}
         </div>
       </div>

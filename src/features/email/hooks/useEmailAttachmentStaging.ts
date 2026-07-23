@@ -16,18 +16,24 @@ export function useEmailAttachmentStaging() {
 
   const addFiles = useCallback(async (files: File[]) => {
     setError(null);
-    for (const file of files) {
-      if (file.size > MAX_FILE) { setError('file_too_large'); continue; }
-      const total = refs.reduce((n, r) => n + r.bytes, 0) + file.size;
-      if (total > MAX_TOTAL) { setError('attachments_too_large'); continue; }
-      setBusy(true);
-      setPending((p) => [...p, file]);
-      const path = `email/${stagingId.current}/${Date.now()}-${sanitizeStorageFileName(file.name)}`;
-      const { error: e } = await supabase.storage.from('attachments').upload(path, file, { contentType: file.type, upsert: false });
-      setPending((p) => p.filter((f) => f !== file));
+    setBusy(true);
+    // Accumulate within THIS batch too (not just against committed refs), so
+    // dropping several files at once can't slip past the total guard.
+    let running = refs.reduce((n, r) => n + r.bytes, 0);
+    try {
+      for (const file of files) {
+        if (file.size > MAX_FILE) { setError('file_too_large'); continue; }
+        if (running + file.size > MAX_TOTAL) { setError('attachments_too_large'); continue; }
+        setPending((p) => [...p, file]);
+        const path = `email/${stagingId.current}/${Date.now()}-${sanitizeStorageFileName(file.name)}`;
+        const { error: e } = await supabase.storage.from('attachments').upload(path, file, { contentType: file.type, upsert: false });
+        setPending((p) => p.filter((f) => f !== file));
+        if (e) { setError(e.message); continue; }
+        running += file.size;
+        setRefs((r) => [...r, { bucket: 'attachments', path, filename: file.name, mimeType: file.type || 'application/octet-stream', bytes: file.size }]);
+      }
+    } finally {
       setBusy(false);
-      if (e) { setError(e.message); continue; }
-      setRefs((r) => [...r, { bucket: 'attachments', path, filename: file.name, mimeType: file.type || 'application/octet-stream', bytes: file.size }]);
     }
   }, [refs]);
 

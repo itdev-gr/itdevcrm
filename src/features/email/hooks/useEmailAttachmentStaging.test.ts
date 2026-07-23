@@ -93,6 +93,21 @@ describe('useEmailAttachmentStaging', () => {
     expect(upload).toHaveBeenCalledTimes(1);
   });
 
+  it('accumulates within a single multi-file batch (rejects the file that trips 18 MB)', async () => {
+    const { result } = renderHook(() => useEmailAttachmentStaging());
+
+    await act(async () => {
+      await result.current.addFiles([
+        fileOfSize(12 * 1024 * 1024, 'a.png'),
+        fileOfSize(12 * 1024 * 1024, 'b.png'),
+      ]);
+    });
+
+    expect(result.current.refs).toHaveLength(1);
+    expect(result.current.error).toBe('attachments_too_large');
+    expect(upload).toHaveBeenCalledTimes(1);
+  });
+
   it('remove(0) deletes the storage object and drops the ref', async () => {
     const { result } = renderHook(() => useEmailAttachmentStaging());
 
