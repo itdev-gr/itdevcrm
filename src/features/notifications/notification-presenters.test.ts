@@ -151,6 +151,36 @@ describe('task_auto_closed presenter', () => {
   });
 });
 
+describe('mention presenter — attachment fallback', () => {
+  it('renders "📎 attachment" when the preview is empty (photo-only comment)', () => {
+    const markup = renderToStaticMarkup(
+      CompactNotificationContent({
+        type: 'mention',
+        payload: { author_name: 'Jane', preview: '' },
+        parentLabel: null,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      }),
+    );
+    expect(markup).toContain('📎 attachment');
+  });
+});
+
+describe('task_comment presenter — attachment fallback', () => {
+  it('renders "📎 attachment" when the snippet is empty (attachment-only comment)', () => {
+    const markup = renderToStaticMarkup(
+      CompactNotificationContent({
+        type: 'task_comment',
+        payload: { title: 'Fix logo', snippet: '' },
+        parentLabel: null,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      }),
+    );
+    expect(markup).toContain('📎 attachment');
+  });
+});
+
 describe('readPath — deal comment channels', () => {
   it('routes deal_dev and deal_seo mentions to the deal page', () => {
     expect(readPath({ parent_type: 'deal_dev', parent_id: 'D1' })).toBe('/deals/D1');

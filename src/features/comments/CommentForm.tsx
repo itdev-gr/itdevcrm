@@ -43,6 +43,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   const [query, setQuery] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [pending, setPending] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const tokenToUserId = useRef<Map<string, string>>(new Map());
 
   const matches = useMemo<MentionableUser[]>(() => {
@@ -125,26 +126,31 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
 
   async function submit() {
     const hasBody = body.trim().length > 0;
-    if ((!hasBody && pending.length === 0) || create.isPending) return;
-    const { id } = await create.mutateAsync({
-      parent_type: parentType,
-      parent_id: parentId,
-      body: body.trim(),
-      mentioned_user_ids: resolveMentions(body),
-      reply_to_id: replyToId ?? null,
-    });
-    for (const file of pending) {
-      try {
-        await uploadFile.mutateAsync({ parent: { comment_id: id }, file });
-      } catch (err) {
-        alert((err as Error).message); // comment is posted; let the user retry the file
+    if ((!hasBody && pending.length === 0) || create.isPending || submitting) return;
+    try {
+      setSubmitting(true);
+      const { id } = await create.mutateAsync({
+        parent_type: parentType,
+        parent_id: parentId,
+        body: body.trim(),
+        mentioned_user_ids: resolveMentions(body),
+        reply_to_id: replyToId ?? null,
+      });
+      for (const file of pending) {
+        try {
+          await uploadFile.mutateAsync({ parent: { comment_id: id }, file });
+        } catch (err) {
+          alert((err as Error).message); // comment is posted; let the user retry the file
+        }
       }
+      setPending([]);
+      clearDraft();
+      setQuery(null);
+      tokenToUserId.current.clear();
+      if (replyToId) onCancelReply?.();
+    } finally {
+      setSubmitting(false);
     }
-    setPending([]);
-    clearDraft();
-    setQuery(null);
-    tokenToUserId.current.clear();
-    if (replyToId) onCancelReply?.();
   }
 
   async function onSubmit(e: FormEvent) {
@@ -210,7 +216,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
                 pending={pending}
                 onPick={(f) => setPending((p) => [...p, ...f])}
                 onRemove={(i) => setPending((p) => p.filter((_, idx) => idx !== i))}
-                disabled={create.isPending}
+                disabled={submitting}
               />
               {replyToId && onCancelReply && (
                 <Button type="button" variant="outline" size="sm" onClick={onCancelReply}>
@@ -220,7 +226,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
               <Button
                 type="submit"
                 size="sm"
-                disabled={create.isPending || (!body.trim() && pending.length === 0)}
+                disabled={submitting || (!body.trim() && pending.length === 0)}
                 className="gap-1.5"
               >
                 <Send className="size-3.5" />

@@ -50,6 +50,7 @@ export function TaskComments({ kind, taskId, locale }: {
   const post = usePostTaskComment();
   const uploadFile = useUploadCommentAttachment();
   const [pending, setPending] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const { text: body, setText: setBody, clear: clearDraft } = useCommentDraft(taskThreadKey(kind, taskId));
 
   // Resolve via the security-definer directory: profiles RLS hides other users'
@@ -61,19 +62,24 @@ export function TaskComments({ kind, taskId, locale }: {
 
   async function submit() {
     const text = body.trim();
-    if ((!text && pending.length === 0) || post.isPending) return;
-    const { id } = await post.mutateAsync({ kind, taskId, body: text });
-    // Files upload against the freshly-posted comment; a file error alerts but
-    // never rolls back the comment that already landed.
-    for (const file of pending) {
-      try {
-        await uploadFile.mutateAsync({ parent: { task_comment_id: id }, file });
-      } catch (err) {
-        alert((err as Error).message);
+    if ((!text && pending.length === 0) || post.isPending || submitting) return;
+    try {
+      setSubmitting(true);
+      const { id } = await post.mutateAsync({ kind, taskId, body: text });
+      // Files upload against the freshly-posted comment; a file error alerts but
+      // never rolls back the comment that already landed.
+      for (const file of pending) {
+        try {
+          await uploadFile.mutateAsync({ parent: { task_comment_id: id }, file });
+        } catch (err) {
+          alert((err as Error).message);
+        }
       }
+      setPending([]);
+      clearDraft();
+    } finally {
+      setSubmitting(false);
     }
-    setPending([]);
-    clearDraft();
   }
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -140,11 +146,11 @@ export function TaskComments({ kind, taskId, locale }: {
           pending={pending}
           onPick={(f) => setPending((p) => [...p, ...f])}
           onRemove={(i) => setPending((p) => p.filter((_, idx) => idx !== i))}
-          disabled={post.isPending}
+          disabled={submitting}
         />
         <button
           type="submit"
-          disabled={post.isPending || (body.trim().length === 0 && pending.length === 0)}
+          disabled={submitting || (body.trim().length === 0 && pending.length === 0)}
           aria-label={t('tasks_page.comment_post')}
           title={t('tasks_page.comment_post')}
           className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
