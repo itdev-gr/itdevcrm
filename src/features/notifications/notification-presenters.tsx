@@ -118,6 +118,9 @@ export function CompactNotificationContent({
   if (type === 'mention') {
     const author = readString(payload, 'author_name');
     const preview = readString(payload, 'preview');
+    // Photo-only comments carry no body text — surface the attachment instead
+    // of a blank preview slot.
+    const previewText = preview?.trim() ? preview : '📎 attachment';
     return (
       <>
         <p className={cn('min-w-0', titleClass)}>
@@ -129,9 +132,7 @@ export function CompactNotificationContent({
             </>
           )}
         </p>
-        {preview && (
-          <p className="mt-0.5 truncate text-muted-foreground italic">&ldquo;{preview}&rdquo;</p>
-        )}
+        <p className="mt-0.5 truncate text-muted-foreground italic">&ldquo;{previewText}&rdquo;</p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
     );

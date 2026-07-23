@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils';
 import type { CommentRow } from './hooks/useComments';
 import { useUpdateComment } from './hooks/useUpdateComment';
 import { useArchiveComment } from './hooks/useArchiveComment';
+import { useCommentAttachments } from './hooks/useCommentAttachments';
+import { useDeleteCommentAttachment } from './hooks/useDeleteCommentAttachment';
+import { AttachmentGallery } from '@/features/attachments/AttachmentGallery';
 import { CommentForm } from './CommentForm';
 import { TaskCommentLink } from './TaskCommentLink';
 import { CommentAvatar, CommentBody, formatCommentTime } from './comment-utils';
@@ -26,6 +29,8 @@ export function CommentItem({ comment, replies = [], nested = false }: Props) {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const update = useUpdateComment();
   const archive = useArchiveComment();
+  const { data: files = [] } = useCommentAttachments({ comment_id: comment.id });
+  const del = useDeleteCommentAttachment();
   const [editing, setEditing] = useState(false);
   const [replying, setReplying] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -207,6 +212,24 @@ export function CommentItem({ comment, replies = [], nested = false }: Props) {
           ) : (
             <>
               <CommentBody body={comment.body} className="mt-3" />
+
+              {files.length > 0 && (
+                <div className="mt-2">
+                  <AttachmentGallery
+                    files={files}
+                    {...(canDelete
+                      ? {
+                          onDelete: (f) =>
+                            void del.mutateAsync({
+                              id: f.id,
+                              storage_path: f.storage_path,
+                              parent: { comment_id: comment.id },
+                            }),
+                        }
+                      : {})}
+                  />
+                </div>
+              )}
 
               {comment.task_key && <TaskCommentLink taskKey={comment.task_key} />}
 

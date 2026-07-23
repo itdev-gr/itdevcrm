@@ -2,9 +2,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@/lib/i18n';
 
-const mutateAsync = vi.fn(() => Promise.resolve(undefined));
+const mutateAsync = vi.fn(() => Promise.resolve({ id: 'c1' }));
 vi.mock('./hooks/useCreateComment', () => ({
   useCreateComment: () => ({ mutateAsync, isPending: false }),
+}));
+vi.mock('./hooks/useUploadCommentAttachment', () => ({
+  useUploadCommentAttachment: () => ({ mutateAsync: vi.fn(() => Promise.resolve()), isPending: false }),
 }));
 vi.mock('./hooks/useMentionableUsers', () => ({
   useMentionableUsers: () => ({ data: [] }),

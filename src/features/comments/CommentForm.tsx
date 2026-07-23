@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMentionableUsers, type MentionableUser } from './hooks/useMentionableUsers';
 import { useCreateComment } from './hooks/useCreateComment';
+import { useUploadCommentAttachment } from './hooks/useUploadCommentAttachment';
+import { CommentAttachButton } from './CommentAttachButton';
 import { CommentAvatar, resolveMentionedUserIds } from './comment-utils';
 import { useCommentDraft, commentThreadKey } from './commentDraftStore';
 import type { CommentParentType } from './commentChannels';
@@ -32,6 +34,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   const { t } = useTranslation('sales');
   const { data: users = [] } = useMentionableUsers();
   const create = useCreateComment();
+  const uploadFile = useUploadCommentAttachment();
   const me = useAuthStore((s) => s.user);
 
   const taRef = useRef<HTMLTextAreaElement | null>(null);
@@ -39,6 +42,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   const { text: body, setText: setBody, clear: clearDraft } = useCommentDraft(draftKey);
   const [query, setQuery] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [pending, setPending] = useState<File[]>([]);
   const tokenToUserId = useRef<Map<string, string>>(new Map());
 
   const matches = useMemo<MentionableUser[]>(() => {
@@ -120,14 +124,23 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   }
 
   async function submit() {
-    if (!body.trim() || create.isPending) return;
-    await create.mutateAsync({
+    const hasBody = body.trim().length > 0;
+    if ((!hasBody && pending.length === 0) || create.isPending) return;
+    const { id } = await create.mutateAsync({
       parent_type: parentType,
       parent_id: parentId,
       body: body.trim(),
       mentioned_user_ids: resolveMentions(body),
       reply_to_id: replyToId ?? null,
     });
+    for (const file of pending) {
+      try {
+        await uploadFile.mutateAsync({ parent: { comment_id: id }, file });
+      } catch (err) {
+        alert((err as Error).message); // comment is posted; let the user retry the file
+      }
+    }
+    setPending([]);
     clearDraft();
     setQuery(null);
     tokenToUserId.current.clear();
@@ -192,7 +205,13 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
             <p className="text-[11px] text-muted-foreground">
               {t('comments.mention_hint', { defaultValue: 'Type @ to mention someone' })}
             </p>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <CommentAttachButton
+                pending={pending}
+                onPick={(f) => setPending((p) => [...p, ...f])}
+                onRemove={(i) => setPending((p) => p.filter((_, idx) => idx !== i))}
+                disabled={create.isPending}
+              />
               {replyToId && onCancelReply && (
                 <Button type="button" variant="outline" size="sm" onClick={onCancelReply}>
                   {t('comments.cancel', { defaultValue: 'Cancel' })}
@@ -201,7 +220,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
               <Button
                 type="submit"
                 size="sm"
-                disabled={create.isPending || !body.trim()}
+                disabled={create.isPending || (!body.trim() && pending.length === 0)}
                 className="gap-1.5"
               >
                 <Send className="size-3.5" />
