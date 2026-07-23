@@ -16,9 +16,9 @@ afterEach(() => {
 });
 
 describe('RichTextEditor', () => {
-  // NB: assertions use vitest-native matchers (getByRole throws when absent, so it
-  // already asserts existence). jest-dom's toBeInTheDocument is not extended in an
-  // isolated single-file `vitest run` in this repo, and this task runs file-scoped.
+  // NB: assertions use vitest-native matchers — getByRole throws when the element
+  // is absent, so it already asserts existence without needing jest-dom's
+  // toBeInTheDocument.
   it('renders the formatting toolbar buttons', () => {
     render(<RichTextEditor value="" onChange={() => {}} ariaLabel="Message body" />);
     expect(screen.getByRole('button', { name: /Bold|Έντονα/ })).toBeTruthy();

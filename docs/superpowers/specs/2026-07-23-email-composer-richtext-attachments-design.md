@@ -1,7 +1,7 @@
 # Email composer: rich text + attachments — design
 
 Date: 2026-07-23
-Status: approved by owner (chat)
+Status: code complete + whole-branch reviewed 2026-07-23 (commits d84751c → 0e96424 + cleanups). **Edge-function deploy PENDING** — `supabase functions deploy send-email` needs the owner's sbp token (Phase 2 attachments won't work in prod until deployed; Phase 1 rich text ships with the frontend on Vercel). Follow-up hardening tickets (deferred, non-blocking): (1) fetchMimeAttachments size-check-before-download bound; (2) constrain `attachments`-bucket refs to the `email/` prefix; (3) shared global jest-dom vitest setup so file-scoped email tests stop red.
 
 ## Goal
 
