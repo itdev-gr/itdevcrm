@@ -15,19 +15,20 @@ type Vars = {
 
 export function useCreateComment() {
   const qc = useQueryClient();
-  return useMutation<void, DefaultError, Vars>({
+  return useMutation<{ id: string }, DefaultError, Vars>({
     mutationFn: captureMutation('comments', 'create', async (vars: Vars) => {
       const author_id = useAuthStore.getState().user?.id;
       if (!author_id) throw new Error('not_authenticated');
-      const { error } = await supabase.from('comments').insert({
+      const { data, error } = await supabase.from('comments').insert({
         parent_type: vars.parent_type,
         parent_id: vars.parent_id,
         body: vars.body,
         author_id,
         mentioned_user_ids: vars.mentioned_user_ids ?? [],
         reply_to_id: vars.reply_to_id ?? null,
-      });
+      }).select('id').single();
       if (error) throw new Error(error.message);
+      return { id: (data as { id: string }).id };
     }),
     onSuccess: (_d, vars) => {
       void qc.invalidateQueries({ queryKey: queryKeys.comments(vars.parent_type, vars.parent_id) });

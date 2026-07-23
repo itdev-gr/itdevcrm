@@ -30,6 +30,8 @@ export const queryKeys = {
     ['task-comments', kind, taskId] as const,
   attachments: (parentType: string, parentId: string) =>
     ['attachments', parentType, parentId] as const,
+  commentAttachments: (scope: 'comment' | 'task_comment', id: string) =>
+    ['comment-attachments', scope, id] as const,
   activity: (entityType: string, entityId: string) => ['activity', entityType, entityId] as const,
   clientActivity: (clientId: string) => ['activity', 'client', clientId] as const,
   notifications: () => ['notifications'] as const,
