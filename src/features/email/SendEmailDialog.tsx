@@ -4,8 +4,19 @@ import { useSendEmail, type SendEmailVars } from './useSendEmail';
 import { RichTextEditor } from './RichTextEditor';
 import { useGoogleConnection } from './useGoogleConnection';
 import { MySignaturePreview } from './SignaturePreview';
+import { useEmailAttachmentStaging, type EmailAttachmentRef } from './hooks/useEmailAttachmentStaging';
+import { CommentAttachButton } from '../comments/CommentAttachButton';
+import { useFileDropPaste } from '../comments/hooks/useFileDropPaste';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { parseRecipientList } from '../../../supabase/functions/_shared/recipients.ts';
+
+/** A lightweight File carrying the staged ref's name + byte size, purely so
+ *  CommentAttachButton can render the chip label + size (it never re-reads bytes). */
+function refToChip(ref: EmailAttachmentRef): File {
+  const f = new File([], ref.filename, { type: ref.mimeType });
+  Object.defineProperty(f, 'size', { value: ref.bytes });
+  return f;
+}
 
 export type SendEmailDialogProps = {
   open: boolean;
@@ -20,6 +31,8 @@ export type SendEmailDialogProps = {
 export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, onClose }: SendEmailDialogProps) {
   const { t } = useTranslation('email');
   const send = useSendEmail();
+  const att = useEmailAttachmentStaging();
+  const dnd = useFileDropPaste((f) => void att.addFiles(f), send.isPending);
   const google = useGoogleConnection();
   const needsConnect = identity === 'personal' && !google.connected && !google.isLoading;
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -42,16 +55,31 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
       return setError(t('dialog.invalid_recipients', { defaultValue: 'Invalid Cc/Bcc address (comma-separated, max 10).' }));
     }
     try {
-      await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, cc, bcc, dedupeKey });
+      await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, cc, bcc, dedupeKey, attachments: att.refs });
       setDone(true);
+      void att.cleanup();
     } catch {
       setError(t('dialog.failed'));
     }
   }
 
+  function handleClose() {
+    if (!done) void att.cleanup();
+    onClose();
+  }
+
+  const attError = att.error
+    ? (att.error === 'file_too_large' || att.error === 'attachments_too_large'
+        ? t(`errors.${att.error}`)
+        : att.error)
+    : null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded bg-card p-6 shadow">
+      <div
+        {...dnd.dropZoneProps}
+        className={`w-full max-w-lg rounded bg-card p-6 shadow ${dnd.isDragging ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+      >
         <h2 className="mb-4 text-lg font-semibold">{t('dialog.title')}</h2>
         {done ? (
           <p className="text-sm text-green-700 dark:text-green-400">{t('dialog.sent')}</p>
@@ -79,9 +107,17 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
             </label>
             <div className="mt-3 block text-sm">
               <span>{t('dialog.body')}</span>
-              <div className="mt-1">
+              <div className="mt-1" onPaste={dnd.onPaste}>
                 <RichTextEditor value={text} onChange={setText} disabled={send.isPending} ariaLabel={t('dialog.body')} />
               </div>
+            </div>
+            <div className="mt-3">
+              <CommentAttachButton
+                pending={att.refs.map(refToChip)}
+                onPick={(f) => void att.addFiles(f)}
+                onRemove={att.remove}
+                disabled={send.isPending}
+              />
             </div>
             {identity === 'personal' && (
               <div className="mt-3">
@@ -97,12 +133,13 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
                 </details>
               </div>
             )}
+            {attError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{attError}</p>}
             {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
             {needsConnect && <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">{t('connect.needed')}</p>}
           </>
         )}
         <div className="mt-4 flex justify-end gap-2">
-          <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={onClose}>{t('dialog.cancel')}</button>
+          <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={handleClose}>{t('dialog.cancel')}</button>
           {!done && (needsConnect ? (
             <button type="button" className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground" onClick={() => google.connect()}>
               {t('connect.connect')}

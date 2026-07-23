@@ -64,5 +64,9 @@
     "numbered_list": "Numbered list",
     "link": "Link",
     "link_prompt": "Enter URL:"
+  },
+  "errors": {
+    "file_too_large": "That file is over 25 MB and can't be attached.",
+    "attachments_too_large": "Attachments can total at most 18 MB."
   }
 }

@@ -11,6 +11,7 @@ export type SendEmailVars = {
   cc?: string[] | undefined;
   bcc?: string[] | undefined;
   dedupeKey?: string | undefined;
+  attachments?: { bucket: string; path: string; filename: string; mimeType?: string }[] | undefined;
 };
 
 export function useSendEmail() {
@@ -27,6 +28,7 @@ export function useSendEmail() {
           dedupeKey: vars.dedupeKey ?? null,
           ...(vars.cc && vars.cc.length > 0 ? { cc: vars.cc } : {}),
           ...(vars.bcc && vars.bcc.length > 0 ? { bcc: vars.bcc } : {}),
+          ...(vars.attachments && vars.attachments.length ? { attachments: vars.attachments } : {}),
         },
       });
       if (error) throw new Error(error.message);
