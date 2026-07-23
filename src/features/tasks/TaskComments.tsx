@@ -7,6 +7,7 @@ import { useCommentDraft, taskThreadKey } from '@/features/comments/commentDraft
 import { resolveAuthorIdentity } from '@/features/comments/authorIdentity';
 import { useProfileDirectory } from '@/features/comments/hooks/useProfileDirectory';
 import { CommentAttachButton } from '@/features/comments/CommentAttachButton';
+import { useFileDropPaste } from '@/features/comments/hooks/useFileDropPaste';
 import { useUploadCommentAttachment } from '@/features/comments/hooks/useUploadCommentAttachment';
 import { useCommentAttachments } from '@/features/comments/hooks/useCommentAttachments';
 import { useDeleteCommentAttachment } from '@/features/comments/hooks/useDeleteCommentAttachment';
@@ -52,6 +53,7 @@ export function TaskComments({ kind, taskId, locale }: {
   const [pending, setPending] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const { text: body, setText: setBody, clear: clearDraft } = useCommentDraft(taskThreadKey(kind, taskId));
+  const dnd = useFileDropPaste((f) => setPending((p) => [...p, ...f]), submitting);
 
   // Resolve via the security-definer directory: profiles RLS hides other users'
   // rows, so the embedded author is null for everyone but the viewer.
@@ -133,11 +135,24 @@ export function TaskComments({ kind, taskId, locale }: {
         )}
       </div>
 
-      <form onSubmit={onSubmit} className="flex items-end gap-2">
+      <form
+        onSubmit={onSubmit}
+        {...dnd.dropZoneProps}
+        className={cn(
+          'relative flex items-end gap-2',
+          dnd.isDragging && 'rounded-xl ring-2 ring-primary/50',
+        )}
+      >
+        {dnd.isDragging && (
+          <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-primary/5 text-xs font-medium text-primary">
+            {t('tasks_page.comment_drop_hint', { defaultValue: 'Drop files to attach' })}
+          </div>
+        )}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           onKeyDown={onKeyDown}
+          onPaste={dnd.onPaste}
           rows={1}
           placeholder={t('tasks_page.comment_placeholder')}
           className="max-h-28 min-h-9 flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm shadow-sm transition-colors focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30"

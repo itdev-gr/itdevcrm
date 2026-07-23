@@ -3,8 +3,10 @@ import type { FormEvent, KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMentionableUsers, type MentionableUser } from './hooks/useMentionableUsers';
+import { useFileDropPaste } from './hooks/useFileDropPaste';
 import { useCreateComment } from './hooks/useCreateComment';
 import { useUploadCommentAttachment } from './hooks/useUploadCommentAttachment';
 import { CommentAttachButton } from './CommentAttachButton';
@@ -45,6 +47,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   const [pending, setPending] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const tokenToUserId = useRef<Map<string, string>>(new Map());
+  const dnd = useFileDropPaste((f) => setPending((p) => [...p, ...f]), submitting);
 
   const matches = useMemo<MentionableUser[]>(() => {
     if (query == null) return [];
@@ -159,7 +162,16 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative">
+    <form
+      onSubmit={onSubmit}
+      {...dnd.dropZoneProps}
+      className={cn('relative', dnd.isDragging && 'rounded-lg ring-2 ring-[#1a9696]/50')}
+    >
+      {dnd.isDragging && (
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-lg bg-[#1a9696]/5 text-xs font-medium text-[#1a9696]">
+          {t('comments.drop_hint', { defaultValue: 'Drop files to attach' })}
+        </div>
+      )}
       <div className="flex gap-3">
         {!replyToId && me?.email && (
           <CommentAvatar
@@ -176,6 +188,7 @@ export function CommentForm({ parentType, parentId, replyToId, onCancelReply }: 
             value={body}
             onChange={onChange}
             onKeyDown={onKeyDown}
+            onPaste={dnd.onPaste}
             placeholder={t('comments.placeholder')}
             rows={replyToId ? 2 : 2}
             className="block w-full resize-none rounded-lg border border-input/80 bg-background px-3 py-2.5 text-sm shadow-sm transition-colors placeholder:text-muted-foreground/80 focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
