@@ -3,7 +3,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 import { IDENTITIES, type Identity } from './identities.ts';
 import { renderTemplate, renderDbTemplate, LOGO_URL } from './templates.ts';
 import { renderSignatureHtml } from '../_shared/signature.ts';
-import { validateAttachmentRefs, fetchAttachments, type AttachmentRef, type ResendAttachment } from './attachments.ts';
+import { validateAttachmentRefs, fetchAttachments, fetchMimeAttachments, type AttachmentRef, type ResendAttachment, type MimeAttachment } from './attachments.ts';
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 import { timingSafeEqual } from '../_shared/timing.ts';
 import { parseRecipientList, deptBccFor } from '../_shared/recipients.ts';
@@ -35,7 +35,7 @@ type SendInput = {
   data?: Record<string, unknown>;
   dedupeKey?: string | null;
   dryRun?: boolean;
-  attachments?: AttachmentRef[];
+  attachments?: unknown;
   cc?: string[] | string;
   bcc?: string[] | string;
 };
@@ -129,7 +129,7 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
   }
 
   let attachments: ResendAttachment[] = [];
-  if (input.attachments && input.attachments.length > 0) {
+  if (Array.isArray(input.attachments) && input.attachments.length > 0) {
     try {
       attachments = await fetchAttachments(admin.storage, validateAttachmentRefs(input.attachments));
     } catch (e) {
@@ -232,7 +232,7 @@ async function drain(): Promise<{ processed: number; sent: number; failed: numbe
   return { processed: (rows ?? []).length, sent, failed };
 }
 
-async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null, cc: string[] = [], bcc: string[] = []): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
+async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null, cc: string[] = [], bcc: string[] = [], attachmentRefs: AttachmentRef[] = []): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
   // Reject header injection / malformed recipients before building the MIME message.
   if (/[\r\n]/.test(to) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
     return { status: 'failed', error: 'invalid_recipient' };
@@ -298,7 +298,22 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
     await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'failed', dedupe_key: dedupeKey, error: 'token_refresh_failed' });
     return { status: 'failed', error: 'token_refresh_failed' };
   }
-  const raw = buildMime({ from: acct.google_email, to, subject, html, cc, bcc: mergedBcc });
+  // Attachment bytes are fetched service-role from the allowlisted `attachments`
+  // bucket (the caller only holds a user JWT). A failed fetch — including the
+  // 18MB total guard tripping — logs and fails the send without hitting Gmail.
+  let mimeAtts: MimeAttachment[] = [];
+  if (attachmentRefs.length > 0) {
+    try {
+      mimeAtts = await fetchMimeAttachments(admin.storage, attachmentRefs);
+    } catch (e) {
+      await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'failed', dedupe_key: dedupeKey, error: String((e as Error).message) });
+      return { status: 'failed', error: (e as Error).message };
+    }
+  }
+  const raw = buildMime({
+    from: acct.google_email, to, subject, html, cc, bcc: mergedBcc,
+    attachments: mimeAtts.map((a) => ({ filename: a.filename, mimeType: a.mimeType, base64: a.base64 })),
+  });
   const res = await sendGmail(access, raw);
   // Keep the raw Gmail error in email_log for debugging; return a generic code to the client.
   await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: res.ok ? 'sent' : 'failed', resend_id: res.id ?? null, dedupe_key: dedupeKey, error: res.ok ? null : res.error });
@@ -339,7 +354,13 @@ Deno.serve(async (req) => {
       const { data: prof } = await admin.from('profiles').select('is_admin').eq('user_id', u.user.id).maybeSingle();
       if (!prof?.is_admin) return json({ error: 'bcc_admin_only' }, 403);
     }
-    const r = await sendPersonal(u.user.id, body.to, body.data ?? {}, body.dedupeKey ?? null, cc, bcc);
+    let attachmentRefs: AttachmentRef[] = [];
+    try {
+      attachmentRefs = body.attachments ? validateAttachmentRefs(body.attachments) : [];
+    } catch (e) {
+      return json({ error: (e as Error).message }, 400);
+    }
+    const r = await sendPersonal(u.user.id, body.to, body.data ?? {}, body.dedupeKey ?? null, cc, bcc, attachmentRefs);
     if (r.status === 'not_connected') return json({ status: 'not_connected' }, 409);
     return json({ status: r.status, id: r.id, error: r.error }, r.status === 'failed' ? 502 : 200);
   }

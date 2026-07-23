@@ -105,21 +105,56 @@ export function emailFromIdToken(idToken: string): string | null {
 }
 
 // cc/bcc must be pre-validated by parseRecipientList (no CR/LF) — headers are emitted verbatim.
-export function buildMime(m: { from: string; to: string; subject: string; html: string; cc?: string[]; bcc?: string[] }): string {
+// When `attachments` is present the message is emitted as multipart/mixed (a
+// text/html part + one base64 attachment part each); absent, the output is the
+// unchanged single-part text/html message (backward compatible byte-for-byte).
+export function buildMime(m: {
+  from: string; to: string; subject: string; html: string;
+  cc?: string[]; bcc?: string[];
+  attachments?: { filename: string; mimeType: string; base64: string }[];
+}): string {
   const subj = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(m.subject)))}?=`;
-  const lines = [
+  const headers = [
     `From: ${m.from}`,
     `To: ${m.to}`,
     ...(m.cc && m.cc.length > 0 ? [`Cc: ${m.cc.join(', ')}`] : []),
     ...(m.bcc && m.bcc.length > 0 ? [`Bcc: ${m.bcc.join(', ')}`] : []),
     `Subject: ${subj}`,
     'MIME-Version: 1.0',
+  ];
+  const htmlB64 = btoa(unescape(encodeURIComponent(m.html)));
+
+  if (!m.attachments || m.attachments.length === 0) {
+    // Unchanged single-part output (backward compatible).
+    const lines = [...headers, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', htmlB64];
+    return b64url(enc.encode(lines.join('\r\n')));
+  }
+
+  const boundary = `itdev_${crypto.randomUUID().replace(/-/g, '')}`;
+  const parts: string[] = [
+    ...headers,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
     'Content-Type: text/html; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
-    btoa(unescape(encodeURIComponent(m.html))),
+    htmlB64,
   ];
-  return b64url(enc.encode(lines.join('\r\n')));
+  for (const a of m.attachments) {
+    // Sanitize against header injection: strip quotes, backslashes, CR, LF.
+    const name = a.filename.replace(/["\\\r\n]/g, '_');
+    parts.push(
+      `--${boundary}`,
+      `Content-Type: ${a.mimeType}; name="${name}"`,
+      'Content-Transfer-Encoding: base64',
+      `Content-Disposition: attachment; filename="${name}"`,
+      '',
+      a.base64.replace(/(.{76})/g, '$1\r\n'), // RFC 2045 76-char line wrap
+    );
+  }
+  parts.push(`--${boundary}--`);
+  return b64url(enc.encode(parts.join('\r\n')));
 }
 
 export async function sendGmail(accessToken: string, rawBase64Url: string): Promise<{ ok: boolean; id?: string; error?: string }> {
