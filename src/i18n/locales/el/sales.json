@@ -57,7 +57,8 @@
       "offers": "Προσφορές",
       "proformas": "Προτιμολόγια",
       "contracts": "Συμβάσεις",
-      "job_files": "Αρχεία εργασιών"
+      "job_files": "Αρχεία εργασιών",
+      "from_comments": "Από σχόλια"
     }
   },
   "activity": {

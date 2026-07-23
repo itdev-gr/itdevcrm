@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { AttachmentsPanel } from './AttachmentsPanel';
+import { AttachmentGallery } from './AttachmentGallery';
+import { useEntityCommentFiles } from './hooks/useEntityCommentFiles';
 import { DealJobFiles } from '@/features/deals/DealJobFiles';
 import { OffersTab } from '@/features/offers/OffersTab';
 import { ProFormasTab } from '@/features/proformas/ProFormasTab';
@@ -19,12 +21,19 @@ const headerClass = 'mb-3 text-xs font-semibold uppercase tracking-wide text-mut
 export function CombinedAttachmentsTab({ parentType, parentId, leadId, dealId, clientId }: Props) {
   const { t } = useTranslation('sales');
   const showOffers = Boolean(leadId ?? dealId);
+  const { data: commentFiles = [] } = useEntityCommentFiles(parentType, parentId);
   return (
     <div className="space-y-4">
       <section className={sectionClass}>
         <h2 className={headerClass}>{t('attachments.sections.files')}</h2>
         <AttachmentsPanel parentType={parentType} parentId={parentId} />
       </section>
+      {commentFiles.length > 0 && (
+        <section className={sectionClass}>
+          <h2 className={headerClass}>{t('attachments.sections.from_comments')}</h2>
+          <AttachmentGallery files={commentFiles} />
+        </section>
+      )}
       {parentType === 'deal' && dealId && <DealJobFiles dealId={dealId} />}
       {showOffers && (
         <section className={sectionClass}>

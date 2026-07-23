@@ -57,7 +57,8 @@
       "offers": "Offers",
       "proformas": "Pro Formas",
       "contracts": "Contracts",
-      "job_files": "Job files"
+      "job_files": "Job files",
+      "from_comments": "From comments"
     }
   },
   "activity": {
