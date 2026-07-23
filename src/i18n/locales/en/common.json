@@ -91,7 +91,8 @@
     "source_label": "Linked to",
     "description_label": "Description",
     "no_description": "No description.",
-    "you": "You"
+    "you": "You",
+    "comment_drop_hint": "Drop files to attach"
   },
   "seo_access": {
     "no_email": "No client email on file",

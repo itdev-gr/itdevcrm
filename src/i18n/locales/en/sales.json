@@ -37,7 +37,8 @@
     "submit": "Post",
     "empty": "No comments yet. Start the conversation.",
     "new_comment": "New comment",
-    "mention_hint": "Type @ to mention someone"
+    "mention_hint": "Type @ to mention someone",
+    "drop_hint": "Drop files to attach"
   },
   "attachments": {
     "choose_file": "Choose file",

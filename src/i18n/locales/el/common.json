@@ -91,7 +91,8 @@
     "source_label": "Σύνδεση με",
     "description_label": "Περιγραφή",
     "no_description": "Χωρίς περιγραφή.",
-    "you": "Εσείς"
+    "you": "Εσείς",
+    "comment_drop_hint": "Αφήστε αρχεία για επισύναψη"
   },
   "seo_access": {
     "no_email": "Δεν υπάρχει email πελάτη",
