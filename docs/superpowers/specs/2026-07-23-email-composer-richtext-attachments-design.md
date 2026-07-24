@@ -1,7 +1,7 @@
 # Email composer: rich text + attachments — design
 
 Date: 2026-07-23
-Status: code complete + whole-branch reviewed 2026-07-23 (commits d84751c → 0e96424 + cleanups). **Edge-function deploy PENDING** — `supabase functions deploy send-email` needs the owner's sbp token (Phase 2 attachments won't work in prod until deployed; Phase 1 rich text ships with the frontend on Vercel). Follow-up hardening tickets (deferred, non-blocking): (1) fetchMimeAttachments size-check-before-download bound; (2) constrain `attachments`-bucket refs to the `email/` prefix; (3) shared global jest-dom vitest setup so file-scoped email tests stop red.
+Status: implemented + DEPLOYED 2026-07-24 (commits d84751c → bdb47e0). send-email edge fn deployed to prod; composer verified live (rich-text toolbar + attach paperclip render in the Send-email dialog on prod). **End-to-end DELIVERY smoke still pending** a Gmail-connected sender: the logged-in test account info@itdev.gr is NOT Gmail-connected (composer shows "Connect Google"); a real formatted-email-with-attachment delivery test needs a connected account (e.g. mkifokeris@itdev.gr) — not run to avoid impersonating a user's Gmail. Follow-up hardening tickets (deferred, non-blocking): (1) fetchMimeAttachments size-check-before-download bound; (2) constrain `attachments`-bucket refs to the `email/` prefix; (3) shared global jest-dom vitest setup so file-scoped email tests stop red.
 
 ## Goal
 
