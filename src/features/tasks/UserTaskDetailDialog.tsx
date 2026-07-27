@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogContent, DialogDescription,
@@ -39,7 +40,18 @@ export function UserTaskDetailDialog({
   if (creatorName) rows.push({ label: c('tasks_page.created_by_label'), value: creatorName });
   if (created) rows.push({ label: c('tasks_page.created_label'), value: created });
   if (due) rows.push({ label: c('tasks_page.due_label'), value: due });
-  if (card.clientName) rows.push({ label: c('tasks_page.client_label'), value: card.clientName });
+  if (card.clientName) {
+    rows.push({
+      label: c('tasks_page.client_label'),
+      value: card.clientId ? (
+        <Link to={`/clients/${card.clientId}`} className="hover:text-primary hover:underline">
+          {card.clientName}
+        </Link>
+      ) : (
+        card.clientName
+      ),
+    });
+  }
   if (card.leadName) rows.push({ label: c('tasks_page.lead_label'), value: card.leadName });
 
   // Dual-resolve: the primary button depends on who has stamped which side.

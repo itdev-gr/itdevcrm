@@ -37,6 +37,12 @@ const assignedRow = (o = {}) => ({
   deal_id: 'd1', job_id: null, description: null, client: null, department: null, ...o,
 });
 
+const userRow = (o = {}) => ({
+  id: 'u1', title: 'Follow up call', user_id: 'me', created_by: 'me', completed_at: null,
+  due_at: '2026-07-01T10:00:00Z', importance: 'high', lead: null,
+  client: { id: 'c1', name: 'ACME' }, client_id: 'c1', ...o,
+});
+
 describe('TasksKanbanBoard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,6 +59,17 @@ describe('TasksKanbanBoard', () => {
       { card: expect.objectContaining({ id: 'a1' }), action: { type: 'resolve' } },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
+  });
+
+  it('a client-linked user card shows the client name, not the Personal badge', () => {
+    useTaskBoardData.mockReturnValue({ userRows: [userRow()], assignedRows: [], isLoading: false });
+    render(<TasksKanbanBoard />);
+    const high = screen.getByTestId('tasks-col-high');
+    // getByText throws if absent → asserts both the title and the client chip render.
+    expect(within(high).getByText('Follow up call')).toBeTruthy();
+    expect(within(high).getByText('ACME')).toBeTruthy();
+    // The "Personal" badge (i18n key echoed by the mock) must NOT render.
+    expect(within(high).queryByText('tasks_page.personal')).toBeNull();
   });
 
   it('By me filter shows delegated tasks (read-only) and hides my own', () => {

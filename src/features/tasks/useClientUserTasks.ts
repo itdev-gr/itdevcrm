@@ -3,10 +3,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { UserTaskRow } from '@/features/home/hooks/useUserTasks';
-import { userTaskToCard, type TaskCard } from './taskCard';
+import { userTaskToCard, type TaskCard, type TaskClientJoin } from './taskCard';
+
+/** A client-linked user_task row, optionally carrying the joined client row. */
+export type ClientUserTaskRow = UserTaskRow & { client?: TaskClientJoin | null };
 
 /** Map raw client-linked user_tasks into TaskCards (all kind='user'). Pure. */
-export function mapClientUserTasks(rows: UserTaskRow[], meId: string): TaskCard[] {
+export function mapClientUserTasks(rows: ClientUserTaskRow[], meId: string): TaskCard[] {
   return rows.map((r) => userTaskToCard(r, meId));
 }
 
@@ -26,9 +29,9 @@ export function partitionClientTasks(cards: TaskCard[]): {
  *  that deal (its job-targeted tasks carry the parent deal_id too, so they appear on
  *  the deal as well); a task with a job_id shows on that job. Pure. */
 export function filterUserTasksForSource(
-  rows: UserTaskRow[],
+  rows: ClientUserTaskRow[],
   source: { kind: 'deal' | 'job'; id: string },
-): UserTaskRow[] {
+): ClientUserTaskRow[] {
   return rows.filter((r) => {
     if (r.deal_id == null && r.job_id == null) return true; // client-level
     return source.kind === 'deal' ? r.deal_id === source.id : r.job_id === source.id;
@@ -49,11 +52,11 @@ export function useClientUserTasks(
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_tasks')
-        .select('*')
+        .select('*, client:clients(id, name)')
         .eq('client_id', clientId!)
         .order('due_at', { ascending: true });
       if (error) throw new Error(error.message);
-      const scoped = filterUserTasksForSource((data ?? []) as UserTaskRow[], source);
+      const scoped = filterUserTasksForSource((data ?? []) as unknown as ClientUserTaskRow[], source);
       return mapClientUserTasks(scoped, meId);
     },
   });

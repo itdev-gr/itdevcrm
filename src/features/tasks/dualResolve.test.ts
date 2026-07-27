@@ -152,7 +152,7 @@ describe('cardDualResolveState', () => {
     key: 'user:u1', kind: 'user', id: 'u1', title: 'T', importance: 'low',
     relation: 'mine', resolved: false, assigneeId: ASSIGNEE, creatorId: CREATOR,
     createdAtIso: null, dueAt: null, resolvedAt: null, startedAtIso: null,
-    sourceCode: null, link: null, notes: null, clientName: null, leadName: null,
+    sourceCode: null, link: null, notes: null, clientName: null, clientId: null, leadName: null,
     creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
   };
 

@@ -17,6 +17,7 @@ export type ColumnKey = ImportanceCode | 'resolved' | 'replies';
 export type BoardFilter = 'to_me' | 'by_me' | 'all';
 
 export type TaskLeadJoin = { id: string; title: string; code: string | null };
+export type TaskClientJoin = { id: string; name: string };
 
 /** Left→right column order on the board. Replies is derived (foreign comments
  *  on open party tasks), not a stored state — see columnOf. */
@@ -40,6 +41,7 @@ export type TaskCard = {
   link: string | null;    // deal/job link, or null for personal
   notes: string | null;
   clientName: string | null;
+  clientId: string | null;
   leadName: string | null;
   // Dual-resolve: per-side stamps + the AI resolve-summary (null until filled).
   creatorResolvedAt: string | null;
@@ -66,7 +68,7 @@ export function relationOf(assigneeId: string, creatorId: string | null, meId: s
 }
 
 export function userTaskToCard(
-  row: UserTaskRow & TaskSideStamps & { lead?: TaskLeadJoin | null },
+  row: UserTaskRow & TaskSideStamps & { lead?: TaskLeadJoin | null; client?: TaskClientJoin | null },
   meId: string,
 ): TaskCard {
   const creatorId = row.created_by ?? null;
@@ -87,7 +89,9 @@ export function userTaskToCard(
     sourceCode: row.lead?.code ?? null,
     link: row.lead ? `/leads/${row.lead.id}` : null,
     notes: row.notes ?? null,
-    clientName: null,
+    // Fall back to the raw column so the id survives even without the join.
+    clientName: row.client?.name ?? null,
+    clientId: row.client?.id ?? row.client_id ?? null,
     leadName: row.lead?.title ?? null,
     creatorResolvedAt: row.creator_resolved_at ?? null,
     assigneeResolvedAt: row.assignee_resolved_at ?? null,
@@ -115,6 +119,7 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
     link,
     notes: row.description ?? null,
     clientName: row.client?.name ?? null,
+    clientId: row.client_id ?? null,
     leadName: null,
     creatorResolvedAt: row.creator_resolved_at ?? null,
     assigneeResolvedAt: row.assignee_resolved_at ?? null,
@@ -151,7 +156,7 @@ export function isDraggable(card: TaskCard): boolean {
   return card.relation === 'mine' || card.relation === 'delegated';
 }
 
-export function buildBoardCards(userRows: Array<UserTaskRow & { lead?: TaskLeadJoin | null }>, assignedRows: AssignedTaskRow[], meId: string): TaskCard[] {
+export function buildBoardCards(userRows: Array<UserTaskRow & { lead?: TaskLeadJoin | null; client?: TaskClientJoin | null }>, assignedRows: AssignedTaskRow[], meId: string): TaskCard[] {
   return [
     ...userRows.map((r) => userTaskToCard(r, meId)),
     ...assignedRows.map((r) => assignedTaskToCard(r, meId)),

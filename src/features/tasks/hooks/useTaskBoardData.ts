@@ -14,6 +14,7 @@ export function isoDaysAgo(days: number): string {
 
 export type BoardUserTaskRow = UserTaskRow & {
   lead?: { id: string; title: string; code: string | null } | null;
+  client?: { id: string; name: string } | null;
 };
 
 export function useTaskBoardData(params: { meId: string; allTeam: boolean; cutoffIso: string }) {
@@ -40,7 +41,7 @@ export function useTaskBoardData(params: { meId: string; allTeam: boolean; cutof
   const userTasks = useQuery<BoardUserTaskRow[]>({
     queryKey: [...queryKeys.tasksBoardUser(scope, cutoffIso), userIdList],
     queryFn: async () => {
-      let q = supabase.from('user_tasks').select('*, lead:leads(id, title, code)');
+      let q = supabase.from('user_tasks').select('*, lead:leads(id, title, code), client:clients(id, name)');
       if (!allTeam) q = q.or(`user_id.eq.${meId},created_by.eq.${meId}`);
       // open, or resolved within the window, or any-age with an unread reply.
       // Only emit id.in.(...) when non-empty — PostgREST rejects an empty list.

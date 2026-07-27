@@ -21,7 +21,7 @@ const openCard: TaskCard = {
   key: 'user:u1', kind: 'user', id: 'u1', title: 'Sibling task', importance: 'low',
   relation: 'other', resolved: false, assigneeId: 'me', creatorId: 'me', createdAtIso: null,
   dueAt: null, resolvedAt: null, startedAtIso: null, sourceCode: null, link: null,
-  notes: null, clientName: null, leadName: null,
+  notes: null, clientName: null, clientId: null, leadName: null,
   creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
 };
 vi.mock('@/features/clients/hooks/useClientTasks', () => ({

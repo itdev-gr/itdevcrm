@@ -43,6 +43,37 @@ describe('taskCard', () => {
     expect(c.leadName).toBeNull();
   });
 
+  it('maps a client-linked user task: clientName + clientId from the join', () => {
+    const c = userTaskToCard(
+      userRow({ client: { id: 'c1', name: 'ACME' }, client_id: 'c1' }),
+      me,
+    );
+    expect(c.clientName).toBe('ACME');
+    expect(c.clientId).toBe('c1');
+    expect(c.link).toBeNull(); // client link stays out of `link` (lead-only)
+  });
+
+  it('user task without the client join still surfaces clientId from client_id', () => {
+    const c = userTaskToCard(userRow({ client_id: 'c9' }), me);
+    expect(c.clientName).toBeNull();
+    expect(c.clientId).toBe('c9');
+  });
+
+  it('user task with neither join nor client_id has null clientName/clientId', () => {
+    const c = userTaskToCard(userRow(), me);
+    expect(c.clientName).toBeNull();
+    expect(c.clientId).toBeNull();
+  });
+
+  it('assigned task keeps clientName from the embed and clientId from client_id', () => {
+    const c = assignedTaskToCard(
+      assignedRow({ client: { id: 'c2', name: 'Beta' }, client_id: 'c2' }),
+      me,
+    );
+    expect(c.clientName).toBe('Beta');
+    expect(c.clientId).toBe('c2');
+  });
+
   it('maps an assigned task to a card with a deal link', () => {
     const c = assignedTaskToCard(assignedRow(), me);
     expect(c).toMatchObject({ kind: 'assigned', relation: 'mine', link: '/deals/d1', sourceCode: 'D-1', key: 'assigned:a1' });
@@ -149,7 +180,7 @@ const vCard = (over: Partial<TaskCard>): TaskCard => ({
   key: 'assigned:t1', kind: 'assigned', id: 't1', title: 'T', importance: 'medium',
   relation: 'mine', resolved: false, assigneeId: 'A', creatorId: 'C',
   createdAtIso: null, dueAt: null, resolvedAt: null, startedAtIso: null,
-  sourceCode: null, link: null, notes: null, clientName: null, leadName: null,
+  sourceCode: null, link: null, notes: null, clientName: null, clientId: null, leadName: null,
   creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
   ...over,
 });

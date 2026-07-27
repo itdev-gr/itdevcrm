@@ -6,7 +6,7 @@ const card = (o: Partial<TaskCard>): TaskCard => ({
   key: 'assigned:a1', kind: 'assigned', id: 'a1', title: 't', importance: 'low',
   relation: 'mine', resolved: false, assigneeId: 'me', creatorId: 'boss',
   createdAtIso: null, dueAt: null, resolvedAt: null, startedAtIso: null,
-  sourceCode: null, link: null, notes: null, clientName: null, leadName: null,
+  sourceCode: null, link: null, notes: null, clientName: null, clientId: null, leadName: null,
   creatorResolvedAt: null, assigneeResolvedAt: null, summary: null, ...o,
 });
 

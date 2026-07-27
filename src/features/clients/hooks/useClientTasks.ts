@@ -11,13 +11,13 @@ export function useClientTasks(clientId: string, meId: string) {
     enabled: !!clientId,
     queryFn: async () => {
       const [u, a] = await Promise.all([
-        supabase.from('user_tasks').select('*').eq('client_id', clientId).order('due_at', { ascending: true }),
+        supabase.from('user_tasks').select('*, client:clients(id, name)').eq('client_id', clientId).order('due_at', { ascending: true }),
         supabase.from('assigned_tasks').select(ASSIGNED_TASK_SELECT).eq('client_id', clientId).order('created_at', { ascending: false }),
       ]);
       if (u.error) throw new Error(u.error.message);
       if (a.error) throw new Error(a.error.message);
       return buildBoardCards(
-        (u.data ?? []) as UserTaskRow[],
+        (u.data ?? []) as unknown as UserTaskRow[],
         (a.data ?? []) as unknown as AssignedTaskRow[],
         meId,
       );

@@ -40,6 +40,7 @@ function card(p: Partial<TaskCard>): TaskCard {
     link: null,
     notes: null,
     clientName: null,
+    clientId: null,
     leadName: null,
     creatorResolvedAt: null,
     assigneeResolvedAt: null,

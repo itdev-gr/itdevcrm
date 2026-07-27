@@ -13,7 +13,7 @@ import { useAssignedTasksRealtime } from './hooks/useAssignedTasksRealtime';
 import { DepartmentChip } from './DepartmentChip';
 import { AssignedTaskDetailDialog } from './AssignedTaskDetailDialog';
 import { TaskDialog } from '@/features/home/TaskDialog';
-import { useOpenUserTasks } from '@/features/home/hooks/useOpenUserTasks';
+import { useOpenUserTasks, type OpenUserTaskRow } from '@/features/home/hooks/useOpenUserTasks';
 import { useTasksSeenStore } from '@/features/tasks/tasksSeenStore';
 import { isTaskHighlighted, HIGHLIGHT_WINDOW_DAYS } from '@/features/tasks/taskHighlight';
 import { NEW_TASK_ROW, NewTaskDot } from '@/features/tasks/taskHighlightStyle';
@@ -139,7 +139,7 @@ function Row({
 function PersonalRow({
   task, meId, isAdmin, onOpen, isNew = false,
 }: {
-  task: UserTaskRow & TaskSideStamps;
+  task: OpenUserTaskRow & TaskSideStamps;
   meId: string;
   isAdmin: boolean;
   onOpen: (task: UserTaskRow) => void;
@@ -188,9 +188,19 @@ function PersonalRow({
             {isNew && <NewTaskDot />}
             <span className="truncate text-sm font-medium">{task.title}</span>
             {awaiting && <AwaitingChip label={c('tasks_page.awaiting_confirmation_nameless')} />}
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {t('assigned_tasks.personal')}
-            </span>
+            {task.client?.name ? (
+              <Link
+                to={`/clients/${task.client.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="max-w-[10rem] truncate rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+              >
+                {task.client.name}
+              </Link>
+            ) : (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {t('assigned_tasks.personal')}
+              </span>
+            )}
             <span
               className={cn(
                 'text-[11px]',
@@ -229,7 +239,7 @@ function PersonalRow({
 
 type WidgetItem =
   | { kind: 'assigned'; task: AssignedTaskRow }
-  | { kind: 'personal'; task: UserTaskRow };
+  | { kind: 'personal'; task: OpenUserTaskRow & TaskSideStamps };
 
 export function AssignedTasksColumn() {
   const { t } = useTranslation('home');
@@ -250,7 +260,7 @@ export function AssignedTasksColumn() {
   // (they resurface in the board's viewer-relative Resolved column, and the
   // other party still sees them in their own widget).
   const meId = userId || null;
-  const visiblePersonal = (personalTasks as Array<UserTaskRow & TaskSideStamps>).filter(
+  const visiblePersonal = (personalTasks as Array<OpenUserTaskRow & TaskSideStamps>).filter(
     (task) =>
       !sideStampedFor(
         {

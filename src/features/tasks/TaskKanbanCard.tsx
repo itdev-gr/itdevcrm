@@ -73,6 +73,13 @@ export function TaskKanbanCard({
           <Link to={card.link} className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] hover:text-primary">
             {card.sourceCode ?? '—'}
           </Link>
+        ) : card.clientName && card.clientId ? (
+          <Link
+            to={`/clients/${card.clientId}`}
+            className="inline-block max-w-[10rem] truncate rounded bg-muted px-1.5 py-0.5 text-[10px] hover:text-primary"
+          >
+            {card.clientName}
+          </Link>
         ) : (
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">{t('tasks_page.personal')}</span>
         )}

@@ -39,7 +39,7 @@ function card(p: Partial<TaskCard>): TaskCard {
     relation: 'other', resolved: false,
     assigneeId: 'a', creatorId: null, createdAtIso: null, dueAt: null,
     resolvedAt: null, startedAtIso: null, sourceCode: null, link: null,
-    notes: null, clientName: null, leadName: null,
+    notes: null, clientName: null, clientId: null, leadName: null,
     creatorResolvedAt: null, assigneeResolvedAt: null, summary: null, ...p,
   };
 }

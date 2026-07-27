@@ -11,7 +11,7 @@ const card = {
   assigneeId: 'me', creatorId: 'me', createdAtIso: '2025-12-20T08:30:00Z',
   dueAt: '2026-07-01T09:00:00Z',
   resolvedAt: null, startedAtIso: null, sourceCode: null, link: null,
-  notes: 'ring after lunch', clientName: 'ACME', leadName: null,
+  notes: 'ring after lunch', clientName: 'ACME', clientId: null, leadName: null,
   creatorResolvedAt: null, assigneeResolvedAt: null, summary: null,
 };
 

@@ -11,11 +11,11 @@ export function useLeadTasks(leadId: string, meId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_tasks')
-        .select('*')
+        .select('*, client:clients(id, name)')
         .eq('lead_id', leadId)
         .order('due_at', { ascending: true });
       if (error) throw new Error(error.message);
-      return buildBoardCards((data ?? []) as UserTaskRow[], [], meId);
+      return buildBoardCards((data ?? []) as unknown as UserTaskRow[], [], meId);
     },
   });
   return { cards: query.data ?? [], isLoading: query.isLoading, error: query.error };
