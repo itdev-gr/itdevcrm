@@ -25,3 +25,21 @@ export function useClientSearch(term: string) {
     },
   });
 }
+
+/** Resolve a client's display name by id (edit mode only has client_id). */
+export function useClientName(clientId: string | null) {
+  return useQuery<string | null>({
+    queryKey: ['client-name', clientId],
+    enabled: !!clientId,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('name')
+        .eq('id', clientId!)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data?.name ?? null;
+    },
+  });
+}

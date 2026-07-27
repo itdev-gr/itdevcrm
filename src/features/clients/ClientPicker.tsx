@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useClientSearch } from './hooks/useClientSearch';
+import { useClientSearch, useClientName } from './hooks/useClientSearch';
 
 export type PickedClient = { id: string; name: string };
 
@@ -35,13 +35,17 @@ export function ClientPicker({ value, onChange, id }: Props) {
   }, []);
 
   const { data: results = [], isFetching } = useClientSearch(debounced);
+  // Edit mode passes { id, name: '' } — resolve the name for display.
+  const { data: fetchedName } = useClientName(value && !value.name ? value.id : null);
 
   if (value) {
     return (
       <div className="space-y-1.5">
         <Label>{t('client_picker.label')}</Label>
         <div className="flex items-center gap-2">
-          <span className="rounded-md border bg-muted px-2 py-1 text-sm">{value.name}</span>
+          <span className="rounded-md border bg-muted px-2 py-1 text-sm">
+            {value.name || fetchedName || '…'}
+          </span>
           <Button type="button" size="sm" variant="ghost" onClick={() => onChange(null)}>
             <X className="size-3.5" /> {t('client_picker.clear')}
           </Button>

@@ -5,8 +5,10 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { i18n } from '@/lib/i18n';
 
 const search = vi.fn();
+const name = vi.fn();
 vi.mock('./hooks/useClientSearch', () => ({
   useClientSearch: (term: string) => search(term),
+  useClientName: (id: string | null) => name(id),
 }));
 
 import { ClientPicker } from './ClientPicker';
@@ -19,6 +21,7 @@ describe('ClientPicker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     search.mockReturnValue({ data: [], isFetching: false });
+    name.mockReturnValue({ data: null });
   });
 
   it('shows the selected client name and a clear button', () => {
@@ -26,6 +29,14 @@ describe('ClientPicker', () => {
     render(wrap(<ClientPicker value={{ id: 'c1', name: 'ACME' }} onChange={onChange} />));
     expect(screen.getByText('ACME')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
+  });
+
+  it('fetches the client name when the value has an empty name (edit mode)', () => {
+    name.mockReturnValue({ data: 'Fetched Client' });
+    render(wrap(<ClientPicker value={{ id: 'c1', name: '' }} onChange={vi.fn()} />));
+    expect(name).toHaveBeenCalledWith('c1');
+    // getByText throws if the fetched name isn't rendered (i.e. an empty chip).
+    expect(screen.getByText('Fetched Client')).toBeTruthy();
   });
 
   it('selecting a result calls onChange with the client', async () => {
