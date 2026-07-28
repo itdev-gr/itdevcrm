@@ -148,7 +148,8 @@
       "hosting": "Φιλοξενία",
       "ads": "Διαφημίσεις",
       "maintenance": "Υποστήριξη",
-      "franchise": "Franchise"
+      "franchise": "Franchise",
+      "domains": "Domains"
     },
     "billing": {
       "recurring_monthly": "Μηνιαία",

@@ -39,6 +39,10 @@ describe('SERVICE_INFO_FIELDS', () => {
   it('returns [] for a service without an Info tab', () => {
     expect(infoFieldsFor('hosting')).toEqual([]);
   });
+  it('domains has a single Domain text field', () => {
+    expect(infoFieldsFor('domains').map((f) => f.key)).toEqual(['domain']);
+    expect(infoFieldsFor('domains')[0]?.type).toBe('text');
+  });
 });
 
 describe('sharedDealFields', () => {

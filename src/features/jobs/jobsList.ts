@@ -26,10 +26,10 @@ export function jobListStatus(job: JobRow, opts: JobListStatusOpts): JobListStat
   return job.stage?.code && opts.doneStageCodes.has(job.stage.code) ? 'done' : 'active';
 }
 
-/** The job's site: details.live_url → details.hosting → client.website → ''. */
+/** The job's site: details.domain → details.live_url → details.hosting → client.website → ''. */
 export function jobListDomain(job: JobRow): string {
   const d = (job.details ?? {}) as Record<string, unknown>;
-  const candidates = [d.live_url, d.hosting, job.client?.website];
+  const candidates = [d.domain, d.live_url, d.hosting, job.client?.website];
   for (const c of candidates) {
     if (typeof c === 'string' && c.trim()) return c.trim();
   }

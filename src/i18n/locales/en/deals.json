@@ -148,7 +148,8 @@
       "hosting": "Hosting",
       "ads": "Ads",
       "maintenance": "Support",
-      "franchise": "Franchise"
+      "franchise": "Franchise",
+      "domains": "Domains"
     },
     "billing": {
       "recurring_monthly": "Monthly",

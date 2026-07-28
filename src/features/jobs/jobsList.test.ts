@@ -50,6 +50,10 @@ describe('jobListDomain', () => {
     expect(jobListDomain(mk({ details: {}, client: { id: 'c', name: 'X', website: 'c.gr' } as NonNullable<JobRow['client']> }))).toBe('c.gr');
     expect(jobListDomain(mk({ details: {} }))).toBe('');
   });
+  it('prefers details.domain over every other candidate', () => {
+    expect(jobListDomain(mk({ details: { domain: 'shop.gr', live_url: 'a.gr' } }))).toBe('shop.gr');
+    expect(jobListDomain(mk({ details: { domain: '  ' , live_url: 'a.gr' } }))).toBe('a.gr');
+  });
 });
 
 describe('filterAndSortJobsList', () => {

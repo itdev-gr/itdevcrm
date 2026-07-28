@@ -81,6 +81,7 @@ const ENUM_LABELS: Record<string, Record<string, string>> = {
     ads: 'Ads',
     maintenance: 'Support',
     franchise: 'Franchise',
+    domains: 'Domains',
   },
   status: {
     active: 'Active',

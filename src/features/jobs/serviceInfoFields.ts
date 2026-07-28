@@ -53,6 +53,10 @@ const SOCIAL: InfoField[] = [
   { key: 'social_notes', labelEn: 'Social Media Notes', labelEl: 'Σημειώσεις Social Media', type: 'textarea', sharedWithDeal: true },
 ];
 
+const DOMAINS: InfoField[] = [
+  { key: 'domain', labelEn: 'Domain', labelEl: 'Domain', type: 'text' },
+];
+
 const withSection = (fields: InfoField[], section: string): InfoField[] =>
   fields.map((f) => ({ ...f, section }));
 
@@ -70,6 +74,7 @@ export const SERVICE_INFO_FIELDS: Record<string, InfoField[] | undefined> & {
   web_dev: WEB_DEV,
   ads: ADS,
   social_media: SOCIAL,
+  domains: DOMAINS,
 };
 
 export function infoFieldsFor(serviceType: string): InfoField[] {

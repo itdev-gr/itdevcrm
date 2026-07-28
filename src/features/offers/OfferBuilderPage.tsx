@@ -34,6 +34,7 @@ const CATEGORY_LABELS: Record<string, { en: string; el: string }> = {
   ads: { en: 'Ads', el: 'Διαφημίσεις' },
   maintenance: { en: 'Support', el: 'Υποστήριξη' },
   franchise: { en: 'Franchise', el: 'Franchise' },
+  domains: { en: 'Domains', el: 'Domains' },
 };
 
 function categoryLabel(serviceType: string): string {
