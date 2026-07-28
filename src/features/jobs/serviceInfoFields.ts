@@ -1,6 +1,6 @@
 import { INDUSTRIES } from '@/lib/industries';
 
-export type InfoFieldType = 'url' | 'text' | 'textarea' | 'password' | 'select';
+export type InfoFieldType = 'url' | 'text' | 'textarea' | 'password' | 'select' | 'date';
 export type InfoFieldOption = { value: string; labelEn: string; labelEl: string };
 export type InfoField = {
   key: string;
@@ -37,6 +37,7 @@ const INDUSTRY_OPTIONS: InfoFieldOption[] = INDUSTRIES.map((i) => ({
 const WEB_DEV: InfoField[] = [
   { key: 'website', labelEn: 'Website', labelEl: 'Ιστοσελίδα', type: 'url' },
   { key: 'industry', labelEn: 'Industry', labelEl: 'Κλάδος', type: 'select', options: INDUSTRY_OPTIONS },
+  { key: 'due_date', labelEn: 'Due date', labelEl: 'Προθεσμία παράδοσης', type: 'date' },
   { key: 'webdev_notes', labelEn: 'Web Dev Notes', labelEl: 'Σημειώσεις Web Dev', type: 'textarea', sharedWithDeal: true },
   { key: 'hosting', labelEn: 'Hosting', labelEl: 'Hosting', type: 'text' },
   { key: 'supabase_name', labelEn: 'Supabase name', labelEl: 'Όνομα Supabase', type: 'text' },

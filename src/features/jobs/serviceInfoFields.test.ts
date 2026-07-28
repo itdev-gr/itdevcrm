@@ -11,10 +11,15 @@ describe('SERVICE_INFO_FIELDS', () => {
     ]);
     expect(new Set(keys).size).toBe(keys.length);
   });
-  it('web_dev leads with website + industry then its six base fields', () => {
+  it('web_dev leads with website + industry + due date then its six base fields', () => {
     expect(infoFieldsFor('web_dev').map((f) => f.key)).toEqual([
-      'website', 'industry', 'webdev_notes', 'hosting', 'supabase_name', 'temp_url', 'live_url', 'email',
+      'website', 'industry', 'due_date', 'webdev_notes', 'hosting', 'supabase_name', 'temp_url', 'live_url', 'email',
     ]);
+  });
+  it('web_dev due date is a date field not shared with the deal', () => {
+    const due = infoFieldsFor('web_dev').find((f) => f.key === 'due_date');
+    expect(due?.type).toBe('date');
+    expect(due?.sharedWithDeal).toBeUndefined();
   });
   it('web_dev industry is a select backed by INDUSTRIES', () => {
     const industry = infoFieldsFor('web_dev').find((f) => f.key === 'industry');
