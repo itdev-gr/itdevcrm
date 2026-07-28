@@ -1,7 +1,7 @@
 # Lead tasks & conversations — read visibility for lead-visible users — design
 
 Date: 2026-07-28
-Status: approved, not yet implemented
+Status: implemented + APPLIED to prod 2026-07-28 (commits 8eba093, d0fcf92, f55d6e4, 632b102, 9992b9e, 4719b2f, ef88e74; prod harness: owner reads task+thread, outsider 0 rows, owner insert denied 42501; UI smoke green via testsales@itdev.gr on lead 006355). Note: jest-dom matcher breakage led to core-matcher conversions across 12 tasks/leads test files (ef88e74); pgTAP suite not yet run locally (no Docker) — behavior proven on prod.
 
 ## Goal
 
