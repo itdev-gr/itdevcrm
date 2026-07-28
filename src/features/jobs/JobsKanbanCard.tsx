@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, CheckCircle2, ListChecks, Lock, User } from 'lucide-react';
+import { AlarmClock, Calendar, CheckCircle2, ListChecks, Lock, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyableCode } from '@/components/CopyableCode';
 import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { jobAmountLabel } from './jobAmount';
 import { jobCardHeading } from './jobCardTitle';
 import { formatJobPeriodChip } from './jobPeriodChip';
+import { formatJobDueDateChip } from './jobDueDateChip';
 import { canViewJobPricing } from './permissions';
 import { groupIdForServiceType } from './serviceTaskMatch';
 import { useServiceTaskCounts } from './hooks/useServiceTaskCounts';
@@ -59,6 +60,15 @@ export function JobsKanbanCard({
     { start: job.period_start_date ?? null, due: job.period_due_date ?? null },
     new Date(),
   );
+  const rawDueDate = job.details?.['due_date'];
+  const dueChip = formatJobDueDateChip(
+    {
+      due: typeof rawDueDate === 'string' ? rawDueDate : null,
+      completed: job.completed_at != null,
+    },
+    new Date(),
+    lang,
+  );
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
@@ -92,6 +102,22 @@ export function JobsKanbanCard({
                     )}
                   >
                     {periodChip.label}
+                  </span>
+                )}
+                {dueChip && (
+                  <span
+                    title={dueChip.tooltip}
+                    className={cn(
+                      'inline-flex items-center gap-0.5 rounded px-1 text-[10px] font-medium',
+                      dueChip.tone === 'overdue' &&
+                        'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
+                      dueChip.tone === 'due-soon' &&
+                        'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+                      dueChip.tone === 'ok' && 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    <AlarmClock className="size-2.5" />
+                    {dueChip.label}
                   </span>
                 )}
                 {job.parent_job_id != null && (
