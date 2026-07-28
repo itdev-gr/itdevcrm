@@ -1,7 +1,7 @@
 # Deal page: Due date column on the Jobs table
 
 **Date:** 2026-07-28
-**Status:** Approved (design), pending implementation
+**Status:** Implemented (commit `ea5d620`)
 
 ## Goal
 
