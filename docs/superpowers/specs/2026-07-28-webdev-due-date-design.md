@@ -1,7 +1,7 @@
 # Web Dev delivery due date
 
 **Date:** 2026-07-28
-**Status:** Approved (design), pending implementation
+**Status:** Implemented 2026-07-28 (commits 1306336..ba8df7e)
 
 ## Goal
 
