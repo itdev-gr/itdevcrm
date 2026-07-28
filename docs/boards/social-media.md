@@ -10,15 +10,16 @@ Auto-assigned to the Social Media team lead when set.
 
 ## Stages
 
-| #   | Stage        | Greek              | Meaning                                                                                                       |
-| --- | ------------ | ------------------ | ------------------------------------------------------------------------------------------------------------- |
-| 1   | Onboarding   | Ενσωμάτωση         | Entry column. Account access, brand assets, tone-of-voice, goals.                                             |
-| 2   | Content Plan | Πλάνο Περιεχομένου | Build the content calendar (formats, frequency, campaigns) and get client sign-off.                           |
-| 3   | Renewal      | Ανανέωση           | An existing client whose retainer renewed. **Cards land here automatically every time the client pays** — review last period and restart the cycle. |
-| 4   | Active       | Ενεργό             | Ongoing publishing and community management per the approved plan; monthly task checklists track each period. |
-| 5   | Done         | Ολοκληρώθηκε       | **A monthly rest, not the end.** "This period's work is finished, waiting for renewal." The next payment restarts the job in **Renewal**. |
-| 6   | On Hold      | Σε Αναμονή         | Paused (seasonal stop, client request).                                                                       |
-| 7   | Cancelled    | Ακυρωμένο          | Terminal (outcome cancelled). Retainer ended.                                                                 |
+| #   | Stage      | Greek        | Meaning                                                                                                       |
+| --- | ---------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
+| 1   | Onboarding | Ενσωμάτωση   | Entry column. Account access, brand assets, tone-of-voice, goals.                                             |
+| 2   | Renewal    | Ανανέωση     | An existing client whose retainer renewed. **Cards land here automatically every time the client pays** — review last period and restart the cycle. |
+| 3   | Working    | Σε Εξέλιξη   | The period's work in progress: content calendar, campaigns, client sign-off. (Renamed from "Content Plan" 2026-07-29; stage code stays `content_plan`.) |
+| 4   | Active     | Ενεργό       | Ongoing publishing and community management per the approved plan; monthly task checklists track each period. |
+| 5   | On Hold    | Σε Αναμονή   | Paused (seasonal stop, client request).                                                                       |
+| 6   | Cancelled  | Ακυρωμένο    | Terminal (outcome cancelled). Retainer ended.                                                                 |
+| 7   | Done       | Ολοκληρώθηκε | **A monthly rest, not the end.** "This period's work is finished, waiting for renewal." The next payment restarts the job in **Renewal**. |
+| 8   | Closed     | Κλειστό      | Terminal (outcome completed). Set automatically when accounting closes the deal.                              |
 
 ## Automations & rules
 

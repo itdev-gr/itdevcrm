@@ -31,7 +31,7 @@
 | `web_seo` | new_project, no_response, gsc_ga4_setup, sitemap_schema, performance_audit, technical_crawl, keyword_research, metadata, content, internal_links, backlink_cleanup, blogs, results_review, stuck | ✅ | ✅ | `closed` |
 | `local_seo` | new_project, called_no_response, send_form, optimize, rank_tracking, new_gbp, suspended, verification | ✅ | ✅ | `closed` |
 | `ads` | onboarding, audit_strategy, active, on_hold | ✅ | ✅ | `cancelled`, `closed` |
-| `social_media` | onboarding, content_plan, active, on_hold | ✅ | ✅ | `cancelled`, `closed` |
+| `social_media` | onboarding, content_plan ("Working"), active, on_hold | ✅ | ✅ (sits before `closed`) | `cancelled`, `closed` |
 | `web_dev` | new_project, client_contact, no_response, get_requirements, planning, development, stuck, revision, redesign, waiting_client_approval | — | — | `live` (terminal), `closed` |
 | `hosting` | setup, active | — | — | `closed` |
 
