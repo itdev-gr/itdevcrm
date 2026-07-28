@@ -45,6 +45,20 @@ function canGroupTogether(a: JobBillingRow, b: JobBillingRow): boolean {
   return a.billing_type === b.billing_type;
 }
 
+/**
+ * True when `due` (a yyyy-mm-dd string) is strictly before today, using the
+ * same UTC day-boundary comparison as `formatJobPeriodChip` so the deal-page
+ * "overdue" state matches the boards. Null / unparseable dates are not overdue.
+ */
+function isDueOverdue(due: string | null): boolean {
+  if (!due) return false;
+  const dueMs = Date.parse(due + 'T00:00:00Z');
+  if (Number.isNaN(dueMs)) return false;
+  const now = new Date();
+  const todayMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return dueMs < todayMs;
+}
+
 function cadenceSuffix(t: (k: string) => string, billingType: string): string {
   switch (billingType) {
     case 'recurring_monthly':
@@ -72,7 +86,7 @@ function JobRow({
   /** Hide all mutation controls and render a plain read-only row. */
   readOnly: boolean;
 }) {
-  const { t } = useTranslation('deals');
+  const { t, i18n } = useTranslation('deals');
   const update = useUpdateJobBilling(dealId);
   const end = useEndJob(dealId);
   const pause = useJobPauseBilling(job.id, dealId);
@@ -247,6 +261,21 @@ function JobRow({
               ? t('jobs_billing.status.ended')
               : t('jobs_billing.status.active')}
         </span>
+      </td>
+      <td className="px-1.5 py-1.5">
+        {job.period_due_date == null ? (
+          <span className="text-muted-foreground/50">—</span>
+        ) : (
+          <span
+            className={`text-[11px] tabular-nums ${
+              isDueOverdue(job.period_due_date)
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-foreground'
+            }`}
+          >
+            {formatDate(job.period_due_date, i18n.language)}
+          </span>
+        )}
       </td>
       <td className="px-1.5 py-1.5">
         {readOnly ? (
@@ -463,7 +492,7 @@ function JobRow({
     {noteText && (
       <tr data-testid={`note-preview-${job.id}`} className="border-t-0">
         <td
-          colSpan={6}
+          colSpan={7}
           title={noteText}
           className="px-1.5 pb-1.5 pt-0 text-[10px] italic text-muted-foreground truncate"
         >
@@ -760,6 +789,7 @@ export function JobsBillingPanel({
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_department')}</th>
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_price')}</th>
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_status')}</th>
+                  <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_due_date')}</th>
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_group')}</th>
                   <th className="px-1.5 py-1.5 font-normal text-right" />
                 </tr>

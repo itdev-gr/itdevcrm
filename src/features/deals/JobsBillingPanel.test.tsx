@@ -57,6 +57,7 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     description: null,
     parent_job_id: null,
     blocked_reason: null,
+    period_due_date: null,
     ...over,
   };
 }
@@ -561,5 +562,49 @@ describe('JobsBillingPanel pause/resume', () => {
     billing.current = { jobs: [makeJob({ id: 'a', title: 'SEO', billing_type: 'recurring_monthly' })], payments: [] };
     render(wrap(<JobsBillingPanel dealId="d1" readOnly />));
     expect(screen.queryByRole('button', { name: /pause billing/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('JobsBillingPanel due date', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('renders the Due date column header', () => {
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    // Core matcher (jest-dom is broken in this repo).
+    expect(screen.getByText('Due date')).toBeTruthy();
+  });
+
+  it('shows a future due date formatted, without the overdue red class', () => {
+    // Fixed far-future date so the clock never flips this to overdue.
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Hosting', period_due_date: '2999-01-15' })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const el = screen.getByText('15 Jan 2999');
+    expect(el.className).not.toContain('text-red-600');
+    expect(el.className).toContain('text-foreground');
+  });
+
+  it('shows a past due date formatted, with the overdue red class', () => {
+    // Fixed far-past date so the clock never flips this to non-overdue.
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Hosting', period_due_date: '2000-01-15' })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const el = screen.getByText('15 Jan 2000');
+    expect(el.className).toContain('text-red-600');
+  });
+
+  it('shows an em dash when the job has no due date', () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Hosting', period_due_date: null })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    expect(within(row).getByText('—')).toBeTruthy();
   });
 });

@@ -178,6 +178,7 @@
     "col_department": "Department",
     "col_price": "Price",
     "col_status": "Status",
+    "col_due_date": "Due date",
     "col_group": "Billing",
     "col_term": "Term",
     "col_actions": "",

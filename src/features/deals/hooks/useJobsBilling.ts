@@ -27,6 +27,12 @@ export type JobBillingRow = {
   /** Set on €0 AI SEO work-card children; top-level billing rows are null. */
   parent_job_id: string | null;
   blocked_reason: string | null;
+  /**
+   * Derived paid-until / next-payment-due date (yyyy-mm-dd), same value the
+   * SEO kanban chips and hosting/maintenance/domains list pages show. Null
+   * when there is no paid coverage (e.g. one-time jobs).
+   */
+  period_due_date: string | null;
 };
 
 /** A single billed line of a payment, scoped to one job. */
@@ -100,7 +106,7 @@ export function useJobsBilling(dealId: string) {
       const jobsRes = await supabase
         .from('jobs')
         .select(
-          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason',
+          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason, period_due_date',
         )
         .eq('deal_id', dealId)
         .eq('archived', false)
@@ -129,6 +135,7 @@ export function useJobsBilling(dealId: string) {
         description: (j.description as string | null) ?? null,
         parent_job_id: (j.parent_job_id as string | null) ?? null,
         blocked_reason: (j.blocked_reason as string | null) ?? null,
+        period_due_date: (j.period_due_date as string | null) ?? null,
       }));
 
       // 2. Payment headers (with totals) for the deal.

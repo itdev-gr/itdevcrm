@@ -178,6 +178,7 @@
     "col_department": "Τμήμα",
     "col_price": "Τιμή",
     "col_status": "Κατάσταση",
+    "col_due_date": "Προθεσμία πληρωμής",
     "col_group": "Χρέωση",
     "col_term": "Περίοδος χρέωσης",
     "col_actions": "",
