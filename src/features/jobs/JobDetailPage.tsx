@@ -45,6 +45,7 @@ import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
 import { HostingInfoSection } from './HostingInfoSection';
 import { ClientIntakeSection } from './ClientIntakeSection';
+import { DownloadAllAssetsButton } from './DownloadAllAssetsButton';
 import { infoFieldsFor } from './serviceInfoFields';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { useGroups } from '@/features/groups/hooks/useGroups';
@@ -650,6 +651,7 @@ function JobDetailContent() {
         {infoFieldsFor(job.service_type).length > 0 && (
           <TabsContent value="info" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
             <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+              <DownloadAllAssetsButton job={job} lang={lang} />
               <JobInfoPanel
                 jobId={job.id}
                 serviceType={job.service_type}

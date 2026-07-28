@@ -7,6 +7,11 @@
     "upload": "Μεταφόρτωση",
     "deal_title": "Αρχεία υπηρεσιών"
   },
+  "info_assets": {
+    "download_all": "Λήψη όλων",
+    "downloading": "Λήψη {{done}}/{{total}}…",
+    "partial_failed": "{{failed}} αρχείο/α δεν κατέβηκαν"
+  },
   "delete": {
     "button": "Διαγραφή",
     "title": "Διαγραφή αυτής της εργασίας;",
