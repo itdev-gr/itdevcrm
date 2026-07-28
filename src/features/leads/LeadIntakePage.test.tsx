@@ -99,8 +99,8 @@ describe('LeadIntakePage', () => {
     });
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<LeadIntakePage />);
-    expect(screen.getByText('x@kara.gr')).toBeInTheDocument();
-    expect(screen.getByText('Old Lead')).toBeInTheDocument();
+    expect(screen.getByText('x@kara.gr')).toBeTruthy();
+    expect(screen.getByText('Old Lead')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
     expect(confirmSpy).toHaveBeenCalled();
     expect(release).toHaveBeenCalledWith({ id: 'i1', force: true });
@@ -155,8 +155,8 @@ describe('LeadIntakePage', () => {
       isLoading: false,
     });
     render(<LeadIntakePage />);
-    expect(screen.getByText('new@person.gr')).toBeInTheDocument();
-    expect(screen.getByText(/leads:intake.clean/)).toBeInTheDocument();
+    expect(screen.getByText('new@person.gr')).toBeTruthy();
+    expect(screen.getByText(/leads:intake.clean/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'leads:intake.release' }));
     expect(release).toHaveBeenCalledWith({ id: 'i2', force: false });
   });
@@ -164,7 +164,7 @@ describe('LeadIntakePage', () => {
   it('shows the empty state', () => {
     useLeadIntake.mockReturnValue({ data: [], isLoading: false });
     render(<LeadIntakePage />);
-    expect(screen.getByText('leads:intake.empty')).toBeInTheDocument();
+    expect(screen.getByText('leads:intake.empty')).toBeTruthy();
   });
 
   it('opens the picker and merges into the chosen lead when there are 2+ matches', () => {
@@ -266,7 +266,7 @@ describe('LeadIntakePage', () => {
       isLoading: false,
     });
     render(<LeadIntakePage />);
-    expect(screen.getByRole('button', { name: 'leads:intake.merge' })).toBeDisabled();
+    expect((screen.getByRole('button', { name: 'leads:intake.merge' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('shows the bulk merge count and runs it after confirm', () => {
@@ -297,14 +297,14 @@ describe('LeadIntakePage', () => {
     useBulkReleasePreview.mockReturnValue({ data: { releasable: 0 }, isLoading: false });
     useLeadIntake.mockReturnValue({ data: [], isLoading: false });
     render(<LeadIntakePage />);
-    expect(screen.getByRole('button', { name: /leads:intake.bulk_release/ })).toBeDisabled();
+    expect((screen.getByRole('button', { name: /leads:intake.bulk_release/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('disables bulk merge when the count is zero', () => {
     useBulkMergePreview.mockReturnValue({ data: { mergeable: 0, dead_end: 0 }, isLoading: false });
     useLeadIntake.mockReturnValue({ data: [], isLoading: false });
     render(<LeadIntakePage />);
-    expect(screen.getByRole('button', { name: /leads:intake.bulk_merge/ })).toBeDisabled();
+    expect((screen.getByRole('button', { name: /leads:intake.bulk_merge/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('warns before merging into a dead-end target and merges only on confirm', () => {
@@ -382,7 +382,7 @@ describe('LeadIntakePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'leads:intake.merge' })); // open picker
     fireEvent.click(screen.getByRole('button', { name: /Lead One/ })); // dead-end target, confirm dismissed
     expect(merge).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /Lead Two/ })).toBeInTheDocument(); // picker still open
+    expect(screen.getByRole('button', { name: /Lead Two/ })).toBeTruthy(); // picker still open
   });
 
   it('re-engages a cold lead on Release for a Meta row matching a single cold lead', () => {

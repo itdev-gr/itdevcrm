@@ -27,15 +27,15 @@ describe('LeadPicker', () => {
   it('shows the selected lead name and a clear button', () => {
     const onChange = vi.fn();
     render(wrap(<LeadPicker value={{ id: 'l1', name: 'Bakery Lead' }} onChange={onChange} />));
-    expect(screen.getByText('Bakery Lead')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
+    expect(screen.getByText('Bakery Lead')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /clear/i })).toBeTruthy();
   });
 
   it('fetches the title when the value has an empty name (edit mode)', () => {
     title.mockReturnValue({ data: 'Fetched Lead' });
     render(wrap(<LeadPicker value={{ id: 'l1', name: '' }} onChange={vi.fn()} />));
     expect(title).toHaveBeenCalledWith('l1');
-    expect(screen.getByText('Fetched Lead')).toBeInTheDocument();
+    expect(screen.getByText('Fetched Lead')).toBeTruthy();
   });
 
   it('selecting a result calls onChange with the lead', async () => {
@@ -44,7 +44,7 @@ describe('LeadPicker', () => {
     const onChange = vi.fn();
     render(wrap(<LeadPicker value={null} onChange={onChange} />));
     await user.type(screen.getByPlaceholderText(/search lead/i), 'ta');
-    expect(await screen.findByRole('option', { name: /Taverna/ })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /Taverna/ })).toBeTruthy();
     await user.click(screen.getByRole('option', { name: /Taverna/ }));
     expect(onChange).toHaveBeenCalledWith({ id: 'l9', name: 'Taverna' });
   });

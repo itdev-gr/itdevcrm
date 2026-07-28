@@ -85,7 +85,7 @@ describe('LeadsListPage distribute confirmation', () => {
 
     await user.click(screen.getByRole('button', { name: /distribute unassigned/i }));
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeTruthy();
     expect(distributeMutateAsync).not.toHaveBeenCalled();
   });
 

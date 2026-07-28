@@ -36,7 +36,7 @@ describe('TaskComments draft persistence', () => {
   it('restores a saved draft into the textarea', () => {
     useCommentDraftStore.getState().setDraft(taskThreadKey('assigned', 't1'), 'wip note');
     render(<TaskComments kind="assigned" taskId="t1" locale="en-GB" />);
-    expect(screen.getByRole('textbox')).toHaveValue('wip note');
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('wip note');
   });
 
   it('persists typed text under the task thread key', () => {
@@ -58,10 +58,10 @@ describe('TaskComments draft persistence', () => {
   it('enables the send button with a pending file and empty body', () => {
     const { container } = render(<TaskComments kind="assigned" taskId="t1" locale="en-GB" />);
     const send = container.querySelector('button[type="submit"]') as HTMLButtonElement;
-    expect(send).toBeDisabled();
+    expect(send.disabled).toBe(true);
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['x'], 'shot.png', { type: 'image/png' });
     fireEvent.change(fileInput, { target: { files: [file] } });
-    expect(send).not.toBeDisabled();
+    expect(send.disabled).toBe(false);
   });
 });

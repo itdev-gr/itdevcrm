@@ -55,13 +55,13 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     useTaskRepliesIndex.mockReturnValue(new Set(['assigned:a1']));
     render(<TasksKanbanBoard />);
     // A card with unread comments now lives in the derived Replies column.
-    expect(within(screen.getByTestId('tasks-col-replies')).getByText('💬 2')).toBeInTheDocument();
+    expect(within(screen.getByTestId('tasks-col-replies')).getByText('💬 2')).toBeTruthy();
   });
 
   it('shows no badge without unread comments', () => {
     useUnreadCommentNotifs.mockReturnValue({ data: [] });
     render(<TasksKanbanBoard />);
-    expect(screen.queryByText(/💬/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/💬/)).toBeNull();
   });
 
   it('opening the card marks exactly its notification ids read', () => {
@@ -100,16 +100,16 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     useTaskRepliesIndex.mockReturnValue(new Set(['assigned:a1']));
     render(<TasksKanbanBoard />);
     const replies = screen.getByTestId('tasks-col-replies');
-    expect(within(replies).getByText('Mine urgent')).toBeInTheDocument();
-    expect(within(screen.getByTestId('tasks-col-urgent')).queryByText('Mine urgent')).not.toBeInTheDocument();
+    expect(within(replies).getByText('Mine urgent')).toBeTruthy();
+    expect(within(screen.getByTestId('tasks-col-urgent')).queryByText('Mine urgent')).toBeNull();
   });
 
   it('stays in Replies after its notifications are read', () => {
     useUnreadCommentNotifs.mockReturnValue({ data: [] });
     useTaskRepliesIndex.mockReturnValue(new Set(['assigned:a1']));
     render(<TasksKanbanBoard />);
-    expect(within(screen.getByTestId('tasks-col-replies')).getByText('Mine urgent')).toBeInTheDocument();
-    expect(within(screen.getByTestId('tasks-col-urgent')).queryByText('Mine urgent')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('tasks-col-replies')).getByText('Mine urgent')).toBeTruthy();
+    expect(within(screen.getByTestId('tasks-col-urgent')).queryByText('Mine urgent')).toBeNull();
   });
 
   it('a resolved task with replies renders in Resolved, not Replies', () => {
@@ -121,15 +121,15 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     });
     useTaskRepliesIndex.mockReturnValue(new Set(['assigned:a1']));
     render(<TasksKanbanBoard />);
-    expect(within(screen.getByTestId('tasks-col-resolved')).getByText('Mine urgent')).toBeInTheDocument();
-    expect(within(screen.getByTestId('tasks-col-replies')).queryByText('Mine urgent')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('tasks-col-resolved')).getByText('Mine urgent')).toBeTruthy();
+    expect(within(screen.getByTestId('tasks-col-replies')).queryByText('Mine urgent')).toBeNull();
   });
 
   it('renders Replies as the leftmost column', () => {
     useUnreadCommentNotifs.mockReturnValue({ data: [] });
     render(<TasksKanbanBoard />);
     const cols = screen.getAllByTestId(/tasks-col-/);
-    expect(cols[0]).toHaveAttribute('data-testid', 'tasks-col-replies');
+    expect(cols[0]?.getAttribute('data-testid')).toBe('tasks-col-replies');
   });
 
   it('a card in Replies keeps its Resolve button', () => {
@@ -140,7 +140,7 @@ describe('TasksKanbanBoard unread-comment badge', () => {
     render(<TasksKanbanBoard />);
     const replies = screen.getByTestId('tasks-col-replies');
     const card = within(replies).getByLabelText('Mine urgent');
-    expect(card).not.toHaveAttribute('aria-disabled', 'true');
+    expect(card.getAttribute('aria-disabled')).not.toBe('true');
     fireEvent.click(within(replies).getByRole('button', { name: /tasks_page.resolve/ }));
     expect(apply).toHaveBeenCalledWith(
       { card: expect.objectContaining({ id: 'a1' }), action: { type: 'resolve' } },

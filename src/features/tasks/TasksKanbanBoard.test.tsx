@@ -53,7 +53,7 @@ describe('TasksKanbanBoard', () => {
     useTaskBoardData.mockReturnValue({ userRows: [], assignedRows: [assignedRow()], isLoading: false });
     render(<TasksKanbanBoard />);
     const urgent = screen.getByTestId('tasks-col-urgent');
-    expect(within(urgent).getByText('Mine urgent')).toBeInTheDocument();
+    expect(within(urgent).getByText('Mine urgent')).toBeTruthy();
     fireEvent.click(within(urgent).getByRole('button', { name: /tasks_page.resolve/ }));
     expect(apply).toHaveBeenCalledWith(
       { card: expect.objectContaining({ id: 'a1' }), action: { type: 'resolve' } },
@@ -80,10 +80,10 @@ describe('TasksKanbanBoard', () => {
     });
     render(<TasksKanbanBoard />);
     fireEvent.click(screen.getByText('tasks_page.filter_by_me'));
-    expect(screen.queryByText('Mine urgent')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mine urgent')).toBeNull();
     const high = screen.getByTestId('tasks-col-high');
-    expect(within(high).getByText('Handed off')).toBeInTheDocument();
-    expect(within(high).queryByRole('button', { name: /tasks_page.resolve/ })).not.toBeInTheDocument();
-    expect(within(high).getByText('tasks_page.assigned_to:Colleague')).toBeInTheDocument();
+    expect(within(high).getByText('Handed off')).toBeTruthy();
+    expect(within(high).queryByRole('button', { name: /tasks_page.resolve/ })).toBeNull();
+    expect(within(high).getByText('tasks_page.assigned_to:Colleague')).toBeTruthy();
   });
 });

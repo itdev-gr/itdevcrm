@@ -24,8 +24,8 @@ describe('MyTasksPage New task button', () => {
   it('opens the task dialog', async () => {
     const user = userEvent.setup();
     render(wrap(<MyTasksPage />));
-    expect(screen.queryByText('task-dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText('task-dialog')).toBeNull();
     await user.click(screen.getByRole('button', { name: /new task/i }));
-    expect(screen.getByText('task-dialog')).toBeInTheDocument();
+    expect(screen.getByText('task-dialog')).toBeTruthy();
   });
 });

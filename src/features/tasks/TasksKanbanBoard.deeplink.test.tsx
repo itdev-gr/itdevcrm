@@ -92,8 +92,8 @@ describe('TasksKanbanBoard deep-link via ?open=', () => {
         <TasksKanbanBoard />
       </MemoryRouter>,
     );
-    expect(screen.getByTestId('assigned-dialog')).toHaveTextContent('assigned:a2');
-    expect(screen.queryByTestId('user-dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('assigned-dialog').textContent).toContain('assigned:a2');
+    expect(screen.queryByTestId('user-dialog')).toBeNull();
   });
 
   it('opens the user-task dialog when the URL says ?open=user:<id>', () => {
@@ -107,7 +107,7 @@ describe('TasksKanbanBoard deep-link via ?open=', () => {
         <TasksKanbanBoard />
       </MemoryRouter>,
     );
-    expect(screen.getByTestId('user-dialog')).toHaveTextContent('user:u1');
+    expect(screen.getByTestId('user-dialog').textContent).toContain('user:u1');
   });
 
   it('opens nothing when ?open is absent', () => {
@@ -121,8 +121,8 @@ describe('TasksKanbanBoard deep-link via ?open=', () => {
         <TasksKanbanBoard />
       </MemoryRouter>,
     );
-    expect(screen.queryByTestId('assigned-dialog')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('user-dialog')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('assigned-dialog')).toBeNull();
+    expect(screen.queryByTestId('user-dialog')).toBeNull();
   });
 
   it('ignores ?open= pointing at a task that is not on the board', () => {
@@ -136,6 +136,6 @@ describe('TasksKanbanBoard deep-link via ?open=', () => {
         <TasksKanbanBoard />
       </MemoryRouter>,
     );
-    expect(screen.queryByTestId('assigned-dialog')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('assigned-dialog')).toBeNull();
   });
 });

@@ -18,10 +18,10 @@ const wrap = (ui: ReactNode) => render(<>{ui}</>);
 describe('MyTasksPage', () => {
   it('shows the board by default and switches to the archive tab', () => {
     wrap(<MyTasksPage />);
-    expect(screen.getByText('BOARD')).toBeInTheDocument();
-    expect(screen.queryByText('ARCHIVE')).not.toBeInTheDocument();
+    expect(screen.getByText('BOARD')).toBeTruthy();
+    expect(screen.queryByText('ARCHIVE')).toBeNull();
     fireEvent.click(screen.getByText('tasks_page.tab_archive'));
-    expect(screen.getByText('ARCHIVE')).toBeInTheDocument();
-    expect(screen.queryByText('BOARD')).not.toBeInTheDocument();
+    expect(screen.getByText('ARCHIVE')).toBeTruthy();
+    expect(screen.queryByText('BOARD')).toBeNull();
   });
 });

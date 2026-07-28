@@ -65,30 +65,30 @@ describe('ClientOpenTasksList', () => {
       card({ kind: 'assigned', id: 'a1', title: 'Deal task', sourceCode: '000512-WEBSEO' }),
     ];
     render(wrap(<ClientOpenTasksList clientId="C1" />));
-    expect(screen.getByText(/open tasks on this client/i)).toHaveTextContent('(2)');
-    expect(screen.getByText('Open personal')).toBeInTheDocument();
-    expect(screen.getByText('Deal task')).toBeInTheDocument();
-    expect(screen.getByText('000512-WEBSEO')).toBeInTheDocument();
-    expect(screen.queryByText('Done personal')).not.toBeInTheDocument();
+    expect(screen.getByText(/open tasks on this client/i).textContent).toContain('(2)');
+    expect(screen.getByText('Open personal')).toBeTruthy();
+    expect(screen.getByText('Deal task')).toBeTruthy();
+    expect(screen.getByText('000512-WEBSEO')).toBeTruthy();
+    expect(screen.queryByText('Done personal')).toBeNull();
   });
 
   it('renders the empty message when there are no open tasks', () => {
     hookRef.cards = [card({ kind: 'user', id: 'u2', resolved: true })];
     render(wrap(<ClientOpenTasksList clientId="C1" />));
-    expect(screen.getByText(/no open tasks on this client/i)).toBeInTheDocument();
+    expect(screen.getByText(/no open tasks on this client/i)).toBeTruthy();
   });
 
   it('opens the user detail dialog when a personal row is clicked', () => {
     hookRef.cards = [card({ kind: 'user', id: 'u1', title: 'Open personal' })];
     render(wrap(<ClientOpenTasksList clientId="C1" />));
     fireEvent.click(screen.getByText('Open personal'));
-    expect(screen.getByText('user-detail:u1')).toBeInTheDocument();
+    expect(screen.getByText('user-detail:u1')).toBeTruthy();
   });
 
   it('opens the assigned detail dialog when a deal/job row is clicked', () => {
     hookRef.cards = [card({ kind: 'assigned', id: 'a1', title: 'Deal task' })];
     render(wrap(<ClientOpenTasksList clientId="C1" />));
     fireEvent.click(screen.getByText('Deal task'));
-    expect(screen.getByText('assigned-detail:a1')).toBeInTheDocument();
+    expect(screen.getByText('assigned-detail:a1')).toBeTruthy();
   });
 });

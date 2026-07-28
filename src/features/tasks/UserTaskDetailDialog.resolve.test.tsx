@@ -56,21 +56,21 @@ describe('UserTaskDetailDialog resolve button', () => {
 
   it('creator (delegated) sees Resolve', () => {
     render(<UserTaskDetailDialog card={card({ relation: 'delegated', creatorId: 'me', assigneeId: 'a' })} onOpenChange={() => {}} />);
-    expect(screen.getByRole('button', { name: 'tasks_page.resolve' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'tasks_page.resolve' })).toBeTruthy();
   });
 
   it('admin non-party sees Resolve', () => {
     auth.isAdmin = true;
     render(<UserTaskDetailDialog card={card({ relation: 'other', assigneeId: 'a', creatorId: 'b' })} onOpenChange={() => {}} />);
-    expect(screen.getByRole('button', { name: 'tasks_page.resolve' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'tasks_page.resolve' })).toBeTruthy();
   });
 
   it('non-participant sees no Resolve; resolved tasks show none either', () => {
     const { rerender } = render(
       <UserTaskDetailDialog card={card({ relation: 'other', assigneeId: 'a', creatorId: 'b' })} onOpenChange={() => {}} />,
     );
-    expect(screen.queryByRole('button', { name: 'tasks_page.resolve' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'tasks_page.resolve' })).toBeNull();
     rerender(<UserTaskDetailDialog card={card({ relation: 'mine', assigneeId: 'me', resolved: true })} onOpenChange={() => {}} />);
-    expect(screen.queryByRole('button', { name: 'tasks_page.resolve' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'tasks_page.resolve' })).toBeNull();
   });
 });
