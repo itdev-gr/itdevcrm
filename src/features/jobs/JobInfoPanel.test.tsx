@@ -23,4 +23,9 @@ describe('JobInfoPanel', () => {
     expect(screen.getByText('Local SEO')).toBeInTheDocument();
     expect(screen.getByText('Web SEO')).toBeInTheDocument();
   });
+  it('renders the web_dev due date as a date input', () => {
+    renderPanel('web_dev', { due_date: '2026-08-15' });
+    const input = screen.getByDisplayValue('2026-08-15') as HTMLInputElement;
+    expect(input.type).toBe('date');
+  });
 });

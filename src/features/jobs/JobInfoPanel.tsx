@@ -23,6 +23,12 @@ function FieldInput({
       </select>
     );
   }
+  if (field.type === 'date') {
+    return (
+      <input type="date" className="w-full rounded border px-2 py-1 text-sm"
+        value={value} onChange={(e) => onChange(e.target.value)} />
+    );
+  }
   if (field.type === 'textarea') {
     return (
       <textarea className="w-full rounded border px-2 py-1 text-sm" rows={4}
