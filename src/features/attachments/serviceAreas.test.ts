@@ -31,6 +31,7 @@ describe('areasForJob', () => {
   });
   it('other service → no areas', () => {
     expect(areasForJob({ service_type: 'hosting' })).toEqual([]);
+    expect(areasForJob({ service_type: 'domains' })).toEqual([]);
   });
 });
 

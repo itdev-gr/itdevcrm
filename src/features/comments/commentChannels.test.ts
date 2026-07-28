@@ -26,6 +26,7 @@ describe('jobCommentThread', () => {
     }));
   it('other services keep their private job thread', () => {
     expect(jobCommentThread(job('hosting'))).toEqual({ parentType: 'job', parentId: 'J1' });
+    expect(jobCommentThread(job('domains'))).toEqual({ parentType: 'job', parentId: 'J1' });
   });
 });
 
