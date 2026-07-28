@@ -8,6 +8,7 @@
     "en": "EN"
   },
   "chrome": {
+    "form_for": "Φόρμα για: {{name}}",
     "step_of": "Βήμα {{current}} από {{total}}",
     "back": "Πίσω",
     "next": "Συνέχεια",

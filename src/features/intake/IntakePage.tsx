@@ -292,6 +292,13 @@ export function IntakePage() {
 
       {phase === 'form' && (
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 sm:p-8">
+          {/* Whose form this is — a wrong recipient must see it immediately
+              (real case: two clients shared one link and mixed their data). */}
+          {clientName && (
+            <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full bg-[#15243b]/5 px-3 py-1.5 text-sm font-semibold text-[#15243b] ring-1 ring-[#15243b]/10">
+              <span className="truncate">{t('chrome.form_for', { name: clientName })}</span>
+            </div>
+          )}
           {initialStatus === 'submitted' && (
             <div className="mb-5 rounded-xl bg-[#1a9696]/8 px-4 py-3 text-sm text-[#0f5f5f] ring-1 ring-[#1a9696]/20">
               {t('resubmit_banner')}

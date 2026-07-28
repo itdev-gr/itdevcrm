@@ -8,6 +8,7 @@
     "en": "EN"
   },
   "chrome": {
+    "form_for": "Form for: {{name}}",
     "step_of": "Step {{current}} of {{total}}",
     "back": "Back",
     "next": "Continue",
