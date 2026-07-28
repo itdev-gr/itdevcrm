@@ -2,7 +2,10 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/datetime';
 import { useJobsForClient } from '@/features/jobs/hooks/useJobsForClient';
-import { hostingStatus } from '@/features/hosting/hostingList';
+import { jobListStatus } from '@/features/jobs/jobsList';
+
+/** Matches the old hostingStatus(job): Done iff the job sits in 'closed'. */
+const HOSTING_STATUS_OPTS = { doneStageCodes: new Set(['closed']), blockedAware: false } as const;
 
 /**
  * Read-only cross-reference for a web_dev job's Info tab: if the client also has
@@ -19,7 +22,7 @@ export function HostingInfoSection({ clientId }: { clientId: string }) {
       <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hosting</h3>
       <ul className="mt-2 flex flex-col gap-1.5">
         {hosting.map((j) => {
-          const done = hostingStatus(j) === 'done';
+          const done = jobListStatus(j, HOSTING_STATUS_OPTS) === 'done';
           return (
             <li key={j.id} className="flex flex-wrap items-center gap-2 text-sm">
               <Link
