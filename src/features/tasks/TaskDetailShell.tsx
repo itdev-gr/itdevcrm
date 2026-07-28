@@ -79,7 +79,7 @@ export function TaskDetailShell({
         <div className="flex min-w-0 flex-col gap-4 sm:border-l sm:border-border/60 sm:pl-5">
           {children}
           {commentsReplacement ?? (
-            <TaskComments kind={commentsKind} taskId={commentsTaskId} locale={locale} readOnly={commentsReadOnly} />
+            <TaskComments kind={commentsKind} taskId={commentsTaskId} locale={locale} readOnly={commentsReadOnly ?? false} />
           )}
         </div>
       </div>
