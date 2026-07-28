@@ -34,6 +34,10 @@ const HostingListPage = lazyPage(
   () => import('@/features/hosting/HostingListPage'),
   'HostingListPage',
 );
+const SupportListPage = lazyPage(
+  () => import('@/features/support/SupportListPage'),
+  'SupportListPage',
+);
 const UsersListPage = lazyPage(() => import('@/features/users/UsersListPage'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/UserDetailPage'), 'UserDetailPage');
 const GroupsListPage = lazyPage(
@@ -306,7 +310,7 @@ export const router = createBrowserRouter([
               { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
               { path: 'hosting', element: <HostingListPage /> },
               { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
-              { path: 'maintenance', element: <JobsKanbanPage serviceType="maintenance" /> },
+              { path: 'maintenance', element: <SupportListPage /> },
               { path: 'franchise', element: <JobsKanbanPage serviceType="franchise" /> },
               { path: ':serviceType/clients', element: <TechMyClientsPage /> },
               { path: ':serviceType/docs', element: <TechBoardDocsPage /> },
