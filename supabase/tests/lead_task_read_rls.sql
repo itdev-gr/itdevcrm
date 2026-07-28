@@ -55,8 +55,8 @@ end $$;
 
 -- ---- (a) Lead OWNER (non-party): reads everything, writes nothing. ----
 set local role authenticated;
-set local "request.jwt.claims" to
-  (select json_build_object('sub', current_setting('t.owner'), 'role', 'authenticated')::text);
+select set_config('request.jwt.claims',
+  json_build_object('sub', current_setting('t.owner'), 'role', 'authenticated')::text, true);
 
 select is((select count(*)::int from public.user_tasks
             where id = current_setting('t.task')::uuid),
@@ -76,8 +76,8 @@ select throws_ok(
 -- ---- (b) Another rep (NOT the lead owner): zero rows everywhere. ----
 reset role;
 set local role authenticated;
-set local "request.jwt.claims" to
-  (select json_build_object('sub', current_setting('t.outsider'), 'role', 'authenticated')::text);
+select set_config('request.jwt.claims',
+  json_build_object('sub', current_setting('t.outsider'), 'role', 'authenticated')::text, true);
 
 select is((select count(*)::int from public.user_tasks
             where id = current_setting('t.task')::uuid),
@@ -92,8 +92,8 @@ select is((select count(*)::int from public.comment_attachments
 -- ---- (c) A PARTY (assignee): unchanged — reads and posts. ----
 reset role;
 set local role authenticated;
-set local "request.jwt.claims" to
-  (select json_build_object('sub', current_setting('t.assignee'), 'role', 'authenticated')::text);
+select set_config('request.jwt.claims',
+  json_build_object('sub', current_setting('t.assignee'), 'role', 'authenticated')::text, true);
 
 select is((select count(*)::int from public.task_comments
             where user_task_id = current_setting('t.task')::uuid),

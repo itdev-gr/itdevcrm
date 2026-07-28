@@ -55,8 +55,8 @@ end $$;
 
 -- ---- (a) A task party can INSERT + SELECT a file on their task comment. ----
 set local role authenticated;
-set local "request.jwt.claims" to
-  (select json_build_object('sub', current_setting('t.party'), 'role', 'authenticated')::text);
+select set_config('request.jwt.claims',
+  json_build_object('sub', current_setting('t.party'), 'role', 'authenticated')::text, true);
 
 select lives_ok(
   format($f$ insert into public.comment_attachments (task_comment_id, storage_path, file_name, uploaded_by)
@@ -78,8 +78,8 @@ select lives_ok(
 -- ---- (b) A NON-party is denied: 0 rows on select, 42501 on insert. ----
 reset role;
 set local role authenticated;
-set local "request.jwt.claims" to
-  (select json_build_object('sub', current_setting('t.outsider'), 'role', 'authenticated')::text);
+select set_config('request.jwt.claims',
+  json_build_object('sub', current_setting('t.outsider'), 'role', 'authenticated')::text, true);
 
 select is(
   (select count(*)::int from public.comment_attachments
