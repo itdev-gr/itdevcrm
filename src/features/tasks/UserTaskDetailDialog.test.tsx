@@ -27,19 +27,30 @@ function wrap(n: React.ReactNode) {
 describe('UserTaskDetailDialog', () => {
   it('shows title, notes, and client', () => {
     render(wrap(<UserTaskDetailDialog card={card} onOpenChange={() => {}} />));
-    expect(screen.getByText('Call ACME')).toBeInTheDocument();
-    expect(screen.getByText('ring after lunch')).toBeInTheDocument();
+    expect(screen.getByText('Call ACME')).not.toBe(null);
+    expect(screen.getByText('ring after lunch')).not.toBe(null);
     expect(screen.getAllByText(/ACME/).length).toBeGreaterThan(0);
   });
 
   it('shows who created the task and when', () => {
     render(wrap(<UserTaskDetailDialog card={card} creatorName="Maria Pap" onOpenChange={() => {}} />));
-    expect(screen.getByText('Maria Pap')).toBeInTheDocument();
-    expect(screen.getByText(/2025/)).toBeInTheDocument();
+    expect(screen.getByText('Maria Pap')).not.toBe(null);
+    expect(screen.getByText(/2025/)).not.toBe(null);
   });
 
   it('renders nothing when card is null', () => {
     const { container } = render(wrap(<UserTaskDetailDialog card={null} onOpenChange={() => {}} />));
-    expect(container).toBeEmptyDOMElement();
+    expect(container.childNodes.length).toBe(0);
+  });
+
+  it('hides the thread composer for a non-party observer', () => {
+    const observer = { ...card, relation: 'other' as const, assigneeId: 'a1', creatorId: 'c1' };
+    render(wrap(<UserTaskDetailDialog card={observer} onOpenChange={() => {}} />));
+    expect(document.body.querySelector('textarea')).toBe(null);
+  });
+
+  it('keeps the thread composer for a party', () => {
+    render(wrap(<UserTaskDetailDialog card={card} onOpenChange={() => {}} />));
+    expect(document.body.querySelector('textarea')).not.toBe(null);
   });
 });

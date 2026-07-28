@@ -26,6 +26,9 @@ export function UserTaskDetailDialog({
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const resolve = useResolveTask();
   const unresolve = useUnresolveTask();
+  // Non-party observer (e.g. the lead's owner reading a task between two other
+  // people): the thread is visible via RLS but strictly read-only.
+  const isObserver = card ? card.relation === 'other' && !isAdmin : false;
   if (!card) return null;
 
   const fmt = (iso: string) =>
@@ -113,6 +116,7 @@ export function UserTaskDetailDialog({
           }
           commentsKind="user"
           commentsTaskId={card.id}
+          commentsReadOnly={isObserver}
           locale={locale}
         >
           {awaiting && (
