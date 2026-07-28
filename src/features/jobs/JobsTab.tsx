@@ -20,6 +20,7 @@ const SERVICE_TO_KANBAN: Record<ServiceType, string> = {
   ads:          '/tech/ads',
   maintenance:  '/tech/maintenance',
   franchise:    '/tech/franchise',
+  domains:      '/tech/domains',
 };
 
 const BILLING_LABEL: Record<string, { en: string; el: string }> = {

@@ -37,6 +37,7 @@ const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   ads: { en: 'Ads', el: 'Διαφημίσεις' },
   maintenance: { en: 'Support', el: 'Υποστήριξη' },
   franchise: { en: 'Franchise', el: 'Franchise' },
+  domains: { en: 'Domains', el: 'Domains' },
 };
 
 const SEARCH_PLACEHOLDER: { en: string; el: string } = {

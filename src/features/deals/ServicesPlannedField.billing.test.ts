@@ -10,6 +10,11 @@ describe('billingOptionsFor', () => {
     expect(billingOptionsFor('hosting')).toEqual(['recurring_yearly']);
   });
 
+  it('restricts domains to yearly only (hosting mirror)', () => {
+    expect(billingOptionsFor('domains')).toEqual(['recurring_yearly']);
+    expect(defaultBillingFor('domains')).toBe('recurring_yearly');
+  });
+
   it('restricts franchise to one-time only', () => {
     expect(billingOptionsFor('franchise')).toEqual(['one_time']);
   });

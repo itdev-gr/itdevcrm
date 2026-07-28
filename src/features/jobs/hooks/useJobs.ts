@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
 
-export type ServiceType = 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting' | 'ads' | 'maintenance' | 'franchise';
+export type ServiceType = 'web_seo' | 'local_seo' | 'web_dev' | 'social_media' | 'ai_seo' | 'hosting' | 'ads' | 'maintenance' | 'franchise' | 'domains';
 
 type JobBase = Database['public']['Tables']['jobs']['Row'];
 

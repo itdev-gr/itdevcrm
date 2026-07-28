@@ -178,7 +178,8 @@ export type JobDepartment =
   | 'hosting'
   | 'ads'
   | 'maintenance'
-  | 'franchise';
+  | 'franchise'
+  | 'domains';
 
 export type CreateCustomJobInput = {
   dealId: string;

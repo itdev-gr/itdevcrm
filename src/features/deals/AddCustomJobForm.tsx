@@ -31,6 +31,7 @@ const DEPARTMENTS: JobDepartment[] = [
   'ads',
   'maintenance',
   'franchise',
+  'domains',
 ];
 
 const CADENCES: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];
@@ -58,9 +59,9 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   const [schedule, setSchedule] = useState<ScheduleRow[]>([{ amount_net: 0, due_date: null }]);
   const [dupConfirm, setDupConfirm] = useState(false);
 
-  // Hosting is billed yearly only; franchise is billed one-time only.
+  // Hosting and domains are billed yearly only; franchise is billed one-time only.
   const cadences: BillingType[] =
-    department === 'hosting'
+    department === 'hosting' || department === 'domains'
       ? ['recurring_yearly']
       : department === 'franchise'
         ? ['one_time']
@@ -147,7 +148,7 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
           onValueChange={(v) => {
             const dep = v as JobDepartment | typeof BILLING_ONLY;
             setDepartment(dep);
-            if (dep === 'hosting') setCadence('recurring_yearly');
+            if (dep === 'hosting' || dep === 'domains') setCadence('recurring_yearly');
             if (dep === 'franchise') setCadence('one_time');
           }}
         >
@@ -171,7 +172,7 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
         <Select
           value={cadence}
           onValueChange={(v) => setCadence(v as BillingType)}
-          disabled={department === 'hosting'}
+          disabled={department === 'hosting' || department === 'domains'}
         >
           <SelectTrigger className="mt-1 h-8 w-full text-xs" aria-label={t('jobs_billing.form.cadence')}>
             <SelectValue />
