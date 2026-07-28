@@ -35,7 +35,7 @@ export type TaskMetaRow = { label: string; value: ReactNode };
  */
 export function TaskDetailShell({
   title, importance, statusTone, statusLabel, metaRows, action,
-  commentsKind, commentsTaskId, locale, footer, commentsReplacement, children,
+  commentsKind, commentsTaskId, locale, footer, commentsReplacement, commentsReadOnly, children,
 }: {
   title: string;
   importance: ImportanceCode;
@@ -48,6 +48,7 @@ export function TaskDetailShell({
   locale: string;
   footer?: ReactNode;
   commentsReplacement?: ReactNode;
+  commentsReadOnly?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -77,7 +78,9 @@ export function TaskDetailShell({
 
         <div className="flex min-w-0 flex-col gap-4 sm:border-l sm:border-border/60 sm:pl-5">
           {children}
-          {commentsReplacement ?? <TaskComments kind={commentsKind} taskId={commentsTaskId} locale={locale} />}
+          {commentsReplacement ?? (
+            <TaskComments kind={commentsKind} taskId={commentsTaskId} locale={locale} readOnly={commentsReadOnly} />
+          )}
         </div>
       </div>
 

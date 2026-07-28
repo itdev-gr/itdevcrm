@@ -38,10 +38,11 @@ function tintFor(id: string): string {
   return AVATAR_TINTS[h % AVATAR_TINTS.length]!;
 }
 
-export function TaskComments({ kind, taskId, locale }: {
+export function TaskComments({ kind, taskId, locale, readOnly = false }: {
   kind: 'user' | 'assigned';
   taskId: string;
   locale: string;
+  readOnly?: boolean;
 }) {
   const { t } = useTranslation('common');
   const meId = useAuthStore((s) => s.user?.id ?? '');
@@ -135,7 +136,8 @@ export function TaskComments({ kind, taskId, locale }: {
         )}
       </div>
 
-      <form
+      {!readOnly && (
+        <form
         onSubmit={onSubmit}
         {...dnd.dropZoneProps}
         className={cn(
@@ -172,7 +174,8 @@ export function TaskComments({ kind, taskId, locale }: {
         >
           <ArrowUp className="size-4" />
         </button>
-      </form>
+        </form>
+      )}
     </section>
   );
 }
