@@ -11,5 +11,6 @@ describe('seoAccessConfig', () => {
   it('returns null for services without an access email', () => {
     expect(seoAccessConfig('web_dev')).toBeNull();
     expect(seoAccessConfig('hosting')).toBeNull();
+    expect(seoAccessConfig('domains')).toBeNull();
   });
 });

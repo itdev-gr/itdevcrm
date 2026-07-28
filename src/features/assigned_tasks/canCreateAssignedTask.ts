@@ -9,6 +9,7 @@ const ALLOWED_GROUPS = new Set([
   'ads',
   'maintenance',
   'franchise',
+  'domains',
 ]);
 
 export function canCreateAssignedTask(input: {

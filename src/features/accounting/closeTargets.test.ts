@@ -16,6 +16,7 @@ describe('closeTargetCode', () => {
     expect(closeTargetCode('social_media')).toBe('closed');
     expect(closeTargetCode('ads')).toBe('closed');
     expect(closeTargetCode('hosting')).toBe('closed');
+    expect(closeTargetCode('domains')).toBe('closed');
     expect(closeTargetCode('web_dev')).toBe('closed');
     expect(closeTargetCode('web_dev', 'live')).toBe('live');
   });

@@ -110,6 +110,7 @@ describe('hasBlockedColumn', () => {
   it('is off for the website and hosting, which are never blocked', () => {
     expect(hasBlockedColumn('web_dev')).toBe(false);
     expect(hasBlockedColumn('hosting')).toBe(false);
+    expect(hasBlockedColumn('domains')).toBe(false);
   });
 });
 

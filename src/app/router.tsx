@@ -38,6 +38,10 @@ const SupportListPage = lazyPage(
   () => import('@/features/support/SupportListPage'),
   'SupportListPage',
 );
+const DomainsListPage = lazyPage(
+  () => import('@/features/domains/DomainsListPage'),
+  'DomainsListPage',
+);
 const UsersListPage = lazyPage(() => import('@/features/users/UsersListPage'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/UserDetailPage'), 'UserDetailPage');
 const GroupsListPage = lazyPage(
@@ -296,6 +300,7 @@ export const router = createBrowserRouter([
                   'ads',
                   'maintenance',
                   'franchise',
+                  'domains',
                 ]}
               >
                 {/* ai_seo stays in the access list so AI-SEO members can reach
@@ -309,6 +314,7 @@ export const router = createBrowserRouter([
               { path: 'web-dev', element: <JobsKanbanPage serviceType="web_dev" /> },
               { path: 'social-media', element: <JobsKanbanPage serviceType="social_media" /> },
               { path: 'hosting', element: <HostingListPage /> },
+              { path: 'domains', element: <DomainsListPage /> },
               { path: 'ads', element: <JobsKanbanPage serviceType="ads" /> },
               { path: 'maintenance', element: <SupportListPage /> },
               { path: 'franchise', element: <JobsKanbanPage serviceType="franchise" /> },

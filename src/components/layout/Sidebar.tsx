@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import {
   AlertTriangle,
+  AtSign,
   BarChart3,
   Building2,
   ClipboardList,
@@ -69,7 +70,7 @@ function TasksBadges() {
   );
 }
 
-const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting', 'ads', 'maintenance', 'franchise'] as const;
+const TECH_GROUPS = ['web_seo', 'local_seo', 'web_dev', 'social_media', 'hosting', 'ads', 'maintenance', 'franchise', 'domains'] as const;
 
 const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   web_seo: 'Web SEO',
@@ -80,6 +81,7 @@ const TECH_LABELS: Record<(typeof TECH_GROUPS)[number], string> = {
   ads: 'Ads',
   maintenance: 'Support',
   franchise: 'Franchise',
+  domains: 'Domains',
 };
 
 const TECH_ICONS: Record<(typeof TECH_GROUPS)[number], typeof Globe> = {
@@ -91,6 +93,7 @@ const TECH_ICONS: Record<(typeof TECH_GROUPS)[number], typeof Globe> = {
   ads: Megaphone,
   maintenance: LifeBuoy,
   franchise: Building2,
+  domains: AtSign,
 };
 
 const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -102,6 +105,7 @@ const TECH_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   ads: '/tech/ads',
   maintenance: '/tech/maintenance',
   franchise: '/tech/franchise',
+  domains: '/tech/domains',
 };
 
 const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
@@ -113,6 +117,7 @@ const TECH_CLIENTS_ROUTES: Record<(typeof TECH_GROUPS)[number], string> = {
   ads: '/tech/ads/clients',
   maintenance: '/tech/maintenance/clients',
   franchise: '/tech/franchise/clients',
+  domains: '/tech/domains/clients',
 };
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -259,7 +264,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <p className={sidebarSectionClass()}>{t('common:nav.section.technical')}</p>
           <div className="space-y-0.5">
             {visibleTechGroups
-              .filter((g) => g !== 'hosting' && g !== 'maintenance')
+              .filter((g) => g !== 'hosting' && g !== 'maintenance' && g !== 'domains')
               .map((g) => {
               const TechIcon = TECH_ICONS[g];
               return (
@@ -286,7 +291,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       {t('common:nav.documentation')}
                     </NavLink>
                   )}
-                  {/* Hosting + Support are sub-categories of Web Dev — nested here, not top-level boards. */}
+                  {/* Hosting + Support + Domains are sub-categories of Web Dev — nested here, not top-level boards. */}
                   {g === 'web_dev' && (
                     <NavLink
                       to={TECH_ROUTES.hosting}
@@ -303,6 +308,15 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       className={({ isActive }) => sidebarLinkClass(isActive, true)}
                     >
                       {TECH_LABELS.maintenance}
+                    </NavLink>
+                  )}
+                  {g === 'web_dev' && (
+                    <NavLink
+                      to={TECH_ROUTES.domains}
+                      end
+                      className={({ isActive }) => sidebarLinkClass(isActive, true)}
+                    >
+                      {TECH_LABELS.domains}
                     </NavLink>
                   )}
                 </div>
