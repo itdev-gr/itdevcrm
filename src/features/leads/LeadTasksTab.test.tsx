@@ -50,7 +50,7 @@ describe('LeadTasksTab', () => {
     });
     render(wrap(<LeadTasksTab leadId="L1" leadTitle="Bakery" />));
     await user.click(screen.getByText('Foreign task'));
-    expect(document.body.textContent).toContain('Foreign task');
+    expect(screen.getAllByText('Foreign task').length).toBeGreaterThan(1);
     cards.length = 0;
   });
 });
