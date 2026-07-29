@@ -332,7 +332,7 @@ end $$;
 
 -- ---- SL15 (AGGREGATE): two pending payments due SAME day -> ONE summed email
 do $$
-declare v_client uuid; v_deal uuid; v_rows int; v_amount numeric; v_key text; v_rows2 int;
+declare v_client uuid; v_deal uuid; v_rows int; v_amount numeric; v_key text; v_rows2 int; v_break text;
 begin
   insert into public.clients (name, email, country) values ('sl15_'||gen_random_uuid()::text,'sl15@example.com','Greece') returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
@@ -345,20 +345,21 @@ begin
            (v_deal,'hosting',1,'recurring_monthly',200,24, current_date + 3, 'pending');
   perform public.enqueue_payment_reminders();
   select count(*) into v_rows from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
-  select (data->>'amount_gross')::numeric, dedupe_key into v_amount, v_key
+  select (data->>'amount_gross')::numeric, dedupe_key, data->>'breakdown' into v_amount, v_key, v_break
     from public.email_outbox where (data->>'deal_id')::uuid=v_deal limit 1;
   perform public.enqueue_payment_reminders();   -- re-run: group key must dedupe
   select count(*) into v_rows2 from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
   if v_rows <> 1 or v_rows2 <> 1 or v_amount <> 372.00
-     or v_key <> 'pay_soon:'||v_deal||':'||to_char(current_date+3,'YYYYMMDD') then
-    raise exception 'RESULT :: FAIL SL15 :: expected 1 summed row (372.00, group key), got rows=% rows2=% amount=% key=%', v_rows, v_rows2, v_amount, v_key;
+     or v_key <> 'pay_soon:'||v_deal||':'||to_char(current_date+3,'YYYYMMDD')
+     or v_break is distinct from E'\n(Φιλοξενία: 248€ • Web SEO: 124€)' then
+    raise exception 'RESULT :: FAIL SL15 :: expected 1 summed row (372.00, group key, 2-svc breakdown), got rows=% rows2=% amount=% key=% break=[%]', v_rows, v_rows2, v_amount, v_key, v_break;
   end if;
-  raise exception 'RESULT :: PASS SL15 :: two same-day payments -> 1 summed due_soon (372.00), re-run dedupes';
+  raise exception 'RESULT :: PASS SL15 :: two same-day payments -> 1 summed due_soon (372.00) + breakdown, re-run dedupes';
 end $$;
 
 -- ---- SL16 (AGGREGATE scope): two payments due DIFFERENT days -> two emails
 do $$
-declare v_client uuid; v_deal uuid; v_rows int; v_dates int;
+declare v_client uuid; v_deal uuid; v_rows int; v_dates int; v_breaks int;
 begin
   insert into public.clients (name, email, country) values ('sl16_'||gen_random_uuid()::text,'sl16@example.com','Greece') returning id into v_client;
   insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
@@ -372,10 +373,13 @@ begin
   perform public.enqueue_payment_reminders();
   select count(*), count(distinct data->>'due_date') into v_rows, v_dates
     from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key='payment_due_soon';
-  if v_rows <> 2 or v_dates <> 2 then
-    raise exception 'RESULT :: FAIL SL16 :: different due dates must email separately, got rows=% dates=%', v_rows, v_dates;
+  -- Single-service groups must carry an EMPTY breakdown (email renders as today).
+  select count(*) into v_breaks
+    from public.email_outbox where (data->>'deal_id')::uuid=v_deal and coalesce(data->>'breakdown','') <> '';
+  if v_rows <> 2 or v_dates <> 2 or v_breaks <> 0 then
+    raise exception 'RESULT :: FAIL SL16 :: different due dates must email separately w/o breakdown, got rows=% dates=% breaks=%', v_rows, v_dates, v_breaks;
   end if;
-  raise exception 'RESULT :: PASS SL16 :: different-day payments -> 2 separate due_soon emails';
+  raise exception 'RESULT :: PASS SL16 :: different-day payments -> 2 separate due_soon emails, no breakdown';
 end $$;
 
 -- ---- SL17 (TRANSITION): payment already reminded under legacy key -> only the other aggregates
