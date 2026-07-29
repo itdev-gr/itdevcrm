@@ -14,7 +14,7 @@
 ## Decisions (owner AFK at question time — ⭐ defaults chosen, CONFIRM before DB writes)
 
 1. **Data source for the ~159:** ⭐ ClickUp personal API token (`pk_`, ClickUp → Settings → Apps) — 3 calls fetch all 218 with custom fields, finishes same-day. Fallback: MCP connector after the 07-30 12:15 reset (recipe in memory `franchise-clickup-import`). CSV-only rejected (incomplete data).
-2. **SALES INFO** = `leads.additional_notes` (form label «Σημείωση πωλήσεων» / "Sales Note").
+2. **~~SALES INFO = additional_notes~~ CORRECTED by owner 07-29: the info block lives in `leads.notes` («Πληροφορίες επαφής» / "Lead info")**; `additional_notes` stays empty. Data moved same day (backup `leads_franchise_notes_swap_backup_20260729`).
 3. **Budget + Region:** two new nullable text columns `leads.budget`, `leads.region`, editable on the lead form for ALL leads (empty for non-franchise). No RLS change (row-level policies unaffected by new columns).
 4. **The 59 already imported:** retrofit to the same shape (backdate `created_at`, split budget/region out of `notes`, move the rest to `additional_notes`, import their comments).
 
@@ -22,8 +22,8 @@
 
 - `title` = task name; `email`/`phone` per the proven 07-29 recipe (regex-validated email, fallback Phone 2; phone = first of Phone/Phone 2/Secondary with ≥10 digits).
 - `budget` = Κεφάλαιο επένδυσης value; `region` = Περιοχή value (raw text, cleaned of underscores/placeholder noise).
-- `additional_notes` (SALES INFO) = remaining info block: Πότε θέλει να ξεκινήσει, Εμπειρία, ClickUp URL — Greek labels, one per line.
-- `notes` = NULL (no longer the dumping ground; contact data lives in real fields).
+- `notes` (Lead Info; CORRECTED 07-29, was additional_notes) = remaining info block: Πότε θέλει να ξεκινήσει, Εμπειρία, ClickUp URL — Greek labels, one per line.
+- `additional_notes` = NULL.
 - `created_at` = ClickUp `Date Created` (epoch ms → timestamptz). No trigger fires on created_at; franchise email guard (`enqueue_lead_email`) already blocks all automated email for source='franchise' (verified 0 enqueued on 07-29).
 - `stage` from ClickUp "Franchise Status" custom field, same mapping as 07-29 (New Lead→new_lead, No Answer→no_answer, Working on it→working_on_it, Offer Sent→offer_sent, Hot→hot, Won→won, No Interested→not_interested, Dead End→dead_end; default new_lead). `source='franchise'`, `owner_user_id` NULL, `source_data` = full raw ClickUp extract (keyed by task id — the diff/idempotency key).
 
