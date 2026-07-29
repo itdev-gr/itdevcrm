@@ -36,11 +36,16 @@ select distinct on (kept_id) mirror_id, kept_id
 from mirror_best order by kept_id, delta;
 
 -- Backup: full mirror rows + which twin absorbed them + their bcc payload.
-create table if not exists public.email_mirror_dedup_backup_20260729 as
+create table public.email_mirror_dedup_backup_20260729 as
 select m.*, p.kept_id as kept_twin_id, b.bcc_emails as mirror_bcc
 from _mirror_pairs p
 join public.email_messages m on m.id = p.mirror_id
 left join public.email_message_bcc b on b.message_pk = m.id;
+
+-- Service-role only: the backup holds full email bodies plus the admin-only
+-- bcc payload. RLS enabled with zero policies = invisible to anon/authenticated
+-- via PostgREST; the service role (and SQL) still read it.
+alter table public.email_mirror_dedup_backup_20260729 enable row level security;
 
 -- Fold the mirror's admin-only bcc into the kept twin (union, never clobber).
 insert into public.email_message_bcc (message_pk, bcc_emails)
