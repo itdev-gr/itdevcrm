@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseColumnarMetaLead } from './meta-lead';
+import { parseColumnarMetaLead, flattenColumnValue, demangleBudget } from './meta-lead';
 
 // A real captured Meta → Excel → Zapier row (COL$ format).
 const sample: Record<string, unknown> = {
@@ -120,5 +120,113 @@ describe('parseColumnarMetaLead', () => {
     expect(r!.fullName).toBe('Costas Hadjipavlis');
     expect(r!.phone).toBe('35799645690');
     expect(r!.email).toBe('elde@cytanet.com.cy');
+  });
+
+  // A standard (name, phone, email ordered) payload must keep parsing exactly as
+  // before, even after the franchise-form contact-anchoring change was added.
+  it('regression: still parses a name/phone/email ordered payload (email column last of the three)', () => {
+    const r = parseColumnarMetaLead({
+      'COL$A': 'l:111222333444555',
+      'COL$B': '2026-05-10 09:00:00',
+      'COL$J': '🧲 SOCIAL MEDIA LEAD FORM (ITDEV)',
+      'COL$L': 'ig',
+      'COL$M': 'ναι',
+      'COL$N': 'Giorgos Nikou',
+      'COL$O': 'p:306901234567',
+      'COL$P': 'gnikou@example.com',
+      'COL$Q': 'Some Company',
+    });
+    expect(r!.fullName).toBe('Giorgos Nikou');
+    expect(r!.phone).toBe('306901234567');
+    expect(r!.email).toBe('gnikou@example.com');
+    expect(r!.isFranchise).toBe(false);
+  });
+});
+
+// The franchise lead form breaks three of the columnar parser's assumptions:
+// contact order is name/email/phone (phone AFTER email), COL$N arrives as a nested
+// object, and Zapier number-formats the budget option (€5.000 → €5.00).
+describe('parseColumnarMetaLead — franchise form', () => {
+  // Real production payload that mis-parsed on 2026-07-29 (secret key omitted).
+  const franchiseSample: Record<string, unknown> = {
+    id: '269',
+    row: '269',
+    'COL$A': '1510582260391631',
+    'COL$B': '2026-07-29 10:05:56',
+    'COL$C': '120245070940080494',
+    'COL$D': 'Προώθηση ανεύρεσης υποψήφιων πελατών: Franchize itdev-copy',
+    'COL$E': '120245070939880494',
+    'COL$F': 'Προώθηση ανεύρεσης υποψήφιων πελατών: Franchize itdev-copy',
+    'COL$G': '120245070939500494',
+    'COL$H': '[3/4/2026] Προωθείται η Σελίδα Franchize itdev-copy',
+    'COL$I': '1469004058107023',
+    'COL$J': 'Franchize itdev-copy',
+    'COL$K': '',
+    'COL$L': 'fb',
+    'COL$M': '€5.00',
+    'COL$N': { '': 'μέσα_σε_1_μήνα' },
+    'COL$O': 'όχι,_αλλά_θέλω_να_ξεκινήσω',
+    'COL$P': 'αρτα',
+    'COL$Q': "Κώστας Παπαγιάννης'",
+    'COL$R': 'kostaspapagiannis325@gmail.com',
+    'COL$S': '306975553455',
+    leadgen_id: '1510582260391631',
+  };
+
+  it('parses the Kostas franchise fixture end-to-end (name/email/phone order + franchise fields)', () => {
+    const r = parseColumnarMetaLead(franchiseSample);
+    expect(r).not.toBeNull();
+    expect(r!.isFranchise).toBe(true);
+    // Contact order is name (email-1), email, phone (email+1) — NOT the region/name mixup.
+    expect(r!.fullName).toBe("Κώστας Παπαγιάννης'");
+    expect(r!.email).toBe('kostaspapagiannis325@gmail.com');
+    expect(r!.phone).toBe('306975553455');
+    // Franchise answer columns after the platform (COL$M..COL$P).
+    expect(r!.budget).toBe('€5.000'); // Zapier de-mangled from €5.00
+    expect(r!.when).toBe('μέσα σε 1 μήνα'); // flattened out of {"": "…"} + _→space
+    expect(r!.experience).toBe('όχι, αλλά θέλω να ξεκινήσω');
+    expect(r!.region).toBe('αρτα');
+    expect(r!.leadgenId).toBe('1510582260391631');
+    expect(r!.formName).toBe('Franchize itdev-copy');
+  });
+
+  it('de-mangles a larger budget (€20.00 → €20.000)', () => {
+    const r = parseColumnarMetaLead({ ...franchiseSample, 'COL$M': '€20.00' });
+    expect(r!.budget).toBe('€20.000');
+  });
+
+  it('passes a non-numeric budget answer through (Εξαρτάται)', () => {
+    const r = parseColumnarMetaLead({ ...franchiseSample, 'COL$M': 'Εξαρτάται' });
+    expect(r!.budget).toBe('Εξαρτάται');
+  });
+});
+
+describe('flattenColumnValue', () => {
+  it('flattens a nested {"": value} object to its leaf string', () => {
+    expect(flattenColumnValue({ '': 'μέσα_σε_1_μήνα' })).toBe('μέσα_σε_1_μήνα');
+  });
+
+  it('joins multiple non-empty leaves and drops empties', () => {
+    expect(flattenColumnValue({ a: 'one', b: '', c: { d: 'two' } })).toBe('one two');
+  });
+
+  it('passes plain strings through (trimmed), empty → null', () => {
+    expect(flattenColumnValue('  hi  ')).toBe('hi');
+    expect(flattenColumnValue('')).toBeNull();
+    expect(flattenColumnValue(null)).toBeNull();
+  });
+});
+
+describe('demangleBudget', () => {
+  it('restores the Greek thousands dot Zapier stripped', () => {
+    expect(demangleBudget('€5.00')).toBe('€5.000');
+    expect(demangleBudget('€20.00')).toBe('€20.000');
+    expect(demangleBudget('€200.00')).toBe('€200.000');
+  });
+
+  it('passes any other value through with _→space cleanup', () => {
+    expect(demangleBudget('Εξαρτάται')).toBe('Εξαρτάται');
+    expect(demangleBudget('πάνω_από_€1.000')).toBe('πάνω από €1.000');
+    expect(demangleBudget(null)).toBeNull();
   });
 });

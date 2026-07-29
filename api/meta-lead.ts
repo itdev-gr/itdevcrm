@@ -24,6 +24,53 @@ const str = (v: unknown): string | null => {
   return s.length > 0 ? s : null;
 };
 
+// Some Meta forms nest a COL$ answer as an object (e.g. {"": "μέσα_σε_1_μήνα"}),
+// which String()s to "[object Object]" and loses the answer. Flatten any non-null
+// object to the join of its non-empty leaf strings; plain values behave like str().
+export function flattenColumnValue(v: unknown): string | null {
+  if (v == null) return null;
+  if (typeof v === 'object') {
+    const leaves: string[] = [];
+    const walk = (o: unknown): void => {
+      if (o == null) return;
+      if (typeof o === 'object') {
+        for (const val of Object.values(o as Record<string, unknown>)) walk(val);
+      } else {
+        const s = String(o).trim();
+        if (s.length > 0) leaves.push(s);
+      }
+    };
+    walk(v);
+    return leaves.length > 0 ? leaves.join(' ') : null;
+  }
+  const s = String(v).trim();
+  return s.length > 0 ? s : null;
+}
+
+// Meta form answers slugify spaces to underscores (e.g. "όχι,_αλλά_θέλω"). Undo that.
+function cleanUnderscore(v: string | null): string | null {
+  if (v == null) return null;
+  const s = v.replace(/_/g, ' ').trim();
+  return s.length > 0 ? s : null;
+}
+
+// Zapier number-formats the franchise budget option: the Greek thousands-dot value
+// "€5.000" arrives as "€5.00" (trailing zero dropped). Restore it; anything else
+// (e.g. "Εξαρτάται") passes through with the same _→space cleanup as other answers.
+export function demangleBudget(v: string | null): string | null {
+  if (v == null) return null;
+  const m = v.match(/^€(\d{1,3})\.00$/);
+  if (m) return `€${m[1]}.000`;
+  return cleanUnderscore(v);
+}
+
+// The submission timestamp (COL$B) as a plain YYYY-MM-DD (used in franchise notes).
+function isoDate(v: string | null): string | null {
+  if (!v) return null;
+  const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1]! : null;
+}
+
 // ---- Columnar (Meta → Excel → Zapier) format --------------------------------
 // Some Meta leads arrive as a positional spreadsheet row with keys COL$A..COL$S
 // and prefixed values (l: lead id, p: phone, c:/as:/ag:/f: campaign/adset/ad/form
@@ -38,6 +85,12 @@ type ColumnarLead = {
   website: string | null;
   formName: string | null;
   noteBlock: string | null;
+  // Franchise lead-form extras (null for every other form).
+  isFranchise: boolean;
+  budget: string | null;
+  when: string | null;
+  experience: string | null;
+  region: string | null;
 };
 
 function stripPrefix(v: string | null, prefix: string): string | null {
@@ -69,7 +122,7 @@ const LEAD_STATUS = new Set(['created', 'in_progress', 'disqualified', 'complete
 
 export function parseColumnarMetaLead(data: Record<string, unknown>): ColumnarLead | null {
   if (!('COL$A' in data) && !('COL$N' in data)) return null;
-  const c = (k: string): string | null => str(data[k]);
+  const c = (k: string): string | null => flattenColumnValue(data[k]);
 
   // The positional payload lists the standard contact fields (full name, phone, email)
   // consecutively, in that order, AFTER the form's custom-question answers. But the
@@ -84,10 +137,20 @@ export function parseColumnarMetaLead(data: Record<string, unknown>): ColumnarLe
     .sort(compareColKeys);
 
   const emailIdx = colKeys.findIndex((k) => EMAIL_RE.test(c(k) ?? ''));
+  // Contact order varies by form. Anchor on the email column, then disambiguate by the
+  // column immediately after it: if that value is a phone (≥10 digits) the order is
+  // name, email, phone (the franchise form); otherwise it's the standard name, phone,
+  // email (phone precedes the email). Fall back to fixed columns when no email is found.
+  const afterEmailDigits =
+    emailIdx >= 0 ? (c(colKeys[emailIdx + 1] ?? '') ?? '').replace(/\D/g, '') : '';
   let nameIdx: number;
   let phoneIdx: number;
   let mailIdx: number;
-  if (emailIdx >= 2) {
+  if (emailIdx >= 1 && afterEmailDigits.length >= 10) {
+    mailIdx = emailIdx;
+    nameIdx = emailIdx - 1;
+    phoneIdx = emailIdx + 1;
+  } else if (emailIdx >= 2) {
     mailIdx = emailIdx;
     phoneIdx = emailIdx - 1;
     nameIdx = emailIdx - 2;
@@ -148,7 +211,36 @@ export function parseColumnarMetaLead(data: Record<string, unknown>): ColumnarLe
   }
   const noteBlock = lines.length > 0 ? lines.join('\n') : null;
 
-  return { leadgenId, fullName, email, phone, website, formName, noteBlock };
+  // Franchise lead form: the four answer columns after the platform carry structured
+  // fields (budget, when-to-start, prior experience, region) that sales reads directly.
+  const isFranchise = /franchi[sz]e/i.test(formName ?? '');
+  let budget: string | null = null;
+  let when: string | null = null;
+  let experience: string | null = null;
+  let region: string | null = null;
+  if (isFranchise) {
+    const ans = (offset: number): string | null =>
+      platformIdx >= 0 ? c(colKeys[platformIdx + offset] ?? '') : null;
+    budget = demangleBudget(ans(1)); // COL$M
+    when = cleanUnderscore(ans(2)); // COL$N (flattened out of {"": "…"})
+    experience = cleanUnderscore(ans(3)); // COL$O
+    region = cleanUnderscore(ans(4)); // COL$P
+  }
+
+  return {
+    leadgenId,
+    fullName,
+    email,
+    phone,
+    website,
+    formName,
+    noteBlock,
+    isFranchise,
+    budget,
+    when,
+    experience,
+    region,
+  };
 }
 
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
@@ -244,6 +336,24 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     notes = pick(['notes']) ?? (noteLines.length > 0 ? noteLines.join('\n') : null);
   }
 
+  // Franchise lead form: a distinct source, a name-based title, and a compact Greek
+  // contact_info block. crm_budget/crm_region ride along in source_data so the DB
+  // release paths can fill the lead's budget/region columns.
+  const isFranchise = !!(columnar && columnar.isFranchise);
+  if (isFranchise && columnar) {
+    const platformRaw = flattenColumnValue(data['COL$L']);
+    const submitted = isoDate(flattenColumnValue(data['COL$B']));
+    const infoLines: string[] = [];
+    if (columnar.when) infoLines.push(`Πότε θέλει να ξεκινήσει: ${columnar.when}`);
+    if (columnar.experience) infoLines.push(`Εμπειρία: ${columnar.experience}`);
+    infoLines.push(
+      `Meta lead l:${columnar.leadgenId ?? ''} (${platformRaw ?? ''}, ${submitted ?? ''}), φόρμα: ${columnar.formName ?? ''}`,
+    );
+    notes = infoLines.join('\n');
+    payload.crm_budget = columnar.budget;
+    payload.crm_region = columnar.region;
+  }
+
   // Dedup on the Meta lead id stored in source_data. Retries return the existing
   // record — whether it landed in `leads` (clean) or `lead_intake` (held duplicate).
   if (leadgenId) {
@@ -268,7 +378,10 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   }
 
   const { first, last } = splitFullName(fullName ?? '');
-  const title = (formName ?? 'Meta lead').slice(0, 200);
+  // Franchise leads are titled by the person; every other form keeps the form name.
+  const title = (isFranchise ? (fullName ?? formName) : formName ?? 'Meta lead')?.slice(0, 200)
+    ?? 'Meta lead';
+  const source = isFranchise ? 'franchise' : 'meta';
 
   // ---- Intake queue --------------------------------------------------------
   // Every incoming lead is held in `lead_intake` for review — nothing reaches the
@@ -294,7 +407,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const { data: intake, error: intakeErr } = await admin
     .from('lead_intake')
     .insert({
-      source: 'meta',
+      source,
       source_data: payload,
       title,
       contact_first_name: first,
