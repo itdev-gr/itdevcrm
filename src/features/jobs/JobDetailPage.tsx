@@ -40,6 +40,7 @@ import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachm
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { useJob } from './hooks/useJob';
+import { filterAssignableOwners } from './assignableOwners';
 import { JobEmailStatusBadge } from './JobEmailStatusBadge';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
@@ -172,6 +173,7 @@ function JobDetailContent() {
     service_type: job.service_type,
   });
   const owner = job.owner_user_id ? owners.find((o) => o.user_id === job.owner_user_id) : null;
+  const assignableOwners = filterAssignableOwners(owners, job.service_type, job.owner_user_id);
   const boardStages = stages
     .filter((s) => s.board === job.service_type && !s.archived)
     .sort((a, b) => a.position - b.position);
@@ -317,7 +319,7 @@ function JobDetailContent() {
                   className={detailHeaderSelectClass}
                 >
                   <option value="">Unassigned</option>
-                  {owners.map((o) => (
+                  {assignableOwners.map((o) => (
                     <option key={o.user_id} value={o.user_id}>
                       {o.full_name || o.email}
                     </option>
