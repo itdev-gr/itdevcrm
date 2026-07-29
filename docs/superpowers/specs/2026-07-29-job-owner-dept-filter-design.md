@@ -1,7 +1,7 @@
 # Department-filtered Assigned (Owner) dropdown on jobs
 
 **Date:** 2026-07-29
-**Status:** Approved, pending implementation
+**Status:** Implemented 2026-07-29 (commits 43198bc..e1540da); live-verified on web_dev, local_seo, ai_seo, hosting jobs
 
 ## Goal
 
