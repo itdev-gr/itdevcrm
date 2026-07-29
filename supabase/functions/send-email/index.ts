@@ -7,6 +7,7 @@ import { validateAttachmentRefs, fetchAttachments, fetchMimeAttachments, type At
 import { decryptToken, refreshAccessToken, buildMime, sendGmail } from '../_shared/google.ts';
 import { timingSafeEqual } from '../_shared/timing.ts';
 import { parseRecipientList, deptBccFor } from '../_shared/recipients.ts';
+import { newCrmMessageId } from '../_shared/emailDedup.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -138,6 +139,11 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     }
   }
 
+  // One RFC822 Message-ID for BOTH the wire email and the mirror row below:
+  // when gmail-sync captures a delivered copy (dept-CC'd shared box), it
+  // lands on the same unique key and dedups in the DB instead of showing
+  // twice on the Mail tab (spec 2026-07-29-email-mirror-dedup-design.md).
+  const rfcMessageId = newCrmMessageId();
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -148,6 +154,7 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
         : {}),
       ...(userBcc.length > 0 ? { bcc: userBcc } : {}),
       subject: rendered.subject, html: rendered.html, text: rendered.text,
+      headers: { 'Message-ID': rfcMessageId },
       ...(attachments.length > 0 ? { attachments } : {}),
     }),
   });
@@ -170,7 +177,7 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
       });
       const f = Array.isArray(fil) ? fil[0] : null;
       if (f) {
-        const mirrorMessageId = `resend:${body.id ?? crypto.randomUUID()}`;
+        const mirrorMessageId = rfcMessageId;
         await admin.from('email_messages').upsert({
           message_id: mirrorMessageId,
           direction: 'outbound', from_email: fromEmail, from_name: 'ITDEV (automated)',
