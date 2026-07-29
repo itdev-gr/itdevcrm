@@ -159,6 +159,8 @@
     "industry": "Industry",
     "country": "Country",
     "address": "Address",
+    "budget": "Budget",
+    "region": "Region",
     "vat_number": "VAT number",
     "lead_info": "Lead info",
     "notes": "Notes",

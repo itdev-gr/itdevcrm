@@ -159,6 +159,8 @@
     "industry": "Κλάδος",
     "country": "Χώρα",
     "address": "Διεύθυνση",
+    "budget": "Budget",
+    "region": "Περιοχή",
     "vat_number": "ΑΦΜ",
     "lead_info": "Πληροφορίες επαφής",
     "notes": "Σημειώσεις",

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { leadsToCsv, type CsvColumn } from './leadsCsv';
+import { leadsToCsv, leadCsvColumns, type CsvColumn } from './leadsCsv';
+import type { LeadRow } from './hooks/useLeads';
 
 type Row = { code: string; company: string | null };
 
@@ -21,5 +22,21 @@ describe('leadsToCsv', () => {
 
   it('handles an empty row list (header only)', () => {
     expect(leadsToCsv<Row>([], cols)).toBe('Code,Company');
+  });
+});
+
+describe('leadCsvColumns', () => {
+  const t = (k: string) =>
+    (({ 'form.budget': 'Budget', 'form.region': 'Region' }) as Record<string, string>)[k] ?? k;
+  const cols = leadCsvColumns({ t, ownerLabel: () => '', statusLabel: () => '' });
+
+  it('exports budget and region columns', () => {
+    const lead = { budget: '30.000€', region: 'Θεσσαλονίκη' } as unknown as LeadRow;
+    const csv = leadsToCsv([lead], cols);
+    const [header, row] = csv.split('\n');
+    expect(header).toContain('Budget');
+    expect(header).toContain('Region');
+    expect(row).toContain('30.000€');
+    expect(row).toContain('Θεσσαλονίκη');
   });
 });

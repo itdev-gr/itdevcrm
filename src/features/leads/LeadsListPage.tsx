@@ -19,8 +19,7 @@ import { isLeadDeletable } from './leadDeletable';
 import { LeadRowEditor } from './LeadRowEditor';
 import { LEADS_TABLE_COLS, LEADS_TABLE_MIN_WIDTH } from './leadsTableLayout';
 import { filterAndSortLeads, UNASSIGNED, type LeadSort, type LeadSortKey } from './leadsTableFilter';
-import { leadsToCsv, type CsvColumn } from './leadsCsv';
-import type { LeadRow } from './hooks/useLeads';
+import { leadsToCsv, leadCsvColumns } from './leadsCsv';
 import type { Database } from '@/types/supabase';
 
 type LeadUpdate = Database['public']['Tables']['leads']['Update'];
@@ -105,19 +104,7 @@ export function LeadsListPage() {
   }
 
   function exportCsv() {
-    const cols: CsvColumn<LeadRow>[] = [
-      { header: t('table.code'), value: (l) => l.code ?? '' },
-      { header: t('table.source'), value: (l) => l.source ?? '' },
-      { header: t('table.title'), value: (l) => l.title ?? '' },
-      { header: t('table.full_name'), value: (l) => [l.contact_first_name, l.contact_last_name].filter(Boolean).join(' ') },
-      { header: t('table.email'), value: (l) => l.email ?? '' },
-      { header: t('table.phone'), value: (l) => l.phone ?? '' },
-      { header: t('table.website'), value: (l) => l.website ?? '' },
-      { header: t('table.category'), value: (l) => l.industry ?? '' },
-      { header: t('table.company'), value: (l) => l.company_name ?? '' },
-      { header: t('table.assign'), value: (l) => ownerLabel(l.owner_user_id) },
-      { header: t('table.status'), value: (l) => statusLabel(l.stage_id) },
-    ];
+    const cols = leadCsvColumns({ t, ownerLabel, statusLabel });
     const csv = leadsToCsv(rows, cols);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

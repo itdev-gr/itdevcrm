@@ -62,6 +62,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
   const [industry, setIndustry] = useState(lead.industry ?? '');
   const [country, setCountry] = useState(lead.country ?? '');
   const [address, setAddress] = useState(lead.address ?? '');
+  const [budget, setBudget] = useState(lead.budget ?? '');
+  const [region, setRegion] = useState(lead.region ?? '');
   const [vatNumber, setVatNumber] = useState(lead.vat_number ?? '');
   const [instagram, setInstagram] = useState(lead.instagram ?? '');
   const [facebook, setFacebook] = useState(lead.facebook ?? '');
@@ -109,6 +111,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       industry: industry.trim() || null,
       country: country.trim() || null,
       address: address.trim() || null,
+      budget: budget.trim() || null,
+      region: region.trim() || null,
       vat_number: vatNumber.trim() || null,
       instagram: instagram.trim() || null,
       facebook: facebook.trim() || null,
@@ -136,6 +140,8 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
       industry,
       country,
       address,
+      budget,
+      region,
       vatNumber,
       instagram,
       facebook,
@@ -297,6 +303,14 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                   </option>
                 ))}
               </FilterSelect>
+            </div>
+            <div>
+              <Label htmlFor="budget">{t('form.budget')}</Label>
+              <Input id="budget" value={budget} onChange={(e) => setBudget(e.target.value)} className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="region">{t('form.region')}</Label>
+              <Input id="region" value={region} onChange={(e) => setRegion(e.target.value)} className="mt-1.5" />
             </div>
             <div className="sm:col-span-2">
               <Label htmlFor="addr">{t('form.address')}</Label>
