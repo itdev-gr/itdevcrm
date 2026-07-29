@@ -256,6 +256,7 @@ async function storeCaptured(row: CapturedRow): Promise<boolean> {
     let q = admin.from('email_messages')
       .select('id, message_id, sent_at, cc_emails')
       .or('message_id.like.resend:*,message_id.like.<crm-*')
+      .is('gmail_id', null)
       .eq('to_email', row.to_email)
       .eq('direction', 'outbound')
       .gte('sent_at', new Date(t - ADOPTION_WINDOW_MS).toISOString())
