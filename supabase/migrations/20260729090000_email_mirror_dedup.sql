@@ -66,10 +66,17 @@ from _mirror_pairs p
 join public.email_messages m on m.id = p.mirror_id
 where c.id = p.kept_id and c.cc_emails is null and m.cc_emails is not null;
 
--- Drop the mirrors (email_message_bcc children cascade).
+-- Drop the mirrors (email_message_bcc children cascade). The message_id guard
+-- re-tests the row at delete time: gmail-sync adoption runs every few minutes
+-- and may rewrite a mirror's 'resend:%' id to the real RFC822 Message-ID
+-- between this txn's snapshot and its delete. Under READ COMMITTED the delete
+-- re-checks the WHERE against the current row, so an adopted (renamed) mirror
+-- no longer matches and survives. The backup stays a superset; its rollback is
+-- `on conflict do nothing`, so a backed-up row that escapes deletion is harmless.
 delete from public.email_messages m
 using _mirror_pairs p
-where m.id = p.mirror_id;
+where m.id = p.mirror_id
+  and m.message_id like 'resend:%';
 
 commit;
 
