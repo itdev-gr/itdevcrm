@@ -24,6 +24,17 @@ const str = (v: unknown): string | null => {
   return s.length > 0 ? s : null;
 };
 
+// Store phones the way the CRM does: plain local Greek form (69…/2…, 10 digits).
+// 0030/30/+30-prefixed Greek numbers are stripped to the local part; anything
+// else (foreign numbers, malformed lengths) passes through untouched.
+export function normalizeGreekPhone(v: string | null): string | null {
+  const digits = (v ?? '').replace(/\D/g, '');
+  if (/^0030(69|2)/.test(digits) && digits.length === 14) return digits.slice(4);
+  if (/^30(69|2)/.test(digits) && digits.length === 12) return digits.slice(2);
+  if (digits.length === 10 && /^(69|2)/.test(digits)) return digits;
+  return str(v);
+}
+
 // Some Meta forms nest a COL$ answer as an object (e.g. {"": "μέσα_σε_1_μήνα"}),
 // which String()s to "[object Object]" and loses the answer. Flatten any non-null
 // object to the join of its non-empty leaf strings; plain values behave like str().
@@ -308,7 +319,11 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const leadgenId = columnar ? columnar.leadgenId : pick(['leadgen_id', 'id']);
   const fullName = columnar ? columnar.fullName : pick(['full_name', 'name'], /ονοματεπ|full.?name/i);
   const email = columnar ? columnar.email : pick(['email'], /email/i);
-  const phone = columnar ? columnar.phone : pick(['phone', 'phone_number'], /phone|τηλεφ/i);
+  // Both paths (columnar + named-field) funnel through the same normalizer so stored
+  // phones match the CRM's local Greek form; the parser stays a faithful raw reader.
+  const phone = normalizeGreekPhone(
+    columnar ? columnar.phone : pick(['phone', 'phone_number'], /phone|τηλεφ/i),
+  );
   const company = columnar ? null : pick(['company', 'company_name'], /company|εταιρ/i);
   const website = columnar ? columnar.website : pick(['website'], /website/i);
   const formName = columnar ? columnar.formName : pick(['form_name', 'campaign']);

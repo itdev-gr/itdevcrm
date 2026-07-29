@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { parseColumnarMetaLead, flattenColumnValue, demangleBudget } from './meta-lead';
+import {
+  parseColumnarMetaLead,
+  flattenColumnValue,
+  demangleBudget,
+  normalizeGreekPhone,
+} from './meta-lead';
 
 // A real captured Meta → Excel → Zapier row (COL$ format).
 const sample: Record<string, unknown> = {
@@ -199,6 +204,15 @@ describe('parseColumnarMetaLead — franchise form', () => {
     const r = parseColumnarMetaLead({ ...franchiseSample, 'COL$M': 'Εξαρτάται' });
     expect(r!.budget).toBe('Εξαρτάται');
   });
+
+  // The parser stays a faithful reader (raw phone); the handler normalizes it. Mirror
+  // the handler's `normalizeGreekPhone(columnar.phone)` step so the stored phone is the
+  // CRM's local Greek form — 306975553455 → 6975553455 — not another +30/30 variant.
+  it('end-to-end: normalizing the parsed phone yields the local Greek form', () => {
+    const r = parseColumnarMetaLead(franchiseSample);
+    expect(r!.phone).toBe('306975553455'); // parser leaves it raw
+    expect(normalizeGreekPhone(r!.phone)).toBe('6975553455'); // handler stores this
+  });
 });
 
 describe('flattenColumnValue', () => {
@@ -228,5 +242,38 @@ describe('demangleBudget', () => {
     expect(demangleBudget('Εξαρτάται')).toBe('Εξαρτάται');
     expect(demangleBudget('πάνω_από_€1.000')).toBe('πάνω από €1.000');
     expect(demangleBudget(null)).toBeNull();
+  });
+});
+
+// The CRM stores lead phones as the plain local Greek form (10 digits, 69… mobile or
+// 2… landline). Greek numbers arriving with a 0030/30/+30 prefix are stripped to that
+// local part; foreign numbers and malformed lengths pass through untouched.
+describe('normalizeGreekPhone', () => {
+  it('strips a +30 mobile prefix (and the spaces) to the local 10-digit form', () => {
+    expect(normalizeGreekPhone('+30 694 465 6813')).toBe('6944656813');
+  });
+
+  it('strips a bare 30 mobile prefix', () => {
+    expect(normalizeGreekPhone('306939626608')).toBe('6939626608');
+  });
+
+  it('strips a 0030 mobile prefix', () => {
+    expect(normalizeGreekPhone('00306975553455')).toBe('6975553455');
+  });
+
+  it('collapses spaces/dashes on an already-local number', () => {
+    expect(normalizeGreekPhone('694 465 6813')).toBe('6944656813');
+  });
+
+  it('keeps a local landline unchanged', () => {
+    expect(normalizeGreekPhone('2103456789')).toBe('2103456789');
+  });
+
+  it('passes a foreign number through untouched', () => {
+    expect(normalizeGreekPhone('+35799012020')).toBe('+35799012020');
+  });
+
+  it('leaves null as null', () => {
+    expect(normalizeGreekPhone(null)).toBeNull();
   });
 });
