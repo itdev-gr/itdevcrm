@@ -4297,6 +4297,7 @@ export type Database = {
           automations_enabled: boolean
           business_profile_name: string | null
           business_profile_url: string | null
+          budget: string | null
           cash_charge_vat: boolean
           code: string
           company_name: string | null
@@ -4326,6 +4327,7 @@ export type Database = {
           payment_method: string | null
           phone: string | null
           phone_normalized: string | null
+          region: string | null
           scheduled_for: string | null
           services_planned: Json
           source: string
@@ -4350,6 +4352,7 @@ export type Database = {
           automations_enabled?: boolean
           business_profile_name?: string | null
           business_profile_url?: string | null
+          budget?: string | null
           cash_charge_vat?: boolean
           code?: string
           company_name?: string | null
@@ -4379,6 +4382,7 @@ export type Database = {
           payment_method?: string | null
           phone?: string | null
           phone_normalized?: string | null
+          region?: string | null
           scheduled_for?: string | null
           services_planned?: Json
           source: string
@@ -4403,6 +4407,7 @@ export type Database = {
           automations_enabled?: boolean
           business_profile_name?: string | null
           business_profile_url?: string | null
+          budget?: string | null
           cash_charge_vat?: boolean
           code?: string
           company_name?: string | null
@@ -4432,6 +4437,7 @@ export type Database = {
           payment_method?: string | null
           phone?: string | null
           phone_normalized?: string | null
+          region?: string | null
           scheduled_for?: string | null
           services_planned?: Json
           source?: string

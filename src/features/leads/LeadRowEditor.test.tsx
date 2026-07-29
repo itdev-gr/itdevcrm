@@ -37,6 +37,7 @@ const baseLead: LeadRow = {
   archived_reason: null,
   business_profile_url: null,
   business_profile_name: null,
+  budget: null,
   additional_contacts: [],
   additional_notes: null,
   address: null,
@@ -68,6 +69,7 @@ const baseLead: LeadRow = {
   tiktok: null,
   linkedin: null,
   phone_normalized: null,
+  region: null,
   stage: null,
 };
 
