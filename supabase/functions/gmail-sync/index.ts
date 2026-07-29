@@ -7,6 +7,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 import { decryptToken, refreshAccessToken, listGmailMessageIds, getGmailMessageFull } from '../_shared/google.ts';
 import { timingSafeEqual } from '../_shared/timing.ts';
+import { ADOPTION_WINDOW_MS, nearestBySentAt } from '../_shared/emailDedup.ts';
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -22,6 +23,76 @@ const admin = createClient(URL_, SERVICE_KEY);
 const OVERLAP_SEC = 600; // re-scan a 10-min overlap each incremental run; dedup absorbs it.
 
 type SyncResult = { scanned: number; matched: number; stored: number; errors: number };
+
+type CapturedRow = {
+  message_id: string; gmail_id: string; thread_id: string | null;
+  direction: string; from_email: string; from_name: string | null; to_email: string;
+  subject: string | null; body_text: string | null; body_html: string | null; snippet: string | null;
+  cc_emails: string | null; sent_at: string | null;
+  client_id: string | null; deal_id: string | null; job_id: string | null; lead_id: string | null;
+  department: string | null; staff_user_id: string | null; captured_from_user_id: string;
+};
+
+// Store a captured message, folding it into its send-time mirror row when one
+// exists (spec 2026-07-29-email-mirror-dedup-design.md): send-email writes a
+// mirror row per Resend send, and the dept-CC copy of the same email arrives
+// here minutes later with the real Message-ID. One logical email must stay
+// ONE row, else the Mail tab shows it twice.
+async function storeCaptured(row: CapturedRow): Promise<boolean> {
+  // (a) Same Message-ID already stored: an earlier sweep of another mailbox
+  //     (gmail_id set → done) or a mirror whose custom Message-ID header
+  //     survived delivery (gmail_id null → attach the Gmail metadata so the
+  //     thread folds and Reply works).
+  const { data: existing, error: exErr } = await admin.from('email_messages')
+    .select('id, gmail_id').eq('message_id', row.message_id).maybeSingle();
+  if (exErr) return false;
+  if (existing) {
+    if (existing.gmail_id) return true;
+    const { error } = await admin.from('email_messages').update({
+      gmail_id: row.gmail_id, thread_id: row.thread_id,
+      body_text: row.body_text, body_html: row.body_html, snippet: row.snippet,
+      captured_from_user_id: row.captured_from_user_id,
+    }).eq('id', existing.id);
+    return !error;
+  }
+  // (b) Un-adopted mirror twin stored under a synthetic id: adopt it in
+  //     place (keeps the row id, so email_message_bcc children survive).
+  if (row.direction === 'outbound' && row.sent_at) {
+    const t = new Date(row.sent_at).getTime();
+    let q = admin.from('email_messages')
+      .select('id, message_id, sent_at, cc_emails')
+      .or('message_id.like.resend:*,message_id.like.<crm-*')
+      .eq('to_email', row.to_email)
+      .eq('direction', 'outbound')
+      .gte('sent_at', new Date(t - ADOPTION_WINDOW_MS).toISOString())
+      .lte('sent_at', new Date(t + ADOPTION_WINDOW_MS).toISOString());
+    q = row.subject === null ? q.is('subject', null) : q.eq('subject', row.subject);
+    q = row.deal_id ? q.eq('deal_id', row.deal_id) : q.is('deal_id', null);
+    q = row.lead_id ? q.eq('lead_id', row.lead_id) : q.is('lead_id', null);
+    const { data: mirrors } = await q;
+    const mirror = nearestBySentAt(mirrors ?? [], row.sent_at);
+    if (mirror) {
+      // The .eq('message_id', old) guard makes this a 0-row no-op if another
+      // sweep adopted the mirror first; we then fall through to the plain
+      // upsert, which dedups on the real Message-ID.
+      const { data: adopted, error: adoptErr } = await admin.from('email_messages')
+        .update({
+          message_id: row.message_id, gmail_id: row.gmail_id, thread_id: row.thread_id,
+          from_email: row.from_email, from_name: row.from_name,
+          body_text: row.body_text, body_html: row.body_html, snippet: row.snippet,
+          sent_at: row.sent_at, captured_from_user_id: row.captured_from_user_id,
+          cc_emails: row.cc_emails ?? mirror.cc_emails,
+        })
+        .eq('id', mirror.id).eq('message_id', mirror.message_id)
+        .select('id');
+      if (!adoptErr && (adopted ?? []).length > 0) return true;
+    }
+  }
+  // (c) First sighting: plain insert (races absorbed by the unique key).
+  const { error } = await admin.from('email_messages')
+    .upsert(row, { onConflict: 'message_id', ignoreDuplicates: true });
+  return !error;
+}
 
 async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> {
   const { data: acct } = await admin.from('user_google_accounts')
@@ -64,7 +135,7 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
       const f = Array.isArray(fil) ? fil[0] : null;
       if (!f) continue;
       matched++;
-      const { error } = await admin.from('email_messages').upsert({
+      const ok = await storeCaptured({
         message_id: m.message_id, gmail_id: m.gmail_id, thread_id: m.thread_id,
         direction: f.direction, from_email: m.from_email, from_name: m.from_name, to_email: m.to_email,
         subject: m.subject, body_text: m.body_text, body_html: m.body_html, snippet: m.snippet,
@@ -72,9 +143,9 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         sent_at: m.internal_date ? new Date(m.internal_date).toISOString() : null,
         client_id: f.client_id, deal_id: f.deal_id, job_id: f.job_id, lead_id: f.lead_id, department: f.department,
         staff_user_id: f.staff_user_id, captured_from_user_id: uid,
-      }, { onConflict: 'message_id', ignoreDuplicates: true });
-      if (!error) stored++; else errors++;
-      if (!error && m.bcc_emails) {
+      });
+      if (ok) stored++; else errors++;
+      if (ok && m.bcc_emails) {
         const { data: mrow } = await admin
           .from('email_messages').select('id').eq('message_id', m.message_id).maybeSingle();
         if (mrow) {
@@ -96,7 +167,7 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
           );
         }
       }
-      if (!error && m.thread_id && f.direction === 'inbound' && (f.client_id || f.lead_id)) {
+      if (ok && m.thread_id && f.direction === 'inbound' && (f.client_id || f.lead_id)) {
         // Automated sends (thread_id null) adopt the reply's Gmail thread so the
         // conversation folds together. Normalized-subject match, same client/lead.
         const norm = (m.subject ?? '').replace(/^((re|fwd?):\s*)+/i, '').trim().toLowerCase();
