@@ -42,8 +42,8 @@ it lists every active user in the company.
 
 ## Frontend changes (no DB/RPC changes)
 
-1. **`src/features/jobs/utils/filterAssignableOwners.ts`** (new) — pure
-   helper:
+1. **`src/features/jobs/assignableOwners.ts`** (new, flat per house
+   convention) — pure helper:
    `filterAssignableOwners(owners: MentionableUser[], serviceType: string, currentOwnerId: string | null): MentionableUser[]`
    - Accepted codes: `ai_seo` → `['ai_seo', 'local_seo', 'web_seo']`;
      otherwise `[serviceType]`.
