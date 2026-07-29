@@ -317,3 +317,79 @@ begin
   end if;
   raise exception 'RESULT :: PASS SL14 :: 7d-overdue boundary -> payment_final_notice (lower edge of >=7)';
 end $$;
+
+-- ---- SL15 (AGGREGATE): two pending payments due SAME day -> ONE summed email
+do $$
+declare v_client uuid; v_deal uuid; v_rows int; v_amount numeric; v_key text; v_rows2 int;
+begin
+  insert into public.clients (name, email, country) values ('sl15_'||gen_random_uuid()::text,'sl15@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL15','sl15','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending'),
+           (v_deal,'hosting',1,'recurring_monthly',200,24, current_date + 3, 'pending');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_rows from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  select (data->>'amount_gross')::numeric, dedupe_key into v_amount, v_key
+    from public.email_outbox where (data->>'deal_id')::uuid=v_deal limit 1;
+  perform public.enqueue_payment_reminders();   -- re-run: group key must dedupe
+  select count(*) into v_rows2 from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_rows <> 1 or v_rows2 <> 1 or v_amount <> 372.00
+     or v_key <> 'pay_soon:'||v_deal||':'||to_char(current_date+3,'YYYYMMDD') then
+    raise exception 'RESULT :: FAIL SL15 :: expected 1 summed row (372.00, group key), got rows=% rows2=% amount=% key=%', v_rows, v_rows2, v_amount, v_key;
+  end if;
+  raise exception 'RESULT :: PASS SL15 :: two same-day payments -> 1 summed due_soon (372.00), re-run dedupes';
+end $$;
+
+-- ---- SL16 (AGGREGATE scope): two payments due DIFFERENT days -> two emails
+do $$
+declare v_client uuid; v_deal uuid; v_rows int; v_dates int;
+begin
+  insert into public.clients (name, email, country) values ('sl16_'||gen_random_uuid()::text,'sl16@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL16','sl16','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending'),
+           (v_deal,'web_seo',1,'recurring_monthly',100,24, current_date + 5, 'pending');
+  perform public.enqueue_payment_reminders();
+  select count(*), count(distinct data->>'due_date') into v_rows, v_dates
+    from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key='payment_due_soon';
+  if v_rows <> 2 or v_dates <> 2 then
+    raise exception 'RESULT :: FAIL SL16 :: different due dates must email separately, got rows=% dates=%', v_rows, v_dates;
+  end if;
+  raise exception 'RESULT :: PASS SL16 :: different-day payments -> 2 separate due_soon emails';
+end $$;
+
+-- ---- SL17 (TRANSITION): payment already reminded under legacy key -> only the other aggregates
+do $$
+declare v_client uuid; v_deal uuid; v_paid uuid; v_rows int; v_amount numeric;
+begin
+  insert into public.clients (name, email, country) values ('sl17_'||gen_random_uuid()::text,'sl17@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL17','sl17','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending')
+    returning id into v_paid;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'hosting',1,'recurring_monthly',200,24, current_date + 3, 'pending');
+  -- Simulate the pre-aggregation era: first payment already reminded.
+  insert into public.email_log (identity, to_email, template_key, status, dedupe_key)
+    values ('accounting','sl17@example.com','payment_due_soon','sent','pay_soon:'||v_paid);
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_rows from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  select (data->>'amount_gross')::numeric into v_amount
+    from public.email_outbox where (data->>'deal_id')::uuid=v_deal limit 1;
+  if v_rows <> 1 or v_amount <> 248.00 then
+    raise exception 'RESULT :: FAIL SL17 :: expected 1 row covering only the un-reminded payment (248.00), got rows=% amount=%', v_rows, v_amount;
+  end if;
+  raise exception 'RESULT :: PASS SL17 :: legacy-reminded payment excluded; other aggregates alone (248.00)';
+end $$;
