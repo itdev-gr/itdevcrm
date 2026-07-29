@@ -92,6 +92,13 @@ begin
     returning id into v_deal;
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 7, now() - interval '37 days', 'overdue');
+  -- deal_payments_reconcile_stage (single-owner reconcile, post-07-02) moves an
+  -- overdue-payment deal to on_hold on INSERT; force the stage back so the test
+  -- still exercises the enqueue gate for a deal held in awaiting_payment —
+  -- same pattern as SL6/SL11.
+  update public.deals set accounting_stage_id =
+    (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment')
+   where id = v_deal;
   perform public.enqueue_payment_reminders();
   select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
   if v_any <> 0 then
@@ -112,6 +119,11 @@ begin
     returning id into v_deal;
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 3, now() - interval '33 days', 'overdue');
+  -- Same force-back as SL4: the reconcile trigger would move this deal to
+  -- on_hold at INSERT, which is not the state under test.
+  update public.deals set accounting_stage_id =
+    (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment')
+   where id = v_deal;
   perform public.enqueue_payment_reminders();
   select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
   if v_any <> 0 then
