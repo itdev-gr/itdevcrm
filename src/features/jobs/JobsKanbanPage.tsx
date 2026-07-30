@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { PageHeader, FilterSelect } from '@/components/layout/page-shell';
 import { Input } from '@/components/ui/input';
 import { boardFocusJobId, matchesJobSearch } from './jobSearch';
+import { isOwnerOnlyBoard } from './boardScope';
 import { JobsKanbanColumn } from './JobsKanbanColumn';
 import { JobsKanbanCard } from './JobsKanbanCard';
 import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
@@ -82,8 +83,11 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const setSortBy = useJobsBoardSortStore((s) => s.setSortBy);
   const [searchParams, setSearchParams] = useSearchParams();
   // Admins always see every job in the department — the Only-mine filter
-  // is a per-tech-user convenience, not a permissions boundary.
-  const onlyMine = !isAdmin && searchParams.get('mine') !== '0';
+  // is a per-tech-user convenience, not a permissions boundary. On owner-only
+  // boards (see boardScope.ts) members get no group-wide view at all, so
+  // ?mine=0 is ignored there too.
+  const ownerOnly = !isAdmin && isOwnerOnlyBoard(serviceType);
+  const onlyMine = !isAdmin && (ownerOnly || searchParams.get('mine') !== '0');
   const boardRef = useRef<HTMLDivElement>(null);
 
   const scopedJobs =
@@ -185,6 +189,10 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
         {isAdmin ? (
           <span className="rounded-full border border-amber-300/80 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
             Admin view · {filteredJobs.length}
+          </span>
+        ) : ownerOnly ? (
+          <span className="rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+            Only mine · <span className="tabular-nums">{filteredJobs.length}</span>
           </span>
         ) : (
           <button
