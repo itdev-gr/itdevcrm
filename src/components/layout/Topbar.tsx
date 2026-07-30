@@ -2,8 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LocaleSwitcher } from './LocaleSwitcher';
-import { ThemeToggle } from './ThemeToggle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { signOut } from '@/lib/auth';
 import { NotificationsBell } from '@/features/notifications/NotificationsBell';
@@ -61,8 +59,6 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
               <NotificationsBell />
             </>
           )}
-          <ThemeToggle />
-          <LocaleSwitcher />
           {session && (
             <Button
               variant="ghost"

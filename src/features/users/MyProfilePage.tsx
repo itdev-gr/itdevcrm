@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { useThemeStore } from '@/lib/stores/themeStore';
+import { isThemeMode } from '@/lib/theme';
 import { autoSaveLabel, useAutoSave } from '@/lib/autosave';
 import { useGoogleConnection } from '@/features/email/useGoogleConnection';
 import { SignaturePreview } from '@/features/email/SignaturePreview';
@@ -59,6 +61,10 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
   const [preferredLocale, setPreferredLocale] = useState<'en' | 'el'>(
     (p.preferred_locale as 'en' | 'el') ?? 'en',
   );
+  // Theme is a device-local preference (themeStore → localStorage), not a
+  // profile column — it applies instantly, no Save needed.
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
   const [offerFollowupDays, setOfferFollowupDays] = useState<number>(
     typeof p.offer_followup_days === 'number' ? p.offer_followup_days : 0,
   );
@@ -143,6 +149,21 @@ function ProfileForm({ profile: p, userId }: { profile: ProfileRow; userId: stri
           >
             <option value="en">English</option>
             <option value="el">Ελληνικά</option>
+          </select>
+        </div>
+        <div>
+          <Label htmlFor="theme">{t('profile.theme')}</Label>
+          <select
+            id="theme"
+            value={themeMode}
+            onChange={(e) => {
+              if (isThemeMode(e.target.value)) setThemeMode(e.target.value);
+            }}
+            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="system">{lang === 'el' ? 'Σύστημα' : 'System'}</option>
+            <option value="light">{lang === 'el' ? 'Ανοιχτό' : 'Light'}</option>
+            <option value="dark">{lang === 'el' ? 'Σκούρο' : 'Dark'}</option>
           </select>
         </div>
         <div className="md:col-span-2">

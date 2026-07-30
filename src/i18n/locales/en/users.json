@@ -44,6 +44,7 @@
     "job_title": "Job title",
     "timezone": "Time zone",
     "preferred_locale": "Language",
+    "theme": "Theme",
     "avatar_url": "Avatar URL",
     "photo_title": "Profile photo",
     "photo_upload": "Upload photo",
