@@ -33,6 +33,17 @@ export type JobBillingRow = {
    * when there is no paid coverage (e.g. one-time jobs).
    */
   period_due_date: string | null;
+  /**
+   * Raw jobs.details JSONB — kept so a delivery-deadline edit can merge the
+   * `due_date` key back in without wiping the other keys (website, industry…).
+   */
+  details: Record<string, unknown> | null;
+  /**
+   * Manual delivery deadline (jobs.details.due_date, yyyy-mm-dd) — the date the
+   * WORK is due, set here or on the web_dev Info tab. Distinct from
+   * period_due_date, which is the billing/next-payment date.
+   */
+  delivery_due_date: string | null;
 };
 
 /** A single billed line of a payment, scoped to one job. */
@@ -106,7 +117,7 @@ export function useJobsBilling(dealId: string) {
       const jobsRes = await supabase
         .from('jobs')
         .select(
-          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason, period_due_date',
+          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason, period_due_date, details',
         )
         .eq('deal_id', dealId)
         .eq('archived', false)
@@ -136,6 +147,12 @@ export function useJobsBilling(dealId: string) {
         parent_job_id: (j.parent_job_id as string | null) ?? null,
         blocked_reason: (j.blocked_reason as string | null) ?? null,
         period_due_date: (j.period_due_date as string | null) ?? null,
+        details:
+          j.details && typeof j.details === 'object' ? (j.details as Record<string, unknown>) : null,
+        delivery_due_date: (() => {
+          const d = (j.details as Record<string, unknown> | null | undefined)?.due_date;
+          return typeof d === 'string' && d !== '' ? d : null;
+        })(),
       }));
 
       // 2. Payment headers (with totals) for the deal.

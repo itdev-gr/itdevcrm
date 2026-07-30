@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
@@ -9,10 +9,12 @@ import type { JobBillingRow, JobsBilling } from './hooks/useJobsBilling';
 
 const updateMutate = vi.fn().mockResolvedValue('job-1');
 const endMutate = vi.fn().mockResolvedValue('job-1');
+const dueDateMutate = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('./hooks/useCustomJobMutations', () => ({
   useUpdateJobBilling: () => ({ mutateAsync: updateMutate, isPending: false }),
   useEndJob: () => ({ mutateAsync: endMutate, isPending: false }),
+  useUpdateJobDeliveryDueDate: () => ({ mutateAsync: dueDateMutate, isPending: false }),
 }));
 
 vi.mock('./hooks/useDealPayments', () => ({
@@ -58,6 +60,8 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     parent_job_id: null,
     blocked_reason: null,
     period_due_date: null,
+    details: null,
+    delivery_due_date: null,
     ...over,
   };
 }
@@ -606,5 +610,83 @@ describe('JobsBillingPanel due date', () => {
     render(wrap(<JobsBillingPanel dealId="d1" />));
     const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
     expect(within(row).getByText('—')).toBeTruthy();
+  });
+});
+
+describe('JobsBillingPanel delivery deadline column', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('renders the Delivery due column header', () => {
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Website' })], payments: [] };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    // getByRole throws if absent; toBeTruthy keeps to core matchers (jest-dom is broken here).
+    expect(screen.getByRole('columnheader', { name: 'Delivery due' })).toBeTruthy();
+  });
+
+  it('prefills the date input and saves an edit, merging into existing details', async () => {
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'a',
+          title: 'Website',
+          department: 'web_dev',
+          details: { website: 'x.gr', due_date: '2026-08-15' },
+          delivery_due_date: '2026-08-15',
+        }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const row = screen.getByText('Website').closest('tr') as HTMLElement;
+    const input = within(row).getByLabelText('Delivery due') as HTMLInputElement;
+    expect(input.value).toBe('2026-08-15');
+
+    fireEvent.change(input, { target: { value: '2026-09-01' } });
+    await waitFor(() => expect(dueDateMutate).toHaveBeenCalledTimes(1));
+    expect(dueDateMutate).toHaveBeenCalledWith({
+      jobId: 'a',
+      details: { website: 'x.gr', due_date: '2026-08-15' },
+      dueDate: '2026-09-01',
+      department: 'web_dev',
+    });
+  });
+
+  it('clears the deadline (dueDate=null) when the date input is emptied', async () => {
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'a',
+          title: 'Website',
+          department: 'web_dev',
+          details: { due_date: '2026-08-15' },
+          delivery_due_date: '2026-08-15',
+        }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+    const row = screen.getByText('Website').closest('tr') as HTMLElement;
+    const input = within(row).getByLabelText('Delivery due') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '' } });
+    await waitFor(() =>
+      expect(dueDateMutate).toHaveBeenCalledWith({
+        jobId: 'a',
+        details: { due_date: '2026-08-15' },
+        dueDate: null,
+        department: 'web_dev',
+      }),
+    );
+  });
+
+  it('renders read-only as plain text with the overdue red class and no input', () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'a', title: 'Website', delivery_due_date: '2000-01-15' })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" readOnly />));
+    const row = screen.getByText('Website').closest('tr') as HTMLElement;
+    expect(within(row).queryByLabelText('Delivery due')).toBeNull();
+    const el = screen.getByText('15 Jan 2000');
+    expect(el.className).toContain('text-red-600');
   });
 });

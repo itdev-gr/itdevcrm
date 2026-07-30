@@ -179,6 +179,7 @@
     "col_price": "Price",
     "col_status": "Status",
     "col_due_date": "Due date",
+    "col_deadline": "Delivery due",
     "col_group": "Billing",
     "col_term": "Term",
     "col_actions": "",

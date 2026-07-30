@@ -9,7 +9,15 @@ const { createCustomJob, updateJobBilling, endJob } = vi.hoisted(() => ({
   endJob: vi.fn(),
 }));
 
+const { supabaseFrom, supabaseUpdate, supabaseEq } = vi.hoisted(() => {
+  const eq = vi.fn().mockResolvedValue({ error: null });
+  const update = vi.fn(() => ({ eq }));
+  const from = vi.fn(() => ({ update }));
+  return { supabaseFrom: from, supabaseUpdate: update, supabaseEq: eq };
+});
+
 vi.mock('@/lib/rpc', () => ({ createCustomJob, updateJobBilling, endJob }));
+vi.mock('@/lib/supabase', () => ({ supabase: { from: supabaseFrom } }));
 vi.mock('@/lib/sentry/captureMutation', () => ({
   captureMutation: (_s: string, _o: string, fn: (...a: unknown[]) => unknown) => fn,
 }));
@@ -18,6 +26,8 @@ import {
   useCreateCustomJob,
   useUpdateJobBilling,
   useEndJob,
+  useUpdateJobDeliveryDueDate,
+  mergeDueDate,
 } from './useCustomJobMutations';
 
 const DEAL = 'deal-1';
@@ -122,5 +132,50 @@ describe('useCustomJobMutations', () => {
       const keys = invalidatedKeys(invalidate);
       for (const k of EXPECTED_INVALIDATIONS) expect(keys).toContainEqual(k);
     });
+  });
+
+  it('useUpdateJobDeliveryDueDate merges due_date into details and invalidates board + billing', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const invalidate = vi.spyOn(qc, 'invalidateQueries');
+
+    const { result } = renderHook(() => useUpdateJobDeliveryDueDate(DEAL), { wrapper: wrap(qc) });
+    await result.current.mutateAsync({
+      jobId: 'job-7',
+      details: { website: 'x.gr' },
+      dueDate: '2026-08-15',
+      department: 'ads',
+    });
+
+    // preserves other detail keys, sets due_date
+    expect(supabaseFrom).toHaveBeenCalledWith('jobs');
+    expect(supabaseUpdate).toHaveBeenCalledWith({ details: { website: 'x.gr', due_date: '2026-08-15' } });
+    expect(supabaseEq).toHaveBeenCalledWith('id', 'job-7');
+
+    await waitFor(() => {
+      const keys = invalidatedKeys(invalidate);
+      for (const k of EXPECTED_INVALIDATIONS) expect(keys).toContainEqual(k);
+      expect(keys).toContainEqual(['job', 'job-7']);
+      expect(keys).toContainEqual(['jobs', 'service', 'ads']);
+    });
+  });
+});
+
+describe('mergeDueDate', () => {
+  it('sets due_date while preserving other keys', () => {
+    expect(mergeDueDate({ website: 'x', industry: 'y' }, '2026-08-01')).toEqual({
+      website: 'x',
+      industry: 'y',
+      due_date: '2026-08-01',
+    });
+  });
+
+  it('removes due_date when cleared (empty or null)', () => {
+    expect(mergeDueDate({ website: 'x', due_date: '2026-08-01' }, '')).toEqual({ website: 'x' });
+    expect(mergeDueDate({ website: 'x', due_date: '2026-08-01' }, null)).toEqual({ website: 'x' });
+  });
+
+  it('handles null details', () => {
+    expect(mergeDueDate(null, '2026-08-01')).toEqual({ due_date: '2026-08-01' });
+    expect(mergeDueDate(null, null)).toEqual({});
   });
 });
