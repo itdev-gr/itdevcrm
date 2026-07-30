@@ -8,6 +8,10 @@ import { relativeFromNow, formatDate } from '@/lib/datetime';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { useMentionableUsers } from '@/features/comments/hooks/useMentionableUsers';
+import { filterAssignableOwners } from './assignableOwners';
+import { useAssignJobOwner } from './hooks/useAssignJobOwner';
+import { queryKeys } from '@/lib/queryKeys';
 import type { JobRow, ServiceType } from './hooks/useJobs';
 
 const SERVICE_TO_KANBAN: Record<ServiceType, string> = {
@@ -88,6 +92,10 @@ export function JobsTab(props: Scope) {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const showPricing = canViewJobPricing(isAdmin, groupCodes);
+  // Assigning the owner is gated like billing/pricing: admins + accounting.
+  const canAssign = isAdmin || groupCodes.includes('accounting');
+  const owners = useMentionableUsers().data ?? [];
+  const assignOwner = useAssignJobOwner();
 
   const isDeal = 'dealId' in props;
   const dealQuery = useJobsForDeal(isDeal ? props.dealId : '');
@@ -127,6 +135,7 @@ export function JobsTab(props: Scope) {
             )}
             <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Στάδιο' : 'Stage'}</th>
             <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Κατάσταση' : 'Status'}</th>
+            <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Ανάθεση' : 'Assigned'}</th>
             {showPricing && (
               <th className="px-4 py-3 font-medium">
                 {lang === 'el' ? 'Προθεσμία πληρωμής' : 'Due date'}
@@ -152,6 +161,10 @@ export function JobsTab(props: Scope) {
               typeof j.details?.due_date === 'string' && j.details.due_date !== ''
                 ? (j.details.due_date as string)
                 : null;
+            const owner = j.owner_user_id
+              ? owners.find((o) => o.user_id === j.owner_user_id)
+              : null;
+            const assignable = filterAssignableOwners(owners, j.service_type, j.owner_user_id);
             return (
               <tr key={j.id} className="border-t border-border/40 transition-colors hover:bg-muted/35">
                 <td className="px-4 py-3">
@@ -181,6 +194,40 @@ export function JobsTab(props: Scope) {
                     <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                       {lang === 'el' ? 'Ενεργό' : 'Active'}
                     </span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {canAssign ? (
+                    <select
+                      value={j.owner_user_id ?? ''}
+                      aria-label={lang === 'el' ? 'Ανάθεση' : 'Assigned'}
+                      onChange={(e) =>
+                        assignOwner.mutate({
+                          jobId: j.id,
+                          ownerUserId: e.target.value,
+                          invalidate: [
+                            isDeal
+                              ? queryKeys.jobsForDeal(props.dealId)
+                              : queryKeys.jobsForClient(props.clientId),
+                            queryKeys.jobsByService(j.service_type),
+                          ],
+                        })
+                      }
+                      className="block w-full max-w-[11rem] rounded-md border border-input bg-background px-2 py-1.5 text-xs"
+                    >
+                      <option value="">{lang === 'el' ? '— Χωρίς ανάθεση' : '— Unassigned'}</option>
+                      {assignable.map((o) => (
+                        <option key={o.user_id} value={o.user_id}>
+                          {o.full_name || o.email}
+                        </option>
+                      ))}
+                    </select>
+                  ) : owner ? (
+                    <span className="text-xs text-muted-foreground" title={owner.full_name || owner.email}>
+                      {owner.full_name || owner.email}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground/50">—</span>
                   )}
                 </td>
                 {showPricing && (
