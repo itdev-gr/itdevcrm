@@ -4,7 +4,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
 import { useJobsForDeal } from './hooks/useJobsForDeal';
 import { useJobsForClient } from './hooks/useJobsForClient';
-import { relativeFromNow } from '@/lib/datetime';
+import { relativeFromNow, formatDate } from '@/lib/datetime';
 import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -36,6 +36,29 @@ function StageBadge({ job, lang }: { job: JobRow; lang: 'en' | 'el' }) {
   return (
     <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
       {label}
+    </span>
+  );
+}
+
+/** True when a yyyy-mm-dd date is strictly before today (UTC day boundary), matching the boards' overdue semantics. */
+function isDatePast(due: string | null): boolean {
+  if (!due) return false;
+  const dueMs = Date.parse(due + 'T00:00:00Z');
+  if (Number.isNaN(dueMs)) return false;
+  const now = new Date();
+  return dueMs < Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+}
+
+/** Read-only date cell: formatted date, red when overdue, em dash when unset. */
+function DueDateCell({ date, locale }: { date: string | null; locale: string }) {
+  if (!date) return <span className="text-muted-foreground/50">—</span>;
+  return (
+    <span
+      className={`text-xs tabular-nums ${
+        isDatePast(date) ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
+      }`}
+    >
+      {formatDate(date, locale)}
     </span>
   );
 }
@@ -104,6 +127,14 @@ export function JobsTab(props: Scope) {
             )}
             <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Στάδιο' : 'Stage'}</th>
             <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Κατάσταση' : 'Status'}</th>
+            {showPricing && (
+              <th className="px-4 py-3 font-medium">
+                {lang === 'el' ? 'Προθεσμία πληρωμής' : 'Due date'}
+              </th>
+            )}
+            <th className="px-4 py-3 font-medium">
+              {lang === 'el' ? 'Προθεσμία παράδοσης' : 'Delivery due'}
+            </th>
             {!isDeal && (
               <th className="px-4 py-3 font-medium">{lang === 'el' ? 'Deal' : 'Deal'}</th>
             )}
@@ -117,6 +148,10 @@ export function JobsTab(props: Scope) {
             const billingLabel =
               BILLING_LABEL[j.billing_type]?.[lang] ?? j.billing_type;
             const amount = jobAmountLabel(j.billing_type, j.amount_net, lang);
+            const deliveryDue =
+              typeof j.details?.due_date === 'string' && j.details.due_date !== ''
+                ? (j.details.due_date as string)
+                : null;
             return (
               <tr key={j.id} className="border-t border-border/40 transition-colors hover:bg-muted/35">
                 <td className="px-4 py-3">
@@ -147,6 +182,14 @@ export function JobsTab(props: Scope) {
                       {lang === 'el' ? 'Ενεργό' : 'Active'}
                     </span>
                   )}
+                </td>
+                {showPricing && (
+                  <td className="px-4 py-3">
+                    <DueDateCell date={j.period_due_date} locale={i18n.language} />
+                  </td>
+                )}
+                <td className="px-4 py-3">
+                  <DueDateCell date={deliveryDue} locale={i18n.language} />
                 </td>
                 {!isDeal && (
                   <td className="px-4 py-3 text-xs">
