@@ -17,7 +17,7 @@ import {
   type JobBillingRow,
   type PaymentWithLines,
 } from './hooks/useJobsBilling';
-import { useEndJob, useUpdateJobBilling, useUpdateJobDeliveryDueDate } from './hooks/useCustomJobMutations';
+import { useEndJob, useUpdateJobBilling } from './hooks/useCustomJobMutations';
 import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
@@ -88,7 +88,6 @@ function JobRow({
 }) {
   const { t, i18n } = useTranslation('deals');
   const update = useUpdateJobBilling(dealId);
-  const updateDueDate = useUpdateJobDeliveryDueDate(dealId);
   const end = useEndJob(dealId);
   const pause = useJobPauseBilling(job.id, dealId);
   const resume = useJobResumeBilling(job.id, dealId);
@@ -128,14 +127,6 @@ function JobRow({
     const next = Number(price || 0);
     if (next === Number(job.amount_net ?? 0)) return;
     update.mutateAsync({ jobId: job.id, amountNet: next }).catch((err: unknown) => reportError(t, err));
-  }
-
-  function onDeliveryDueChange(value: string) {
-    const next = value || null;
-    if (next === job.delivery_due_date) return;
-    updateDueDate
-      .mutateAsync({ jobId: job.id, details: job.details, dueDate: next, department: job.department })
-      .catch((err: unknown) => reportError(t, err));
   }
 
   async function onTermChange(value: string) {
@@ -284,33 +275,6 @@ function JobRow({
           >
             {formatDate(job.period_due_date, i18n.language)}
           </span>
-        )}
-      </td>
-      <td className="px-1.5 py-1.5">
-        {readOnly ? (
-          job.delivery_due_date == null ? (
-            <span className="text-muted-foreground/50">—</span>
-          ) : (
-            <span
-              className={`text-[11px] tabular-nums ${
-                isDueOverdue(job.delivery_due_date)
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-foreground'
-              }`}
-            >
-              {formatDate(job.delivery_due_date, i18n.language)}
-            </span>
-          )
-        ) : (
-          <Input
-            type="date"
-            value={job.delivery_due_date ?? ''}
-            onChange={(e) => onDeliveryDueChange(e.target.value)}
-            aria-label={t('jobs_billing.col_deadline')}
-            className={`h-7 w-[8.5rem] text-[11px] ${
-              isDueOverdue(job.delivery_due_date) ? 'text-red-600 dark:text-red-400' : ''
-            }`}
-          />
         )}
       </td>
       <td className="px-1.5 py-1.5">
@@ -528,7 +492,7 @@ function JobRow({
     {noteText && (
       <tr data-testid={`note-preview-${job.id}`} className="border-t-0">
         <td
-          colSpan={8}
+          colSpan={7}
           title={noteText}
           className="px-1.5 pb-1.5 pt-0 text-[10px] italic text-muted-foreground truncate"
         >
@@ -826,7 +790,6 @@ export function JobsBillingPanel({
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_price')}</th>
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_status')}</th>
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_due_date')}</th>
-                  <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_deadline')}</th>
                   <th className="px-1.5 py-1.5 font-normal">{t('jobs_billing.col_group')}</th>
                   <th className="px-1.5 py-1.5 font-normal text-right" />
                 </tr>

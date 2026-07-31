@@ -8,7 +8,6 @@ import {
   type UpdateJobBillingInput,
   type AddWebsiteJobInput,
 } from '@/lib/rpc';
-import { supabase } from '@/lib/supabase';
 import { captureMutation } from '@/lib/sentry/captureMutation';
 import { jobsBillingKey } from './useJobsBilling';
 import { dealPaymentsKey } from './useDealPayments';
@@ -65,52 +64,6 @@ export function useAddWebsiteJob(dealId: string) {
     onSuccess: () => {
       invalidateBilling(qc, dealId);
       void qc.invalidateQueries({ queryKey: queryKeys.dealServiceJobs(dealId, 'web_dev') });
-    },
-  });
-}
-
-/**
- * Merge a delivery deadline into a job's existing `details` JSONB without
- * dropping the other keys (website, industry, …). An empty/undefined `dueDate`
- * removes the `due_date` key. The result is safe to write straight to
- * `jobs.details`.
- */
-export function mergeDueDate(
-  details: Record<string, unknown> | null | undefined,
-  dueDate: string | null | undefined,
-): Record<string, unknown> {
-  const next = { ...(details ?? {}) };
-  if (dueDate) next.due_date = dueDate;
-  else delete next.due_date;
-  return next;
-}
-
-/**
- * Set/clear a job's manual delivery deadline (`jobs.details.due_date`) from the
- * deal-page Jobs table. Writes `details` directly (the billing RPC only knows
- * billing fields); RLS `jobs_update_accounting` / `jobs_mutate_admin_or_service`
- * cover the accounting + admin users who get the panel's edit mode. `department`
- * is passed so the job's kanban board (which shows the deadline chip) refreshes.
- */
-export function useUpdateJobDeliveryDueDate(dealId: string) {
-  const qc = useQueryClient();
-  return useMutation<
-    void,
-    DefaultError,
-    { jobId: string; details: Record<string, unknown> | null; dueDate: string | null; department?: string }
-  >({
-    mutationFn: captureMutation('jobs', 'update_job_delivery_due_date', async ({ jobId, details, dueDate }) => {
-      const merged = mergeDueDate(details, dueDate);
-      const { error } = await supabase.from('jobs').update({ details: merged } as never).eq('id', jobId);
-      if (error) throw new Error(error.message);
-    }),
-    onSuccess: (_data, { jobId, department }) => {
-      invalidateBilling(qc, dealId);
-      void qc.invalidateQueries({ queryKey: queryKeys.job(jobId) });
-      if (department) {
-        void qc.invalidateQueries({ queryKey: queryKeys.jobsByService(department) });
-        void qc.invalidateQueries({ queryKey: queryKeys.dealServiceJobs(dealId, department) });
-      }
     },
   });
 }
