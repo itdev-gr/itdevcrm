@@ -42,6 +42,7 @@ import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { useJob } from './hooks/useJob';
 import { filterAssignableOwners } from './assignableOwners';
 import { JobEmailStatusBadge } from './JobEmailStatusBadge';
+import { JobFollowupButton } from './JobFollowupButton';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
 import { HostingInfoSection } from './HostingInfoSection';
@@ -281,6 +282,7 @@ function JobDetailContent() {
             />
             <span className={detailHeaderChipClass}>{job.service_type.replace(/_/g, ' ')}</span>
             <JobEmailStatusBadge job={job} variant="detail" />
+            <JobFollowupButton job={job} />
             <span className={detailHeaderMetaClass}>
               <Calendar className="size-3 opacity-70" />
               {formatDate(job.created_at)}

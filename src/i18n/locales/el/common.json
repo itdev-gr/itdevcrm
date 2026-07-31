@@ -114,6 +114,18 @@
     "resend": "Επαναποστολή",
     "last_sent_line": "Είχε σταλεί ξανά στις {{date}}."
   },
+  "follow_up": {
+    "button": "Follow-up",
+    "gbp_request": "Αποστολή follow-up για πρόσβαση GBP",
+    "gbp_confirm_title": "Αποστολή follow-up",
+    "gbp_confirm_body": "Αποστολή του follow-up email για την πρόσβαση στο Google Business Profile στο {{email}};",
+    "gsc_request": "Αποστολή follow-up για πρόσβαση GSC",
+    "gsc_confirm_title": "Αποστολή follow-up",
+    "gsc_confirm_body": "Αποστολή του follow-up email για την πρόσβαση στο Google Search Console στο {{email}};",
+    "form_request": "Αποστολή follow-up για τη φόρμα",
+    "form_confirm_title": "Αποστολή follow-up",
+    "form_confirm_body": "Αποστολή του follow-up email για τη φόρμα ιστοσελίδας στο {{email}};"
+  },
   "client_picker": {
     "label": "Πελάτης (προαιρετικά)",
     "search_placeholder": "Αναζήτηση πελάτη…",

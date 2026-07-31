@@ -30,3 +30,26 @@ export function seoAccessConfig(serviceType: string): SeoAccessConfig | null {
   }
   return null;
 }
+
+/** The follow-up email config for a service, or null when the service has none.
+ *  Parallels seoAccessConfig: local_seo → GBP follow-up, web_seo → GSC follow-up.
+ *  The follow-up is a reminder to the initial access email of the same service. */
+export function seoFollowupConfig(serviceType: string): SeoAccessConfig | null {
+  if (serviceType === 'local_seo') {
+    return {
+      templateKey: 'localseo_gbp_followup',
+      requestKey: 'follow_up.gbp_request',
+      confirmTitleKey: 'follow_up.gbp_confirm_title',
+      confirmBodyKey: 'follow_up.gbp_confirm_body',
+    };
+  }
+  if (serviceType === 'web_seo') {
+    return {
+      templateKey: 'webseo_gsc_followup',
+      requestKey: 'follow_up.gsc_request',
+      confirmTitleKey: 'follow_up.gsc_confirm_title',
+      confirmBodyKey: 'follow_up.gsc_confirm_body',
+    };
+  }
+  return null;
+}

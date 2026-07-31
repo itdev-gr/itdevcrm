@@ -111,24 +111,36 @@ export function useUpdateIntakeForm() {
   });
 }
 
-type SendInput = { jobId: string; to: string; code: string; clientName: string; link: string };
+type SendInput = {
+  jobId: string;
+  to: string;
+  code: string;
+  clientName: string;
+  link: string;
+  /** Defaults to the initial `webdev_client_form`. Pass `webdev_form_followup`
+   *  for the follow-up reminder — same data shape, but sent_at is NOT re-stamped
+   *  (that date tracks the initial form send, not the reminder). */
+  templateKey?: string;
+};
 
 /**
  * Send the client-facing `webdev_client_form` link email. Mirrors
  * `useRequestSeoAccess` exactly — same `send-email` invoke shape, same
  * `identity: 'accounting'`, same error-context unwrapping and status check — but
- * with this template + `{ code, client_name, link }` data. On success it stamps
- * `sent_at = now()` on the form row so the badge flips to "Sent". Re-sends allowed.
+ * with this template + `{ code, client_name, link }` data. On the INITIAL send it
+ * stamps `sent_at = now()` on the form row so the badge flips to "Sent"
+ * (follow-ups skip that). Re-sends allowed.
  */
 export function useSendIntakeForm() {
   const qc = useQueryClient();
   return useMutation<void, DefaultError, SendInput>({
     mutationFn: captureMutation('webdev_intake', 'send_form', async (input: SendInput) => {
+      const templateKey = input.templateKey ?? 'webdev_client_form';
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           identity: 'accounting',
           to: input.to,
-          templateKey: 'webdev_client_form',
+          templateKey,
           data: { code: input.code, client_name: input.clientName, link: input.link },
         },
       });
@@ -149,11 +161,15 @@ export function useSendIntakeForm() {
       if (status !== 'sent' && status !== 'skipped') {
         throw new Error((data as { error?: string } | null)?.error ?? 'send failed');
       }
-      const upd = await supabase
-        .from('job_intake_forms' as never)
-        .update({ sent_at: new Date().toISOString() } as never)
-        .eq('job_id', input.jobId);
-      if (upd.error) throw new Error(upd.error.message);
+      // Only the initial form email stamps sent_at (drives the "Sent" badge);
+      // a follow-up reminder leaves the original send date intact.
+      if (templateKey === 'webdev_client_form') {
+        const upd = await supabase
+          .from('job_intake_forms' as never)
+          .update({ sent_at: new Date().toISOString() } as never)
+          .eq('job_id', input.jobId);
+        if (upd.error) throw new Error(upd.error.message);
+      }
     }),
     onSuccess: (_v, input) => void qc.invalidateQueries({ queryKey: jobIntakeKey(input.jobId) }),
   });

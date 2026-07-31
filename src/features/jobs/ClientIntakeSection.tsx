@@ -87,6 +87,7 @@ export function ClientIntakeSection({ job }: { job: JobRow }) {
 
   const [copied, setCopied] = useState(false);
   const [confirmSend, setConfirmSend] = useState(false);
+  const [confirmFollowup, setConfirmFollowup] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [confirmComplete, setConfirmComplete] = useState(false);
 
@@ -123,6 +124,17 @@ export function ClientIntakeSection({ job }: { job: JobRow }) {
       { jobId: job.id, to: clientEmail, code: job.code ?? '', clientName, link },
       {
         onSuccess: () => setConfirmSend(false),
+        onError: (e) => window.alert(e instanceof Error ? e.message : 'send failed'),
+      },
+    );
+  }
+
+  function onSendFollowup() {
+    if (!form || !clientEmail) return;
+    send.mutate(
+      { jobId: job.id, to: clientEmail, code: job.code ?? '', clientName, link, templateKey: 'webdev_form_followup' },
+      {
+        onSuccess: () => setConfirmFollowup(false),
         onError: (e) => window.alert(e instanceof Error ? e.message : 'send failed'),
       },
     );
@@ -251,6 +263,16 @@ export function ClientIntakeSection({ job }: { job: JobRow }) {
             onClick={() => setConfirmSend(true)}
           >
             {form.sent_at ? t('client_intake.resend') : t('client_intake.send')}
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            disabled={isLocked || clientEmail === '' || send.isPending}
+            title={clientEmail === '' ? t('client_intake.no_email') : undefined}
+            onClick={() => setConfirmFollowup(true)}
+          >
+            {t('follow_up.button', { ns: 'common' })}
           </Button>
           <Button type="button" size="xs" variant="outline" onClick={onCopy}>
             {copied ? `✓ ${t('client_intake.copied')}` : t('client_intake.copy')}
@@ -451,6 +473,28 @@ export function ClientIntakeSection({ job }: { job: JobRow }) {
             </DialogClose>
             <Button type="button" onClick={onSend} disabled={send.isPending}>
               {form.sent_at ? t('client_intake.resend') : t('client_intake.send')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Follow-up confirm — sends the reminder template (does not re-stamp sent_at). */}
+      <Dialog open={confirmFollowup} onOpenChange={setConfirmFollowup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('follow_up.form_confirm_title', { ns: 'common' })}</DialogTitle>
+            <DialogDescription>
+              {t('follow_up.form_confirm_body', { ns: 'common', email: clientEmail })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                {t('cancel', { ns: 'common', defaultValue: 'Cancel' })}
+              </Button>
+            </DialogClose>
+            <Button type="button" onClick={onSendFollowup} disabled={send.isPending}>
+              {t('follow_up.button', { ns: 'common' })}
             </Button>
           </DialogFooter>
         </DialogContent>

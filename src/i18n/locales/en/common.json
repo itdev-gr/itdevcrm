@@ -114,6 +114,18 @@
     "resend": "Resend",
     "last_sent_line": "Last sent on {{date}}."
   },
+  "follow_up": {
+    "button": "Follow-up",
+    "gbp_request": "Send GBP access follow-up",
+    "gbp_confirm_title": "Send follow-up",
+    "gbp_confirm_body": "Send the Google Business Profile access follow-up email to {{email}}?",
+    "gsc_request": "Send GSC access follow-up",
+    "gsc_confirm_title": "Send follow-up",
+    "gsc_confirm_body": "Send the Google Search Console access follow-up email to {{email}}?",
+    "form_request": "Send form follow-up",
+    "form_confirm_title": "Send follow-up",
+    "form_confirm_body": "Send the website-form follow-up email to {{email}}?"
+  },
   "client_picker": {
     "label": "Client (optional)",
     "search_placeholder": "Search client…",
