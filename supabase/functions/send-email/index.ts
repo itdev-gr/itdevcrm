@@ -83,7 +83,13 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
   let cc: string | undefined;
   let fromOverride: string | undefined;
   let replyToOverride: string | undefined;
-  if (templateKey === 'webseo_gsc_access' || templateKey === 'localseo_gbp_access') {
+  if (
+    templateKey === 'webseo_gsc_access' ||
+    templateKey === 'localseo_gbp_access' ||
+    templateKey === 'webseo_gsc_followup' ||
+    templateKey === 'localseo_gbp_followup' ||
+    templateKey === 'webdev_form_followup'
+  ) {
     fromOverride = 'ITDEV Support <support@itdev.gr>';
     replyToOverride = 'support@itdev.gr';
     cc = 'support@itdev.gr';
