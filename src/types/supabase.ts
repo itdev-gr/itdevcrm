@@ -578,6 +578,57 @@ export type Database = {
         }
         Relationships: []
       }
+      call_stats_daily: {
+        Row: {
+          answered: number
+          extension: string
+          inbound: number
+          internal: number
+          missed: number
+          missed_inbound: number
+          outbound: number
+          recent: Json
+          ring_seconds: number
+          stat_date: string
+          talk_seconds: number
+          total: number
+          unique_numbers: number
+          updated_at: string
+        }
+        Insert: {
+          answered?: number
+          extension: string
+          inbound?: number
+          internal?: number
+          missed?: number
+          missed_inbound?: number
+          outbound?: number
+          recent?: Json
+          ring_seconds?: number
+          stat_date: string
+          talk_seconds?: number
+          total?: number
+          unique_numbers?: number
+          updated_at?: string
+        }
+        Update: {
+          answered?: number
+          extension?: string
+          inbound?: number
+          internal?: number
+          missed?: number
+          missed_inbound?: number
+          outbound?: number
+          recent?: Json
+          ring_seconds?: number
+          stat_date?: string
+          talk_seconds?: number
+          total?: number
+          unique_numbers?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_blocks: {
         Row: {
           blocked_at: string
@@ -6945,6 +6996,10 @@ export type Database = {
           severity: string
           title: string
         }[]
+      }
+      get_my_call_stats_today: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Tables"]["call_stats_daily"]["Row"]
       }
       global_search: {
         Args: { max_rows?: number; q: string }
