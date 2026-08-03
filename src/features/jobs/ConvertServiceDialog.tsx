@@ -12,12 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select';
 import { convertibleTargets } from './serviceConversion';
 import { useConvertJobService } from './hooks/useConvertJobService';
 import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
@@ -37,6 +31,9 @@ type ConvertJob = {
  * realigned). Optionally also changes the price: after a successful convert it
  * calls the existing `update_job_billing` on the resulting billing job so we
  * reuse the tested billing logic instead of duplicating it.
+ *
+ * The target picker is a NATIVE <select>: a Radix Select nested inside this
+ * Radix Dialog fails to open reliably (focus-scope / portal), so we avoid it.
  */
 export function ConvertServiceDialog({
   job,
@@ -89,23 +86,30 @@ export function ConvertServiceDialog({
         ) : (
           <div className="space-y-3">
             <div>
-              <Label className="text-[11px] text-muted-foreground">{t('convert.target')}</Label>
-              <Select value={target} onValueChange={setTarget} disabled={busy}>
-                <SelectTrigger className="mt-0.5 h-8 text-sm" aria-label={t('convert.target')}>
-                  {label(target)}
-                </SelectTrigger>
-                <SelectContent>
-                  {targets.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {label(s)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="convert-target" className="text-[11px] text-muted-foreground">
+                {t('convert.target')}
+              </Label>
+              <select
+                id="convert-target"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                disabled={busy}
+                aria-label={t('convert.target')}
+                className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+              >
+                {targets.map((s) => (
+                  <option key={s} value={s}>
+                    {label(s)}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
-              <Label className="text-[11px] text-muted-foreground">{t('convert.new_price')}</Label>
+              <Label htmlFor="convert-price" className="text-[11px] text-muted-foreground">
+                {t('convert.new_price')}
+              </Label>
               <Input
+                id="convert-price"
                 type="number"
                 inputMode="decimal"
                 min="0"
