@@ -33,8 +33,10 @@ export function useMyCallStats() {
     queryFn: async (): Promise<MyCallStats> => {
       const { data, error } = await supabase.rpc('get_my_call_stats_today');
       if (error) throw new Error(error.message);
-      // The generated RPC return types `recent` as `Json`; narrow via `unknown`.
-      return (data ?? null) as unknown as MyCallStats;
+      // RPC is `returns setof` → PostgREST yields an array (0 or 1 row).
+      // (Generated types model `recent` as `Json`, so narrow via `unknown`.)
+      const rows = (data ?? []) as unknown as NonNullable<MyCallStats>[];
+      return rows[0] ?? null;
     },
     refetchInterval: 60_000,
     placeholderData: keepPreviousData,

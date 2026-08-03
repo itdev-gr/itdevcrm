@@ -30,7 +30,7 @@ drop policy if exists call_stats_daily_select on public.call_stats_daily;
 create policy call_stats_daily_select on public.call_stats_daily
   for select to authenticated
   using (
-    is_admin()
+    public.current_user_is_admin()
     or exists (
       select 1 from public.profiles p
       where p.user_id = auth.uid()
@@ -39,9 +39,11 @@ create policy call_stats_daily_select on public.call_stats_daily
   );
 -- No INSERT/UPDATE/DELETE policy: writes come only from the service role.
 
--- Caller-scoped read RPC (single row for today, Athens tz).
-create or replace function public.get_my_call_stats_today()
-returns public.call_stats_daily
+-- Caller-scoped read RPC: 0 or 1 row for today (Athens tz). `setof` so that
+-- "no row" serializes as [] rather than an all-null composite object.
+drop function if exists public.get_my_call_stats_today();
+create function public.get_my_call_stats_today()
+returns setof public.call_stats_daily
 language sql stable security definer set search_path = public as $$
   select s.*
   from public.call_stats_daily s

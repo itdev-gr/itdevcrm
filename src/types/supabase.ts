@@ -6999,7 +6999,7 @@ export type Database = {
       }
       get_my_call_stats_today: {
         Args: Record<PropertyKey, never>
-        Returns: Database["public"]["Tables"]["call_stats_daily"]["Row"]
+        Returns: Database["public"]["Tables"]["call_stats_daily"]["Row"][]
       }
       global_search: {
         Args: { max_rows?: number; q: string }

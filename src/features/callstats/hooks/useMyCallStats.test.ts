@@ -16,16 +16,16 @@ function wrapper({ children }: { children: ReactNode }) {
 describe('useMyCallStats', () => {
   beforeEach(() => rpc.mockReset());
 
-  it('returns the row from the RPC', async () => {
-    rpc.mockResolvedValue({ data: { extension: '207', total: 5, missed: 2, talk_seconds: 72, recent: [] }, error: null });
+  it('returns the first row from the RPC array', async () => {
+    rpc.mockResolvedValue({ data: [{ extension: '207', total: 5, missed: 2, talk_seconds: 72, recent: [] }], error: null });
     const { result } = renderHook(() => useMyCallStats(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.extension).toBe('207');
     expect(result.current.data?.total).toBe(5);
   });
 
-  it('returns null when the user has no row', async () => {
-    rpc.mockResolvedValue({ data: null, error: null });
+  it('returns null when the RPC returns an empty array (no row)', async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
     const { result } = renderHook(() => useMyCallStats(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBeNull();
