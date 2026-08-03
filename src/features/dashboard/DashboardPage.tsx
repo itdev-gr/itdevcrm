@@ -17,6 +17,7 @@ import { PageHeader, SegmentedControl } from '@/components/layout/page-shell';
 import { Input } from '@/components/ui/input';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { useContractedMRR } from '@/features/accounting_report/hooks/useContractedMRR';
+import { useDealPaymentsRealtime } from '@/features/accounting_report/hooks/useDealPaymentsRealtime';
 import { cn } from '@/lib/utils';
 import {
   monthKeys,
@@ -221,6 +222,7 @@ const SOURCE_LABELS: Record<string, string> = {
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
+  useDealPaymentsRealtime();
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-US';
   const [preset, setPreset] = useState<Preset>('last_6_months');
   const [customFrom, setCustomFrom] = useState<string>(() => rangeFor('this_month').from);

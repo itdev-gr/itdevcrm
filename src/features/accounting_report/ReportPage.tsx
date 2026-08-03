@@ -7,6 +7,7 @@ import { usePLSummary } from './hooks/usePLSummary';
 import { useMRR } from './hooks/useMRR';
 import { useContractedMRR } from './hooks/useContractedMRR';
 import { useExpensesRealtime } from './hooks/useExpensesRealtime';
+import { useDealPaymentsRealtime } from './hooks/useDealPaymentsRealtime';
 import { ReportHeader } from './components/ReportHeader';
 import { IncomeBreakdown } from './components/IncomeBreakdown';
 import { ExpenseBreakdown } from './components/ExpenseBreakdown';
@@ -18,6 +19,7 @@ import { ExpenseDetailDialog } from './components/ExpenseDetailDialog';
 export function ReportPage() {
   const { t } = useTranslation('accounting_report');
   useExpensesRealtime();
+  useDealPaymentsRealtime();
 
   const [preset, setPreset] = useState<RangePreset>('this_month');
   const [range, setRange] = useState<DateRange>(() => rangeForPreset('this_month'));
