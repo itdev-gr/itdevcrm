@@ -25,6 +25,7 @@ type ConvertJob = {
   service_type: string;
   parent_job_id: string | null;
   hasChildren?: boolean;
+  billing_only?: boolean | null;
 };
 
 /**
@@ -49,6 +50,12 @@ export function ConvertServiceDialog({
   const convert = useConvertJobService();
 
   const label = (s: string) => t(`deals:services.types.${s}`, { defaultValue: s });
+  const warningKey =
+    job.service_type === 'ai_seo'
+      ? 'convert.warning_ai_down'
+      : target === 'ai_seo'
+        ? 'convert.warning_ai_up'
+        : 'convert.warning';
 
   function onConfirm() {
     if (!target) return;
@@ -90,7 +97,7 @@ export function ConvertServiceDialog({
                 </SelectContent>
               </Select>
             </div>
-            <DialogDescription>{t('convert.warning')}</DialogDescription>
+            <DialogDescription>{t(warningKey)}</DialogDescription>
           </div>
         )}
         <DialogFooter>
