@@ -51,13 +51,13 @@ begin
      and coalesce(amount_net, -1) = coalesce(j.amount_net, -1);
 
   update public.deals d
-     set services_planned = (
+     set services_planned = coalesce((
        select jsonb_agg(
          case when (e->>'service_type') = j.service_type
                and coalesce((e->>'amount_net')::numeric, -1) = coalesce(j.amount_net, -1)
               then jsonb_set(e, '{service_type}', to_jsonb(p_target))
               else e end)
-       from jsonb_array_elements(d.services_planned) e)
+       from jsonb_array_elements(d.services_planned) e), d.services_planned)
    where d.id = j.deal_id and jsonb_typeof(d.services_planned) = 'array';
 
   -- 2) service_type + 3) stage remap to the target board's first stage
@@ -77,17 +77,20 @@ begin
 
   -- 6) monthly tasks — reset to the target template
   update public.jobs
-     set monthly_tasks = (select tasks from public.service_monthly_task_templates where service_type = p_target),
+     set monthly_tasks = coalesce(
+           (select tasks from public.service_monthly_task_templates where service_type = p_target),
+           '[]'::jsonb),
          monthly_tasks_period = null
    where id = p_job_id;
 
   -- NOTE (v1): details JSONB is left as-is. The Info tab renders only the target
   -- service's keys, so stale keys are hidden; keeping them makes convert reversible.
 
-  -- 7) audit
+  -- 7) audit (action is CHECK-limited to insert/update/delete; kind goes in changes)
   insert into public.activity_log(entity_type, entity_id, action, changes, user_id, client_id)
-    values ('job', p_job_id, 'service_type_converted',
-            jsonb_build_object('from', j.service_type, 'to', p_target), auth.uid(), j.client_id);
+    values ('job', p_job_id, 'update',
+            jsonb_build_object('kind','service_type_converted','from', j.service_type, 'to', p_target),
+            auth.uid(), j.client_id);
 
   select * into j from public.jobs where id = p_job_id;
   return j;
