@@ -3,6 +3,19 @@
   "app_subtitle": "CRM Platform",
   "back": "Back",
   "tagline": "Multi-department CRM",
+  "callstats": {
+    "today": "Today",
+    "calls": "calls",
+    "missed": "missed",
+    "talk": "talk",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "answered": "Answered",
+    "ring": "Ring time",
+    "unique": "Unique numbers",
+    "recent": "Recent calls",
+    "none": "No calls today"
+  },
   "record_type": {
     "lead": "Lead",
     "deal": "Deal",

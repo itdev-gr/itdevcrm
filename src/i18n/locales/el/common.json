@@ -3,6 +3,19 @@
   "app_subtitle": "CRM Platform",
   "back": "Πίσω",
   "tagline": "CRM πολλαπλών τμημάτων",
+  "callstats": {
+    "today": "Σήμερα",
+    "calls": "κλήσεις",
+    "missed": "αναπάντητες",
+    "talk": "ομιλία",
+    "inbound": "Εισερχόμενες",
+    "outbound": "Εξερχόμενες",
+    "answered": "Απαντημένες",
+    "ring": "Χρόνος κουδουνίσματος",
+    "unique": "Μοναδικοί αριθμοί",
+    "recent": "Τελευταίες κλήσεις",
+    "none": "Καμία κλήση σήμερα"
+  },
   "record_type": {
     "lead": "Lead",
     "deal": "Συμφωνία",
