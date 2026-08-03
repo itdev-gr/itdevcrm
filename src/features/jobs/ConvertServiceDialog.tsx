@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -19,9 +20,11 @@ import {
 } from '@/components/ui/select';
 import { convertibleTargets } from './serviceConversion';
 import { useConvertJobService } from './hooks/useConvertJobService';
+import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
 
 type ConvertJob = {
   id: string;
+  deal_id: string;
   service_type: string;
   parent_job_id: string | null;
   hasChildren?: boolean;
@@ -29,11 +32,11 @@ type ConvertJob = {
 };
 
 /**
- * Admin/accounting dialog that converts a standalone job between same-cadence
- * service types via the `convert_job_service_type` RPC. Amounts/payments are
- * preserved server-side; the board, owner, monthly tasks, code and info fields
- * are realigned. Shows a "cannot convert" note when the job has no valid
- * targets (AI SEO / web dev / special services / parent or child jobs).
+ * Admin/accounting dialog that converts a job between service types via the
+ * `convert_job_service_type` RPC (amounts preserved; board/owner/tasks/code
+ * realigned). Optionally also changes the price: after a successful convert it
+ * calls the existing `update_job_billing` on the resulting billing job so we
+ * reuse the tested billing logic instead of duplicating it.
  */
 export function ConvertServiceDialog({
   job,
@@ -47,7 +50,10 @@ export function ConvertServiceDialog({
   const { t } = useTranslation('jobs');
   const targets = convertibleTargets(job);
   const [target, setTarget] = useState(targets[0] ?? '');
+  const [newPrice, setNewPrice] = useState('');
   const convert = useConvertJobService();
+  const updateBilling = useUpdateJobBilling(job.deal_id);
+  const busy = convert.isPending || updateBilling.isPending;
 
   const label = (s: string) => t(`deals:services.types.${s}`, { defaultValue: s });
   const warningKey =
@@ -57,19 +63,19 @@ export function ConvertServiceDialog({
         ? 'convert.warning_ai_up'
         : 'convert.warning';
 
-  function onConfirm() {
+  async function onConfirm() {
     if (!target) return;
-    convert.mutate(
-      { jobId: job.id, target },
-      {
-        onSuccess: () => {
-          onOpenChange(false);
-          window.alert(t('convert.success'));
-        },
-        onError: (e) =>
-          window.alert(t('convert.error', { msg: e instanceof Error ? e.message : String(e) })),
-      },
-    );
+    try {
+      const result = await convert.mutateAsync({ jobId: job.id, target });
+      const price = newPrice.trim();
+      if (price !== '' && Number.isFinite(Number(price)) && result?.id) {
+        await updateBilling.mutateAsync({ jobId: result.id, amountNet: Number(price) });
+      }
+      onOpenChange(false);
+      window.alert(t('convert.success'));
+    } catch (e) {
+      window.alert(t('convert.error', { msg: e instanceof Error ? e.message : String(e) }));
+    }
   }
 
   return (
@@ -84,7 +90,7 @@ export function ConvertServiceDialog({
           <div className="space-y-3">
             <div>
               <Label className="text-[11px] text-muted-foreground">{t('convert.target')}</Label>
-              <Select value={target} onValueChange={setTarget} disabled={convert.isPending}>
+              <Select value={target} onValueChange={setTarget} disabled={busy}>
                 <SelectTrigger className="mt-0.5 h-8 text-sm" aria-label={t('convert.target')}>
                   {label(target)}
                 </SelectTrigger>
@@ -97,6 +103,20 @@ export function ConvertServiceDialog({
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label className="text-[11px] text-muted-foreground">{t('convert.new_price')}</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                placeholder={t('convert.new_price_hint')}
+                disabled={busy}
+                className="mt-0.5 h-8 text-sm"
+              />
+            </div>
             <DialogDescription>{t(warningKey)}</DialogDescription>
           </div>
         )}
@@ -107,7 +127,7 @@ export function ConvertServiceDialog({
             </Button>
           </DialogClose>
           {targets.length > 0 && (
-            <Button type="button" onClick={onConfirm} disabled={convert.isPending || !target}>
+            <Button type="button" onClick={onConfirm} disabled={busy || !target}>
               {t('convert.confirm')}
             </Button>
           )}
