@@ -48,8 +48,36 @@ export function useAddDealPayment(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: captureMutation('deal_payments', 'create', async (row: Omit<DealPaymentInsert, 'deal_id'>) => {
-      const { error } = await supabase.from('deal_payments').insert({ ...row, deal_id: dealId });
+      const { data: inserted, error } = await supabase
+        .from('deal_payments')
+        .insert({ ...row, deal_id: dealId })
+        .select('id, service_type, label, amount_net, vat_rate')
+        .single();
       if (error) throw new Error(error.message);
+
+      // Every other payment path creates a matching deal_payment_lines row; the
+      // manual add-payment flow used to skip it, leaving payments with zero lines
+      // and thus invisible to per-job billing. Resolve a job link when the
+      // service_type maps to exactly one non-archived job, else leave it null.
+      let job: { id: string; title: string | null } | null = null;
+      if (inserted.service_type) {
+        const { data: jobs, error: jobsError } = await supabase
+          .from('jobs')
+          .select('id, title')
+          .eq('deal_id', dealId)
+          .eq('service_type', inserted.service_type)
+          .eq('archived', false);
+        if (!jobsError && jobs && jobs.length === 1) job = jobs[0]!;
+      }
+
+      const { error: lineError } = await supabase.from('deal_payment_lines').insert({
+        payment_id: inserted.id,
+        job_id: job?.id ?? null,
+        label: job?.title ?? inserted.label ?? null,
+        amount_net: inserted.amount_net ?? 0,
+        vat_rate: inserted.vat_rate ?? 24,
+      });
+      if (lineError) throw new Error(lineError.message);
     }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
