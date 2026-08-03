@@ -211,6 +211,7 @@
       "vat": "VAT",
       "total": "Total"
     },
+    "convert": "Convert",
     "end": "End",
     "end_confirm_title": "End this job?",
     "end_confirm_body": "Billing stops and the job is marked ended. This can't be undone here.",

@@ -17,6 +17,9 @@ export function useConvertJobService() {
       qc.invalidateQueries({ queryKey: ['jobs'] });
       qc.invalidateQueries({ queryKey: ['job'] });
       qc.invalidateQueries({ queryKey: ['deal'] });
+      // Refresh the deal's Jobs & Billing panel (prefix keys, any deal).
+      qc.invalidateQueries({ queryKey: ['jobs-billing'] });
+      qc.invalidateQueries({ queryKey: ['deal-payments'] });
     },
   });
 }

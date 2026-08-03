@@ -28,6 +28,9 @@ import { billingErrorMessage, reportBillingError as reportError } from './billin
 import type { BillingType } from '@/lib/rpc';
 import { PauseCircle, PlayCircle } from 'lucide-react';
 import { useJobPauseBilling, useJobResumeBilling } from '@/features/jobs/hooks/useJobBillingPause';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { canConvert } from '@/features/jobs/serviceConversion';
+import { ConvertServiceDialog } from '@/features/jobs/ConvertServiceDialog';
 
 /** Billing-term options offered per job, in display order. */
 const TERMS: BillingType[] = ['one_time', 'recurring_monthly', 'recurring_yearly'];
@@ -113,6 +116,17 @@ function JobRow({
   const [confirmPause, setConfirmPause] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleRow[] | null>(null);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const canConvertJob =
+    !readOnly &&
+    (isAdmin || groupCodes.includes('accounting')) &&
+    canConvert({
+      service_type: job.department,
+      parent_job_id: job.parent_job_id,
+      billing_only: job.billing_only,
+    });
 
   const ended = job.status === 'ended' || job.billing_active === false;
   const isRecurring = job.billing_type === 'recurring_monthly' || job.billing_type === 'recurring_yearly';
@@ -394,6 +408,17 @@ function JobRow({
       </td>
       <td className="px-1.5 py-1.5 text-right">
         <div className="flex items-center justify-end gap-1">
+          {canConvertJob && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setConvertOpen(true)}
+            >
+              {t('jobs_billing.convert', { defaultValue: 'Μετατροπή' })}
+            </Button>
+          )}
           {showPause && (
             <Button
               type="button"
@@ -485,6 +510,19 @@ function JobRow({
                 reportError(t, err);
               }
             }}
+          />
+        )}
+        {canConvertJob && (
+          <ConvertServiceDialog
+            job={{
+              id: job.id,
+              deal_id: dealId,
+              service_type: job.department,
+              parent_job_id: job.parent_job_id,
+              billing_only: job.billing_only,
+            }}
+            open={convertOpen}
+            onOpenChange={setConvertOpen}
           />
         )}
       </td>
