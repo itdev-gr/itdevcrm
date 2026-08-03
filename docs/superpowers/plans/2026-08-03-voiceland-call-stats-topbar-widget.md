@@ -18,7 +18,7 @@
 - Tests: `npm run test:run` (Vitest). Use **core matchers only** — `jest-dom` is broken here (`reference_jestdom_vitest_broken`). Vitest hits PROD data (`project_full_live_sweep`) — use disposable/seeded rows and clean them up.
 - Lint gate is strict: `eslint . --max-warnings=0` runs inside `npm run build`.
 - No secrets in committed files (env-var names only). The box's Supabase service key lives in `/etc/voiceland-supabase.env` (chmod 600), never in git.
-- Talk-time field: the box CDR uses `duration` (talk seconds) + `ring_duration`; the legacy `stats.php` sums a nonexistent `talk_duration` (0-bug). Producer must use `(int)($c['talk_duration'] ?? $c['duration'] ?? 0)`.
+- Talk-time field: Yeastar `duration` is TOTAL (ring+talk); `talk_duration` exists only on ANSWERED calls. Correct talk time in all cases = `max(0, duration - ring_duration)` (verified live 2026-08-03: NO ANSWER dur=63/ring=63→0, ANSWERED dur=1160/ring=10→1150, BUSY dur=13/ring=13→0). Do NOT use `talk_duration ?? duration` (inflates unanswered calls by their ring time).
 
 ## File Structure
 
@@ -596,8 +596,10 @@ foreach ($cdr as $c) {
     $a =& $agg[$ext];
     $type = $c['call_type'] ?? ''; $disp = $c['disposition'] ?? '';
     $isAns = ($disp === 'ANSWERED');
-    $talk = (int)($c['talk_duration'] ?? $c['duration'] ?? 0);
+    // duration = total (ring+talk); talk_duration only on answered calls.
+    // duration - ring_duration = talk in all cases (0 when unanswered).
     $ring = (int)($c['ring_duration'] ?? 0);
+    $talk = max(0, (int)($c['duration'] ?? 0) - $ring);
     $a['total']++;
     if ($type === 'Inbound') { $a['inbound']++; if (!$isAns) $a['missed_inbound']++; }
     elseif ($type === 'Outbound') $a['outbound']++;
