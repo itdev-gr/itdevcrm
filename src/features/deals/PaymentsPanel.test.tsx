@@ -24,7 +24,6 @@ import { PaymentsPanel } from './PaymentsPanel';
 const row: DealPaymentRow = {
   id: 'p1',
   deal_id: 'd1',
-  amount: 100,
   amount_gross: 124,
   amount_net: 100,
   billing_type: 'one_time',

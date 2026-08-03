@@ -1456,7 +1456,6 @@ export type Database = {
       }
       deal_payments: {
         Row: {
-          amount: number
           amount_gross: number | null
           amount_net: number
           billing_type: string
@@ -1476,7 +1475,6 @@ export type Database = {
           vat_rate: number
         }
         Insert: {
-          amount?: number
           amount_gross?: number | null
           amount_net: number
           billing_type: string
@@ -1496,7 +1494,6 @@ export type Database = {
           vat_rate?: number
         }
         Update: {
-          amount?: number
           amount_gross?: number | null
           amount_net?: number
           billing_type?: string
@@ -6546,7 +6543,6 @@ export type Database = {
       }
       deal_payments_with_totals: {
         Row: {
-          amount: number | null
           amount_gross: number | null
           amount_net: number | null
           billing_type: string | null
