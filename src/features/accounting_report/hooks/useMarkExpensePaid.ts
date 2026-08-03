@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { invalidateFinancialReports } from '@/lib/financialInvalidations';
 
 export function useMarkExpensePaid() {
   const qc = useQueryClient();
@@ -24,8 +25,7 @@ export function useMarkExpensePaid() {
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: ['expenses'] });
       void qc.invalidateQueries({ queryKey: ['expense', vars.id] });
-      void qc.invalidateQueries({ queryKey: ['accounting-ledger'] });
-      void qc.invalidateQueries({ queryKey: ['accounting-pl-summary'] });
+      invalidateFinancialReports(qc);
     },
   });
 }

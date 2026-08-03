@@ -23,8 +23,10 @@ describe('useSetExpenseAutopay', () => {
   });
 
   it('calls set_expense_autopay with id, enabled, and payment method', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const invalidateSpy = vi.spyOn(qc, 'invalidateQueries');
     const { result } = renderHook(() => useSetExpenseAutopay(), {
-      wrapper: ({ children }) => wrap(children),
+      wrapper: ({ children }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
     });
     await act(async () => {
       await result.current.mutateAsync({ id: 'e1', enabled: true, paymentMethod: 'CARD' });
@@ -34,6 +36,8 @@ describe('useSetExpenseAutopay', () => {
       p_enabled: true,
       p_payment_method: 'CARD',
     });
+    const invalidated = invalidateSpy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey));
+    expect(invalidated).toContain(JSON.stringify(['dashboard-monthly-pl']));
   });
 
   it('omits the payment method when not provided (disable path)', async () => {

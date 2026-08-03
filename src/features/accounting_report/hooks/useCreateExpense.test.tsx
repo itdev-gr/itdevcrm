@@ -27,8 +27,10 @@ describe('useCreateExpense', () => {
   });
 
   it('inserts pending row with correct payload', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const invalidateSpy = vi.spyOn(qc, 'invalidateQueries');
     const { result } = renderHook(() => useCreateExpense(), {
-      wrapper: ({ children }) => wrap(children),
+      wrapper: ({ children }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
     });
     await act(async () => {
       await result.current.mutateAsync({
@@ -58,6 +60,8 @@ describe('useCreateExpense', () => {
       status: 'pending',
       autopay: false,
     });
+    const invalidated = invalidateSpy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey));
+    expect(invalidated).toContain(JSON.stringify(['dashboard-monthly-pl']));
   });
 
   it('supports markPaid=true with paid_by and paid_at', async () => {

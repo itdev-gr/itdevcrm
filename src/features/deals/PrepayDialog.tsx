@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { accountingPrepayMonths, type PrepayResult } from '@/lib/rpc';
+import { invalidateFinancialReports } from '@/lib/financialInvalidations';
 import { dealPaymentsKey } from './hooks/useDealPayments';
 import { jobsBillingKey } from './hooks/useJobsBilling';
 
@@ -67,6 +68,8 @@ export function PrepayDialog({
       // don't show stale "next due" / collected amounts until a manual reload.
       void qc.invalidateQueries({ queryKey: ['recurring-clients'] });
       void qc.invalidateQueries({ queryKey: ['accounting-mrr'] });
+      // Also refresh the P&L / dashboard trend keys the block above doesn't cover.
+      invalidateFinancialReports(qc);
     } catch (e) {
       setDone({ ok: false, errors: [(e as Error).message] });
     } finally {

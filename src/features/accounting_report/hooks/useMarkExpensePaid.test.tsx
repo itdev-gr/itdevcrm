@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
@@ -19,11 +18,6 @@ vi.mock('@/lib/supabase', () => ({
 
 import { useMarkExpensePaid } from './useMarkExpensePaid';
 
-function wrap(c: ReactNode) {
-  const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  return <QueryClientProvider client={qc}>{c}</QueryClientProvider>;
-}
-
 describe('useMarkExpensePaid', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,8 +26,10 @@ describe('useMarkExpensePaid', () => {
   });
 
   it('sets status=paid, paid_at=now, payment_method, paid_by=currentUser', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const invalidateSpy = vi.spyOn(qc, 'invalidateQueries');
     const { result } = renderHook(() => useMarkExpensePaid(), {
-      wrapper: ({ children }) => wrap(children),
+      wrapper: ({ children }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
     });
     await act(async () => {
       await result.current.mutateAsync({ id: 'e1', paymentMethod: 'bank_transfer' });
@@ -44,5 +40,7 @@ describe('useMarkExpensePaid', () => {
     expect(payload.paid_by).toBe('user-1');
     expect(typeof payload.paid_at).toBe('string');
     expect(eq).toHaveBeenCalledWith('id', 'e1');
+    const invalidated = invalidateSpy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey));
+    expect(invalidated).toContain(JSON.stringify(['dashboard-monthly-pl']));
   });
 });
