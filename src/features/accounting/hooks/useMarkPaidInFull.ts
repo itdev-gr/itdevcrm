@@ -2,6 +2,7 @@ import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-
 import { markPaidInFull } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 import { captureMutation } from '@/lib/sentry/captureMutation';
+import { invalidateFinancialReports } from '@/lib/financialInvalidations';
 
 export function useMarkPaidInFull() {
   const qc = useQueryClient();
@@ -20,6 +21,7 @@ export function useMarkPaidInFull() {
       void qc.invalidateQueries({ queryKey: queryKeys.deal(dealId) });
       void qc.invalidateQueries({ queryKey: queryKeys.clients() });
       void qc.invalidateQueries({ queryKey: ['jobs'] });
+      invalidateFinancialReports(qc);
     },
   });
 }

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { completeAccounting } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 import { captureMutation } from '@/lib/sentry/captureMutation';
+import { invalidateFinancialReports } from '@/lib/financialInvalidations';
 
 export function useCompleteAccounting() {
   const qc = useQueryClient();
@@ -17,6 +18,7 @@ export function useCompleteAccounting() {
     }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
+      invalidateFinancialReports(qc);
     },
   });
 }

@@ -9,6 +9,8 @@ const {
   paymentsInsert,
   paymentsSelect,
   paymentsSingle,
+  paymentsUpdate,
+  paymentsUpdateEq,
   jobsSelect,
   jobsEq1,
   jobsEq2,
@@ -20,6 +22,9 @@ const {
   const paymentsSelect = vi.fn().mockReturnValue({ single: paymentsSingle });
   const paymentsInsert = vi.fn().mockReturnValue({ select: paymentsSelect });
 
+  const paymentsUpdateEq = vi.fn().mockResolvedValue({ error: null });
+  const paymentsUpdate = vi.fn().mockReturnValue({ eq: paymentsUpdateEq });
+
   const jobsEq3 = vi.fn();
   const jobsEq2 = vi.fn().mockReturnValue({ eq: jobsEq3 });
   const jobsEq1 = vi.fn().mockReturnValue({ eq: jobsEq2 });
@@ -28,7 +33,7 @@ const {
   const linesInsert = vi.fn();
 
   const from = vi.fn((table: string) => {
-    if (table === 'deal_payments') return { insert: paymentsInsert };
+    if (table === 'deal_payments') return { insert: paymentsInsert, update: paymentsUpdate };
     if (table === 'jobs') return { select: jobsSelect };
     if (table === 'deal_payment_lines') return { insert: linesInsert };
     throw new Error(`unexpected table: ${table}`);
@@ -38,6 +43,8 @@ const {
     paymentsInsert,
     paymentsSelect,
     paymentsSingle,
+    paymentsUpdate,
+    paymentsUpdateEq,
     jobsSelect,
     jobsEq1,
     jobsEq2,
@@ -52,7 +59,7 @@ vi.mock('@/lib/sentry/captureMutation', () => ({
   captureMutation: (_s: string, _o: string, fn: (...a: unknown[]) => unknown) => fn,
 }));
 
-import { useAddDealPayment } from './useDealPayments';
+import { useAddDealPayment, useUpdateDealPayment } from './useDealPayments';
 
 const DEAL = 'deal-1';
 
@@ -79,7 +86,9 @@ describe('useAddDealPayment', () => {
     });
     jobsEq3.mockResolvedValue({ data: [{ id: 'job-7', title: 'Website build' }], error: null });
 
-    const { result } = renderHook(() => useAddDealPayment(DEAL), { wrapper: wrap(newClient()) });
+    const client = newClient();
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
+    const { result } = renderHook(() => useAddDealPayment(DEAL), { wrapper: wrap(client) });
     await result.current.mutateAsync({
       service_type: 'web_dev',
       label: 'caller label',
@@ -113,6 +122,11 @@ describe('useAddDealPayment', () => {
       amount_net: 500,
       vat_rate: 24,
     });
+
+    // Adding income must also refresh the financial report / dashboard surfaces.
+    const invalidated = invalidateSpy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey));
+    expect(invalidated).toContain(JSON.stringify(['accounting-ledger']));
+    expect(invalidated).toContain(JSON.stringify(['dashboard-monthly-pl']));
   });
 
   it('falls back to a null job link when the service_type is ambiguous (2 jobs)', async () => {
@@ -198,5 +212,26 @@ describe('useAddDealPayment', () => {
     await expect(
       result.current.mutateAsync({ label: 'x', amount_net: 0, vat_rate: 24 } as never),
     ).rejects.toThrow('line failed');
+  });
+});
+
+describe('useUpdateDealPayment', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    paymentsUpdateEq.mockResolvedValue({ error: null });
+  });
+
+  it('invalidates the financial report + dashboard keys on success', async () => {
+    const client = newClient();
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
+    const { result } = renderHook(() => useUpdateDealPayment(DEAL), { wrapper: wrap(client) });
+    await result.current.mutateAsync({ id: 'pay-1', patch: { amount_net: 200 } });
+
+    expect(paymentsUpdate).toHaveBeenCalledWith({ amount_net: 200 });
+    expect(paymentsUpdateEq).toHaveBeenCalledWith('id', 'pay-1');
+
+    const invalidated = invalidateSpy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey));
+    expect(invalidated).toContain(JSON.stringify(['accounting-ledger']));
+    expect(invalidated).toContain(JSON.stringify(['dashboard-monthly-pl']));
   });
 });

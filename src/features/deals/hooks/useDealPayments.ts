@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 import { captureMutation } from '@/lib/sentry/captureMutation';
+import { invalidateFinancialReports } from '@/lib/financialInvalidations';
 import { jobsBillingKey } from './useJobsBilling';
 
 export type DealPaymentRow = Database['public']['Tables']['deal_payments']['Row'];
@@ -40,6 +41,7 @@ export function useUpdateDealPayment(dealId: string) {
       void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
       void qc.invalidateQueries({ queryKey: jobsBillingKey(dealId) });
       void qc.invalidateQueries({ queryKey: ['accounting-deals'] });
+      invalidateFinancialReports(qc);
     },
   });
 }
@@ -83,6 +85,7 @@ export function useAddDealPayment(dealId: string) {
       void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
       void qc.invalidateQueries({ queryKey: jobsBillingKey(dealId) });
       void qc.invalidateQueries({ queryKey: ['accounting-deals'] });
+      invalidateFinancialReports(qc);
     },
   });
 }
@@ -98,6 +101,7 @@ export function useDeleteDealPayment(dealId: string) {
       void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
       void qc.invalidateQueries({ queryKey: jobsBillingKey(dealId) });
       void qc.invalidateQueries({ queryKey: ['accounting-deals'] });
+      invalidateFinancialReports(qc);
     },
   });
 }
