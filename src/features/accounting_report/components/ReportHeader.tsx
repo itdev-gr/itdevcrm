@@ -16,6 +16,8 @@ export type ReportHeaderProps = {
   mrr: number;
   collectedMrr: number;
   ytdSummary: PLSummary | undefined;
+  includePendingExpenses: boolean;
+  onIncludePendingExpensesChange: (value: boolean) => void;
 };
 
 function KpiTile({
@@ -25,6 +27,7 @@ function KpiTile({
   suffix,
   icon: Icon,
   accent = 'default',
+  hint,
 }: {
   label: string;
   gross: number;
@@ -32,6 +35,7 @@ function KpiTile({
   suffix: string;
   icon: typeof TrendingUp;
   accent?: 'income' | 'expense' | 'profit' | 'mrr' | 'default';
+  hint?: string | undefined;
 }) {
   const accentStyles = {
     default: 'bg-muted/50 text-muted-foreground',
@@ -52,6 +56,11 @@ function KpiTile({
               €{net.toFixed(2)} {suffix}
             </p>
           )}
+          {hint && (
+            <span className="mt-1.5 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {hint}
+            </span>
+          )}
         </div>
         <div className={cn('rounded-lg p-2.5', accentStyles[accent])}>
           <Icon className="size-4" />
@@ -71,6 +80,8 @@ export function ReportHeader({
   mrr,
   collectedMrr,
   ytdSummary,
+  includePendingExpenses,
+  onIncludePendingExpensesChange,
 }: ReportHeaderProps) {
   const { t } = useTranslation('accounting_report');
   const presets: RangePreset[] = ['this_month', 'last_month', 'this_year', 'last_year', 'custom'];
@@ -108,6 +119,16 @@ export function ReportHeader({
             </label>
           </div>
         )}
+
+        <label className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            aria-label={t('include_pending_expenses')}
+            checked={includePendingExpenses}
+            onChange={(e) => onIncludePendingExpensesChange(e.target.checked)}
+          />
+          <span>{t('include_pending_expenses')}</span>
+        </label>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -126,6 +147,7 @@ export function ReportHeader({
           suffix={t('kpi.net_suffix')}
           icon={TrendingDown}
           accent="expense"
+          hint={includePendingExpenses ? t('includes_pending_hint') : undefined}
         />
         <KpiTile
           label={t('kpi.net_profit')}

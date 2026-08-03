@@ -2,6 +2,8 @@
   "page_title": "Accounting Report",
   "page_subtitle": "Income, expenses, and net profit",
   "expenses_page_title": "Expenses",
+  "include_pending_expenses": "Include unpaid expenses",
+  "includes_pending_hint": "includes unpaid",
   "nav": {
     "report": "Report",
     "expenses": "Expenses"

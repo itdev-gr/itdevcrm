@@ -23,15 +23,16 @@ export function ReportPage() {
 
   const [preset, setPreset] = useState<RangePreset>('this_month');
   const [range, setRange] = useState<DateRange>(() => rangeForPreset('this_month'));
+  const [includePendingExpenses, setIncludePendingExpenses] = useState(false);
 
   function onPreset(p: RangePreset) {
     setPreset(p);
     if (p !== 'custom') setRange(rangeForPreset(p));
   }
 
-  const summary = usePLSummary(range);
+  const summary = usePLSummary(range, { includePendingExpenses });
   const ytdRange = useMemo(() => rangeForPreset('this_year'), []);
-  const ytdSummary = usePLSummary(ytdRange);
+  const ytdSummary = usePLSummary(ytdRange, { includePendingExpenses });
   const collectedMrr = useMRR(range);
   const contractedMrr = useContractedMRR();
   const ledger = useLedger(range);
@@ -41,8 +42,13 @@ export function ReportPage() {
     [ledger.data],
   );
   const expenseRows = useMemo(
-    () => (ledger.data ?? []).filter((r) => r.direction === 'out' && r.status === 'paid'),
-    [ledger.data],
+    () =>
+      (ledger.data ?? []).filter(
+        (r) =>
+          r.direction === 'out' &&
+          (r.status === 'paid' || (includePendingExpenses && r.status === 'pending')),
+      ),
+    [ledger.data, includePendingExpenses],
   );
 
   const [drawer, setDrawer] = useState<{ title: string; rows: LedgerRow[] } | null>(null);
@@ -81,6 +87,8 @@ export function ReportPage() {
         mrr={contractedMrr.data ?? 0}
         collectedMrr={collectedMrr.data ?? 0}
         ytdSummary={ytdSummary.data}
+        includePendingExpenses={includePendingExpenses}
+        onIncludePendingExpensesChange={setIncludePendingExpenses}
       />
 
       <IncomeBreakdown rows={incomeRows} onSelectGroup={openIncomeGroup} />

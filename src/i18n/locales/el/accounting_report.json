@@ -2,6 +2,8 @@
   "page_title": "Λογιστική Αναφορά",
   "page_subtitle": "Έσοδα, έξοδα και καθαρό κέρδος",
   "expenses_page_title": "Έξοδα",
+  "include_pending_expenses": "Με ανεξόφλητα έξοδα",
+  "includes_pending_hint": "περιλαμβάνει ανεξόφλητα",
   "nav": {
     "report": "Αναφορά",
     "expenses": "Έξοδα"

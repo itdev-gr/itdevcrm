@@ -102,6 +102,6 @@ export const queryKeys = {
   expense: (id: string) => ['expense', id] as const,
   accountingLedger: (from: string, to: string) =>
     ['accounting-ledger', from, to] as const,
-  accountingPLSummary: (from: string, to: string) =>
-    ['accounting-pl-summary', from, to] as const,
+  accountingPLSummary: (from: string, to: string, includePendingExpenses = false) =>
+    ['accounting-pl-summary', from, to, includePendingExpenses] as const,
 };

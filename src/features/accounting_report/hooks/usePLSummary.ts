@@ -23,9 +23,13 @@ type LedgerAggRow = {
   amount_gross: number | string | null;
 };
 
-export function usePLSummary(range: { from: string; to: string }) {
+export function usePLSummary(
+  range: { from: string; to: string },
+  opts?: { includePendingExpenses?: boolean },
+) {
+  const includePendingExpenses = opts?.includePendingExpenses ?? false;
   return useQuery({
-    queryKey: queryKeys.accountingPLSummary(range.from, range.to),
+    queryKey: queryKeys.accountingPLSummary(range.from, range.to, includePendingExpenses),
     queryFn: async (): Promise<PLSummary> => {
       // Derive from the SAME exact-date-filtered ledger rows as useLedger, so the
       // header cards always agree with the breakdown tables / PDF / CSV export for
@@ -38,10 +42,12 @@ export function usePLSummary(range: { from: string; to: string }) {
       if (error) throw new Error(error.message);
       const rows = (data ?? []) as LedgerAggRow[];
 
-      // Replicates accounting_pl_summary_v exactly:
+      // Replicates accounting_pl_summary_v (cash basis) by default:
       //   income  = direction='in'  AND status='paid'
       //   expense = direction='out' AND status='paid'
       //   net profit = income - expense (net & gross)
+      // Opt-in: when includePendingExpenses, pending EXPENSES also count
+      // (income stays paid-only — never counts pending income).
       const s: PLSummary = {
         totalIncomeNet: 0,
         totalIncomeVat: 0,
@@ -53,15 +59,18 @@ export function usePLSummary(range: { from: string; to: string }) {
         netProfitGross: 0,
       };
       for (const r of rows) {
-        if (r.status !== 'paid') continue;
         const net = Number(r.amount_net ?? 0);
         const vat = Number(r.vat_amount ?? 0);
         const gross = Number(r.amount_gross ?? 0);
         if (r.direction === 'in') {
+          if (r.status !== 'paid') continue; // income: paid-only, always
           s.totalIncomeNet += net;
           s.totalIncomeVat += vat;
           s.totalIncomeGross += gross;
         } else if (r.direction === 'out') {
+          const counts =
+            r.status === 'paid' || (includePendingExpenses && r.status === 'pending');
+          if (!counts) continue;
           s.totalExpenseNet += net;
           s.totalExpenseVat += vat;
           s.totalExpenseGross += gross;
