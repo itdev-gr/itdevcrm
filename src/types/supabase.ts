@@ -6812,6 +6812,10 @@ export type Database = {
       }
       close_deal: { Args: { p_deal_id: string; p_jobs?: Json }; Returns: Json }
       complete_accounting: { Args: { target_deal_id: string }; Returns: Json }
+      convert_job_service_type: {
+        Args: { p_job_id: string; p_target: string }
+        Returns: Database["public"]["Tables"]["jobs"]["Row"]
+      }
       convert_lead_to_client: {
         Args: { target_lead_id: string }
         Returns: Json

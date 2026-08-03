@@ -49,6 +49,8 @@ import { HostingInfoSection } from './HostingInfoSection';
 import { ClientIntakeSection } from './ClientIntakeSection';
 import { DownloadAllAssetsButton } from './DownloadAllAssetsButton';
 import { infoFieldsFor } from './serviceInfoFields';
+import { canConvert } from './serviceConversion';
+import { ConvertServiceDialog } from './ConvertServiceDialog';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { groupIdForServiceType } from './serviceTaskMatch';
@@ -109,6 +111,7 @@ function JobDetailContent() {
   const updateBilling = useUpdateJobBilling(job?.deal_id ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
   // null = not edited yet → fall back to the loaded job.title.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const billingRefs = useJobBillingRefCount(jobId, confirmDelete);
@@ -467,9 +470,27 @@ function JobDetailContent() {
                   )}
                   <div>
                     <dt className="text-[11px] text-muted-foreground">Service</dt>
-                    <dd className="mt-0.5 text-sm font-medium capitalize">
+                    <dd className="mt-0.5 flex items-center gap-2 text-sm font-medium capitalize">
                       {job.service_type.replace(/_/g, ' ')}
+                      {canEditBilling && canConvert(job) && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-[11px]"
+                          onClick={() => setConvertOpen(true)}
+                        >
+                          {t('convert.action')}
+                        </Button>
+                      )}
                     </dd>
+                    {canEditBilling && canConvert(job) && (
+                      <ConvertServiceDialog
+                        job={job}
+                        open={convertOpen}
+                        onOpenChange={setConvertOpen}
+                      />
+                    )}
                   </div>
                   {job.service_type === 'web_seo' &&
                     (() => {

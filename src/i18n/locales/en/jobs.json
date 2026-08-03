@@ -1,6 +1,16 @@
 {
   "part_of_ai_seo": "Part of AI SEO {{code}}",
   "view_billing_record": "View billing record",
+  "convert": {
+    "action": "Convert service",
+    "title": "Convert job service",
+    "target": "New service",
+    "warning": "The job will move to a new board; owner, monthly tasks and code will be regenerated, and unrelated info fields will be cleared. Amounts/payments stay the same.",
+    "none": "This job cannot be converted (AI SEO / web dev / special service).",
+    "confirm": "Convert",
+    "success": "Service converted.",
+    "error": "Conversion failed: {{msg}}"
+  },
   "attachments": {
     "title": "Attachments",
     "empty": "No files yet.",
