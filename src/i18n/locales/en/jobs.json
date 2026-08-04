@@ -1,6 +1,12 @@
 {
   "part_of_ai_seo": "Part of AI SEO {{code}}",
   "view_billing_record": "View billing record",
+  "renewal": {
+    "action": "Send to Renewal",
+    "title": "Send card to Renewal",
+    "confirm": "Move this card to the Renewal lane and mark the paid cycle as renewed? Use this when the client has paid but the card stayed behind.",
+    "error": "Could not send to Renewal: {{msg}}"
+  },
   "convert": {
     "action": "Convert service",
     "title": "Convert job service",

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { Archive, Calendar, Lock, Trash2 } from 'lucide-react';
+import { Archive, Calendar, Lock, RefreshCw, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,8 @@ import { DownloadAllAssetsButton } from './DownloadAllAssetsButton';
 import { infoFieldsFor } from './serviceInfoFields';
 import { canConvert } from './serviceConversion';
 import { ConvertServiceDialog } from './ConvertServiceDialog';
+import { canForceRenewal } from './renewalAction';
+import { useForceJobRenewal } from './hooks/useForceJobRenewal';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
 import { useGroups } from '@/features/groups/hooks/useGroups';
 import { groupIdForServiceType } from './serviceTaskMatch';
@@ -109,8 +111,10 @@ function JobDetailContent() {
   const queryClient = useQueryClient();
   const del = useDeleteJobs();
   const updateBilling = useUpdateJobBilling(job?.deal_id ?? '');
+  const forceRenewal = useForceJobRenewal();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [confirmRenewal, setConfirmRenewal] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
   // null = not edited yet → fall back to the loaded job.title.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
@@ -374,6 +378,18 @@ function JobDetailContent() {
                   Block
                 </Button>
               ))}
+            {canEditBilling && canForceRenewal(job) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={detailHeaderActionButtonClass}
+                onClick={() => setConfirmRenewal(true)}
+                disabled={forceRenewal.isPending}
+              >
+                <RefreshCw className="size-3" />
+                {t('renewal.action')}
+              </Button>
+            )}
             {canEditBilling && !job.archived && (
               <Button
                 variant="outline"
@@ -761,6 +777,22 @@ function JobDetailContent() {
         }}
       />
 
+      <ConfirmDialog
+        open={confirmRenewal}
+        onOpenChange={setConfirmRenewal}
+        title={t('renewal.title')}
+        description={t('renewal.confirm')}
+        confirmLabel={t('renewal.action')}
+        pending={forceRenewal.isPending}
+        onConfirm={async () => {
+          try {
+            await forceRenewal.mutateAsync(job.id);
+            setConfirmRenewal(false);
+          } catch (e) {
+            window.alert(t('renewal.error', { msg: e instanceof Error ? e.message : String(e) }));
+          }
+        }}
+      />
       <ConfirmDialog
         open={confirmArchive}
         onOpenChange={setConfirmArchive}

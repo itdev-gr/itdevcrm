@@ -3155,6 +3155,7 @@ export type Database = {
           period_due_date: string | null
           period_start_date: string | null
           recurring_start_date: string | null
+          renewed_for_period: string | null
           service_type: string
           setup_fee: number | null
           stage_id: string | null
@@ -3200,6 +3201,7 @@ export type Database = {
           period_due_date?: string | null
           period_start_date?: string | null
           recurring_start_date?: string | null
+          renewed_for_period?: string | null
           service_type: string
           setup_fee?: number | null
           stage_id?: string | null
@@ -3245,6 +3247,7 @@ export type Database = {
           period_due_date?: string | null
           period_start_date?: string | null
           recurring_start_date?: string | null
+          renewed_for_period?: string | null
           service_type?: string
           setup_fee?: number | null
           stage_id?: string | null
@@ -6970,6 +6973,10 @@ export type Database = {
       format_intake_merge_block: {
         Args: { r: Database["public"]["Tables"]["lead_intake"]["Row"] }
         Returns: string
+      }
+      force_job_renewal: {
+        Args: { p_job_id: string }
+        Returns: Database["public"]["Tables"]["jobs"]["Row"]
       }
       gbp_access_sent_map: {
         Args: never
