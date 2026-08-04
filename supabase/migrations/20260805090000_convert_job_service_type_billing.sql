@@ -62,8 +62,14 @@
 --   re-apply supabase/migrations/20260803170000_ai_seo_conversion.sql
 --   (restores the pre-change body, md5 7b1f8f534b6bc7622a2181cc3984e5fe).
 --
--- APPLIED to prod 2026-08-04; post-change md5 recorded by the controller
--- after the branch-(a) guard was added.
+-- APPLIED to prod 2026-08-04. Post-change md5(pg_get_functiondef) =
+--   0518d6770231f736b4947de017f3decf  (this guarded body; the pre-guard body
+--   that was live earlier the same day was cbc03ef185e010db50cc56539065b228).
+-- Verified against the applied function inside a rolled-back transaction, with
+-- the payment header deliberately billing a different amount (199) from the job
+-- (250) so the function's PRE-EXISTING amount-matching re-key could not account
+-- for the result: job service_type web_seo, payment service_type web_seo,
+-- period_start_date NOT NULL, activity_log changes->>'payments_rekeyed' = 1.
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.convert_job_service_type(p_job_id uuid, p_target text)
