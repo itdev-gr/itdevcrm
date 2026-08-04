@@ -221,22 +221,18 @@ No repo files changed yet; this step just records the run. Paste every query's o
 **Files:**
 - Create: `supabase/migrations/20260805090000_convert_job_service_type_billing.sql`
 - Create: `supabase/tests/convert_job_service_type_billing.sql`
-- Reference (do not edit): `supabase/migrations/20260803160000_convert_job_service_type.sql`
+- Reference (do not edit): `supabase/migrations/20260803170000_ai_seo_conversion.sql` — **this**, not `20260803160000`, is the newest emission of `convert_job_service_type`; it added the AI-SEO trio branch. Copying the older body would silently revert that feature.
+- Base to copy verbatim: `.superpowers/sdd/2026-08-04-deal-000403-service-change-integrity/live-convert_job_service_type.sql` — the live body read from prod on 2026-08-04, md5 `7b1f8f534b6bc7622a2181cc3984e5fe`.
 
 **Interfaces:**
 - Consumes: `public.convert_job_service_type(p_job_id uuid, p_target text) returns public.jobs` — existing signature, unchanged.
 - Produces: after a convert, every `deal_payments` row that billed the job's **old** service on that deal now carries the **new** `service_type`, so `recompute_job_period_dates` (which matches on `service_type` **and** `billing_type`) keeps finding it.
 
-- [ ] **Step 1: Drift-check the live function before touching it**
+- [ ] **Step 1: Drift-check — already done by the controller, do not repeat**
 
-Run:
+The controller read the live body on 2026-08-04 (md5 `7b1f8f534b6bc7622a2181cc3984e5fe`, 9846 chars) and saved it to `.superpowers/sdd/2026-08-04-deal-000403-service-change-integrity/live-convert_job_service_type.sql`. It matches the `20260803170000_ai_seo_conversion.sql` emission in shape, including the AI-SEO trio branch and the `grpA`/`grpB` arrays.
 
-```sql
-select md5(pg_get_functiondef(oid)) from pg_proc
- where proname = 'convert_job_service_type';
-```
-
-Compare with the emission in `20260803160000_convert_job_service_type.sql`. If they differ, stop and reconcile — the live body is the source of truth to copy from.
+**That saved file is the base you copy verbatim.** You have no database access; do not attempt to read the function from prod.
 
 - [ ] **Step 2: Write the failing pgTAP test**
 
@@ -287,16 +283,15 @@ select isnt((select period_start_date from public.jobs where id = current_settin
 rollback;
 ```
 
-- [ ] **Step 3: Run the test and watch it fail**
+- [ ] **Step 3: Record why the test cannot be run here**
 
-Run: `supabase test db --file supabase/tests/convert_job_service_type_billing.sql`
-Expected: assertions 2 and 3 FAIL — the payment stays `local_seo` and the job's period goes NULL, which is exactly the 000403 defect.
+`supabase test db --file supabase/tests/convert_job_service_type_billing.sql` is the command that runs it. **This environment has no supabase CLI, no node, and no database access**, so you cannot execute it — do not fake a result or claim a run that did not happen. Write in your report: the command, that it was not run, and why. The controller verifies the migration against prod inside a rolled-back transaction after your work lands.
 
-If the CLI is unavailable in your environment, reproduce the same three assertions through the Management API inside a `begin; … rollback;` block and record the output.
+Expected behaviour once someone can run it: against the **current** function, assertions 2 and 3 FAIL — the payment stays `local_seo` and the job's period goes NULL, which is exactly the 000403 defect. Against your migrated function, 3/3 PASS.
 
 - [ ] **Step 4: Write the migration**
 
-Create `supabase/migrations/20260805090000_convert_job_service_type_billing.sql`. Copy the **live** body from Step 1 verbatim, and insert this block immediately after the existing `-- 2) service_type + 3) stage remap` update (which sets `jobs.service_type = p_target`), keeping every other step byte-identical:
+Create `supabase/migrations/20260805090000_convert_job_service_type_billing.sql`. Copy the live body from the saved file named in Step 1 verbatim — **including the AI-SEO trio branch** — and insert this block immediately after the existing `-- 2) service_type + 3) stage remap` update (which sets `jobs.service_type = p_target`) **in the standalone-convert path only**, keeping every other line byte-identical:
 
 ```sql
   -- 2b) Billing follows the service (2026-08-05). recompute_job_period_dates
@@ -342,25 +337,15 @@ Then extend the existing `activity_log` insert's `changes` object with `'payment
   perform public.recompute_deal_job_period_dates(j.deal_id);
 ```
 
-Head the file with purpose, the pre-change md5 from Step 1, and a `ROLLBACK:` block that re-applies the `20260803160000` body.
+Head the file with purpose, the pre-change md5 `7b1f8f534b6bc7622a2181cc3984e5fe`, and a `ROLLBACK:` block that re-applies the `20260803170000_ai_seo_conversion.sql` body.
 
-- [ ] **Step 5: Run the test and watch it pass**
+- [ ] **Step 5: Self-check the migration by reading it**
 
-Run: `supabase test db --file supabase/tests/convert_job_service_type_billing.sql`
-Expected: 3/3 PASS.
+You cannot execute SQL here. Instead, re-read your migration end to end and confirm: the AI-SEO branch survived intact; `v_rekeyed` is declared; the `get diagnostics` line follows the new update; `perform public.recompute_deal_job_period_dates(j.deal_id);` sits before the final `select * into j`; the header carries the pre-change md5 and a ROLLBACK block. State each check's result in your report.
 
-- [ ] **Step 6: Apply to prod and record the post-change md5**
+- [ ] **Step 6: Leave prod application to the controller**
 
-Run:
-
-```bash
-python3 scratch/mkjson.py supabase/migrations/20260805090000_convert_job_service_type_billing.sql m.json
-curl -s -X POST "https://api.supabase.com/v1/projects/xujlrclyzxrvxszepquy/database/query" \
-  -H "Authorization: Bearer $SUPABASE_PAT" -H "Content-Type: application/json" \
-  --data-binary @m.json
-```
-
-Then read `md5(pg_get_functiondef(oid))` for `convert_job_service_type` and append it to the migration header as `APPLIED to prod <date>, post-change md5 …`.
+Do **not** apply anything to prod — you have no credentials and must not ask for them. The controller applies the migration and records the post-change md5 in the header.
 
 - [ ] **Step 7: Commit**
 
@@ -382,32 +367,26 @@ git commit -m "fix(convert): re-key deal payments to the new service on job conv
 - Consumes: `public.accounting_integrity_alerts()` — the 23-check body applied on 2026-08-04, live md5 `d5a886e95dfeb92673258d035cd6a818`.
 - Produces: check 24 `service_card_not_billing`, same output columns as every other check (`check_key, severity, category, subject_type, subject_id, subject_code, title, detail, deal_id, job_id, signature`), surfaced by the existing accounting Alerts panel with no frontend change.
 
-- [ ] **Step 1: Drift-check, then measure the candidate before shipping it**
+- [ ] **Step 1: Read the measurement the controller already took — do not re-measure**
 
-Confirm the live md5 still equals `d5a886e95dfeb92673258d035cd6a818`, then run the candidate predicate on its own and count what it would surface:
+You have no database access. The controller ran the tuning on prod on 2026-08-04 and the predicate below is the settled result. The numbers, for the migration header:
 
-```sql
-select count(*) as rows_it_would_show
-  from public.jobs j
-  join public.pipeline_stages s on s.id = j.stage_id
- where not j.archived and not s.is_terminal
-   and j.service_type in ('web_seo','local_seo','ads','social_media','maintenance')
-   and j.billing_type in ('recurring_monthly','recurring_yearly')
-   and not j.billing_active
-   and not exists (select 1 from public.jobs j2
-                    where j2.deal_id = j.deal_id and not j2.archived
-                      and j2.service_type = j.service_type and j2.billing_active);
-```
+| variant | rows |
+|---|---|
+| naive (live lane, recurring, not `billing_active`, no `billing_active` sibling of the same service) | **131** |
+| \+ exclude `parent_job_id is not null` | 35 |
+| \+ exclude deals with a `billing_active` `ai_seo` parent | 33 |
+| \+ require `amount_net > 0` | 31 |
+| \+ exclude deals whose accounting stage is `closed`/`done` | 11 |
+| \+ require `j.status = 'active'` → **shipped variant** | **10** |
 
-A first run of a new check on this database has produced anywhere from 0 to 14 rows; `seo_job_no_period` needed narrowing to `status='active'` on 2026-08-04 for exactly this reason. Record the number.
+The 96 rows the first exclusion removes were AI-SEO trio children: their billing sits on the `ai_seo` parent by design, so they are not defects. The `closed`/`done` exclusion matches how checks 1, 12 and 14 already scope themselves.
 
-- [ ] **Step 2: Decide severity and narrowing from that number**
+Severity is `red`: at 10 rows it is a short, actionable list, and every row is a service being delivered with nobody billing it. The 10 deals are `000039`, `000082`, `000122`, `000150`, `000289`, `000306`, `000328`, `000362`, `005497`, `005557` — put that list in the migration header so the backlog is visible rather than implied.
 
-- ≤ 10 rows: ship as written, severity `red`.
-- 11–30 rows: add `and j.status = 'active'` and re-count; ship at `red` if that lands ≤ 10, otherwise `amber`.
-- \> 30 rows: ship at `amber` **and** list the offending deal codes in the migration header, so the backlog is visible rather than implied.
+- [ ] **Step 2: Confirm the base body you copy**
 
-Write the chosen variant and its count into the migration header.
+The base is `supabase/migrations/20260804091000_renewal_integrity_alerts.sql` — the 23-check body, live md5 `d5a886e95dfeb92673258d035cd6a818` as applied on 2026-08-04. Copy it verbatim; checks 1-23 must come through byte-identical.
 
 - [ ] **Step 3: Write the migration**
 
@@ -421,44 +400,47 @@ Create `supabase/migrations/20260805091000_service_card_not_billing_alert.sql`. 
     --     clearing billing_active on the last such job stops the schedule for
     --     ever — silently, because billing_gap (check 11) needs a billing_active
     --     recurring job to fire at all. Deal 000403 ran two months this way.
+    --     Exclusions, each measured on prod 2026-08-04 (131 -> 10 rows):
+    --       parent_job_id / billing_only  AI-SEO trio children bill on the parent (-96)
+    --       ai_seo parent on the deal     same structure, seen from the child (-2)
+    --       amount_net = 0                bundled or free, nothing to bill (-2)
+    --       deal stage closed/done        finished engagement, stale card (-20)
+    --       status <> 'active'            the team ended the work (-1)
     select 'service_card_not_billing','red','lifecycle','job', j.id, j.code,
            'Live service card with no active billing',
-           'Card is on a live lane but no billing_active recurring job bills '||
-             j.service_type||' on this deal',
+           'Card is live and bills EUR '||j.amount_net::text||'/period, but no '||
+             'billing_active recurring job covers '||j.service_type||' on this deal',
            j.deal_id, j.id, ''
-      from jobs j join pipeline_stages s on s.id = j.stage_id
-     where not j.archived and not s.is_terminal
+      from jobs j
+      join pipeline_stages s on s.id = j.stage_id
+      join deals d on d.id = j.deal_id
+      join pipeline_stages ps on ps.id = d.accounting_stage_id
+     where not j.archived and not d.archived and not s.is_terminal
+       and ps.code not in ('closed','done')
+       and j.status = 'active'
        and j.service_type in ('web_seo','local_seo','ads','social_media','maintenance')
        and j.billing_type in ('recurring_monthly','recurring_yearly')
        and not j.billing_active
+       and j.parent_job_id is null
+       and not coalesce(j.billing_only, false)
+       and coalesce(j.amount_net, 0) > 0
        and not exists (select 1 from jobs j2
                         where j2.deal_id = j.deal_id and not j2.archived
                           and j2.service_type = j.service_type and j2.billing_active)
+       and not exists (select 1 from jobs p
+                        where p.deal_id = j.deal_id and not p.archived
+                          and p.billing_active and p.service_type = 'ai_seo')
 ```
 
-Head the file with purpose, the pre-change md5, the Step 1 count, and a `ROLLBACK:` block that re-applies the `20260804091000` body.
+Head the file with purpose, the pre-change md5 `d5a886e95dfeb92673258d035cd6a818`, the Step 1 tuning table and the 10 deal codes, and a `ROLLBACK:` block that re-applies the `20260804091000` body.
 
-- [ ] **Step 4: Apply to prod**
+- [ ] **Step 4: Self-check by reading it**
 
-Same curl-with-`--data-binary` flow as Task 2 Step 6.
+You cannot execute SQL. Re-read the migration and confirm: checks 1-23 are byte-identical to the base file; check 24 sits inside the `alerts` CTE, after check 23 and before the closing `)`; the `union all` that joins it is present; the dismissal filter and the `order by` at the end are untouched. State each check's result in your report. Leave prod application to the controller.
 
-- [ ] **Step 5: Verify the alert is silent for 000403 and correct elsewhere**
+- [ ] **Step 5: Note the expected verification (controller runs it)**
 
-Run the Step 1 predicate again, filtered to this deal:
-
-```sql
-select j.code from public.jobs j
-  join public.deals d on d.id = j.deal_id
-  join public.pipeline_stages s on s.id = j.stage_id
- where d.code = '000403' and not j.archived and not s.is_terminal
-   and j.billing_type in ('recurring_monthly','recurring_yearly')
-   and not j.billing_active
-   and not exists (select 1 from public.jobs j2
-                    where j2.deal_id = j.deal_id and not j2.archived
-                      and j2.service_type = j.service_type and j2.billing_active);
-```
-
-Expected: **zero rows** — Task 1 Step 4 made `000403-WEBSEO` the billing owner. A row here means Task 1 did not land.
+After the controller applies the migration, the check must return exactly the 10 deals listed in Step 1, and **zero rows for 000403** — Task 1 made `000403-WEBSEO` the billing owner. Record that expectation in your report.
 
 - [ ] **Step 6: Commit**
 

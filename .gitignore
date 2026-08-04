@@ -37,3 +37,6 @@ supabase/.temp
 /*.png
 !public/**/*.png
 !src/**/*.png
+
+# superpowers SDD scratch
+.superpowers/
