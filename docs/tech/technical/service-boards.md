@@ -99,3 +99,9 @@ flowchart TD
 - `supabase/migrations/20260619000001_local_seo_owner_dtzouvaras.sql`, `20260623160000_jobs_web_seo_owner.sql` — owner triggers.
 - `src/features/jobs/kanbanGrouping.ts` — `BLOCKED_COLUMN_BOARDS`, `groupJobsForBoard`.
 - `src/features/jobs/JobsKanbanCard.tsx`, `JobsKanbanColumn.tsx`, `JobsKanbanPage.tsx` — kanban UI.
+
+## Changing a service on a live deal
+
+Use the **Convert service** action on the job (`convert_job_service_type`). It moves the card to the new board, regenerates code/owner/group/monthly tasks, rewrites the deal's `services_planned` entry, and — since `20260805090000` — re-keys the deal's billing rows to the new service.
+
+Do **not** do it by hand (close the old card, make a new one, edit `services_planned`). That path leaves the paid periods keyed to the dead service, and if the new card ends up `billing_active = false` the recurring generator stops for ever: `ensure_recurring_payments()` only extends a period when a non-archived, `billing_active` job of the same `service_type` + `billing_type` exists. Deal 000403 ran two months unbilled that way (`docs/data-fixes/2026-08-04-deal-000403-service-change.md`). The `service_card_not_billing` alert now catches it, but the convert action avoids it.
