@@ -1,14 +1,37 @@
 -- =============================================================================
 -- convert_job_service_type re-keys the deal's billing (2026-08-05)
 --
--- BUG (deal 000403 — read live 2026-08-04): the SEO service on this deal was
--- changed from local_seo to web_seo by hand (via convert_job_service_type).
--- The job's service_type moved, but the paid deal_payments row stayed keyed
--- 'local_seo'. recompute_job_period_dates matches a payment to a job on
--- service_type AND billing_type, so after the convert it could no longer find
--- a payment for the web_seo job: period_start_date/period_due_date went NULL
--- and stayed NULL. No renewal move, no due chip, no reminder — billing
--- silently stopped for two months before anyone noticed.
+-- NOT a fix for deal 000403 — that deal never went through this RPC. Read
+-- live 2026-08-04: activity_log has NO service_type_converted entry for
+-- 000403. Both SEO jobs were inserted 38 seconds apart at onboarding on
+-- 2026-06-22 (000403-LOCALSEO 10:37:24, 000403-WEBSEO 10:38:02); someone
+-- edited deals.services_planned to web_seo by hand, closed the local card
+-- (note: "δεν ειναι λοκαλ"), and left the web card in place. See
+-- docs/data-fixes/2026-08-04-deal-000403-service-change.md for the full
+-- read and the separate prod data repair that re-keyed 000403's own rows.
+--
+-- THIS MIGRATION is a preventative fix for the SUPPORTED convert path, so the
+-- same failure mode can't happen to the next deal that legitimately runs
+-- convert_job_service_type: today the function moves jobs.service_type but
+-- leaves deal_payments keyed to the old service, which strands the job's
+-- billing. The mechanism it guards against:
+--   recompute_job_period_dates resolves a job's period from the newest PAID
+--   payment that EITHER matches the job on service_type + billing_type OR is
+--   line-linked to the job via deal_payment_lines (see
+--   20260713150000_jobs_per_type_billing.sql). A convert done through this
+--   RPC leaves the payment's deal_payment_lines row pointing at the SAME job,
+--   so the line-link arm keeps resolving it and period dates would NOT go
+--   NULL even without this fix — 000403's dates went NULL for a different
+--   reason (its line pointed at the *other*, closed local_seo job, not the
+--   web_seo job it should have followed).
+--   The function that genuinely needs the re-key is ensure_recurring_payments():
+--   it only extends a period when a non-archived, billing_active job exists
+--   with j.service_type = dp.service_type AND matching billing_type — it has
+--   NO line-link arm. So a payment left keyed to the job's OLD service simply
+--   stops matching once the job's service_type moves, and no successor period
+--   is ever generated: a silent, permanent stop of the recurring schedule
+--   (the same two-months-unbilled shape 000403 hit, just reached by hand
+--   editing instead of by this RPC).
 --
 -- FIX: after the function sets jobs.service_type = p_target on the standalone
 -- (v1) convert path, re-key deal_payments rows on the SAME deal from the old
@@ -24,8 +47,7 @@
 -- deal_payments_recompute_job_dates_trg only reacts to a payment's status
 -- changing or its dates moving on an already-paid row: a service_type-only
 -- UPDATE fires nothing, so without this the job would sit with NULL period
--- dates until some unrelated write happened to trigger a recompute — which is
--- exactly the 000403 defect, just deferred instead of fixed.
+-- dates until some unrelated write happened to trigger a recompute.
 --
 -- SCOPE: only the v1 standalone-convert path (grpA/grpB same-cadence group
 -- conversions) gets this block. The v2 AI-SEO trio branches (upgrade to
@@ -39,6 +61,9 @@
 -- ROLLBACK:
 --   re-apply supabase/migrations/20260803170000_ai_seo_conversion.sql
 --   (restores the pre-change body, md5 7b1f8f534b6bc7622a2181cc3984e5fe).
+--
+-- APPLIED to prod 2026-08-04; post-change md5 recorded by the controller
+-- after the branch-(a) guard was added.
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.convert_job_service_type(p_job_id uuid, p_target text)
@@ -180,20 +205,33 @@ begin
   update public.jobs set service_type = p_target, stage_id = new_stage where id = p_job_id;
   update public.jobs set code = public.generate_job_code(j.deal_id, p_target) where id = p_job_id;
 
-  -- 2b) Billing follows the service (2026-08-05). recompute_job_period_dates
-  --     matches a payment to a job on service_type AND billing_type, so a convert
-  --     that leaves deal_payments on the OLD service strands the job with no
-  --     period for ever — no renewal, no due chip, no reminder (deal 000403,
-  --     two unbilled months). Re-key (a) every row line-linked to this job and
-  --     (b) rows still keyed to the old service on this deal, but only while no
-  --     OTHER live job of the old service is left to own them.
+  -- 2b) Billing follows the service (2026-08-05). ensure_recurring_payments()
+  --     only extends a period when a non-archived, billing_active job matches
+  --     a payment on service_type AND billing_type (no line-link arm), so a
+  --     convert that leaves deal_payments on the OLD service strands the job's
+  --     recurring schedule for ever — no successor period, no renewal, no due
+  --     chip, no reminder (the two-months-unbilled shape deal 000403 hit by
+  --     hand-editing, not through this RPC — see the header). Re-key (a) every
+  --     row line-linked to this job and (b) rows still keyed to the old
+  --     service on this deal, but only while no OTHER live job of the old
+  --     service is left to own them.
   update public.deal_payments p
      set service_type = p_target
    where p.deal_id = j.deal_id
      and p.billing_type = j.billing_type
      and (
-       exists (select 1 from public.deal_payment_lines l
-                where l.payment_id = p.id and l.job_id = p_job_id)
+       (
+         exists (select 1 from public.deal_payment_lines l
+                  where l.payment_id = p.id and l.job_id = p_job_id)
+         -- Guard against mis-keying a billing GROUP: generate_payments_for_deal
+         -- can put several deal_payment_lines (different jobs) under one
+         -- payment header, deliberately leaving the header service_type NULL
+         -- when the group mixes services. Only re-key branch (a) when this
+         -- payment has no OTHER job's line on it, so converting one member of
+         -- a group never stamps the whole bundle with p_target.
+         and not exists (select 1 from public.deal_payment_lines l2
+                          where l2.payment_id = p.id and l2.job_id <> p_job_id)
+       )
        or (
          p.service_type = j.service_type
          and not exists (select 1 from public.jobs j2
