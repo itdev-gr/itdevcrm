@@ -226,4 +226,7 @@ begin
 
   select * into j from public.jobs where id = p_job_id;
   return j;
-end $function$
+end $function$;
+
+revoke all on function public.convert_job_service_type(uuid, text) from public;
+grant execute on function public.convert_job_service_type(uuid, text) to authenticated;
