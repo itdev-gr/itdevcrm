@@ -317,11 +317,23 @@ drop to 0 in Task 5. If it is not 27, re-derive the mapping before continuing.
 -- NO FUNCTION BODIES ARE TOUCHED, so the usual md5(pg_get_functiondef) drift
 --   check does not apply to this migration.
 --
--- EXPECTED SIDE EFFECT: deal_payments_reconcile_stage fires AFTER UPDATE and
---   releases deals whose only past-due row was this one — ~15 deals leave
---   on_hold, their jobs unblock and SEO cards move to 'renewal'. That is the
---   intended correction. 000041 (partial_payment, open finding A2) and 000298
---   (closed) get corrected dates but no stage move.
+-- ACTUAL SIDE EFFECT (corrected 2026-08-05, Task 6 — this header originally
+--   predicted ~15 deals would leave on_hold; that did not happen and the
+--   prediction, not the migration, was wrong): deal_payments_reconcile_stage
+--   fires AFTER UPDATE on every row and deal_next_due() does change, but
+--   reconcile_deal_stage() has never auto-lifted a hold since
+--   20260702150150_reconcile_deal_stage_respect_holds.sql (lines 26-29): a
+--   deal already in on_hold returns false immediately and only re-runs
+--   block_deal_jobs() — "never auto-lift a hold. Keep jobs blocked; leave the
+--   column to the accountant." Result: 0 of the 18 on_hold domains deals
+--   moved; jobs stay blocked. The one stage move in the whole migration was
+--   000054 (awaiting_payment -> paid_in_full, a deal that was never on
+--   hold). 000041 (partial_payment, open finding A2) and 000298 (closed) get
+--   corrected dates but no stage move, as originally expected. See the
+--   accountant hand-off in
+--   docs/system-analysis/2026-08-05-domain-expiry-reconciliation.md for the
+--   16 deals that now owe nothing but remain on_hold and blocked pending a
+--   manual accountant decision.
 --
 -- ROLLBACK:
 --   update public.deal_payments dp
@@ -550,6 +562,10 @@ This writes to production and will visibly move ~15 deals out of `on_hold`, unbl
 and moving SEO cards into the `renewal` lane. Confirm with the owner before posting. Do not batch
 this with any other pending migration.
 
+*(Superseded prediction, left here as the historical go-ahead request that was actually sent —
+see the "Applied to prod" record below: 0 deals moved, because `reconcile_deal_stage()` never
+auto-lifts a hold.)*
+
 - [ ] **Step 2: Apply the migration as a single query**
 
 POST the entire file contents as one `query` to the Management API. Postgres runs it in one implicit
@@ -640,11 +656,17 @@ select d.code,
  order by ps.code, d.code;
 ```
 
-Expected: no deal remains in `on_hold` **except** 000090, 000205 and 000289, each of which has a
-genuinely past-due non-`domains` payment. 000041 stays `partial_payment` (finding A2) and 000298
-stays `closed`; both are expected and are not regressions from this change.
-
-Any *other* deal still in `on_hold` means its release failed — investigate before closing out.
+**Superseded — this "Expected" line was written before the migration ran and does not match what
+production actually returned.** No deal was ever expected to auto-release: `reconcile_deal_stage()`
+never auto-lifts a hold (`20260702150150_reconcile_deal_stage_respect_holds.sql`, lines 26-29), so
+all 18 deals that were `on_hold` before this migration are still `on_hold` after it — not just
+000090, 000205 and 000289. 000289 in particular was misclassified here: it has **no** genuinely
+past-due non-`domains` payment (`deal_next_due()` = 2028-05-09, a future date); it belongs with the
+other 16 held deals that now owe nothing, not with the 2 genuinely-held deals (000090, 000205). See
+the "Applied to prod" record below and the accountant hand-off table in
+`docs/system-analysis/2026-08-05-domain-expiry-reconciliation.md` for the verified actual outcome.
+000041 stays `partial_payment` (finding A2) and 000298 stays `closed`; both of those were expected
+and are not regressions from this change.
 
 - [ ] **Step 2: Confirm no job is still blocked without a past-due reason**
 
@@ -660,8 +682,13 @@ select d.code, j.code as job_code, j.service_type, j.blocked_reason,
  order by d.code;
 ```
 
-Expected: **zero rows.** A row here is a job left blocked although its deal owes nothing today —
-release it with the normal accounting flow and note it.
+**Superseded — this "Expected: zero rows" line was also written before the migration ran and does
+not match production.** This query returns exactly the jobs blocked on a deal that owes nothing —
+which is precisely the state `reconcile_deal_stage()`'s on_hold guard leaves in place, since it
+recomputes `deal_next_due()` but does not lift the hold or unblock jobs. Actual result: **30 rows**,
+across the 16 held deals listed in the accountant hand-off table in
+`docs/system-analysis/2026-08-05-domain-expiry-reconciliation.md`. Each is a job left blocked
+although its deal owes nothing today; release it with the normal accounting flow per that table.
 
 - [ ] **Step 3: Confirm the renewal generator will not fire early**
 
