@@ -4,7 +4,19 @@
 
 **Goal:** Re-date the 27 `domains` recurring-yearly billing rows so each one comes due on the domain's real registry expiry date instead of the arbitrary deal-creation date the seeder wrote.
 
-**Architecture:** A one-off data migration in the repo's established backfill style — a timestamped backup table, one set-based `UPDATE ... FROM (VALUES ...)`, and a verification query that must return zero rows. No function bodies, no schema changes, no frontend changes. The existing `deal_payments_reconcile_stage` trigger does the downstream work (accounting-stage recompute, job unblocking) automatically as a consequence of the `UPDATE`.
+**Architecture:** A one-off data migration in the repo's established backfill style — a timestamped backup table, one set-based `UPDATE ... FROM (VALUES ...)`, and a verification query that must return zero rows. No function bodies, no schema changes, no frontend changes. The existing `deal_payments_reconcile_stage` trigger fires `AFTER UPDATE` on every row touched, so `deal_next_due()` is recomputed automatically as a consequence of the `UPDATE`.
+
+> **Caveat — corrected 2026-08-05 after the migration ran.** The paragraph above originally claimed
+> the trigger also does the *job unblocking* automatically. It does not, and that single wrong
+> assumption is the root of every superseded prediction in this document.
+> `reconcile_deal_stage()` has never auto-lifted a hold since
+> `20260702150150_reconcile_deal_stage_respect_holds.sql` (lines 26-29): a deal already in `on_hold`
+> returns `false` immediately and only re-runs `block_deal_jobs()` — "never auto-lift a hold. Keep
+> jobs blocked; leave the column to the accountant." Verified actual outcome: **0 of the 18 held
+> deals left `on_hold` and 0 jobs were unblocked**; the only stage move in the whole migration was
+> 000054 (`awaiting_payment` → `paid_in_full`), a deal that was never on hold. Releasing the rest is
+> a manual accountant decision — see the hand-off table in
+> `docs/system-analysis/2026-08-05-domain-expiry-reconciliation.md`.
 
 **Tech Stack:** PostgreSQL 15 (Supabase), pgTAP for the regression test, Supabase Management API for applying to prod (this machine has no psql / supabase CLI — see `memory/crm-supabase-project.md`).
 
@@ -288,6 +300,17 @@ drop to 0 in Task 5. If it is not 27, re-derive the mapping before continuing.
   timestamptz)` — the rollback source, referenced by the ROLLBACK block in the header.
 
 - [ ] **Step 1: Write the migration file**
+
+**Superseded — the fenced file below is the original pre-review draft, NOT what ran.** The
+authoritative, applied version is
+`supabase/migrations/20260806100000_domain_expiry_renewal_dates.sql`; read that file, not this
+block, if you want to know what production received. The draft below differs in ways that matter:
+its backup `INSERT` is scoped to **all** `domains` rows rather than to the 27 ids in the `fix` CTE
+(the Critical defect caught in review and corrected before apply), and it lacks the SCOPE NOTE (the
+out-of-scope 28th row), APPLY WINDOW, ROLLBACK WARNING and NULL-safe post-conditions that the real
+file carries. Its prose comments were partially refreshed in commit `d509f76`, which makes it read
+more current than it is — this marker exists so the two versions can never be confused again. Kept
+verbatim only as the historical record of what the plan originally specified.
 
 ```sql
 -- =============================================================================

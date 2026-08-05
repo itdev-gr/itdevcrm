@@ -35,9 +35,15 @@ do with when the domain actually expires. Consequences visible in prod today:
 
 - 26 of 27 rows are `status = 'overdue'`, 1 is `pending`. All 27 are unpaid, €20.00 net each.
 - `deal_next_due()` therefore returns a **past** date for all 27 deals.
-- **18 of the 27 deals sit in `on_hold`**, and for **15 of them the domains row is the only reason**
+- **18 of the 27 deals sit in `on_hold`**, and for **16 of them the domains row is the only reason**
   — there is no other unpaid non-`domains` row with a past due date. Their jobs are blocked and
   their clients are being chased for €20 that is not yet owed.
+  (An earlier draft of this line said **15**. The 16th is **000289**: its only other past-due row is
+  a `local_seo` row due 2026-06-30 with `status = 'cancelled'`, and `deal_next_due()` filters out
+  both `'paid'` and `'cancelled'`, so that row is invisible to every stage decision the CRM makes.
+  Counting it as a live debt gives 15; matching what `deal_next_due()` actually sees gives 16, which
+  is why 000289 belongs in the "owes nothing today" group in the hand-off table below. Re-verified
+  against prod 2026-08-05: 18 held, 15 counting the cancelled row as due, 16 excluding it.)
 - All 27 jobs show a blank "Renewal due" column on the Domains board, because
   `period_due_date` derives from a **paid** row and none of these has ever been paid.
 
@@ -136,9 +142,13 @@ none of the 18 held deals moved. The one stage move in the whole migration was *
 breakdown, and the "Accountant hand-off" section below for the 16 deals that now owe nothing but
 are still sitting on hold and blocked.
 
-The **000289** (2026-06-30) genuinely-past-due claim below was also wrong — 000289 has no unpaid
-non-`domains` row today; it is one of the 16 in the hand-off table, not one of the two genuinely
-held deals.
+The **000289** (2026-06-30) genuinely-past-due claim was also wrong. That claim does not appear in
+this document — it lived in Task 6 Step 1 of
+`docs/superpowers/plans/2026-08-05-domain-expiry-renewal-dates.md`, where it is now marked
+superseded; it is corrected here because the same mistake shaped the count above. 000289 has no
+unpaid non-`domains` row today (its 2026-06-30 `local_seo` row is `cancelled`, which
+`deal_next_due()` ignores); it is one of the 16 in the hand-off table below, not one of the two
+genuinely held deals.
 
 Two deals did not move at all, for known reasons — this part of the prediction was correct:
 - **000041** is in `partial_payment`, which `reconcile_deal_stage` does not allow-list — open

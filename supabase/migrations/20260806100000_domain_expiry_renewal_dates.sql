@@ -7,7 +7,12 @@
 --   deal-creation date and end_date = +1 year. Neither has any relation to the
 --   domain's registry expiry. Because deal_next_due() reads min(start_date) of
 --   the unpaid rows, all 27 deals reported a past-due €20 they do not yet owe;
---   18 sat in on_hold, 15 of them for that reason alone.
+--   18 sat in on_hold, 16 of them for that reason alone. (An earlier draft of
+--   this line said 15. The 16th is 000289: its only other past-due row is a
+--   local_seo row due 2026-06-30 with status='cancelled', and deal_next_due()
+--   filters out both 'paid' and 'cancelled', so no stage decision can see it.
+--   Re-verified on prod 2026-08-05: 18 held, 15 if the cancelled row is counted
+--   as a live debt, 16 using deal_next_due()'s own filter.)
 --
 -- WHAT: rewrite start_date (= the date the client must pay us again, per
 --   deal_next_due/target_accounting_stage) to the real expiry, end_date to
@@ -32,13 +37,15 @@
 --   domains row — this one or any future one — can never change the 27-row
 --   count this migration backs up, updates, or asserts.
 --
--- APPLY WINDOW: this migration must be applied before 2026-09-03. Deal
---   000054's corrected start_date is 2026-09-03; post-condition assertion 2
---   requires every unpaid domains row's start_date to be strictly in the
---   future. Applying on or after 2026-09-03 makes 000054's new start_date
---   <= current_date true again, and the assertion — correctly — raises and
---   rolls back the whole migration. That is not a bug to work around; it
---   means the mapping needs re-deriving for a later apply date.
+-- APPLY WINDOW (satisfied — see APPLIED below): this migration had to be
+--   applied before 2026-09-03. Deal 000054's corrected start_date is
+--   2026-09-03; post-condition assertion 2 requires every unpaid domains row's
+--   start_date to be strictly in the future. Applying on or after 2026-09-03
+--   would make 000054's new start_date <= current_date true again, and the
+--   assertion would — correctly — raise and roll the whole migration back.
+--   That is not a bug to work around; it means anyone re-deriving this file for
+--   a later apply date must re-derive the mapping with it. It also means this
+--   file must NOT be re-run as-is after 2026-09-02.
 --
 -- NO FUNCTION BODIES ARE TOUCHED, so the usual md5(pg_get_functiondef) drift
 --   check does not apply to this migration.
@@ -78,6 +85,19 @@
 --   restoring from it, and this migration is then re-applied, the new
 --   backup INSERT will capture the already-corrected values as if they were
 --   the originals, silently and permanently destroying reversibility.
+--
+-- APPLIED to prod 2026-08-05 (inside the APPLY WINDOW above), posted as a
+--   single Management API query — one implicit transaction, HTTP 201, no
+--   exception raised, so both post-conditions in section 3 passed. 27 rows
+--   backed up, 27 re-dated, 26 'overdue' -> 'pending'. Verification: the
+--   pre-apply violation query went 27 rows -> 0; supabase/tests/
+--   domains_renewal_due_dates.sql could not be run as pgTAP (pgtap is not
+--   installed on this project) so its assertions were run as bare counts,
+--   27 / 0 / 26 -> 0 / 0 / 0. The out-of-scope 28th row (deal 002154, 'paid')
+--   was untouched. No function bodies were changed, so there is no
+--   md5(pg_get_functiondef) to record here. Full record, including the
+--   before/after stage distribution: the "Applied to prod" section of
+--   docs/superpowers/plans/2026-08-05-domain-expiry-renewal-dates.md.
 -- =============================================================================
 
 -- 1. Backup table (idempotent create; populated in section 2) ----------------
