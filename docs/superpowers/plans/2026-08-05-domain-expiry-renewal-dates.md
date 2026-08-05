@@ -143,20 +143,26 @@ considered, not missed): `pawsly.gr`, `ourfarmoils.com`, `dncandles.gr`, `crazy-
 
 ---
 
-## ⚠️ Expected side effect — read before applying
+## ⚠️ Corrected — this prediction did not happen (see "Applied to prod" below)
 
-The `deal_payments_reconcile_stage` trigger fires `AFTER UPDATE` on every row this migration
-touches. Moving `start_date` from the past into the future changes `deal_next_due()`, which
-re-evaluates `target_accounting_stage()` and **releases deals from `on_hold`** — which in turn
-unblocks their jobs and moves Web/Local SEO cards into the `renewal` lane via `release_deal_jobs()`.
+**This section originally predicted roughly 15 deals would leave `on_hold` when this migration
+applied. That did not happen — 0 did — and the prediction was wrong, not the migration.**
+`reconcile_deal_stage()` has never auto-lifted a hold since
+`20260702150150_reconcile_deal_stage_respect_holds.sql` (lines 26-29): a deal already in `on_hold`
+returns `false` immediately and only re-runs `block_deal_jobs()` — "never auto-lift a hold. Keep
+jobs blocked; leave the column to the accountant." The `deal_payments_reconcile_stage` trigger does
+fire `AFTER UPDATE` on every row this migration touches, and `deal_next_due()` does change, but the
+guard above means `target_accounting_stage()` is never consulted for an already-`on_hold` deal, so
+none of the 18 held deals moved. The one stage move in the whole migration was **000054**
+(`awaiting_payment` → `paid_in_full`, a deal that was never on hold). See "Applied to prod" below
+for the full before/after breakdown and the accountant hand-off in
+`docs/system-analysis/2026-08-05-domain-expiry-reconciliation.md`.
 
-**This is the correct outcome** (the €20 was never actually due yet), but it is a visible,
-team-facing change. Expect roughly **15 deals to leave `on_hold`**. Three will stay on hold because
-they have a *separate*, genuinely past-due non-`domains` payment: **000090** (2026-05-29),
-**000205** (2026-06-05), **000289** (2026-06-30). Task 6 verifies the actual numbers rather than
-trusting this estimate.
+The **000289** (2026-06-30) genuinely-past-due claim below was also wrong — 000289 has no unpaid
+non-`domains` row today; it is one of the 16 held deals that now owe nothing (see "Applied to prod"),
+not one of the two genuinely held deals (000090, 000205).
 
-Two deals will not move at all, for known reasons:
+Two deals did not move at all, for known reasons — this part of the prediction was correct:
 - **000041** is in `partial_payment`, which `reconcile_deal_stage` does not allow-list — open
   finding **A2** in `docs/system-analysis/2026-08-04-accounting-full-audit.md`. Its dates still get
   corrected; only the stage move is suppressed. Expected, not a failure.

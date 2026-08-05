@@ -43,11 +43,23 @@
 -- NO FUNCTION BODIES ARE TOUCHED, so the usual md5(pg_get_functiondef) drift
 --   check does not apply to this migration.
 --
--- EXPECTED SIDE EFFECT: deal_payments_reconcile_stage fires AFTER UPDATE and
---   releases deals whose only past-due row was this one — ~15 deals leave
---   on_hold, their jobs unblock and SEO cards move to 'renewal'. That is the
---   intended correction. 000041 (partial_payment, open finding A2) and 000298
---   (closed) get corrected dates but no stage move.
+-- ACTUAL SIDE EFFECT (corrected 2026-08-05, Task 6 — this header originally
+--   predicted ~15 deals would leave on_hold; that did not happen and the
+--   prediction, not the migration, was wrong): deal_payments_reconcile_stage
+--   fires AFTER UPDATE on every row and deal_next_due() does change, but
+--   reconcile_deal_stage() has never auto-lifted a hold since
+--   20260702150150_reconcile_deal_stage_respect_holds.sql (lines 26-29): a
+--   deal already in on_hold returns false immediately and only re-runs
+--   block_deal_jobs() — "never auto-lift a hold. Keep jobs blocked; leave the
+--   column to the accountant." Result: 0 of the 18 on_hold domains deals
+--   moved; jobs stay blocked. The one stage move in the whole migration was
+--   000054 (awaiting_payment -> paid_in_full, a deal that was never on
+--   hold). 000041 (partial_payment, open finding A2) and 000298 (closed) get
+--   corrected dates but no stage move, as originally expected. See the
+--   accountant hand-off in
+--   docs/system-analysis/2026-08-05-domain-expiry-reconciliation.md for the
+--   16 deals that now owe nothing but remain on_hold and blocked pending a
+--   manual accountant decision.
 --
 -- ROLLBACK:
 --   update public.deal_payments dp

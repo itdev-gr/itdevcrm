@@ -120,22 +120,104 @@ considered, not missed): `pawsly.gr`, `ourfarmoils.com`, `dncandles.gr`, `crazy-
 
 ---
 
-## ⚠️ Expected side effect — read before applying
+## ⚠️ Corrected — this prediction did not happen (see Task 6 hand-off below)
 
-The `deal_payments_reconcile_stage` trigger fires `AFTER UPDATE` on every row this migration
-touches. Moving `start_date` from the past into the future changes `deal_next_due()`, which
-re-evaluates `target_accounting_stage()` and **releases deals from `on_hold`** — which in turn
-unblocks their jobs and moves Web/Local SEO cards into the `renewal` lane via `release_deal_jobs()`.
+**This section originally predicted roughly 15 deals would leave `on_hold` when this migration
+applied. That did not happen — 0 did — and the prediction was wrong, not the migration.**
+`reconcile_deal_stage()` has never auto-lifted a hold since
+`20260702150150_reconcile_deal_stage_respect_holds.sql` (lines 26-29): a deal already in `on_hold`
+returns `false` immediately and only re-runs `block_deal_jobs()` — "never auto-lift a hold. Keep
+jobs blocked; leave the column to the accountant." The `deal_payments_reconcile_stage` trigger does
+fire `AFTER UPDATE` on every row this migration touches, and `deal_next_due()` does change, but the
+guard above means `target_accounting_stage()` is never consulted for an already-`on_hold` deal, so
+none of the 18 held deals moved. The one stage move in the whole migration was **000054**
+(`awaiting_payment` → `paid_in_full`, a deal that was never on hold). See "Applied to prod" in
+`docs/superpowers/plans/2026-08-05-domain-expiry-renewal-dates.md` for the full before/after
+breakdown, and the "Accountant hand-off" section below for the 16 deals that now owe nothing but
+are still sitting on hold and blocked.
 
-**This is the correct outcome** (the €20 was never actually due yet), but it is a visible,
-team-facing change. Expect roughly **15 deals to leave `on_hold`**. Three will stay on hold because
-they have a *separate*, genuinely past-due non-`domains` payment: **000090** (2026-05-29),
-**000205** (2026-06-05), **000289** (2026-06-30). Task 6 verifies the actual numbers rather than
-trusting this estimate.
+The **000289** (2026-06-30) genuinely-past-due claim below was also wrong — 000289 has no unpaid
+non-`domains` row today; it is one of the 16 in the hand-off table, not one of the two genuinely
+held deals.
 
-Two deals will not move at all, for known reasons:
+Two deals did not move at all, for known reasons — this part of the prediction was correct:
 - **000041** is in `partial_payment`, which `reconcile_deal_stage` does not allow-list — open
   finding **A2** in `docs/system-analysis/2026-08-04-accounting-full-audit.md`. Its dates still get
   corrected; only the stage move is suppressed. Expected, not a failure.
 - **000298** is in `closed`. Same — dates corrected, no stage move.
+
+---
+
+## Accountant hand-off — 2026-08-05 (Task 6)
+
+Re-verified directly against prod on 2026-08-05. **18 deals with a `domains` service sit in
+`on_hold`.** All 18 are still `on_hold` and all their previously-blocked jobs are still blocked —
+this migration corrected the dates but, by design (see the correction above), never touches the
+`on_hold` column or unblocks a job. That is the accountant's decision to make, not the system's.
+
+### 16 deals that owe nothing today — move these off `on_hold` manually if you agree
+
+For each: the corrected domain renewal due date this migration wrote (`deal_payments.start_date`
+for the `domains` row), how many of the deal's jobs are currently blocked and by which service
+type, and `deal_next_due()` — the earliest unpaid due date across *all* of the deal's payments,
+domains or not. Every value below is a **future** date (none is null, none is past), which is the
+proof the deal owes nothing today.
+
+| Deal | Client | Domain renewal due | Blocked jobs | `deal_next_due()` |
+|---|---|---|---|---|
+| 000114 | ΓΑΒΡΙΗΛΙΔΗΣ ΣΤΕΦΑΝΟΣ ΓΕΩΡΓΙΟΣ | 2027-03-09 | 1 (`other`) | 2026-08-10 |
+| 000136 | ΚΑΝΑΚΗ ΜΑΡΙΑ ΧΡΙΣΤΟΦΟΡΟΣ | 2028-03-14 | 1 (`ai_seo`) | 2028-03-14 |
+| 000178 | ΕΛΕΥΘΕΡΙΑΔΗΣ ΑΠΟΣΤΟΛΟΣ ΤΟΥ ΔΗΜΗΤΡΙΟΥ | 2028-03-17 | 1 (`web_seo`) | 2028-03-17 |
+| 000247 | ΑΔΑΜΙΔΗΣ ΓΕΩΡΓΙΟΣ ΙΩΑΝΝΗΣ | 2027-07-15 | 3 (`ai_seo`, `local_seo`, `web_seo`) | 2027-07-15 |
+| 000249 | ΤΡΑΠΑΛΗ ΒΑΣΙΛΙΚΗ & ΣΙΑ Ε.Ε. | 2028-06-19 | 2 (`ai_seo`, `web_seo`) | 2028-06-19 |
+| 000261 | ΧΡΙΣΤΟΔΟΥΛΟΥ ΗΛΙΑΝΑ ΧΡΙΣΤΟΔΟΥΛΟΣ | 2027-07-10 | 1 (`local_seo`) | 2027-07-10 |
+| 000270 | ΣΟΤΑ ΗΛΙΑ ΙΩΣΗΦ | 2027-03-27 | 3 (`ads`, `ai_seo`, `web_seo`) | 2027-03-27 |
+| 000277 | ΞΑΝΘΟΠΟΥΛΟΣ ΙΩΑΝΝΗΣ ΑΘΑΝΑΣΙΟΣ | 2026-11-19 | 1 (`web_seo`) | 2026-08-12 |
+| 000289 | THRONOS YACHTING ΜΟΝΟΠΡΟΣΩΠΗ Ι.Κ.Ε. | 2028-05-09 | 1 (`local_seo`) | 2028-05-09 |
+| 000294 | HAJDINI HAMIT RRAPI | 2027-05-21 | 3 (`ads` ×1, `local_seo` ×2) | 2027-05-21 |
+| 000314 | ΕΤΖΙΑΝ ΣΑΦΡΑΝ ΕΕ | 2027-06-07 | 2 (`ai_seo`, `web_seo`) | 2027-06-07 |
+| 000404 | OPAWEY E E | 2029-03-29 | 3 (`ads` ×1, `maintenance` ×2) | 2029-03-29 |
+| 000406 | Ema Monoseis | 2027-02-24 | 3 (`ads`, `social_media`, `web_seo`) | 2027-02-24 |
+| 000431 | SERVISTAS ΙΔΙΩΤΙΚΗ ΚΕΦΑΛΑΙΟΥΧΙΚΗ ΕΤΑΙΡΙΑ | 2027-11-04 | 2 (`ads`, `web_seo`) | 2026-08-10 |
+| 000473 | FREEDOM WHEELS ΜΟΝΟΠΡΟΣΩΠΗ Ι Κ Ε | 2027-05-13 | 0 | 2027-05-13 |
+| 005042 | ΠΑΤΣΙΑΣ ΑΝΑΣΤΑΣΙΟΣ ΜΙΧΑΗΛ | 2028-02-15 | 3 (`ai_seo`, `local_seo`, `web_seo`) | 2028-02-15 |
+
+30 blocked jobs total across these 16 deals. Note 000114, 000277 and 000431 have `deal_next_due()`
+only a few days out (2026-08-10 / 2026-08-12) — not past due today, but check them first if you
+work down this list over several days, since they will become genuinely due soon.
+
+### 2 deals that are genuinely still held — do not touch these
+
+Each has an unpaid, non-`domains` row whose `start_date` is on or before today (2026-08-05); that is
+the row `deal_next_due()` is reporting and the reason the hold is legitimate.
+
+| Deal | Client | Past-due row (service, status, due date) | `deal_next_due()` |
+|---|---|---|---|
+| 000090 | www.dctrade.gr | `web_seo` overdue since 2026-05-29 (plus a second `web_seo` row overdue since 2026-06-29 and a `social_media` row overdue since 2026-07-29) | 2026-05-29 |
+| 000205 | ΓΑΒΡΙΗΛΙΔΗΣ ΜΠΑΝΤΑΒΑΣ FITNESS EVOLUTION Ο Ε | `web_dev` overdue since 2026-06-05 | 2026-06-05 |
+
+000090 has 2 blocked jobs; 000205 has 0 blocked jobs — its hold is on the accounting stage, not on
+a blocked job.
+
+### Step 3 — renewal generator will not fire early
+
+`ensure_recurring_payments()` creates the next period once `end_date <= current_date + 7 days`.
+Re-run 2026-08-05 against every `domains` row (not just the 27 touched by this migration):
+
+```sql
+select count(*) as would_generate
+  from public.deal_payments dp
+ where dp.service_type = 'domains'
+   and dp.end_date <= current_date + interval '7 days';
+```
+
+Result: **`0`**, as expected — every corrected `end_date` is at least a year out.
+
+### Out-of-scope 28th row — confirmed still untouched
+
+Deal **002154** (client "HN travel", `hntravelcorfu.com`), payment
+`96afc085-7489-44d5-a1b5-534bfccf1dd4`: re-checked 2026-08-05, still `status = 'paid'`,
+`start_date = 2026-07-06`, `end_date = 2027-07-06`, unchanged by this migration. It was considered
+during discovery and deliberately excluded because it postdates the mapping freeze (see the
+migration header's SCOPE NOTE); this entry is the record that it was checked again, not missed.
 
