@@ -231,3 +231,47 @@ Deal **002154** (client "HN travel", `hntravelcorfu.com`), payment
 during discovery and deliberately excluded because it postdates the mapping freeze (see the
 migration header's SCOPE NOTE); this entry is the record that it was checked again, not missed.
 
+
+---
+
+## Holds released manually via the CRM UI — 2026-08-05
+
+The "Accountant hand-off" list above was **actioned the same day, through the app**, not by SQL.
+All 16 deals were moved with the deal page's *Move to* control and the 10 leftover job blocks were
+cleared with each job's *Unblock* button, so every write went through the app's own RPCs with a
+real `auth.uid()` (mkifokeris@itdev.gr).
+
+**Final state, verified live:**
+
+| Check | Result |
+|---|---|
+| Of the 16, still `on_hold` | **0** |
+| Of the 16, clients still `status='blocked'` | **0** |
+| Jobs still blocked `account_on_hold` | **0** (was 27) |
+| Jobs still blocked `billing_paused` | **3** — correct, deliberately left |
+| 000090 / 000205 still `on_hold` | **2** — correct, real arrears |
+| Jobs whose `stage_id` changed | **0** |
+| Cycles newly stamped in `renewed_for_period` | **0** |
+
+13 deals went to `paid_in_full`, 3 (000114, 000277, 000431) to `awaiting_payment`. The client status
+of those 3 was set to `active` by hand, because `deals_sync_client_status_on_stage_change` returns
+NULL for `awaiting_payment` and would have left them falsely flagged Blocked forever.
+
+### A correction worth recording
+
+A SQL migration was drafted for this and **abandoned**. Its header claimed the `paid_in_full`
+transition merely clears `account_on_hold` blocks, citing
+`20260618000014_onhold_holds_seo_jobs_only.sql`. That is out of date: since
+`20260629120000_job_release_timing.sql` the `paid_in_full` branch calls
+`release_jobs_for_deal()` **and** `release_deal_jobs()`. Review caught it before it ran; its
+post-condition would have aborted the whole file.
+
+The practical consequence showed up in the UI route too, exactly as predicted: moving a deal to
+`paid_in_full` does **not** unblock its SEO cards, because `release_deal_jobs`'s branches do not
+apply to them. 10 jobs stayed blocked and had to be unblocked one by one — they would otherwise
+have cleared at the 02:20 `reconcile_block_lifecycle` cron.
+
+No card moved to the `renewal` lane and no `renewed_for_period` was written, but only because every
+SEO card already carried the 2026-08-04 backfill stamp, so `seo_sync_renewal_job()` returned false
+for all of them. **That is luck, not design** — anyone repeating this on a deal whose SEO card is
+not already stamped will stamp a cycle nobody paid for.
