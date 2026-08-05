@@ -694,3 +694,52 @@ git commit -m "docs(domains): record the post-apply stage releases and blocked-j
   in `docs/system-analysis/2026-08-04-accounting-full-audit.md` and is not touched here.
 - **Finding A2** (`partial_payment` has no automatic exit), which is why 000041 will not change
   stage. Tracked in the accounting-fixes plan.
+
+---
+
+## Applied to prod
+
+- **2026-08-05** — `20260806100000_domain_expiry_renewal_dates.sql`, HTTP 201, posted as a single
+  Management API query (one implicit transaction). No exception raised.
+  27 rows re-dated, 26 `overdue` → `pending`, 27 rows backed up in
+  `deal_payments_domain_expiry_backup_20260805`.
+  VERIFY_SQL 27 rows → 0. pgTAP `domains_renewal_due_dates` could not run (pgtap is available but
+  not installed on this project — `function plan(integer) does not exist`); its three assertions were
+  run as bare counts instead and went 27 / 0 / 26 → **0 / 0 / 0**.
+  Six contested rows spot-checked: all six `start_date` values match the mapping, all `status =
+  'pending'`, all `label` = `start_date` in `DD/MM/YYYY` (000247 corrected `27/07/2027` → `15/07/2027`).
+  The out-of-scope 28th row (deal 002154, `status='paid'`) was untouched, as designed.
+
+  **Deals released from `on_hold`: none — 18 before, 18 after.** The plan's "~15 deals leave
+  `on_hold`" side effect did **not** occur, and the migration is not at fault. Since
+  `20260702150150_reconcile_deal_stage_respect_holds`, `reconcile_deal_stage()` returns early for any
+  deal already in `on_hold` ("never auto-lift a hold … leave the column to the accountant") and
+  re-runs `block_deal_jobs()`. The trigger fired on all 27 updates; it simply cannot move a held deal.
+  The one stage move was **000054**, `awaiting_payment` → `paid_in_full` (its due date moved from
+  today to 2026-09-03).
+
+  Stage distribution across the 28 live `domains` deals, before → after:
+
+  | accounting stage | before | after |
+  |---|---|---|
+  | `on_hold` | 18 | 18 |
+  | `done` | 6 | 6 |
+  | `partial_payment` | 2 (000041, 002154) | 2 (000041, 002154) |
+  | `awaiting_payment` | 1 (000054) | 0 |
+  | `closed` | 1 (000298) | 1 (000298) |
+  | `paid_in_full` | 0 | 1 (000054) |
+
+  (The plan's earlier "done 7 / partial_payment 1" reference was off by one: the out-of-scope 28th
+  deal 002154 sits in `partial_payment`, not `done`. Totals match at 28 either way.)
+
+  **Follow-up now owed to the accountant.** 16 of the 18 held deals no longer have any past-due row
+  and are eligible for a manual stage move; their jobs stay blocked until someone makes it:
+
+  - would compute to `paid_in_full` (13): 000136, 000178, 000247, 000249, 000261, 000270, 000289,
+    000294, 000314, 000404, 000406, 000473, 005042
+  - would compute to `awaiting_payment` (3): 000114 (due 2026-08-10), 000277 (2026-08-12),
+    000431 (2026-08-10)
+  - legitimately still `on_hold` (2): **000090** (three unpaid `web_seo`/`social_media` rows past due
+    from 2026-05-29) and **000205** (unpaid row due 2026-06-05) — unrelated to domains.
+
+  This is Task 6's work, not a defect in this migration.
