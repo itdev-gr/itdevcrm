@@ -1,6 +1,18 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@/lib/i18n';
+
+// useEntityCommentFiles is a react-query hook, so the component needs either a
+// QueryClientProvider or a stub. Stubbing keeps these tests about which SECTIONS
+// render per parentType, matching how every other collaborator here is mocked —
+// the hook's own behaviour is covered in hooks/useEntityCommentFiles.test.ts.
+const { commentFiles } = vi.hoisted(() => ({ commentFiles: { value: [] as unknown[] } }));
+vi.mock('./hooks/useEntityCommentFiles', () => ({
+  useEntityCommentFiles: () => ({ data: commentFiles.value }),
+}));
+vi.mock('./AttachmentGallery', () => ({
+  AttachmentGallery: () => <div data-testid="comment-files-panel" />,
+}));
 
 vi.mock('./AttachmentsPanel', () => ({
   AttachmentsPanel: () => <div data-testid="files-panel" />,
@@ -21,6 +33,10 @@ vi.mock('@/features/deals/DealJobFiles', () => ({
 import { CombinedAttachmentsTab } from './CombinedAttachmentsTab';
 
 describe('CombinedAttachmentsTab', () => {
+  beforeEach(() => {
+    commentFiles.value = [];
+  });
+
   it('deal: shows files, offers, pro formas and contracts', () => {
     render(
       <CombinedAttachmentsTab parentType="deal" parentId="d1" dealId="d1" clientId="c1" />,
@@ -50,5 +66,16 @@ describe('CombinedAttachmentsTab', () => {
   it('deal without client: no contracts section', () => {
     render(<CombinedAttachmentsTab parentType="deal" parentId="d1" dealId="d1" />);
     expect(screen.queryByTestId('contracts-panel')).not.toBeInTheDocument();
+  });
+
+  it('hides the comment-files section when there are none', () => {
+    render(<CombinedAttachmentsTab parentType="deal" parentId="d1" dealId="d1" />);
+    expect(screen.queryByTestId('comment-files-panel')).not.toBeInTheDocument();
+  });
+
+  it('shows the comment-files section once a comment carries a file', () => {
+    commentFiles.value = [{ id: 'f1' }];
+    render(<CombinedAttachmentsTab parentType="deal" parentId="d1" dealId="d1" />);
+    expect(screen.getByTestId('comment-files-panel')).toBeInTheDocument();
   });
 });
