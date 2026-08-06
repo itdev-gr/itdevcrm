@@ -171,6 +171,24 @@ Left alone: the card sits on `local_seo/done` and the deal's accounting stage is
 `on_hold`; neither was touched. The paid €350 period (2026-06-09 → 07-09) and the
 cancelled one (07-09 → 08-09) keep their original amounts — history, not forecast.
 
+## Safety net: integrity alert 25 `invisible_card`
+
+`supabase/migrations/20260806170000_invisible_card_alert.sql` (post md5
+`b477063586…`). The root cause is fixed, but nothing in the product could ever
+have *told* us a card was invisible — that is why 006122 sat unnoticed for three
+days. Alert 25 fires on any non-archived job, on a non-closed deal, that has a
+`stage_id` which renders no column: either the stage is archived or it belongs to
+another board. It is distinct from check 20 `off_board_job`, which catches
+`stage_id IS NULL`.
+
+Suppressed for a blocked card on a board that renders a virtual Blocked column —
+`groupJobsForBoard` diverts those before the column lookup, so they stay visible.
+`signature` is the stage id, so dismissing one broken stage does not keep the
+card hidden if it later lands on a different one.
+
+No frontend change needed: the alerts UI is generic over `check_key` and takes
+`title`/`detail` straight from the RPC.
+
 ## Verification sweep (whole table, after all four fixes)
 
 | Check | Rows |
