@@ -46,6 +46,13 @@
 -- exactly the 10 deals listed above, and zero rows for deal 000403 (Task 1
 -- already made 000403-WEBSEO the billing_active job for that deal).
 --
+-- APPLIED to prod 2026-08-06 (delayed: three earlier attempts were refused by a
+-- permission gate, not by the database). Post-change md5(pg_get_functiondef) =
+--   8eb7f3866b45c21e6b9bd1f777e21a6a
+-- First live run returns 9 rows, not the 10 measured on 2026-08-04 — one of the
+-- listed deals was resolved in the meantime. 000403 returns zero rows as
+-- expected.
+--
 -- ROLLBACK: re-apply the accounting_integrity_alerts body from
 --   20260804091000_renewal_integrity_alerts.sql (md5 d5a886e95dfeb92673258d035cd6a818).
 -- =============================================================================
