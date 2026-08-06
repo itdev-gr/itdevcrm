@@ -99,7 +99,11 @@
     "prepay_close": "Close",
     "prepay_done": "Recorded {{n}} period(s) as paid.",
     "prepay_skipped": "Skipped {{n}} duplicate period(s).",
-    "prepay_no_chain": "This deal has no active monthly services."
+    "prepay_no_chain": "This deal has no active monthly services.",
+    "remove_confirm_title": "Delete this billing period?",
+    "remove_confirm_regenerates": "Billing for this service is still switched on, so the nightly job will create this period again. To stop charging the client, use Pause billing on the service card instead.",
+    "remove_confirm_plain": "The row is removed permanently.",
+    "remove_row": "Delete billing period"
   },
   "actions": {
     "view": "View",

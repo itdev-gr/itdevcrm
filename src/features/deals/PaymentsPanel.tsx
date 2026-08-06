@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,8 +12,16 @@ import {
   useUpdateDealPayment,
   type DealPaymentRow,
 } from './hooks/useDealPayments';
+import { useJobsBilling } from './hooks/useJobsBilling';
 import { PrepayDialog } from './PrepayDialog';
 import type { PlannedService } from './ServicesPlannedField';
+
+const RECURRING: string[] = ['recurring_monthly', 'recurring_yearly'];
+
+/** Key identifying one billing chain: the generator matches on both fields. */
+function chainKey(serviceType: string | null, billingType: string | null): string {
+  return `${serviceType ?? ''}|${billingType ?? ''}`;
+}
 
 type Props = {
   dealId: string;
@@ -48,15 +57,25 @@ function PaymentRow({
   row,
   dealId,
   countryVatRate,
+  willRegenerate,
 }: {
   row: DealPaymentRow;
   dealId: string;
   /** The VAT rate that matches the client's country (e.g. 0 for Cyprus). */
   countryVatRate: number;
+  /**
+   * True when this period belongs to a recurring chain whose job is still
+   * billing_active — deleting it does NOT stop the billing, because
+   * ensure_recurring_payments() keys off the job, not the payment rows, and
+   * will generate the period again. The dialog says so and points at the
+   * control that does stop it (Pause billing, on the service card).
+   */
+  willRegenerate: boolean;
 }) {
   const { t } = useTranslation('deals');
   const update = useUpdateDealPayment(dealId);
   const remove = useDeleteDealPayment(dealId);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const [label, setLabel] = useState(row.label ?? '');
   const [start, setStart] = useState(row.start_date ?? '');
@@ -198,14 +217,34 @@ function PaymentRow({
           type="button"
           size="sm"
           variant="destructive"
-          onClick={() => {
-            if (confirm(t('payments.remove'))) {
-              void remove.mutateAsync(row.id);
-            }
-          }}
+          aria-label={t('payments.remove_row', { defaultValue: 'Delete billing period' })}
+          onClick={() => setConfirmRemove(true)}
         >
           ×
         </Button>
+        <ConfirmDialog
+          open={confirmRemove}
+          onOpenChange={setConfirmRemove}
+          title={t('payments.remove_confirm_title', { defaultValue: 'Delete this billing period?' })}
+          description={
+            willRegenerate
+              ? t('payments.remove_confirm_regenerates', {
+                  defaultValue:
+                    'Billing for this service is still switched on, so the nightly job will create this period again. To stop charging the client, use Pause billing on the service card instead.',
+                })
+              : t('payments.remove_confirm_plain', {
+                  defaultValue: 'The row is removed permanently.',
+                })
+          }
+          confirmLabel={t('payments.remove')}
+          pending={remove.isPending}
+          onConfirm={() => {
+            remove
+              .mutateAsync(row.id)
+              .then(() => setConfirmRemove(false))
+              .catch(reportError);
+          }}
+        />
       </td>
     </tr>
   );
@@ -215,6 +254,20 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
   const { t } = useTranslation('deals');
   const { data: payments = [], isLoading } = useDealPayments(dealId);
   const add = useAddDealPayment(dealId);
+
+  // Which (service, cadence) chains would regenerate a deleted period. Same
+  // hook JobsBillingPanel uses on this page, so it is a cache hit rather than a
+  // second request.
+  const { data: billing } = useJobsBilling(dealId);
+  const regeneratingChains = useMemo(() => {
+    const keys = new Set<string>();
+    for (const job of billing?.jobs ?? []) {
+      if (!job.billing_active) continue;
+      if (!RECURRING.includes(job.billing_type)) continue;
+      keys.add(chainKey(job.department, job.billing_type));
+    }
+    return keys;
+  }, [billing]);
 
   const [showAdd, setShowAdd] = useState(false);
   const [showPrepay, setShowPrepay] = useState(false);
@@ -298,7 +351,13 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
             </thead>
             <tbody>
               {payments.map((p) => (
-                <PaymentRow key={p.id} row={p} dealId={dealId} countryVatRate={defaultVatRate} />
+                <PaymentRow
+                  key={p.id}
+                  row={p}
+                  dealId={dealId}
+                  countryVatRate={defaultVatRate}
+                  willRegenerate={regeneratingChains.has(chainKey(p.service_type, p.billing_type))}
+                />
               ))}
             </tbody>
           </table>
