@@ -49,6 +49,24 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
     return { subject, html: shell(bodyHtml, COMPANY_SIG_HTML), text: raw + '\n\n' + COMPANY_SIG_TEXT };
   },
 
+  // One-off company announcements (holiday notices, wishes). Body is plain
+  // text from staff — escaped like `custom`. Optional hero image on top; the
+  // URL is code-supplied (email-assets), never free HTML, so it stays safe.
+  company_announcement: (d) => {
+    const subject = String(d.subject ?? '').replace(/[\r\n]+/g, ' ');
+    const raw = String(d.text ?? '');
+    const imgUrl = typeof d.image_url === 'string' && d.image_url.startsWith('https://') ? d.image_url : null;
+    const img = imgUrl
+      ? `<img src="${escapeHtml(imgUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;border-radius:8px;display:block;margin:0 auto 20px"/>`
+      : '';
+    const bodyHtml = linkify(escapeHtml(raw)).replace(/\n/g, '<br/>');
+    return {
+      subject,
+      html: shell(`${img}<p>${bodyHtml}</p>`, COMPANY_SIG_HTML),
+      text: raw + '\n\n' + COMPANY_SIG_TEXT,
+    };
+  },
+
   payment_due_soon: (d) => {
     const svc = escapeHtml(SERVICE_LABELS_EL[String(d.service_type)] ?? String(d.service_type ?? ''));
     const name = escapeHtml(String(d.client_name ?? ''));
