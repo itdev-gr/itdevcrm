@@ -52,17 +52,36 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
   // One-off company announcements (holiday notices, wishes). Body is plain
   // text from staff — escaped like `custom`. Optional hero image on top; the
   // URL is code-supplied (email-assets), never free HTML, so it stays safe.
+  // Layout: email-safe centered card (tables + inline styles, no shell()).
   company_announcement: (d) => {
     const subject = String(d.subject ?? '').replace(/[\r\n]+/g, ' ');
     const raw = String(d.text ?? '');
     const imgUrl = typeof d.image_url === 'string' && d.image_url.startsWith('https://') ? d.image_url : null;
-    const img = imgUrl
-      ? `<img src="${escapeHtml(imgUrl)}" alt="" width="560" style="width:100%;max-width:560px;height:auto;border-radius:8px;display:block;margin:0 auto 20px"/>`
+    const hero = imgUrl
+      ? `<tr><td><img src="${escapeHtml(imgUrl)}" alt="IT DEV" width="600" style="width:100%;max-width:600px;height:auto;display:block"/></td></tr>`
       : '';
-    const bodyHtml = linkify(escapeHtml(raw)).replace(/\n/g, '<br/>');
+    const paras = raw
+      .split(/\n{2,}/)
+      .map((p) => `<p style="margin:0 0 16px">${linkify(escapeHtml(p.trim())).replace(/\n/g, '<br/>')}</p>`)
+      .join('');
+    const html = `<div style="margin:0;padding:24px 12px;background:#f1f5f9">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width:600px;width:100%;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0">
+${hero}
+<tr><td style="padding:32px 36px 8px;font-family:Arial,sans-serif;font-size:15px;color:#0f172a;line-height:1.7">
+${paras}
+</td></tr>
+<tr><td style="padding:8px 36px 28px;font-family:Arial,sans-serif">
+<hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 4px"/>
+${COMPANY_SIG_HTML}
+</td></tr>
+</table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width:600px;width:100%;margin:0 auto">
+<tr><td style="padding:16px 8px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-align:center">IT DEV · Digital Marketing Agency · <a href="https://www.itdev.gr" style="color:#64748b">www.itdev.gr</a></td></tr>
+</table>
+</div>`;
     return {
       subject,
-      html: shell(`${img}<p>${bodyHtml}</p>`, COMPANY_SIG_HTML),
+      html,
       text: raw + '\n\n' + COMPANY_SIG_TEXT,
     };
   },
