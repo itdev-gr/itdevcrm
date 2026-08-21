@@ -83,6 +83,40 @@ describe('email templates', () => {
     expect(r.subject.startsWith(' ')).toBe(false);
   });
 
+  it('renders the webdev weekly report with stats, flags and escaped fields', () => {
+    const r = renderTemplate('webdev_weekly_report', {
+      week_label: '10 Αυγ – 17 Αυγ 2026',
+      overview: 'Καλή εβδομάδα.\n\nΔύο έργα προχώρησαν.',
+      attention: ['Πελάτης Χ: κολλημένο <script>'],
+      totals: { active: 5, newThisWeek: 1, movedThisWeek: 2, completedThisWeek: 1 },
+      projects: [
+        {
+          code: '000066-WEBDEV-2', client: 'ΑΛΕΞΑΝΔΡΑ <Φ>', stage: 'Ανάπτυξη',
+          daysInStage: 12, daysSinceTouch: 3, openTasks: 2, tasksResolvedThisWeek: 1,
+          commentsThisWeek: 4, weekNote: 'Σχεδιασμός → Ανάπτυξη', flags: ['stuck'],
+        },
+      ],
+      ai_generated: true,
+      test: true,
+    });
+    expect(r.subject).toContain('[ΔΟΚΙΜΗ]');
+    expect(r.subject).toContain('10 Αυγ – 17 Αυγ 2026');
+    expect(r.html).toContain('Εβδομαδιαία Αναφορά Web Dev');
+    expect(r.html).toContain('000066-WEBDEV-2');
+    expect(r.html).toContain('Κολλημένο'); // stuck flag chip label
+    expect(r.html).not.toContain('<script>'); // attention text escaped
+    expect(r.html).toContain('ΑΛΕΞΑΝΔΡΑ &lt;Φ&gt;');
+    expect(r.text).toContain('Σχεδιασμός → Ανάπτυξη');
+  });
+
+  it('renders the webdev weekly report empty-board fallback', () => {
+    const r = renderTemplate('webdev_weekly_report', {
+      week_label: 'w', overview: 'Στάσιμη εβδομάδα.', attention: [], totals: {}, projects: [],
+    });
+    expect(r.subject.startsWith('[ΔΟΚΙΜΗ]')).toBe(false);
+    expect(r.html).toContain('Δεν υπάρχουν ενεργά web dev έργα');
+  });
+
   it('keeps the code prefix intact when data.code is supplied', () => {
     const r = renderDbTemplate(
       { subject: '{{code}} - Καλώς ήρθατε', body: 'b', client_facing: true },

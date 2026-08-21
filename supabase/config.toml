@@ -428,3 +428,7 @@ verify_jwt = false
 # Machine-to-machine (cron/backfill); auth is a GMAIL_SYNC_SECRET Bearer token.
 [functions.gmail-sync]
 verify_jwt = false
+
+# Weekly cron calls it with a WEBDEV_REPORT_SECRET Bearer token, no user JWT.
+[functions.webdev-weekly-report]
+verify_jwt = false
