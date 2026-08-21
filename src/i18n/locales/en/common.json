@@ -151,6 +151,14 @@
     "no_results": "No leads found",
     "clear": "Clear"
   },
+  "party_picker": {
+    "label": "Client or lead",
+    "search_placeholder": "Search client or lead — name, code, email, phone…",
+    "no_results": "No clients or leads found",
+    "clear": "Clear",
+    "badge_client": "Client",
+    "badge_lead": "Lead"
+  },
   "docs": {
     "toc_label": "On this page",
     "toc_jump": "Jump to section…"

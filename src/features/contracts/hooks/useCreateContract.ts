@@ -4,7 +4,8 @@ import { queryKeys } from '@/lib/queryKeys';
 import { captureMutation } from '@/lib/sentry/captureMutation';
 
 type Input = {
-  client_id: string;
+  client_id?: string | null;
+  lead_id?: string | null;
   template_id: string | null;
   title: string;
   body: string;

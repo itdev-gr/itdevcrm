@@ -7,12 +7,16 @@ export type LeadSearchRow = {
   title: string;
   code: string | null;
   company_name: string | null;
+  email: string | null;
+  phone: string | null;
 };
 
 /** Debounced-friendly lead typeahead. Disabled until `term` has >= 2 chars.
+ *  Matches title, company, code, email, phone, VAT and contact name.
  *  Leads RLS scopes results (reps own-only; view_all/admins see all). */
 export function useLeadSearch(term: string) {
-  const q = term.trim();
+  // `,` and parens are PostgREST .or() syntax — strip them from the term.
+  const q = term.trim().replace(/[,()]/g, '');
   return useQuery<LeadSearchRow[]>({
     queryKey: queryKeys.leadSearch(q.toLowerCase()),
     enabled: q.length >= 2,
@@ -21,10 +25,10 @@ export function useLeadSearch(term: string) {
       const like = `%${q}%`;
       const { data, error } = await supabase
         .from('leads')
-        .select('id, title, code, company_name')
+        .select('id, title, code, company_name, email, phone')
         .eq('archived', false)
         .or(
-          `title.ilike.${like},company_name.ilike.${like},code.ilike.${like},business_profile_name.ilike.${like}`,
+          `title.ilike.${like},company_name.ilike.${like},code.ilike.${like},business_profile_name.ilike.${like},email.ilike.${like},phone.ilike.${like},vat_number.ilike.${like},contact_first_name.ilike.${like},contact_last_name.ilike.${like}`,
         )
         .limit(20)
         .order('title', { ascending: true });

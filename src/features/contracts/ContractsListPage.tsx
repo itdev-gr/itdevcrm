@@ -1,55 +1,35 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/datetime';
 import { useContracts } from './hooks/useContracts';
 import { ContractStatusBadge } from './ContractStatusBadge';
-
-function useClientOptions() {
-  return useQuery({
-    queryKey: ['contracts', 'client-options'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('id, name')
-        .eq('archived', false)
-        .order('name');
-      if (error) throw new Error(error.message);
-      return data ?? [];
-    },
-  });
-}
+import { ContractPartyPicker, type ContractParty } from './ContractPartyPicker';
 
 export function ContractsListPage() {
   const { t } = useTranslation('contracts');
   const navigate = useNavigate();
   const { data: contracts = [], isLoading, error } = useContracts();
-  const { data: clientOptions = [] } = useClientOptions();
-  const [newClientId, setNewClientId] = useState('');
+  const [party, setParty] = useState<ContractParty | null>(null);
 
   return (
     <div className="flex min-h-full flex-col gap-6 p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t('list.title')}</h1>
         <div className="flex items-center gap-2">
-          <select
-            value={newClientId}
-            onChange={(e) => setNewClientId(e.target.value)}
-            className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-            aria-label={t('list.pick_client')}
-          >
-            <option value="">{t('list.pick_client')}</option>
-            {clientOptions.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <ContractPartyPicker id="ct-party" value={party} onChange={setParty} />
           <Button
             size="sm"
-            disabled={!newClientId}
-            onClick={() => navigate(`/contracts/new?clientId=${newClientId}`)}
+            disabled={!party}
+            onClick={() => {
+              if (!party) return;
+              navigate(
+                party.type === 'client'
+                  ? `/contracts/new?clientId=${party.id}`
+                  : `/contracts/new?leadId=${party.id}`,
+              );
+            }}
           >
             + {t('actions.new')}
           </Button>
@@ -68,7 +48,7 @@ export function ContractsListPage() {
             <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-2">{t('list.number')}</th>
-                <th className="px-4 py-2">{t('list.client')}</th>
+                <th className="px-4 py-2">{t('list.party')}</th>
                 <th className="px-4 py-2">{t('list.contract_title')}</th>
                 <th className="px-4 py-2">{t('list.status')}</th>
                 <th className="px-4 py-2">{t('list.created')}</th>
@@ -82,7 +62,14 @@ export function ContractsListPage() {
                       {c.contract_number ?? c.id.slice(0, 8)}
                     </Link>
                   </td>
-                  <td className="px-4 py-2">{c.clients?.name}</td>
+                  <td className="px-4 py-2">
+                    {c.clients?.name ?? c.leads?.company_name ?? c.leads?.title}
+                    {c.lead_id && (
+                      <span className="ml-1.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        Lead
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-2">{c.title}</td>
                   <td className="px-4 py-2"><ContractStatusBadge status={c.status} /></td>
                   <td className="px-4 py-2 text-muted-foreground">{formatDate(c.created_at)}</td>

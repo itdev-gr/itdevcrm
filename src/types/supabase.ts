@@ -1199,11 +1199,12 @@ export type Database = {
       contracts: {
         Row: {
           body: string
-          client_id: string
+          client_id: string | null
           contract_number: string | null
           created_at: string
           created_by: string | null
           id: string
+          lead_id: string | null
           pdf_path: string | null
           sent_at: string | null
           status: string
@@ -1213,11 +1214,12 @@ export type Database = {
         }
         Insert: {
           body?: string
-          client_id: string
+          client_id?: string | null
           contract_number?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          lead_id?: string | null
           pdf_path?: string | null
           sent_at?: string | null
           status?: string
@@ -1227,11 +1229,12 @@ export type Database = {
         }
         Update: {
           body?: string
-          client_id?: string
+          client_id?: string | null
           contract_number?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          lead_id?: string | null
           pdf_path?: string | null
           sent_at?: string | null
           status?: string
@@ -1253,6 +1256,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tech_my_clients"
             referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "contracts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contracts_created_by_fkey"

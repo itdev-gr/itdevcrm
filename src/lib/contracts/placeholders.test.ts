@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   CONTRACT_PLACEHOLDERS,
   buildPlaceholderData,
+  leadToPlaceholderFields,
   resolvePlaceholders,
 } from './placeholders';
 
@@ -48,6 +49,40 @@ describe('resolvePlaceholders', () => {
 
   it('replaces unknown placeholders with an empty string', () => {
     expect(resolvePlaceholders('x {{nope}} y', {})).toBe('x  y');
+  });
+});
+
+describe('leadToPlaceholderFields', () => {
+  const lead = {
+    title: 'Nikos from the form',
+    company_name: 'Ledas SA',
+    email: 'nikos@ledas.gr',
+    phone: '6980000001',
+    vat_number: null,
+    address: 'Argous 1',
+    country: 'Greece',
+    contact_first_name: 'Nikos',
+    contact_last_name: 'Ledas',
+  };
+
+  it('prefers company_name over title for the name', () => {
+    const d = buildPlaceholderData(leadToPlaceholderFields(lead), new Date(2026, 7, 21));
+    expect(d.client_name).toBe('Ledas SA');
+    expect(d.contact_full_name).toBe('Nikos Ledas');
+  });
+
+  it('falls back to the lead title when company_name is null', () => {
+    const d = buildPlaceholderData(
+      leadToPlaceholderFields({ ...lead, company_name: null }),
+      new Date(2026, 7, 21),
+    );
+    expect(d.client_name).toBe('Nikos from the form');
+  });
+
+  it('resolves city and postcode to empty strings (leads have neither)', () => {
+    const d = buildPlaceholderData(leadToPlaceholderFields(lead), new Date(2026, 7, 21));
+    expect(d.city).toBe('');
+    expect(d.postcode).toBe('');
   });
 });
 

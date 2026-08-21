@@ -151,6 +151,14 @@
     "no_results": "Δεν βρέθηκαν leads",
     "clear": "Καθαρισμός"
   },
+  "party_picker": {
+    "label": "Πελάτης ή lead",
+    "search_placeholder": "Αναζήτηση πελάτη ή lead — όνομα, κωδικός, email, τηλέφωνο…",
+    "no_results": "Δεν βρέθηκαν πελάτες ή leads",
+    "clear": "Καθαρισμός",
+    "badge_client": "Πελάτης",
+    "badge_lead": "Lead"
+  },
   "docs": {
     "toc_label": "Σε αυτή τη σελίδα",
     "toc_jump": "Μετάβαση σε ενότητα…"

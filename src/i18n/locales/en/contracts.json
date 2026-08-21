@@ -14,6 +14,7 @@
     "title": "Contracts",
     "empty": "No contracts yet.",
     "client": "Client",
+    "party": "Client / Lead",
     "number": "Number",
     "contract_title": "Title",
     "status": "Status",
@@ -23,6 +24,7 @@
   "builder": {
     "title": "New contract",
     "missing_client": "Missing client — open this page from a client card.",
+    "missing_party": "Missing client or lead — pick one from the contracts page search.",
     "template": "Template",
     "pick_template": "Pick a template…",
     "contract_title": "Title",
@@ -33,7 +35,7 @@
   "detail": {
     "confirm_send": "Send this contract as a PDF to {{email}}?",
     "sent_ok": "Contract sent.",
-    "no_email": "The client card has no email address — add one to send.",
+    "no_email": "The client/lead card has no email address — add one to send.",
     "status": "Status"
   },
   "templates_admin": {

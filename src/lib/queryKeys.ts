@@ -95,6 +95,7 @@ export const queryKeys = {
   contracts: ['contracts'] as const,
   contract: (id: string) => ['contracts', 'detail', id] as const,
   contractsForClient: (clientId: string) => ['contracts', 'client', clientId] as const,
+  contractsForLead: (leadId: string) => ['contracts', 'lead', leadId] as const,
   contractTemplates: ['contract_templates'] as const,
   expenseCategories: () => ['expense-categories'] as const,
   expenses: (filters?: Record<string, string | undefined>) =>

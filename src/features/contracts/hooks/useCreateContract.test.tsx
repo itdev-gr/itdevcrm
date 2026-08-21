@@ -39,6 +39,21 @@ describe('useCreateContract', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
+  it('inserts a lead contract without a client', async () => {
+    single.mockResolvedValue({ data: { id: 'k2' }, error: null });
+    const { result } = renderHook(() => useCreateContract(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+    const id = await result.current.mutateAsync({
+      client_id: null, lead_id: 'l1', template_id: null, title: 'Σύμβαση franchise', body: 'κείμενο',
+    });
+    expect(insert).toHaveBeenCalledWith({
+      client_id: null, lead_id: 'l1', template_id: null,
+      title: 'Σύμβαση franchise', body: 'κείμενο', status: 'draft',
+    });
+    expect(id).toBe('k2');
+  });
+
   it('throws on insert error', async () => {
     single.mockResolvedValue({ data: null, error: { message: 'rls denied' } });
     const { result } = renderHook(() => useCreateContract(), {

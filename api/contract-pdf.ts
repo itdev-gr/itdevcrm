@@ -71,25 +71,50 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     return;
   }
 
-  const { data: client } = await userClient
-    .from('clients')
-    .select('name, email, phone, vat_number, address, city, contact_first_name, contact_last_name')
-    .eq('id', contract.client_id)
-    .single();
-  const contactName = client
-    ? [client.contact_first_name, client.contact_last_name].filter(Boolean).join(' ')
+  // Party header: contracts carry either a client or a lead (RLS-safe reads —
+  // a denied read renders the header with nulls, same as before).
+  type PartyHeader = {
+    name: string | null;
+    contact_first_name: string | null;
+    contact_last_name: string | null;
+    email: string | null;
+    phone: string | null;
+    vat_number: string | null;
+    address: string | null;
+    city: string | null;
+  };
+  let party: PartyHeader | null = null;
+  if (contract.client_id) {
+    const { data: client } = await userClient
+      .from('clients')
+      .select('name, email, phone, vat_number, address, city, contact_first_name, contact_last_name')
+      .eq('id', contract.client_id)
+      .single();
+    party = client;
+  } else if (contract.lead_id) {
+    const { data: lead } = await userClient
+      .from('leads')
+      .select('title, company_name, email, phone, vat_number, address, contact_first_name, contact_last_name')
+      .eq('id', contract.lead_id)
+      .single();
+    party = lead
+      ? { ...lead, name: lead.company_name ?? lead.title, city: null }
+      : null;
+  }
+  const contactName = party
+    ? [party.contact_first_name, party.contact_last_name].filter(Boolean).join(' ')
     : '';
 
   const html = renderContractHtml({
     contractNumber: contract.contract_number,
     title: contract.title,
     body: contract.body,
-    clientName: client?.name ?? null,
+    clientName: party?.name ?? null,
     contactName: contactName || null,
-    email: client?.email ?? null,
-    phone: client?.phone ?? null,
-    vatNumber: client?.vat_number ?? null,
-    address: [client?.address, client?.city].filter(Boolean).join(', ') || null,
+    email: party?.email ?? null,
+    phone: party?.phone ?? null,
+    vatNumber: party?.vat_number ?? null,
+    address: [party?.address, party?.city].filter(Boolean).join(', ') || null,
     createdAt: contract.created_at,
   });
 

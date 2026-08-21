@@ -61,3 +61,30 @@ export function buildPlaceholderData(
 export function resolvePlaceholders(body: string, data: Record<string, string>): string {
   return body.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => data[key] ?? '');
 }
+
+/** Adapt a lead row to the client-shaped placeholder fields. Leads have no
+ *  city/postcode — those placeholders resolve to '' (the text stays editable). */
+export function leadToPlaceholderFields(lead: {
+  title: string | null;
+  company_name: string | null;
+  email: string | null;
+  phone: string | null;
+  vat_number: string | null;
+  address: string | null;
+  country: string | null;
+  contact_first_name: string | null;
+  contact_last_name: string | null;
+}): ClientPlaceholderFields {
+  return {
+    name: lead.company_name ?? lead.title,
+    email: lead.email,
+    phone: lead.phone,
+    vat_number: lead.vat_number,
+    address: lead.address,
+    city: null,
+    postcode: null,
+    country: lead.country,
+    contact_first_name: lead.contact_first_name,
+    contact_last_name: lead.contact_last_name,
+  };
+}

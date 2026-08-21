@@ -5,16 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useClient } from '@/features/clients/hooks/useClient';
-import { buildPlaceholderData, resolvePlaceholders } from '@/lib/contracts/placeholders';
+import { useLead } from '@/features/leads/hooks/useLead';
+import {
+  buildPlaceholderData,
+  leadToPlaceholderFields,
+  resolvePlaceholders,
+} from '@/lib/contracts/placeholders';
 import { useContractTemplates } from './hooks/useContractTemplates';
 import { useCreateContract } from './hooks/useCreateContract';
 
 export function ContractBuilderPage() {
   const [params] = useSearchParams();
   const clientId = params.get('clientId') ?? '';
+  const leadId = params.get('leadId') ?? '';
   const navigate = useNavigate();
   const { t } = useTranslation('contracts');
   const { data: client, isLoading: clientLoading } = useClient(clientId);
+  const { data: lead, isLoading: leadLoading } = useLead(leadId);
   const { data: templates = [] } = useContractTemplates();
   const create = useCreateContract();
   const [templateId, setTemplateId] = useState('');
@@ -22,17 +29,23 @@ export function ContractBuilderPage() {
   const [body, setBody] = useState('');
   const [dirty, setDirty] = useState(false);
 
-  if (!clientId) return <div className="p-8 text-red-600 dark:text-red-400">{t('builder.missing_client')}</div>;
-  if (clientLoading) return <div className="p-8">…</div>;
-  if (!client) return <div className="p-8 text-red-600 dark:text-red-400">Not found</div>;
+  if (!clientId && !leadId)
+    return <div className="p-8 text-red-600 dark:text-red-400">{t('builder.missing_party')}</div>;
+  if (clientId ? clientLoading : leadLoading) return <div className="p-8">…</div>;
+  const party = clientId ? client : lead;
+  if (!party) return <div className="p-8 text-red-600 dark:text-red-400">Not found</div>;
+
+  const partyName = client ? client.name : (lead?.company_name ?? lead?.title ?? '');
 
   function onPickTemplate(id: string) {
     if (dirty && body.trim() !== '' && !window.confirm(t('builder.replace_edits'))) return;
     setTemplateId(id);
     const tpl = templates.find((x) => x.id === id);
-    if (tpl && client) {
+    if (!tpl) return;
+    const fields = client ?? (lead ? leadToPlaceholderFields(lead) : null);
+    if (fields) {
       setTitle(tpl.name);
-      setBody(resolvePlaceholders(tpl.body, buildPlaceholderData(client)));
+      setBody(resolvePlaceholders(tpl.body, buildPlaceholderData(fields)));
       setDirty(false);
     }
   }
@@ -40,7 +53,8 @@ export function ContractBuilderPage() {
   async function onSave() {
     try {
       const id = await create.mutateAsync({
-        client_id: clientId,
+        client_id: clientId || null,
+        lead_id: leadId || null,
         template_id: templateId || null,
         title,
         body,
@@ -55,7 +69,7 @@ export function ContractBuilderPage() {
     <div className="flex min-h-full flex-col gap-6 p-8">
       <div>
         <h1 className="text-2xl font-bold">{t('builder.title')}</h1>
-        <p className="text-sm text-muted-foreground">{client.name}</p>
+        <p className="text-sm text-muted-foreground">{partyName}</p>
       </div>
       <div className="max-w-3xl space-y-4">
         <div className="space-y-1.5">

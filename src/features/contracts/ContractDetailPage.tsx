@@ -24,9 +24,10 @@ export function ContractDetailPage() {
   const [title, setTitle] = useState<string | null>(null);
   const [body, setBody] = useState<string | null>(null);
 
-  useDocumentTitle(
-    formatPageTitle(contract?.clients?.name, t('record_type.contract', { ns: 'common' })),
-  );
+  const partyName =
+    contract?.clients?.name ?? contract?.leads?.company_name ?? contract?.leads?.title ?? null;
+
+  useDocumentTitle(formatPageTitle(partyName, t('record_type.contract', { ns: 'common' })));
 
   if (isLoading) return <div className="p-8">…</div>;
   if (error || !contract)
@@ -35,7 +36,7 @@ export function ContractDetailPage() {
   const curTitle = title ?? contract.title;
   const curBody = body ?? contract.body;
   const dirty = curTitle !== contract.title || curBody !== contract.body;
-  const clientEmail = contract.clients?.email ?? null;
+  const clientEmail = contract.clients?.email ?? contract.leads?.email ?? null;
 
   // Throws on failure — callers wrap it so a failed save aborts download/send.
   async function saveEdits() {
@@ -72,8 +73,8 @@ export function ContractDetailPage() {
         contractNumber: contract.contract_number ?? 'contract',
         title: curTitle,
         to: clientEmail,
-        clientName: contract.clients?.name ?? '',
-        code: contract.clients?.code ?? '',
+        clientName: partyName ?? '',
+        code: contract.clients?.code ?? contract.leads?.code ?? '',
       });
       window.alert(t('detail.sent_ok'));
     } catch (err) {
@@ -100,8 +101,15 @@ export function ContractDetailPage() {
             <ContractStatusBadge status={contract.status} />
           </div>
           <p className="text-xs text-muted-foreground">
-            <Link to={`/clients/${contract.client_id}`} className="underline">
-              {contract.clients?.name}
+            <Link
+              to={
+                contract.client_id
+                  ? `/clients/${contract.client_id}`
+                  : `/leads/${contract.lead_id}`
+              }
+              className="underline"
+            >
+              {partyName}
             </Link>
             {' · '}
             {formatDate(contract.created_at)}
