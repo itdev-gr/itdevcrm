@@ -16,6 +16,14 @@
     "recent": "Recent calls",
     "none": "No calls today"
   },
+  "break": {
+    "start": "Start break",
+    "stop": "End break",
+    "on_break": "On break",
+    "remaining": "left",
+    "over": "over",
+    "today": "Break today"
+  },
   "record_type": {
     "lead": "Lead",
     "deal": "Deal",

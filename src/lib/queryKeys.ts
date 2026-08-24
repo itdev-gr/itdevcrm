@@ -106,4 +106,5 @@ export const queryKeys = {
   accountingPLSummary: (from: string, to: string, includePendingExpenses = false) =>
     ['accounting-pl-summary', from, to, includePendingExpenses] as const,
   callStatsToday: () => ['call-stats', 'today'] as const,
+  breakToday: () => ['break', 'today'] as const,
 };
