@@ -54,7 +54,32 @@ flowchart TD
 - **`leads_email_automations()`** — on the lead reaching `won`, enqueues `won_welcome` + `won_next_steps` (gated by the email-automation toggles). See kanban doc.
 - **`current_user_can('sales','lock_deal')`** — the capability both conversion and lock check (alongside admin).
 
-No crons.
+No crons (but see the sales-app push below — it has one as a backstop).
+
+## Sales-app push (2026-08-24)
+
+Every conversion also auto-records the win as a sale in the sales app
+(sales.itdevcrm.com, Supabase `cthjxcftxwxbjpqmfiko`) — salespeople no longer
+enter closed CRM deals manually on /tracking there:
+
+- `leads_won_push_enqueue` (AFTER UPDATE on `leads`, fires only on the
+  `converted_at` null→set transition, so old-CRM backfill INSERTs never fire)
+  queues into `won_push_outbox`; a statement-level pulse (`won_push_pulse`,
+  best-effort `net.http_post`) plus a `*/10min` cron `won_push_drain` call the
+  `push-won-sale` edge function.
+- The function maps: package label = `services_planned` package names
+  (`service_packages.display_names.el`), `packages_sold` = service count,
+  `amount` = one_time + monthly **net of VAT** (Greece 24% / Cyprus 0%, same
+  rule as `seed_deal_payments` — deal values are stored gross), commission 23%
+  flat (parity with the manual form), credit = lead owner (fallback won_by),
+  matched to the sales app by profile email.
+- Idempotent end-to-end: upsert on `sales.crm_deal_id` (partial unique index
+  there). A failed push never affects the win — the outbox row keeps the error
+  and the cron retries (max 8 attempts).
+- Secrets: vault `won_push_secret` + edge `WON_PUSH_SECRET`,
+  `SALES_SUPABASE_URL`, `SALES_SERVICE_ROLE_KEY`.
+- Migrations: `20260824150000_won_deal_push.sql` (CRM),
+  `20260824130000_crm_won_sales.sql` (sales app).
 
 ## Gotchas
 
