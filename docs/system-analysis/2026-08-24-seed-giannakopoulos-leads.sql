@@ -44,3 +44,7 @@ begin
 end $$;
 
 -- Verification (post-run): Carlos 2480→2080, Valentin 2993→2593, Panos 0→800.
+
+-- Addendum (same day): 8 unique_lead leads (oldest first) also moved from
+-- Carlos (24→16) to Panos (0→8). Valentin held none; stavroula@'s 14 were
+-- left untouched (not in the sales pool). Same UPDATE pattern, stage kept.
