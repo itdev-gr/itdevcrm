@@ -24,6 +24,15 @@
     "over": "υπέρβαση",
     "today": "Διάλειμμα σήμερα"
   },
+  "commission": {
+    "title": "Αποδοχές μήνα",
+    "commission": "Προμήθεια",
+    "setup_fees": "Τέλη εγκατάστασης",
+    "bonuses": "Bonus",
+    "sales": "Αξία πωλήσεων",
+    "packages": "Πακέτα",
+    "total": "Σύνολο με bonus"
+  },
   "record_type": {
     "lead": "Lead",
     "deal": "Συμφωνία",

@@ -8,6 +8,7 @@ import { NotificationsBell } from '@/features/notifications/NotificationsBell';
 import { GlobalSearch } from '@/features/search/GlobalSearch';
 import { CallStatsWidget } from '@/features/callstats/CallStatsWidget';
 import { BreakButton } from '@/features/break/BreakButton';
+import { CommissionWidget } from '@/features/commission/CommissionWidget';
 
 function userInitial(email: string) {
   return (email.trim()[0] ?? '?').toUpperCase();
@@ -45,6 +46,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {session && <CallStatsWidget />}
+          {session && <CommissionWidget />}
           {session && <BreakButton />}
           {session && (
             <>

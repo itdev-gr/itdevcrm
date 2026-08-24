@@ -24,6 +24,15 @@
     "over": "over",
     "today": "Break today"
   },
+  "commission": {
+    "title": "Earnings this month",
+    "commission": "Commission",
+    "setup_fees": "Setup fees",
+    "bonuses": "Bonuses",
+    "sales": "Sales value",
+    "packages": "Packages",
+    "total": "Total with bonuses"
+  },
   "record_type": {
     "lead": "Lead",
     "deal": "Deal",
