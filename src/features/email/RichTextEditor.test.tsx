@@ -35,6 +35,15 @@ describe('RichTextEditor', () => {
     expect(screen.getByRole('textbox', { name: 'Message body' })).toBeTruthy();
   });
 
+  // Regression (2026-08-24): unbounded growth used to push the compose
+  // dialog's Send button off-screen — long content must scroll internally.
+  it('caps the editable height and scrolls internally', () => {
+    render(<RichTextEditor value="" onChange={() => {}} ariaLabel="Message body" />);
+    const editable = screen.getByRole('textbox', { name: 'Message body' });
+    expect(editable.className).toContain('max-h-[45vh]');
+    expect(editable.className).toContain('overflow-y-auto');
+  });
+
   it('runs execCommand("bold") when the Bold button is clicked', () => {
     render(<RichTextEditor value="" onChange={() => {}} ariaLabel="Message body" />);
     fireEvent.click(screen.getByRole('button', { name: /Bold|Έντονα/ }));

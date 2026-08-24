@@ -75,12 +75,15 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      {/* Flex column with a viewport cap: the field area scrolls internally so
+          the footer (Send) can never be pushed off-screen by a long message. */}
       <div
         {...dnd.dropZoneProps}
-        className={`w-full max-w-lg rounded bg-card p-6 shadow ${dnd.isDragging ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+        className={`flex max-h-[90vh] w-full max-w-3xl flex-col rounded-lg bg-card shadow-lg ${dnd.isDragging ? 'ring-2 ring-primary ring-offset-2' : ''}`}
       >
-        <h2 className="mb-4 text-lg font-semibold">{t('dialog.title')}</h2>
+        <h2 className="px-6 pt-6 pb-4 text-lg font-semibold">{t('dialog.title')}</h2>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
         {done ? (
           <p className="text-sm text-green-700 dark:text-green-400">{t('dialog.sent')}</p>
         ) : (
@@ -138,7 +141,8 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
             {needsConnect && <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">{t('connect.needed')}</p>}
           </>
         )}
-        <div className="mt-4 flex justify-end gap-2">
+        </div>
+        <div className="mt-4 flex justify-end gap-2 border-t border-border/60 px-6 py-4">
           <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={handleClose}>{t('dialog.cancel')}</button>
           {!done && (needsConnect ? (
             <button type="button" className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground" onClick={() => google.connect()}>

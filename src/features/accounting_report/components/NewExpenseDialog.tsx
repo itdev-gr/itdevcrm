@@ -110,7 +110,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded bg-card p-6 shadow">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded bg-card p-6 shadow">
         <h2 className="mb-4 text-lg font-semibold">{t('expense_form.create_title')}</h2>
 
         <label className="block text-sm">

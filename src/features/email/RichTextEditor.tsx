@@ -68,7 +68,12 @@ export function RichTextEditor({ value, onChange, disabled, ariaLabel }: Props) 
         aria-multiline="true"
         contentEditable={!disabled}
         onInput={(e) => onChange((e.currentTarget as HTMLDivElement).innerHTML)}
-        className={cn('min-h-[10rem] w-full px-3 py-2 text-sm focus:outline-none', disabled && 'opacity-60')}
+        className={cn(
+        // max-h + internal scroll: a long message scrolls inside the editor
+        // instead of growing the compose dialog past the viewport.
+        'max-h-[45vh] min-h-[16rem] w-full overflow-y-auto px-3 py-2 text-sm focus:outline-none',
+        disabled && 'opacity-60',
+      )}
       />
     </div>
   );

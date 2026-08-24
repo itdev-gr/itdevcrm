@@ -36,4 +36,22 @@ describe('SendEmailDialog', () => {
     render(wrap(<SendEmailDialog open identity="personal" to="c@x.gr" subject="S" body="B" onClose={() => {}} />));
     expect(screen.getAllByText(/Connect Google|Συνδέστε το Google/).length).toBeGreaterThan(0);
   });
+
+  // Regression (2026-08-24): a long message used to grow the panel past the
+  // viewport, pushing Send off-screen. The panel must cap its height and
+  // scroll the field area internally, with Send in a pinned footer OUTSIDE
+  // the scroll container. (jsdom can't measure layout — assert structure.)
+  it('caps the panel height and keeps Send outside the scroll area', () => {
+    const { container } = render(
+      wrap(<SendEmailDialog open identity="sales" to="c@x.gr" subject="S" body="B" onClose={() => {}} />),
+    );
+    const panel = container.querySelector('.max-h-\\[90vh\\]');
+    expect(panel).not.toBeNull();
+    expect(panel!.className).toContain('flex-col');
+    const scrollArea = panel!.querySelector('.overflow-y-auto');
+    expect(scrollArea).not.toBeNull();
+    const sendButton = screen.getByRole('button', { name: /Αποστολή|Send/ });
+    expect(scrollArea!.contains(sendButton)).toBe(false);
+    expect(panel!.contains(sendButton)).toBe(true);
+  });
 });
