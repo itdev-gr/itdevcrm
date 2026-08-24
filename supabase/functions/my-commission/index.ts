@@ -11,7 +11,10 @@ import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  // baggage + sentry-trace: the CRM's Sentry instrumentation attaches them to
+  // every fetch — without them the browser preflight fails and the widget
+  // silently hides (2026-08-24).
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, baggage, sentry-trace',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const json = (body: unknown, status = 200) =>
