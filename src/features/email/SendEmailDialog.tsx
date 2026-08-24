@@ -80,7 +80,7 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
           the footer (Send) can never be pushed off-screen by a long message. */}
       <div
         {...dnd.dropZoneProps}
-        className={`flex max-h-[90vh] w-full max-w-3xl flex-col rounded-lg bg-card shadow-lg ${dnd.isDragging ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+        className={`flex max-h-[90vh] w-full max-w-[95vw] flex-col rounded-lg bg-card shadow-lg ${dnd.isDragging ? 'ring-2 ring-primary ring-offset-2' : ''}`}
       >
         <h2 className="px-6 pt-6 pb-4 text-lg font-semibold">{t('dialog.title')}</h2>
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
