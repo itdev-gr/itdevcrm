@@ -6,9 +6,12 @@
 //   - packages from the CRM: package_type = the deal's services_planned
 //     package names (service_packages.display_names.el, fallback service_type),
 //     packages_sold = number of service items.
-//   - amount = one_time_value + recurring_monthly_value, NET of VAT
-//     (Greece 24% / Cyprus 0% by client country — same rule as
-//     seed_deal_payments; CRM deal values are stored gross).
+//   - amount = one_time_value + recurring_monthly_value, taken AS-IS: CRM
+//     deal values are stored NET of VAT (the current seed_deal_payments
+//     treats them as amount_net and adds VAT on top), so no VAT math here.
+//     (Fixed 2026-08-24: an earlier version divided by 1.24 based on the
+//     June-era billing convention — deal 006314 arrived as 161.29 instead
+//     of 200.)
 //   - commission 23% flat (parity with the manual form), setup_fee 0 — the
 //     whole value goes through `amount` so nothing is credited at 100%.
 //   - credit goes to the lead's owner (fallback: won_by_user_id), matched to
@@ -108,12 +111,12 @@ Deno.serve(async (req) => {
       if (!salesUserId) { await fail(`no sales-app profile for ${crmProfile?.email ?? crmUserId}`); continue; }
 
       const { data: client } = await admin
-        .from('clients').select('name, country').eq('id', deal.client_id).single();
+        .from('clients').select('name').eq('id', deal.client_id).single();
 
-      // NET of VAT — CRM values are gross; Greece 24%, Cyprus 0% (house rule).
-      const vat = (client?.country ?? '').trim().toLowerCase() === 'cyprus' ? 0 : 24;
-      const gross = Number(deal.one_time_value ?? 0) + Number(deal.recurring_monthly_value ?? 0);
-      const amount = Math.round((gross * 100 / (100 + vat)) * 100) / 100;
+      // Deal values are already NET of VAT — pass them through unchanged.
+      const amount = Math.round(
+        (Number(deal.one_time_value ?? 0) + Number(deal.recurring_monthly_value ?? 0)) * 100,
+      ) / 100;
 
       // Packages straight from the CRM deal.
       const services = Array.isArray(deal.services_planned) ? deal.services_planned : [];

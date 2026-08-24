@@ -69,10 +69,12 @@ enter closed CRM deals manually on /tracking there:
   `push-won-sale` edge function.
 - The function maps: package label = `services_planned` package names
   (`service_packages.display_names.el`), `packages_sold` = service count,
-  `amount` = one_time + monthly **net of VAT** (Greece 24% / Cyprus 0%, same
-  rule as `seed_deal_payments` — deal values are stored gross), commission 23%
-  flat (parity with the manual form), credit = lead owner (fallback won_by),
-  matched to the sales app by profile email.
+  `amount` = one_time + monthly **as stored** — deal values are NET of VAT
+  (the current `seed_deal_payments` treats them as `amount_net` and adds VAT
+  on top), so no VAT math is applied. Commission 23% flat (parity with the
+  manual form), credit = lead owner (fallback won_by), matched to the sales
+  app by profile email. (2026-08-24: an earlier version divided by 1.24 per
+  the June-era gross convention — corrected same day, rows re-pushed.)
 - Idempotent end-to-end: upsert on `sales.crm_deal_id` (partial unique index
   there). A failed push never affects the win — the outbox row keeps the error
   and the cron retries (max 8 attempts).
