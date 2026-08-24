@@ -80,6 +80,7 @@
     "status": {
       "not_sent": "Δεν στάλθηκε",
       "sent": "Στάλθηκε {{date}}",
+      "sent_auto": "Στάλθηκε αυτόματα {{date}}",
       "submitted": "Υποβλήθηκε {{date}}",
       "complete": "Ολοκληρωμένη"
     },

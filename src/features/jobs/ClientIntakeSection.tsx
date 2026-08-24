@@ -46,7 +46,10 @@ function StatusBadge({ form }: { form: JobIntakeForm }) {
     label = t('client_intake.status.submitted', { date: formatDate(form.submitted_at) });
     cls = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300';
   } else if (form.sent_at) {
-    label = t('client_intake.status.sent', { date: formatDate(form.sent_at) });
+    // created_by is null when the row was created by the auto-onboarding cron.
+    label = form.created_by
+      ? t('client_intake.status.sent', { date: formatDate(form.sent_at) })
+      : t('client_intake.status.sent_auto', { date: formatDate(form.sent_at) });
     cls = 'bg-muted text-muted-foreground';
   } else {
     label = t('client_intake.status.not_sent');

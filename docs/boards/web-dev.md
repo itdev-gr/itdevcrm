@@ -40,6 +40,25 @@ when one is set; otherwise it spawns unassigned.
 - **Live** stamps `completed_at` (✓ on the card); dragging a card back out of
   Live clears it.
 
+## Client emails (automatic — 2026-08-24)
+
+Three automations, each with its own switch in email automation settings
+(`webdev_form_auto`, `webdev_form_followup_auto`, `webdev_waiting_nudge`):
+
+- **Intake form auto-send** — every NEW web_dev job (created after go-live;
+  older jobs are never emailed) gets the client intake form email
+  automatically within 15 minutes. The intake card shows «Στάλθηκε αυτόματα».
+- **Form follow-ups** — if the client hasn't submitted: reminder on day 3 and
+  day 8 (weekday mornings, never a third email); on day 12 the job owner and
+  the team lead get a notification to call the client.
+- **Waiting-client nudge** — a card sitting in *Waiting client approval* or
+  *No response* emails the client a polite reminder on day 3 and day 7 of the
+  waiting period; on day 10 the owner + team lead are notified instead. A new
+  waiting period restarts the sequence. Per-job opt-out: the Info-tab field
+  «Χωρίς αυτόματες υπενθυμίσεις πελάτη».
+
+Manual sending from the intake card still works and is the fallback.
+
 ## Suggested flow
 
 ```

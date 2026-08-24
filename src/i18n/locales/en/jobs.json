@@ -80,6 +80,7 @@
     "status": {
       "not_sent": "Not sent",
       "sent": "Sent {{date}}",
+      "sent_auto": "Sent automatically {{date}}",
       "submitted": "Submitted {{date}}",
       "complete": "Complete"
     },

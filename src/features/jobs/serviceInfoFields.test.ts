@@ -11,10 +11,16 @@ describe('SERVICE_INFO_FIELDS', () => {
     ]);
     expect(new Set(keys).size).toBe(keys.length);
   });
-  it('web_dev leads with website + industry + due date then its six base fields', () => {
+  it('web_dev leads with website + industry + due date then its base fields', () => {
     expect(infoFieldsFor('web_dev').map((f) => f.key)).toEqual([
       'website', 'industry', 'due_date', 'webdev_notes', 'hosting', 'supabase_name', 'temp_url', 'live_url', 'email',
+      'no_client_nudge',
     ]);
+  });
+  it('web_dev no_client_nudge is a yes/no select defaulting semantics to "no"', () => {
+    const f = infoFieldsFor('web_dev').find((x) => x.key === 'no_client_nudge');
+    expect(f?.type).toBe('select');
+    expect(f?.options?.map((o) => o.value)).toEqual(['no', 'yes']);
   });
   it('web_dev due date is a date field not shared with the deal', () => {
     const due = infoFieldsFor('web_dev').find((f) => f.key === 'due_date');

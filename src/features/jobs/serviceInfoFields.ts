@@ -44,6 +44,16 @@ const WEB_DEV: InfoField[] = [
   { key: 'temp_url', labelEn: 'Temp Website URL', labelEl: 'Προσωρινό URL', type: 'url' },
   { key: 'live_url', labelEn: 'Live Website URL', labelEl: 'Live URL', type: 'url' },
   { key: 'email', labelEn: 'Email', labelEl: 'Email', type: 'text' },
+  {
+    key: 'no_client_nudge',
+    labelEn: 'Disable client reminders',
+    labelEl: 'Χωρίς αυτόματες υπενθυμίσεις πελάτη',
+    type: 'select',
+    options: [
+      { value: 'no', labelEn: 'No — send reminders', labelEl: 'Όχι — να στέλνονται' },
+      { value: 'yes', labelEn: 'Yes — never email this client automatically', labelEl: 'Ναι — να μη στέλνονται ποτέ' },
+    ],
+  },
 ];
 
 const ADS: InfoField[] = [
