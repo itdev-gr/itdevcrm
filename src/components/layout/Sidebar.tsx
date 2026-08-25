@@ -19,6 +19,7 @@ import {
   Settings,
   Share2,
   ShieldAlert,
+  Sparkles,
   Target,
   Users,
   Code2,
@@ -222,6 +223,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             >
               <RefreshCw className="size-4 shrink-0 opacity-80" />
               {t('accounting:nav.recurring')}
+            </NavLink>
+            <NavLink
+              to="/accounting/assistant"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <Sparkles className="size-4 shrink-0 opacity-80" />
+              {t('accounting:nav.assistant', { defaultValue: 'Βοηθός AI' })}
             </NavLink>
             <NavLink
               to="/accounting/alerts"

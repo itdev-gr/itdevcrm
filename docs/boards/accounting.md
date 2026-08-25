@@ -728,3 +728,14 @@ breakdown to open the transaction list for that group.
 - **MRR** — monthly recurring revenue (contracted vs collected).
 - **Complete accounting** — what happens at **Paid In Full**: jobs unlocked,
   deal stamped ✓, client Active.
+
+## AI Βοηθός (2026-08-25)
+
+Η σελίδα **Λογιστήριο → Βοηθός AI** (`/accounting/assistant`) απαντά ελεύθερες
+ερωτήσεις («τι γίνεται με τον πελάτη Χ;», «ποιοι είναι ληξιπρόθεσμοι;») με
+δεδομένα από τη βάση — ποτέ από τη «μνήμη» του μοντέλου. Τεχνικά: edge
+function `accounting-chat` (OpenAI tool-calling, μοντέλο από το secret
+`AI_CHAT_MODEL`, default gpt-4o)· ΟΛΑ τα queries τρέχουν με το JWT του χρήστη
+που ρωτάει, άρα ισχύει το RLS όπως στο υπόλοιπο CRM (έξοδα/P&L μόνο admins).
+Read-only — καμία ενέργεια. Ιστορικό ανά χρήστη στα `ai_chat_conversations` /
+`ai_chat_messages` (RLS δικές του γραμμές). Πρόσβαση: ομάδα accounting + admins.

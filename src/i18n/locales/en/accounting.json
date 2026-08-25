@@ -20,7 +20,8 @@
     "onboarding": "Accounting onboarding",
     "clients": "Clients",
     "recurring": "Recurring",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "assistant": "AI Assistant"
   },
   "clients_page": {
     "title": "Clients",
@@ -189,6 +190,22 @@
       "overdue": "Overdue",
       "done": "Done",
       "blocked": "Blocked"
+    }
+  },
+  "assistant": {
+    "title": "AI Assistant",
+    "subtitle": "Ask anything about clients, payments and dues — answers come from real data.",
+    "new_chat": "New conversation",
+    "delete": "Delete",
+    "thinking": "Checking the data…",
+    "placeholder": "Type your question…",
+    "send": "Send",
+    "empty": "Ask me about any client, their dues, or the overall accounting picture.",
+    "quick": {
+      "overdue": "Which clients are overdue?",
+      "week": "What payments are due this week?",
+      "alerts": "Which alerts are open?",
+      "client": "What's going on with client "
     }
   }
 }
