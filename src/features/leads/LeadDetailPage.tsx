@@ -359,8 +359,8 @@ function LeadDetailContent() {
         <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-              <LeadForm lead={lead} />
               <LeadEmailsBox leadId={lead.id} />
+              <LeadForm lead={lead} />
               {lead.intake_log ? (
                 <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
                   <h2 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
