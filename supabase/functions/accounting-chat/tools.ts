@@ -37,7 +37,7 @@ export const TOOL_DEFS = [
     function: {
       name: 'clients_by_service',
       description:
-        'Μετράει και λιστάρει τους πελάτες ανά υπηρεσία. Χωρίς service_type: πλήθος πελατών για ΚΑΘΕ υπηρεσία. Με service_type: πλήθος + λίστα πελατών της υπηρεσίας. ΠΑΝΤΑ αυτό για ερωτήσεις «πόσοι πελάτες έχουν Χ» — ΠΟΤΕ το search_entity.',
+        'Μετράει και λιστάρει τους πελάτες ανά υπηρεσία, ΜΑΖΙ με πλήρη κατανομή κατάστασης (ενεργοί/μπλοκαρισμένοι/νέοι/ολοκληρωμένοι) υπολογισμένη σε ΟΛΟΥΣ τους πελάτες. Χωρίς service_type: πλήθος + καταστάσεις για ΚΑΘΕ υπηρεσία. Με service_type: πλήθος, καταστάσεις + λίστα. ΠΑΝΤΑ αυτό για «πόσοι πελάτες έχουν Χ» ή «είναι όλοι ενεργοί;» — ΠΟΤΕ το search_entity.',
       parameters: {
         type: 'object',
         properties: {
@@ -200,15 +200,30 @@ export async function runTool(
       if (error) return { error: error.message };
       const rows = (data ?? []) as any[];
 
+      const statusCountsOf = (entries: any[]) => {
+        const seen = new Map<string, string>();
+        for (const r of entries) {
+          if (!seen.has(r.client_id)) seen.set(r.client_id, r.client?.status ?? 'unknown');
+        }
+        const out: Record<string, number> = {};
+        for (const s of seen.values()) out[s] = (out[s] ?? 0) + 1;
+        return out;
+      };
+
       if (!svc) {
-        const perService = new Map<string, Set<string>>();
+        const perService = new Map<string, any[]>();
         for (const r of rows) {
-          if (!perService.has(r.service_type)) perService.set(r.service_type, new Set());
-          perService.get(r.service_type)!.add(r.client_id);
+          if (!perService.has(r.service_type)) perService.set(r.service_type, []);
+          perService.get(r.service_type)!.push(r);
         }
         return {
           counts: [...perService.entries()]
-            .map(([service_type, ids]) => ({ service_type, clients: ids.size }))
+            .map(([service_type, entries]) => ({
+              service_type,
+              clients: new Set(entries.map((e) => e.client_id)).size,
+              // Complete per-status breakdown over ALL clients of the service.
+              status_counts: statusCountsOf(entries),
+            }))
             .sort((a, b) => b.clients - a.clients),
         };
       }
@@ -229,8 +244,10 @@ export async function runTool(
       const clients = [...byClient.values()].sort((a, b) => String(a.name).localeCompare(String(b.name), 'el'));
       return {
         service_type: svc,
-        // The COUNT is complete even though the list below is truncated.
+        // Totals + status breakdown are COMPLETE; only the name list truncates.
         total_clients: clients.length,
+        status_counts: statusCountsOf(rows),
+        clients_with_blocked_job: clients.filter((c) => c.blocked_job).length,
         clients: clients.slice(0, 100),
         list_truncated: clients.length > 100,
       };
