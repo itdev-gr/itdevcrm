@@ -1,6 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AssistantPage } from './AssistantPage';
+
+const navigateMock = vi.fn();
+vi.mock('react-router-dom', () => ({ useNavigate: () => navigateMock }));
+
+const rpc = vi.fn();
+vi.mock('@/lib/supabase', () => ({
+  supabase: { rpc: (...args: unknown[]) => rpc(...args) },
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -54,6 +62,22 @@ describe('AssistantPage', () => {
     render(<AssistantPage />);
     expect(screen.getByText('ερώτηση')).toBeInTheDocument();
     expect(screen.getByText('On Hold')).toBeInTheDocument();
+  });
+
+  it('renders client codes as clickable chips that open the record', async () => {
+    rpc.mockResolvedValue({
+      data: [{ entity_type: 'client', entity_id: 'uuid-1', code: '000066' }],
+      error: null,
+    });
+    messages.mockReturnValue({
+      data: [
+        { id: '1', conversation_id: 'c', role: 'assistant', content: 'Ο πελάτης ΦΟΥΡΝΑΡΗ (000066) είναι On Hold', tool_payload: null, created_at: 'x' },
+      ],
+    });
+    render(<AssistantPage />);
+    fireEvent.click(screen.getByRole('button', { name: '000066' }));
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/clients/uuid-1'));
+    expect(rpc).toHaveBeenCalledWith('global_search', { q: '000066', max_rows: 8 });
   });
 
   it('shows the thinking indicator while pending', () => {

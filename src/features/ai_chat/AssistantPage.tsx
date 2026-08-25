@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/layout/page-shell';
 import { useDocumentTitle } from '@/lib/documentTitle';
 import {
@@ -11,19 +13,39 @@ import {
   type AiMessage,
 } from './hooks/useAiChat';
 
-/** Minimal renderer: newlines + **bold** (no markdown dependency). */
-function renderContent(text: string): ReactNode[] {
+/** 6-digit client/deal/lead codes become clickable chips → open the record. */
+function linkifyCodes(text: string, onCode: (code: string) => void): ReactNode[] {
+  return text.split(/\b(\d{6})\b/g).map((part, i) =>
+    i % 2 === 1 ? (
+      <button
+        key={i}
+        type="button"
+        onClick={() => onCode(part)}
+        className="rounded bg-[#1a9696]/15 px-1 font-medium text-[#157777] underline-offset-2 hover:underline dark:text-[#7ad4d4]"
+      >
+        {part}
+      </button>
+    ) : (
+      part
+    ),
+  );
+}
+
+/** Minimal renderer: newlines + **bold** + code links (no markdown dependency). */
+function renderContent(text: string, onCode: (code: string) => void): ReactNode[] {
   return text.split('\n').map((line, i) => {
     const parts = line.split(/\*\*(.+?)\*\*/g);
     return (
       <p key={i} className="min-h-[0.5rem]">
-        {parts.map((p, j) => (j % 2 === 1 ? <strong key={j}>{p}</strong> : p))}
+        {parts.map((p, j) =>
+          j % 2 === 1 ? <strong key={j}>{linkifyCodes(p, onCode)}</strong> : <span key={j}>{linkifyCodes(p, onCode)}</span>,
+        )}
       </p>
     );
   });
 }
 
-function Bubble({ msg }: { msg: AiMessage }) {
+function Bubble({ msg, onCode }: { msg: AiMessage; onCode: (code: string) => void }) {
   const isUser = msg.role === 'user';
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -34,7 +56,7 @@ function Bubble({ msg }: { msg: AiMessage }) {
             : 'border border-border/70 bg-card text-foreground'
         }`}
       >
-        {renderContent(msg.content)}
+        {renderContent(msg.content, onCode)}
       </div>
     </div>
   );
@@ -53,6 +75,23 @@ export function AssistantPage() {
   const send = useSendChatMessage();
   const del = useDeleteConversation();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  // A clicked code resolves via global_search: client card first, then deal/lead.
+  const openCode = async (code: string) => {
+    const { data } = await supabase.rpc('global_search', { q: code, max_rows: 8 });
+    const rows = (data ?? []) as { entity_type: string; entity_id: string; code: string | null }[];
+    const exact = rows.filter((r) => r.code === code);
+    const pick =
+      exact.find((r) => r.entity_type === 'client') ??
+      exact.find((r) => r.entity_type === 'deal') ??
+      exact.find((r) => r.entity_type === 'lead') ??
+      exact[0] ?? rows[0];
+    if (!pick) return;
+    const route: Record<string, string> = { client: 'clients', deal: 'deals', lead: 'leads', job: 'jobs' };
+    const base = route[pick.entity_type];
+    if (base) navigate(`/${base}/${pick.entity_id}`);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -146,7 +185,7 @@ export function AssistantPage() {
               </div>
             )}
             {(messages.data ?? []).map((m) => (
-              <Bubble key={m.id} msg={m} />
+              <Bubble key={m.id} msg={m} onCode={openCode} />
             ))}
             {send.isPending && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
