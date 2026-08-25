@@ -62,6 +62,15 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'my_tasks',
+      description:
+        'Οι εκκρεμότητες ΤΟΥ ΧΡΗΣΤΗ που ρωτάει: προσωπικά tasks/ημερολόγιο (με προθεσμίες, σημερινά/εκπρόθεσμα) και ανοιχτές αναθέσεις σε αυτόν από deals/jobs, με τον πελάτη που αφορούν. Για «τι έχω σήμερα/αυτή την εβδομάδα;», «ποιες είναι οι εκκρεμότητές μου;».',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'recent_clients',
       description:
         'Πελάτες που ξεκίνησαν πρόσφατα: όσοι έχουν ημερομηνία έναρξης μέσα στις τελευταίες Χ μέρες (default 30), με ημερομηνία, κατάσταση και υπηρεσίες. Για ερωτήσεις «ποιοι πελάτες ξεκίνησαν πρόσφατα/τον τελευταίο μήνα».',
@@ -143,6 +152,7 @@ export async function runTool(
   name: string,
   args: any,
   isAdmin = false,
+  userId = '',
 ): Promise<unknown> {
   if (ADMIN_ONLY_TOOLS.has(name) && !isAdmin) {
     return { error: 'admin_only', note: 'Τα συγκεντρωτικά έσοδα/έξοδα είναι διαθέσιμα μόνο σε διαχειριστές.' };
@@ -275,6 +285,49 @@ export async function runTool(
         clients_with_blocked_job: clients.filter((c) => c.blocked_job).length,
         clients: clients.slice(0, 100),
         list_truncated: clients.length > 100,
+      };
+    }
+
+    case 'my_tasks': {
+      // Explicit "mine" filters: assigned_tasks RLS lets staff READ a wider
+      // set (parties/boards), but "my tasks" must mean assigned TO the caller.
+      const [personal, assigned] = await Promise.all([
+        caller.from('user_tasks')
+          .select('title, notes, due_at, completed_at')
+          .eq('user_id', userId)
+          .is('completed_at', null)
+          .order('due_at', { ascending: true })
+          .limit(40),
+        caller.from('assigned_tasks')
+          .select('title, description, status, importance, created_at, source_code, client:clients(name, code)')
+          .eq('assignee_user_id', userId)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(40),
+      ]);
+      if (personal.error) return { error: personal.error.message };
+      const now = Date.now();
+      const p = (personal.data ?? []).map((t: any) => ({
+        title: t.title,
+        notes: t.notes,
+        due_at: t.due_at,
+        overdue: t.due_at ? Date.parse(t.due_at) < now : false,
+      }));
+      const a = (assigned.error ? [] : (assigned.data ?? [])).map((t: any) => ({
+        title: t.title,
+        description: t.description,
+        importance: t.importance,
+        created_at: t.created_at,
+        client: t.client?.name ?? null,
+        client_code: t.client?.code ?? null,
+        source_code: t.source_code,
+      }));
+      return {
+        personal_open: p.length,
+        personal_overdue: p.filter((t: any) => t.overdue).length,
+        personal_tasks: p,
+        assigned_open: a.length,
+        assigned_tasks: a,
       };
     }
 

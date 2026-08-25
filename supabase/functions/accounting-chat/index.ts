@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
           let args: any = {};
           try { args = JSON.parse(tc.function?.arguments ?? '{}'); } catch { /* keep {} */ }
           toolsUsed.push(name);
-          const result = await runTool(caller as any, name, args, !!isAdmin);
+          const result = await runTool(caller as any, name, args, !!isAdmin, user.id);
           messages.push({
             role: 'tool',
             tool_call_id: tc.id,
