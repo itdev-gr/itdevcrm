@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRecordBadgeClass, detailHeaderRowClass, detailHeaderSelectClass, detailHeaderTitleClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { LeadForm } from './LeadForm';
+import { LeadEmailsBox } from './LeadEmailsBox';
 import { useLead } from './hooks/useLead';
 import { useConvertLead } from './hooks/useConvertLead';
 import { useUpdateLead } from './hooks/useUpdateLead';
@@ -359,6 +360,7 @@ function LeadDetailContent() {
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <LeadForm lead={lead} />
+              <LeadEmailsBox leadId={lead.id} />
               {lead.intake_log ? (
                 <section className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
                   <h2 className="mb-2 text-sm font-semibold tracking-tight text-foreground">

@@ -369,6 +369,10 @@ const EMAIL_TEMPLATE_LABELS: Record<string, string> = {
   noanswer_day0: 'No-answer follow-up', noanswer_day2: 'No-answer follow-up',
   noanswer_day5: 'No-answer follow-up', noanswer_day10: 'No-answer follow-up',
   offer_followup_day2: 'Offer follow-up', offer_followup_day5: 'Offer follow-up', offer_followup_day10: 'Offer follow-up',
+  scheduled_confirm: 'Appointment confirmation',
+  scheduled_reminder: 'Appointment reminder',
+  scheduled_noshow: 'Appointment no-show follow-up',
+  won_next_steps: 'Next-steps email',
   custom: 'Email',
 };
 export function emailTemplateLabel(key: string): string {
