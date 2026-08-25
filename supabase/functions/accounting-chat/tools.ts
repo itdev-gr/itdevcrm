@@ -4,6 +4,7 @@
 // can never read more than the person asking. Totals are computed here in
 // code; the LLM only narrates them (house rule: no invented figures).
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@^2.45';
+import { ACCOUNTING_BOARD_DOC } from './docs.ts';
 
 /** Admin-only tools: revenue/expense aggregates never reach non-admin chats —
  *  the tool is not even offered to the model, and runTool double-checks. */
@@ -57,6 +58,15 @@ export const TOOL_DEFS = [
         },
         required: [],
       },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'procedures',
+      description:
+        'Ο ΕΠΙΣΗΜΟΣ οδηγός διαδικασιών του λογιστηρίου (docs/boards/accounting.md): πώς δουλεύει το onboarding, οι πληρωμές, τα τιμολόγια, τα μπλοκαρίσματα, το Paid In Full, το κλείσιμο. ΠΑΝΤΑ αυτό για ερωτήσεις «τι πρέπει να κάνουμε…», «πώς δουλεύει η διαδικασία…» — απάντα ΜΟΝΟ από αυτόν, όχι από γενικές γνώσεις.',
+      parameters: { type: 'object', properties: {}, required: [] },
     },
   },
   {
@@ -286,6 +296,10 @@ export async function runTool(
         clients: clients.slice(0, 100),
         list_truncated: clients.length > 100,
       };
+    }
+
+    case 'procedures': {
+      return { source: 'docs/boards/accounting.md', content: ACCOUNTING_BOARD_DOC };
     }
 
     case 'my_tasks': {
