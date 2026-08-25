@@ -54,6 +54,19 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'recent_clients',
+      description:
+        'Πελάτες που ξεκίνησαν πρόσφατα: όσοι έχουν ημερομηνία έναρξης μέσα στις τελευταίες Χ μέρες (default 30), με ημερομηνία, κατάσταση και υπηρεσίες. Για ερωτήσεις «ποιοι πελάτες ξεκίνησαν πρόσφατα/τον τελευταίο μήνα».',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Πόσες μέρες πίσω (default 30, max 365)' } },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'payments_due',
       description:
         'Ληξιπρόθεσμες + επερχόμενες οφειλές όλων των πελατών μέσα στις επόμενες Χ μέρες, με σύνολα.',
@@ -251,6 +264,26 @@ export async function runTool(
         clients: clients.slice(0, 100),
         list_truncated: clients.length > 100,
       };
+    }
+
+    case 'recent_clients': {
+      const days = Math.min(Math.max(Number(args.days ?? 30), 1), 365);
+      const since = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+      const { data, error } = await caller.from('clients')
+        .select('name, code, status, start_date, created_at, email, jobs(service_type, archived)')
+        .gte('start_date', since)
+        .eq('archived', false)
+        .order('start_date', { ascending: false })
+        .limit(100);
+      if (error) return { error: error.message };
+      const rows = (data ?? []).map((c: any) => ({
+        name: c.name,
+        code: c.code,
+        status: c.status,
+        start_date: c.start_date,
+        services: [...new Set((c.jobs ?? []).filter((j: any) => !j.archived).map((j: any) => j.service_type))],
+      }));
+      return { since, days, count: rows.length, clients: rows };
     }
 
     case 'payments_due': {
