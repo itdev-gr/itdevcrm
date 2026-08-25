@@ -5,6 +5,14 @@
 // code; the LLM only narrates them (house rule: no invented figures).
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@^2.45';
 
+/** Admin-only tools: revenue/expense aggregates never reach non-admin chats —
+ *  the tool is not even offered to the model, and runTool double-checks. */
+export const ADMIN_ONLY_TOOLS = new Set(['ledger_summary']);
+
+export function toolDefsFor(isAdmin: boolean) {
+  return isAdmin ? TOOL_DEFS : TOOL_DEFS.filter((t) => !ADMIN_ONLY_TOOLS.has(t.function.name));
+}
+
 export const TOOL_DEFS = [
   {
     type: 'function',
@@ -134,7 +142,11 @@ export async function runTool(
   caller: SupabaseClient,
   name: string,
   args: any,
+  isAdmin = false,
 ): Promise<unknown> {
+  if (ADMIN_ONLY_TOOLS.has(name) && !isAdmin) {
+    return { error: 'admin_only', note: 'Τα συγκεντρωτικά έσοδα/έξοδα είναι διαθέσιμα μόνο σε διαχειριστές.' };
+  }
   switch (name) {
     case 'search_entity': {
       const { data, error } = await caller.rpc('global_search', { q: String(args.q ?? ''), max_rows: 8 });

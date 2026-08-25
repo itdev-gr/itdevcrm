@@ -10,7 +10,7 @@
 // Model: AI_CHAT_MODEL env (default gpt-4o), existing OPENAI_API_KEY secret.
 import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
 import { systemPrompt } from './prompt.ts';
-import { TOOL_DEFS, runTool } from './tools.ts';
+import { toolDefsFor, runTool } from './tools.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,7 +32,7 @@ const HISTORY_LIMIT = 20;
 
 const admin = createClient(URL_, SERVICE_KEY);
 
-async function openai(messages: any[], withTools: boolean): Promise<any> {
+async function openai(messages: any[], withTools: boolean, toolDefs: any[] = []): Promise<any> {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
@@ -41,7 +41,7 @@ async function openai(messages: any[], withTools: boolean): Promise<any> {
       temperature: 0.2,
       max_tokens: 1200,
       messages,
-      ...(withTools ? { tools: TOOL_DEFS, tool_choice: 'auto' } : {}),
+      ...(withTools ? { tools: toolDefs, tool_choice: 'auto' } : {}),
     }),
   });
   if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
@@ -112,8 +112,9 @@ Deno.serve(async (req) => {
   const toolsUsed: string[] = [];
   let reply = '';
   try {
+    const toolDefs = toolDefsFor(!!isAdmin);
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
-      const msg = await openai(messages, round < MAX_TOOL_ROUNDS);
+      const msg = await openai(messages, round < MAX_TOOL_ROUNDS, toolDefs);
       if (!msg) throw new Error('empty completion');
 
       if (msg.tool_calls && msg.tool_calls.length > 0) {
@@ -123,7 +124,7 @@ Deno.serve(async (req) => {
           let args: any = {};
           try { args = JSON.parse(tc.function?.arguments ?? '{}'); } catch { /* keep {} */ }
           toolsUsed.push(name);
-          const result = await runTool(caller as any, name, args);
+          const result = await runTool(caller as any, name, args, !!isAdmin);
           messages.push({
             role: 'tool',
             tool_call_id: tc.id,
