@@ -39,7 +39,92 @@ type SendInput = {
   attachments?: unknown;
   cc?: string[] | string;
   bcc?: string[] | string;
+  /** Outbox rows may name the lead OWNER: sales templates then send from the
+   *  owner's personal Gmail (CC sales@), falling back to Resend when the
+   *  owner has no usable Google connection. */
+  sendAsUserId?: string | null;
 };
+
+/** Templates that switch to the owner-Gmail transport (owner decision
+ *  2026-08-25). won_welcome / won_next_steps deliberately excluded. */
+const SALES_OWNER_TEMPLATES = [
+  'lead_welcome',
+  'noanswer_day0', 'noanswer_day2', 'noanswer_day5', 'noanswer_day10',
+  'offer_followup_day2', 'offer_followup_day5', 'offer_followup_day10',
+  'reengage_90d',
+  'scheduled_confirm', 'scheduled_reminder', 'scheduled_noshow',
+];
+
+/**
+ * Try to send a rendered sales template from the owner's own Gmail with CC
+ * sales@. Returns null on ANY obstacle (not connected, refresh failed, Gmail
+ * rejected) so the caller falls back to the Resend path — an automated email
+ * must always go out one way or the other.
+ */
+async function trySendTemplateViaOwnerGmail(
+  ownerId: string,
+  to: string,
+  templateKey: string,
+  dbTpl: { subject: string; body: string; client_facing: boolean } | null,
+  data: Record<string, unknown>,
+  dedupeKey: string | null,
+): Promise<{ status: 'sent'; resendId?: string } | null> {
+  try {
+    if (!dbTpl) return null;
+    const { data: acct } = await admin
+      .from('user_google_accounts')
+      .select('google_email, refresh_token_enc, revoked_at')
+      .eq('user_id', ownerId)
+      .maybeSingle();
+    if (!acct || acct.revoked_at) return null;
+    const refresh = await decryptToken(acct.refresh_token_enc, G_TOKEN_KEY);
+    const access = await refreshAccessToken(refresh, G_CLIENT_ID, G_CLIENT_SECRET);
+    if (!access) return null;
+
+    // Owner's personal signature (same layout as manual personal sends).
+    const { data: prof } = await admin
+      .from('profiles')
+      .select('full_name, job_title, phone, email, avatar_url')
+      .eq('user_id', ownerId)
+      .maybeSingle();
+    const avatar =
+      typeof prof?.avatar_url === 'string' && prof.avatar_url.startsWith('https://')
+        ? prof.avatar_url
+        : null;
+    const name = (prof?.full_name ?? '').trim() || acct.google_email;
+    const sig = renderSignatureHtml(avatar ?? LOGO_URL, {
+      name,
+      title: prof?.job_title ?? null,
+      phone: prof?.phone ?? null,
+      email: (prof?.email ?? '').trim() || acct.google_email,
+    });
+
+    const rendered = renderDbTemplate(dbTpl, data, { sigHtml: sig });
+    // RFC2047-encoded display name (Greek-safe), CR/LF/quotes stripped.
+    const safeName = name.replace(/["\r\n]/g, '');
+    const fromHeader = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(safeName)))}?= <${acct.google_email}>`;
+    const raw = buildMime({
+      from: fromHeader,
+      to,
+      subject: rendered.subject,
+      html: rendered.html,
+      cc: ['sales@itdev.gr'],
+    });
+    const res = await sendGmail(access, raw);
+    if (!res.ok) {
+      console.error(`owner-gmail send failed (${templateKey} → ${to}), falling back to Resend: ${res.error?.slice(0, 200)}`);
+      return null;
+    }
+    await admin.from('email_log').insert({
+      identity: 'personal', to_email: to, template_key: templateKey,
+      status: 'sent', resend_id: res.id ?? null, dedupe_key: dedupeKey,
+    });
+    return { status: 'sent', resendId: res.id };
+  } catch (e) {
+    console.error('owner-gmail transport error, falling back to Resend:', e);
+    return null;
+  }
+}
 
 async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 'skipped'; resendId?: string; error?: string }> {
   const { identity, to, templateKey, data = {}, dedupeKey = null } = input;
@@ -137,6 +222,16 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     return { status: 'sent', resendId: 'dry-run' };
   }
 
+  // Owner-Gmail transport for automated sales emails (2026-08-25): send from
+  // the lead owner's own mailbox with CC sales@. Any obstacle → null → the
+  // unchanged Resend path below (from sales@, CC owner) delivers instead.
+  if (input.sendAsUserId && SALES_OWNER_TEMPLATES.includes(templateKey)) {
+    const viaGmail = await trySendTemplateViaOwnerGmail(
+      input.sendAsUserId, to, templateKey, dbTpl, data, dedupeKey,
+    );
+    if (viaGmail) return viaGmail;
+  }
+
   let attachments: ResendAttachment[] = [];
   if (Array.isArray(input.attachments) && input.attachments.length > 0) {
     try {
@@ -223,7 +318,7 @@ async function drain(): Promise<{ processed: number; sent: number; failed: numbe
   const { data: rows } = await admin.rpc('claim_email_outbox', { p_limit: 50 });
   let sent = 0, failed = 0;
   for (const r of (rows ?? []) as any[]) {
-    const result = await sendOne({ identity: r.identity, to: r.to_email, templateKey: r.template_key, data: r.data, dedupeKey: r.dedupe_key });
+    const result = await sendOne({ identity: r.identity, to: r.to_email, templateKey: r.template_key, data: r.data, dedupeKey: r.dedupe_key, sendAsUserId: r.send_as_user_id ?? null });
     if (result.status === 'failed') {
       failed++;
       // Release back to 'pending' for retry (attempts was already incremented at claim time).

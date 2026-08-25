@@ -32,13 +32,23 @@ export function LeadEmailsBox({ leadId }: { leadId: string }) {
       ) : (
         <ul className="divide-y divide-border/60">
           {rows.map((r) => {
-            const color = emailStatusColor(r.status);
+            // Owner-Gmail sends carry identity 'personal' and never get a
+            // delivery signal — 'sent' is terminal there, so show it green.
+            const viaGmail = (r as { identity?: string }).identity === 'personal';
+            const color: EmailColor =
+              viaGmail && r.status === 'sent' ? 'green' : emailStatusColor(r.status);
             const failed = color === 'red';
             return (
               <li
                 key={r.id}
                 className="flex items-center gap-2 py-1.5"
-                title={failed && r.error ? r.error : undefined}
+                title={
+                  failed && r.error
+                    ? r.error
+                    : viaGmail
+                      ? 'Εστάλη από το Gmail του πωλητή (χωρίς παρακολούθηση παράδοσης)'
+                      : undefined
+                }
               >
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOT[color]}`} />
                 <span className="truncate text-sm">{emailTemplateLabel(r.template_key)}</span>

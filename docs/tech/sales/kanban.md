@@ -91,3 +91,18 @@ No crons specific to the board (email delivery runs on its own drain cron).
 - `/Users/marios/Desktop/Cursor/itdevcrm/src/features/sales/stageAccess.ts` — `isStageMoveBlocked`
 - `/Users/marios/Desktop/Cursor/itdevcrm/src/features/sales/hooks/useSalesKanbanCounts.ts` — counts hook
 - `/Users/marios/Desktop/Cursor/itdevcrm/src/features/leads/hooks/useMoveLeadStage.ts` — stage-move mutation
+
+## Sales emails from the owner's Gmail (2026-08-25)
+
+Automated lead emails (welcome, no-answer/offer sequences, scheduling,
+re-engage — NOT the won emails) send **from the lead owner's personal Gmail
+with CC sales@itdev.gr**, carrying the owner's personal signature and
+display-name From. Mechanics: `enqueue_lead_email` stamps
+`email_outbox.send_as_user_id = owner`; the send-email drain tries the
+owner-Gmail transport (`trySendTemplateViaOwnerGmail`) and on ANY obstacle
+(no/revoked Google connection, token refresh failure, Gmail rejection) falls
+back to the unchanged Resend path (from sales@, CC owner) — no email is ever
+lost. Gmail sends log as identity `personal` with the real template_key and
+show green ("sent") in the lead Emails box — Gmail provides no
+delivered/bounced signal; bounces arrive in the owner's inbox. Each rep must
+connect their own Gmail (Profile → Connect Google).

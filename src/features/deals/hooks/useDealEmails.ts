@@ -8,6 +8,8 @@ export type DealEmailRow = {
   to_email: string;
   template_key: string;
   status: string;
+  /** Present on lead_email_statuses rows; 'personal' = sent via owner Gmail. */
+  identity?: string;
   delivered_at: string | null;
   bounced_at: string | null;
   error: string | null;

@@ -40,6 +40,16 @@ describe('LeadEmailsBox', () => {
     expect(container.querySelectorAll('li .bg-red-500')).toHaveLength(1);
   });
 
+  it('shows owner-Gmail sends (identity personal, status sent) as green', () => {
+    useLeadEmails.mockReturnValue({
+      data: [row({ status: 'sent', delivered_at: null, identity: 'personal' })],
+      isLoading: false,
+    });
+    const { container } = render(<LeadEmailsBox leadId="lead-1" />);
+    expect(container.querySelectorAll('li .bg-emerald-500')).toHaveLength(1);
+    expect(container.querySelectorAll('li .bg-amber-400')).toHaveLength(0);
+  });
+
   it('shows the empty state', () => {
     useLeadEmails.mockReturnValue({ data: [], isLoading: false });
     render(<LeadEmailsBox leadId="lead-1" />);

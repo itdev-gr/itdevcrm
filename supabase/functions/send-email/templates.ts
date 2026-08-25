@@ -304,6 +304,9 @@ type DbTemplateRow = { subject: string; body: string; client_facing: boolean };
 export function renderDbTemplate(
   row: DbTemplateRow,
   data: Record<string, unknown>,
+  // Optional signature override: the owner-Gmail transport injects the
+  // sender's PERSONAL signature instead of the company block.
+  opts?: { sigHtml?: string },
 ): Rendered {
   const subject = cleanSubject(interpolate(row.subject, data));
   const bodyText = interpolate(row.body, data);
@@ -320,7 +323,9 @@ export function renderDbTemplate(
     const label = escapeHtml(String(data.cta_label ?? 'Άνοιγμα / Open'));
     cta = `<p style="margin:24px 0"><a href="${url}" style="background:#0f172a;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block">${label}</a></p>`;
   }
-  const sig = row.client_facing !== false ? COMPANY_SIG_HTML : '';
+  const sig = opts?.sigHtml !== undefined
+    ? opts.sigHtml
+    : (row.client_facing !== false ? COMPANY_SIG_HTML : '');
   const html = shell(
     `<p>${linkify(escapeHtml(bodyText)).replace(/\n/g, '<br/>')}</p>${cta}${footer}`,
     sig,
@@ -328,7 +333,9 @@ export function renderDbTemplate(
   return {
     subject,
     html,
-    text: sig !== '' ? `${bodyText}\n\n${COMPANY_SIG_TEXT}` : bodyText + footerText,
+    text: opts?.sigHtml === undefined && sig !== ''
+      ? `${bodyText}\n\n${COMPANY_SIG_TEXT}`
+      : bodyText + footerText,
   };
 }
 
