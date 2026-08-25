@@ -106,3 +106,9 @@ lost. Gmail sends log as identity `personal` with the real template_key and
 show green ("sent") in the lead Emails box — Gmail provides no
 delivered/bounced signal; bounces arrive in the owner's inbox. Each rep must
 connect their own Gmail (Profile → Connect Google).
+
+**Instant day-0 (2026-08-25):** the entry email of every sequence
+(day_offset 0, e.g. noanswer_day0) is enqueued by `leads_email_automations`
+the moment the card enters the stage — no waiting for the 06:30 UTC
+processor. Later steps (day 2/5/10) remain with the daily cron; the trigger
+advances `last_step_position` so the two never double-send.
