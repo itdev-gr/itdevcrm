@@ -35,6 +35,25 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'clients_by_service',
+      description:
+        'Μετράει και λιστάρει τους πελάτες ανά υπηρεσία. Χωρίς service_type: πλήθος πελατών για ΚΑΘΕ υπηρεσία. Με service_type: πλήθος + λίστα πελατών της υπηρεσίας. ΠΑΝΤΑ αυτό για ερωτήσεις «πόσοι πελάτες έχουν Χ» — ΠΟΤΕ το search_entity.',
+      parameters: {
+        type: 'object',
+        properties: {
+          service_type: {
+            type: 'string',
+            enum: ['local_seo', 'web_seo', 'ai_seo', 'web_dev', 'hosting', 'domains', 'ads', 'social_media', 'maintenance', 'franchise'],
+            description: 'Προαιρετικό: η υπηρεσία (local_seo = Τοπικό SEO κ.ο.κ.)',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'payments_due',
       description:
         'Ληξιπρόθεσμες + επερχόμενες οφειλές όλων των πελατών μέσα στις επόμενες Χ μέρες, με σύνολα.',
@@ -167,6 +186,53 @@ export async function runTool(
         recent_emails: emails.data ?? [],
         open_tasks: tasks.data ?? [],
         alerts: clientAlerts,
+      };
+    }
+
+    case 'clients_by_service': {
+      const svc = args.service_type ? String(args.service_type) : null;
+      let q = caller.from('jobs')
+        .select('service_type, client_id, is_blocked, billing_active, client:clients(name, code, status)')
+        .eq('archived', false)
+        .limit(3000);
+      if (svc) q = q.eq('service_type', svc);
+      const { data, error } = await q;
+      if (error) return { error: error.message };
+      const rows = (data ?? []) as any[];
+
+      if (!svc) {
+        const perService = new Map<string, Set<string>>();
+        for (const r of rows) {
+          if (!perService.has(r.service_type)) perService.set(r.service_type, new Set());
+          perService.get(r.service_type)!.add(r.client_id);
+        }
+        return {
+          counts: [...perService.entries()]
+            .map(([service_type, ids]) => ({ service_type, clients: ids.size }))
+            .sort((a, b) => b.clients - a.clients),
+        };
+      }
+
+      const byClient = new Map<string, any>();
+      for (const r of rows) {
+        if (!byClient.has(r.client_id)) {
+          byClient.set(r.client_id, {
+            name: r.client?.name ?? null,
+            code: r.client?.code ?? null,
+            status: r.client?.status ?? null,
+            blocked_job: !!r.is_blocked,
+          });
+        } else if (r.is_blocked) {
+          byClient.get(r.client_id).blocked_job = true;
+        }
+      }
+      const clients = [...byClient.values()].sort((a, b) => String(a.name).localeCompare(String(b.name), 'el'));
+      return {
+        service_type: svc,
+        // The COUNT is complete even though the list below is truncated.
+        total_clients: clients.length,
+        clients: clients.slice(0, 100),
+        list_truncated: clients.length > 100,
       };
     }
 
