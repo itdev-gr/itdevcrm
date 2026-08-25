@@ -113,13 +113,15 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
     .select('last_synced_at, backfilled_at, backfill_page_token').eq('user_id', uid).maybeSingle();
 
   // Shared boxes backfill 90 days, paged 200/run; staff keep the single-run 10d.
-  const backfillQ = shared ? 'newer_than:90d' : 'newer_than:10d';
+  // -in:drafts: Gmail auto-saves a draft the moment a recipient is typed, and
+  // those empty no-subject drafts were being captured as real mail (2026-08-25).
+  const backfillQ = shared ? 'newer_than:90d -in:drafts' : 'newer_than:10d -in:drafts';
   const backfilling = !cur?.backfilled_at || cur?.backfill_page_token;
   let q = backfillQ;
   let pageToken: string | undefined = cur?.backfill_page_token ?? undefined;
   if (!backfilling && cur?.last_synced_at) {
     const since = Math.floor(new Date(cur.last_synced_at as string).getTime() / 1000) - OVERLAP_SEC;
-    q = `after:${since}`;
+    q = `after:${since} -in:drafts`;
     pageToken = undefined;
   }
 
@@ -129,6 +131,8 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
     // Isolate per-message failures so one malformed message can't abort the run.
     try {
       const m = await getGmailMessageFull(access, id);
+      // Belt and braces with the -in:drafts query: never capture drafts.
+      if (m.label_ids.includes('DRAFT')) continue;
       if (!m.from_email || !m.to_email) continue;
       const { data: fil } = await admin.rpc('resolve_email_filing', {
         p_from: m.from_email, p_to: m.to_email, p_subject: m.subject,

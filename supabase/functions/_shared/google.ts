@@ -189,6 +189,7 @@ export type GmailMessage = {
   body_text: string; body_html: string; snippet: string;
   cc_emails: string | null;
   bcc_emails: string | null;
+  label_ids: string[];
 };
 
 function b64urlDecodeUtf8(s: string): string {
@@ -242,5 +243,6 @@ export async function getGmailMessageFull(accessToken: string, id: string): Prom
     subject: h('Subject'), date: h('Date'), internal_date: Number(j.internalDate ?? 0),
     body_text: acc.text.join('\n'), body_html: acc.html.join('\n'), snippet: j.snippet ?? '',
     cc_emails: ccList.join(',') || null, bcc_emails: bccList.join(',') || null,
+    label_ids: (j.labelIds ?? []) as string[],
   };
 }
