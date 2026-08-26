@@ -84,7 +84,10 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
       return <Briefcase className={cn(iconClass, 'text-indigo-600 dark:text-indigo-400')} />;
     case 'payment_integrity_alert':
     case 'payment_overdue':
+    case 'cadence_task_overdue':
       return <AlertTriangle className={cn(iconClass, 'text-red-600 dark:text-red-400')} />;
+    case 'cadence_task_transferred':
+      return <CheckCircle2 className={cn(iconClass, 'text-[#1a9696]')} />;
     default:
       return <Bell className={cn(iconClass, 'text-muted-foreground')} />;
   }
@@ -296,6 +299,52 @@ export function CompactNotificationContent({
             <span className="shrink-0 text-[10px]">{when}</span>
           </p>
         )}
+      </>
+    );
+  }
+
+  if (type === 'cadence_task_transferred') {
+    const lead = readString(payload, 'lead_title');
+    const tasks = readString(payload, 'title');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          Lead handed to you
+          {lead && (
+            <>
+              {' '}&mdash; <span className="font-semibold">{lead}</span>
+            </>
+          )}
+        </p>
+        {tasks && <p className="mt-0.5 truncate text-muted-foreground">{tasks}</p>}
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'cadence_task_overdue') {
+    const lead = readString(payload, 'lead_title');
+    const task = readString(payload, 'title');
+    const owner = readString(payload, 'owner_name');
+    const days = Number(payload?.days_overdue ?? 0);
+    return (
+      <>
+        <p className="min-w-0">
+          <span className="font-semibold text-red-700 dark:text-red-300">
+            Sales task overdue{days > 0 ? ` ${days}d` : ''}
+          </span>
+          {lead && (
+            <>
+              {' '}
+              <span className="text-muted-foreground">·</span>{' '}
+              <span className={cn('truncate', titleClass)}>{lead}</span>
+            </>
+          )}
+        </p>
+        <p className="mt-0.5 truncate text-muted-foreground">
+          {[task, owner ? `assigned to ${owner}` : null].filter(Boolean).join(' · ') || '—'}
+        </p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
     );
   }

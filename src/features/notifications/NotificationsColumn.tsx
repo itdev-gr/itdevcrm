@@ -23,8 +23,10 @@ function NotifIcon({ type }: { type: string }) {
       return <AtSign className={cn(className, 'text-primary')} />;
     case 'task_assigned':
     case 'task_resolved':
+    case 'cadence_task_transferred':
       return <CheckCircle2 className={cn(className, 'text-emerald-600 dark:text-emerald-400')} />;
     case 'payment_overdue':
+    case 'cadence_task_overdue':
       return <AlertTriangle className={cn(className, 'text-red-600 dark:text-red-400')} />;
     default:
       return <Bell className={cn(className, 'text-muted-foreground')} />;
