@@ -9,6 +9,7 @@ const SETTINGS_TABS = [
   { to: '/admin/fields', key: 'fields' },
   { to: '/admin/stages', key: 'stages' },
   { to: '/admin/service-packages', key: 'service_packages' },
+  { to: '/admin/sales-automations', key: 'sales_automations' },
   { to: '/admin/email-automations', key: 'email_automations' },
   { to: '/admin/email-health', key: 'email_health' },
   { to: '/admin/shared-mailboxes', key: 'shared_mailboxes' },

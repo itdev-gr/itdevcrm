@@ -61,6 +61,18 @@
         "plus7": "In a week, 10:00",
         "apply": "Set"
       }
+    },
+    "admin": {
+      "settings_title": "Escalation & safety",
+      "overdue_rep": "Notify the rep after (days past due)",
+      "overdue_admin": "Notify admins after (days past due)",
+      "auto_pause": "Auto-pause when the lead replies or calls in",
+      "auto_pause_hint": "An inbound email or PBX call from the lead pauses their chain and notifies the owner.",
+      "starts_on": "Starts on",
+      "ends_suggesting": "ends suggesting",
+      "enabled": "Enabled",
+      "days_after_previous": "days after the previous step",
+      "edit_copy": "Edit email copy"
     }
   },
   "kanban": {

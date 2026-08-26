@@ -88,6 +88,8 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
       return <AlertTriangle className={cn(iconClass, 'text-red-600 dark:text-red-400')} />;
     case 'cadence_task_transferred':
       return <CheckCircle2 className={cn(iconClass, 'text-[#1a9696]')} />;
+    case 'cadence_auto_paused':
+      return <Clock className={cn(iconClass, 'text-amber-600 dark:text-amber-400')} />;
     default:
       return <Bell className={cn(iconClass, 'text-muted-foreground')} />;
   }
@@ -343,6 +345,30 @@ export function CompactNotificationContent({
         </p>
         <p className="mt-0.5 truncate text-muted-foreground">
           {[task, owner ? `assigned to ${owner}` : null].filter(Boolean).join(' · ') || '—'}
+        </p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'cadence_auto_paused') {
+    const lead = readString(payload, 'lead_title');
+    const reason = readString(payload, 'reason');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          <span className="font-semibold text-amber-700 dark:text-amber-300">
+            Chain auto-paused
+          </span>
+          {lead && (
+            <>
+              {' '}
+              <span className="text-muted-foreground">·</span> <span className="truncate">{lead}</span>
+            </>
+          )}
+        </p>
+        <p className="mt-0.5 truncate text-muted-foreground">
+          {reason === 'call' ? 'The lead called in — take over.' : 'The lead replied by email — take over.'}
         </p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>

@@ -12,7 +12,8 @@
     "shared_mailboxes": "Κοινά γραμματοκιβώτια",
     "contract_templates": "Πρότυπα συμβάσεων",
     "announcements": "Ανακοινώσεις",
-    "documentation": "Τεκμηρίωση"
+    "documentation": "Τεκμηρίωση",
+    "sales_automations": "Αυτοματισμοί Πωλήσεων"
   },
   "settings": {
     "title": "Ρυθμίσεις"

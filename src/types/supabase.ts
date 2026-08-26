@@ -6966,6 +6966,30 @@ export type Database = {
           },
         ]
       }
+      ud_cadence_settings: {
+        Row: {
+          auto_pause_enabled: boolean
+          id: boolean
+          overdue_admin_days: number
+          overdue_rep_days: number
+          updated_at: string
+        }
+        Insert: {
+          auto_pause_enabled?: boolean
+          id?: boolean
+          overdue_admin_days?: number
+          overdue_rep_days?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_pause_enabled?: boolean
+          id?: boolean
+          overdue_admin_days?: number
+          overdue_rep_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ud_cadence_steps: {
         Row: {
           cadence_id: string
@@ -7192,6 +7216,8 @@ export type Database = {
           assignee_resolved_at: string | null
           assignee_resolved_by: string | null
           cadence_outcome: string | null
+          cadence_overdue_admin_notified_at: string | null
+          cadence_overdue_notified_at: string | null
           cadence_run_id: string | null
           cadence_step_id: string | null
           client_id: string | null
@@ -7217,6 +7243,8 @@ export type Database = {
           assignee_resolved_at?: string | null
           assignee_resolved_by?: string | null
           cadence_outcome?: string | null
+          cadence_overdue_admin_notified_at?: string | null
+          cadence_overdue_notified_at?: string | null
           cadence_run_id?: string | null
           cadence_step_id?: string | null
           client_id?: string | null
@@ -7242,6 +7270,8 @@ export type Database = {
           assignee_resolved_at?: string | null
           assignee_resolved_by?: string | null
           cadence_outcome?: string | null
+          cadence_overdue_admin_notified_at?: string | null
+          cadence_overdue_notified_at?: string | null
           cadence_run_id?: string | null
           cadence_step_id?: string | null
           client_id?: string | null
@@ -8314,11 +8344,24 @@ export type Database = {
       }
       team_lead_for_group: { Args: { p_group_code: string }; Returns: string }
       ud_advance_run: { Args: { p_run_id: string }; Returns: undefined }
+      ud_auto_pause_lead: {
+        Args: { p_lead_id: string; p_reason: string }
+        Returns: undefined
+      }
       ud_complete_cadence_task: {
-        Args: { p_outcome: string; p_task_id: string }
+        Args: { p_note?: string; p_outcome: string; p_task_id: string }
         Returns: Json
       }
+      ud_notify_overdue_tasks: { Args: never; Returns: undefined }
       ud_process_due_runs: { Args: never; Returns: undefined }
+      ud_set_run_paused: {
+        Args: { p_lead_id: string; p_paused: boolean }
+        Returns: Json
+      }
+      ud_snooze_cadence_task: {
+        Args: { p_due: string; p_task_id: string }
+        Returns: Json
+      }
       ud_start_cadence_run: {
         Args: { p_lead_id: string; p_stage_id: string }
         Returns: undefined

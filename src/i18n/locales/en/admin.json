@@ -12,7 +12,8 @@
     "shared_mailboxes": "Shared mailboxes",
     "contract_templates": "Contract templates",
     "announcements": "Announcements",
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "sales_automations": "Sales automations"
   },
   "settings": {
     "title": "Settings"

@@ -106,6 +106,10 @@ const SalesTasksPage = lazyPage(
   () => import('@/features/under_development/SalesTasksPage'),
   'SalesTasksPage',
 );
+const SalesAutomationsPage = lazyPage(
+  () => import('@/features/under_development/SalesAutomationsPage'),
+  'SalesAutomationsPage',
+);
 const AccountingOnboardingKanbanPage = lazyPage(
   () => import('@/features/accounting/AccountingOnboardingKanbanPage'),
   'AccountingOnboardingKanbanPage',
@@ -234,6 +238,7 @@ export const router = createBrowserRouter([
               { path: 'permissions/test', element: <PermissionsTestPage /> },
               { path: 'stages', element: <StagesListPage /> },
               { path: 'service-packages', element: <ServicePackagesPage /> },
+              { path: 'sales-automations', element: <SalesAutomationsPage /> },
               { path: 'email-automations', element: <EmailAutomationsPage /> },
               { path: 'email-health', element: <EmailHealthPage /> },
               { path: 'shared-mailboxes', element: <SharedMailboxesPage /> },
