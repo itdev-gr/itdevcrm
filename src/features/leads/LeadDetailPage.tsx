@@ -68,7 +68,8 @@ function LeadDetailContent() {
   // "Won" is terminal — never walk it with Next. The column is only reachable
   // when the current lead is itself won (Next is stage-scoped), so gating on the
   // current stage keeps Next from ever landing on a won lead.
-  const isWonStage = !!lead?.stage_id && stages.some((s) => s.id === lead.stage_id && s.code === 'won');
+  const isWonStage =
+    !!lead?.stage_id && stages.some((s) => s.id === lead.stage_id && s.terminal_outcome === 'won');
 
   // Fetch the whole ordered column, not just the first 1000 rows: PostgREST caps
   // each response at 1000, and busy stages (e.g. not_interested) exceed that, so
@@ -169,12 +170,18 @@ function LeadDetailContent() {
     }
   }
 
+  // Every stage control on this page works within the LEAD'S OWN board, so an
+  // Under Development lead moves between UD stages (never leaks to the classic
+  // board) and its Won drop converts into its own Won column.
+  const leadBoard = stages.find((s) => s.id === lead.stage_id)?.board ?? 'sales';
   const salesStages = stages
-    .filter((s) => s.board === 'sales' && !s.archived)
+    .filter((s) => s.board === leadBoard && !s.archived)
     .sort((a, b) => a.position - b.position);
-  const wonStage = salesStages.find((s) => s.code === 'won');
+  const wonStage = salesStages.find((s) => s.terminal_outcome === 'won');
   const currentStage = salesStages.find((s) => s.id === lead.stage_id);
-  const currentStageCode = currentStage?.code;
+  // ud_* codes normalize to their classic twins for code-keyed UI behavior
+  // (offer button, deletability).
+  const currentStageCode = currentStage?.code.replace(/^ud_/, '');
   const stageName =
     (currentStage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
     currentStage?.code ??

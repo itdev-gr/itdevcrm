@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Clock, Mail, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLeadCadence, type CadenceStepRow } from './hooks/useLeadCadence';
-import { CadenceOutcomeButtons } from './CadenceOutcomeButtons';
+import { CadenceFinalMoveDialog, CadenceOutcomeButtons } from './CadenceOutcomeButtons';
 
 const STATUS_TONE: Record<string, string> = {
   active: 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200',
@@ -23,6 +24,9 @@ export function LeadCadenceBox({ leadId }: { leadId: string }) {
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const locale = lang === 'el' ? 'el-GR' : 'en-US';
   const { data, isLoading } = useLeadCadence(leadId);
+  // Hosted HERE (not in the buttons) so the confirm survives the open-task row
+  // unmounting when the final task completes and the query refetches.
+  const [finalMove, setFinalMove] = useState<string | null>(null);
 
   if (isLoading || !data) return null;
   const { run, cadence, steps, tasks } = data;
@@ -122,9 +126,11 @@ export function LeadCadenceBox({ leadId }: { leadId: string }) {
       {openTask && run.status === 'active' && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[#1a9696]/30 bg-[#1a9696]/5 px-3 py-2.5">
           <span className="text-sm font-medium">{openTask.title}</span>
-          <CadenceOutcomeButtons taskId={openTask.id} leadId={leadId} />
+          <CadenceOutcomeButtons taskId={openTask.id} leadId={leadId} onExhausted={setFinalMove} />
         </div>
       )}
+
+      <CadenceFinalMoveDialog leadId={leadId} stageId={finalMove} onClose={() => setFinalMove(null)} />
 
       {run.status === 'stopped_reached' && (
         <p className="mt-3 text-xs text-muted-foreground">{t('ud.cadence.note_reached')}</p>

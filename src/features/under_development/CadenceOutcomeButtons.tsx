@@ -7,39 +7,80 @@ import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveLeadStage } from '@/features/leads/hooks/useMoveLeadStage';
 import { useCompleteCadenceTask } from './hooks/useLeadCadence';
 
+/** The «move to Not Found / Not Interested?» confirmation a finished chain
+ *  offers. Hosted by whoever stays MOUNTED after the task closes — the outcome
+ *  buttons themselves may unmount when the completed task leaves the DOM. */
+export function CadenceFinalMoveDialog({
+  leadId,
+  stageId,
+  onClose,
+}: {
+  leadId: string;
+  stageId: string | null;
+  onClose: () => void;
+}) {
+  const { t, i18n } = useTranslation('sales');
+  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
+  const moveStage = useMoveLeadStage();
+  const { data: stages = [] } = usePipelineStages();
+  const targetStage = stageId ? stages.find((s) => s.id === stageId) : undefined;
+  const targetLabel = targetStage
+    ? (targetStage.display_names as { en: string; el: string })[lang]
+    : '';
+
+  return (
+    <ConfirmDialog
+      open={stageId != null}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+      title={t('ud.cadence.exhausted_title')}
+      description={t('ud.cadence.exhausted_body', { stage: targetLabel })}
+      confirmLabel={t('ud.cadence.exhausted_cta', { stage: targetLabel })}
+      onConfirm={async () => {
+        if (stageId) await moveStage.mutateAsync({ leadId, stageId });
+        onClose();
+      }}
+      pending={moveStage.isPending}
+    />
+  );
+}
+
 /**
  * The two cadence outcomes for an open chain task. On chain exhaustion the
- * engine suggests the terminal stage (Not Found / Not Interested) and the rep
- * confirms or declines the move — per spec, the user has the final say.
+ * engine suggests the terminal stage and the rep confirms or declines the
+ * move — per spec, the user has the final say. When this component may
+ * unmount on task completion (e.g. inside the cadence box, whose open-task
+ * row disappears), the host passes `onExhausted` and renders
+ * CadenceFinalMoveDialog itself; without it the dialog is hosted here.
  */
 export function CadenceOutcomeButtons({
   taskId,
   leadId,
   size = 'sm',
   onDone,
+  onExhausted,
 }: {
   taskId: string;
   leadId: string;
   size?: 'sm' | 'default';
   onDone?: (() => void) | undefined;
+  onExhausted?: ((stageId: string) => void) | undefined;
 }) {
-  const { t, i18n } = useTranslation('sales');
-  const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
+  const { t } = useTranslation('sales');
   const complete = useCompleteCadenceTask();
-  const moveStage = useMoveLeadStage();
-  const { data: stages = [] } = usePipelineStages();
   const [moveTarget, setMoveTarget] = useState<string | null>(null);
-
-  const targetStage = moveTarget ? stages.find((s) => s.id === moveTarget) : undefined;
-  const targetLabel = targetStage
-    ? (targetStage.display_names as { en: string; el: string })[lang]
-    : '';
 
   async function onOutcome(outcome: 'reached' | 'no_answer') {
     try {
       const res = await complete.mutateAsync({ taskId, outcome });
       if (res.result === 'exhausted' && res.final_move_stage_id) {
-        setMoveTarget(res.final_move_stage_id);
+        if (onExhausted) {
+          onExhausted(res.final_move_stage_id);
+          onDone?.();
+        } else {
+          setMoveTarget(res.final_move_stage_id);
+        }
       } else {
         onDone?.();
       }
@@ -74,24 +115,16 @@ export function CadenceOutcomeButtons({
           {t('ud.cadence.outcome_no_answer')}
         </Button>
       </div>
-      <ConfirmDialog
-        open={moveTarget != null}
-        onOpenChange={(o) => {
-          if (!o) {
+      {!onExhausted && (
+        <CadenceFinalMoveDialog
+          leadId={leadId}
+          stageId={moveTarget}
+          onClose={() => {
             setMoveTarget(null);
             onDone?.();
-          }
-        }}
-        title={t('ud.cadence.exhausted_title')}
-        description={t('ud.cadence.exhausted_body', { stage: targetLabel })}
-        confirmLabel={t('ud.cadence.exhausted_cta', { stage: targetLabel })}
-        onConfirm={async () => {
-          if (moveTarget) await moveStage.mutateAsync({ leadId, stageId: moveTarget });
-          setMoveTarget(null);
-          onDone?.();
-        }}
-        pending={moveStage.isPending}
-      />
+          }}
+        />
+      )}
     </>
   );
 }
