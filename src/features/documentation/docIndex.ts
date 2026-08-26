@@ -26,6 +26,7 @@ export const DOC_AREAS: DocArea[] = [
       { slug: 'lead-intake', title: 'Lead intake', file: 'sales/lead-intake.md' },
       { slug: 'distribution', title: 'Lead distribution', file: 'sales/distribution.md' },
       { slug: 'kanban', title: 'Sales kanban & stages', file: 'sales/kanban.md' },
+      { slug: 'call-comments', title: 'Call auto-comments', file: 'sales/call-comments.md' },
       { slug: 'conversion', title: 'Lead → deal conversion', file: 'sales/conversion.md' },
     ],
   },

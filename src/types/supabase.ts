@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -149,6 +149,68 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      ai_chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          tool_name: string | null
+          tool_payload: Json | null
+        }
+        Insert: {
+          content?: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          tool_name?: string | null
+          tool_payload?: Json | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          tool_name?: string | null
+          tool_payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       announcement_dismissals: {
         Row: {
@@ -596,6 +658,81 @@ export type Database = {
           job_name_before?: string | null
           job_url_before?: string | null
           status?: string | null
+        }
+        Relationships: []
+      }
+      call_log: {
+        Row: {
+          agent_user_id: string | null
+          call_type: string
+          comment_id: string | null
+          comment_parent_type: string | null
+          created_at: string
+          disposition: string | null
+          extension: string
+          from_number: string | null
+          matched_id: string | null
+          matched_type: string | null
+          ring_seconds: number
+          route_error: string | null
+          started_at: string
+          talk_seconds: number
+          to_number: string | null
+          yeastar_uid: string
+        }
+        Insert: {
+          agent_user_id?: string | null
+          call_type: string
+          comment_id?: string | null
+          comment_parent_type?: string | null
+          created_at?: string
+          disposition?: string | null
+          extension: string
+          from_number?: string | null
+          matched_id?: string | null
+          matched_type?: string | null
+          ring_seconds?: number
+          route_error?: string | null
+          started_at: string
+          talk_seconds?: number
+          to_number?: string | null
+          yeastar_uid: string
+        }
+        Update: {
+          agent_user_id?: string | null
+          call_type?: string
+          comment_id?: string | null
+          comment_parent_type?: string | null
+          created_at?: string
+          disposition?: string | null
+          extension?: string
+          from_number?: string | null
+          matched_id?: string | null
+          matched_type?: string | null
+          ring_seconds?: number
+          route_error?: string | null
+          started_at?: string
+          talk_seconds?: number
+          to_number?: string | null
+          yeastar_uid?: string
+        }
+        Relationships: []
+      }
+      call_pull_config: {
+        Row: {
+          cutover_at: string
+          id: boolean
+          pulled_through: string
+        }
+        Insert: {
+          cutover_at: string
+          id?: boolean
+          pulled_through: string
+        }
+        Update: {
+          cutover_at?: string
+          id?: boolean
+          pulled_through?: string
         }
         Relationships: []
       }
@@ -2774,6 +2911,7 @@ export type Database = {
           id: string
           identity: string
           last_error: string | null
+          send_as_user_id: string | null
           sent_at: string | null
           status: string
           template_key: string
@@ -2788,6 +2926,7 @@ export type Database = {
           id?: string
           identity: string
           last_error?: string | null
+          send_as_user_id?: string | null
           sent_at?: string | null
           status?: string
           template_key: string
@@ -2802,6 +2941,7 @@ export type Database = {
           id?: string
           identity?: string
           last_error?: string | null
+          send_as_user_id?: string | null
           sent_at?: string | null
           status?: string
           template_key?: string
@@ -6759,6 +6899,153 @@ export type Database = {
         }
         Relationships: []
       }
+      ud_cadence_runs: {
+        Row: {
+          cadence_id: string
+          created_at: string
+          current_position: number
+          current_task_id: string | null
+          exhausted_at: string | null
+          id: string
+          last_event_at: string
+          lead_id: string
+          next_event_at: string | null
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cadence_id: string
+          created_at?: string
+          current_position?: number
+          current_task_id?: string | null
+          exhausted_at?: string | null
+          id?: string
+          last_event_at?: string
+          lead_id: string
+          next_event_at?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cadence_id?: string
+          created_at?: string
+          current_position?: number
+          current_task_id?: string | null
+          exhausted_at?: string | null
+          id?: string
+          last_event_at?: string
+          lead_id?: string
+          next_event_at?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ud_cadence_runs_cadence_id_fkey"
+            columns: ["cadence_id"]
+            isOneToOne: false
+            referencedRelation: "ud_cadences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ud_cadence_runs_current_task_id_fkey"
+            columns: ["current_task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ud_cadence_runs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ud_cadence_steps: {
+        Row: {
+          cadence_id: string
+          created_at: string
+          delay_days: number
+          enabled: boolean
+          id: string
+          kind: string
+          position: number
+          template_key: string | null
+          titles: Json | null
+          updated_at: string
+        }
+        Insert: {
+          cadence_id: string
+          created_at?: string
+          delay_days?: number
+          enabled?: boolean
+          id?: string
+          kind: string
+          position: number
+          template_key?: string | null
+          titles?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          cadence_id?: string
+          created_at?: string
+          delay_days?: number
+          enabled?: boolean
+          id?: string
+          kind?: string
+          position?: number
+          template_key?: string | null
+          titles?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ud_cadence_steps_cadence_id_fkey"
+            columns: ["cadence_id"]
+            isOneToOne: false
+            referencedRelation: "ud_cadences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ud_cadences: {
+        Row: {
+          created_at: string
+          display_names: Json
+          enabled: boolean
+          final_move_stage_code: string | null
+          id: string
+          key: string
+          start_stage_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_names: Json
+          enabled?: boolean
+          final_move_stage_code?: string | null
+          id?: string
+          key: string
+          start_stage_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_names?: Json
+          enabled?: boolean
+          final_move_stage_code?: string | null
+          id?: string
+          key?: string
+          start_stage_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_google_accounts: {
         Row: {
           connected_at: string
@@ -6904,6 +7191,9 @@ export type Database = {
         Row: {
           assignee_resolved_at: string | null
           assignee_resolved_by: string | null
+          cadence_outcome: string | null
+          cadence_run_id: string | null
+          cadence_step_id: string | null
           client_id: string | null
           completed_at: string | null
           created_at: string
@@ -6926,6 +7216,9 @@ export type Database = {
         Insert: {
           assignee_resolved_at?: string | null
           assignee_resolved_by?: string | null
+          cadence_outcome?: string | null
+          cadence_run_id?: string | null
+          cadence_step_id?: string | null
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -6948,6 +7241,9 @@ export type Database = {
         Update: {
           assignee_resolved_at?: string | null
           assignee_resolved_by?: string | null
+          cadence_outcome?: string | null
+          cadence_run_id?: string | null
+          cadence_step_id?: string | null
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -6968,6 +7264,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_tasks_cadence_run_id_fkey"
+            columns: ["cadence_run_id"]
+            isOneToOne: false
+            referencedRelation: "ud_cadence_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tasks_cadence_step_id_fkey"
+            columns: ["cadence_step_id"]
+            isOneToOne: false
+            referencedRelation: "ud_cadence_steps"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_tasks_client_id_fkey"
             columns: ["client_id"]
@@ -7019,6 +7329,21 @@ export type Database = {
           },
         ]
       }
+      webdev_intake_config: {
+        Row: {
+          cutover_at: string
+          id: boolean
+        }
+        Insert: {
+          cutover_at: string
+          id?: boolean
+        }
+        Update: {
+          cutover_at?: string
+          id?: boolean
+        }
+        Relationships: []
+      }
       webseo_renewal_backup_20260626: {
         Row: {
           backed_up_at: string | null
@@ -7040,6 +7365,39 @@ export type Database = {
           job_id?: string | null
           prev_blocked?: boolean | null
           prev_stage_id?: string | null
+        }
+        Relationships: []
+      }
+      won_push_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          deal_id: string
+          id: string
+          last_error: string | null
+          lead_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          deal_id: string
+          id?: string
+          last_error?: string | null
+          lead_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          deal_id?: string
+          id?: string
+          last_error?: string | null
+          lead_id?: string
+          sent_at?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -7274,6 +7632,7 @@ export type Database = {
           id: string
           identity: string
           last_error: string | null
+          send_as_user_id: string | null
           sent_at: string | null
           status: string
           template_key: string
@@ -7723,6 +8082,21 @@ export type Database = {
         Args: { l: Database["public"]["Tables"]["leads"]["Row"] }
         Returns: Json
       }
+      lead_email_statuses: {
+        Args: { p_lead_id: string }
+        Returns: {
+          bounced_at: string
+          created_at: string
+          dedupe_key: string
+          delivered_at: string
+          error: string
+          id: string
+          identity: string
+          status: string
+          template_key: string
+          to_email: string
+        }[]
+      }
       lead_is_dead_end: { Args: { p_lead_id: string }; Returns: boolean }
       lead_shuffle_pool: { Args: never; Returns: string[] }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
@@ -7751,6 +8125,9 @@ export type Database = {
       }
       pick_next_sales_assignee: { Args: never; Returns: string }
       process_email_sequences: { Args: never; Returns: number }
+      process_webdev_intake_auto: { Args: never; Returns: number }
+      process_webdev_intake_followups: { Args: never; Returns: number }
+      process_webdev_waiting_nudges: { Args: never; Returns: number }
       profile_directory: {
         Args: never
         Returns: {
@@ -7827,7 +8204,12 @@ export type Database = {
       run_daily_payment_reminders: { Args: never; Returns: number }
       run_monthly_task_reset: { Args: never; Returns: undefined }
       sales_kanban_counts: {
-        Args: { p_owner?: string; p_search?: string; p_source?: string }
+        Args: {
+          p_board?: string
+          p_owner?: string
+          p_search?: string
+          p_source?: string
+        }
         Returns: {
           stage_id: string
           total: number
@@ -7931,6 +8313,20 @@ export type Database = {
         Returns: string
       }
       team_lead_for_group: { Args: { p_group_code: string }; Returns: string }
+      ud_advance_run: { Args: { p_run_id: string }; Returns: undefined }
+      ud_complete_cadence_task: {
+        Args: { p_outcome: string; p_task_id: string }
+        Returns: Json
+      }
+      ud_process_due_runs: { Args: never; Returns: undefined }
+      ud_start_cadence_run: {
+        Args: { p_lead_id: string; p_stage_id: string }
+        Returns: undefined
+      }
+      ud_stop_live_run: {
+        Args: { p_lead_id: string; p_reason: string }
+        Returns: undefined
+      }
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
       unblock_job: { Args: { target_job_id: string }; Returns: Json }
       undismiss_integrity_alert: { Args: { p_id: string }; Returns: undefined }
@@ -7954,6 +8350,15 @@ export type Database = {
         Returns: Json
       }
       vat_rate_for_country: { Args: { p_country: string }; Returns: number }
+      webdev_intake_pending_jobs: {
+        Args: never
+        Returns: {
+          client_name: string
+          code: string
+          job_id: string
+          to_email: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

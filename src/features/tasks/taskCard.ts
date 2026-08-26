@@ -47,6 +47,11 @@ export type TaskCard = {
   creatorResolvedAt: string | null;
   assigneeResolvedAt: string | null;
   summary: string | null;
+  // Under Development cadence: a chain task closes with an outcome, not a
+  // plain resolve (the DB rejects outcome-less completion). Optional so the
+  // many non-cadence card factories (and test fixtures) stay untouched.
+  leadId?: string | null;
+  cadenceRunId?: string | null;
 };
 
 /** Build the pure dual-resolve state a card carries, for `resolveAction` /
@@ -96,6 +101,8 @@ export function userTaskToCard(
     creatorResolvedAt: row.creator_resolved_at ?? null,
     assigneeResolvedAt: row.assignee_resolved_at ?? null,
     summary: row.summary ?? null,
+    leadId: row.lead?.id ?? row.lead_id ?? null,
+    cadenceRunId: row.cadence_run_id ?? null,
   };
 }
 
@@ -124,6 +131,8 @@ export function assignedTaskToCard(row: AssignedTaskRow, meId: string): TaskCard
     creatorResolvedAt: row.creator_resolved_at ?? null,
     assigneeResolvedAt: row.assignee_resolved_at ?? null,
     summary: row.summary ?? null,
+    leadId: null,
+    cadenceRunId: null,
   };
 }
 

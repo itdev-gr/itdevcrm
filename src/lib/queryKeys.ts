@@ -109,6 +109,7 @@ export const queryKeys = {
   breakToday: () => ['break', 'today'] as const,
   myCommission: () => ['my-commission'] as const,
   leadEmails: (leadId: string) => ['lead-emails', leadId] as const,
+  leadCadence: (leadId: string) => ['lead-cadence', leadId] as const,
   aiChatConversations: () => ['ai-chat', 'conversations'] as const,
   aiChatMessages: (conversationId: string) => ['ai-chat', 'messages', conversationId] as const,
 };

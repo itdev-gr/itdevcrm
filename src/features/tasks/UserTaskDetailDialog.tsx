@@ -6,6 +6,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useResolveTask, useUnresolveTask } from './hooks/useResolveTask';
+import { CadenceOutcomeButtons } from '@/features/under_development/CadenceOutcomeButtons';
 import { StartTaskButton } from './StartTaskButton';
 import { TaskDetailShell, type TaskMetaRow, type TaskStatusTone } from './TaskDetailShell';
 import { cardDualResolveState, type TaskCard } from './taskCard';
@@ -102,7 +103,20 @@ export function UserTaskDetailDialog({
             />
           }
           footer={
-            action ? (
+            // A cadence chain task closes with an outcome, never a plain
+            // resolve — the outcome drives the next automation step.
+            card.cadenceRunId && card.leadId && !card.resolved ? (
+              card.relation === 'mine' || isAdmin ? (
+                <div className="flex justify-end">
+                  <CadenceOutcomeButtons
+                    taskId={card.id}
+                    leadId={card.leadId}
+                    size="default"
+                    onDone={() => onOpenChange(false)}
+                  />
+                </div>
+              ) : undefined
+            ) : action ? (
               <div className="flex justify-end">
                 <Button
                   type="button"

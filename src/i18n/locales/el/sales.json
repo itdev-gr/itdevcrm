@@ -1,7 +1,28 @@
 {
   "ud": {
     "nav": "Υπό Ανάπτυξη",
-    "title": "Pipeline Υπό Ανάπτυξη"
+    "title": "Pipeline Υπό Ανάπτυξη",
+    "cadence": {
+      "title": "Αλυσίδα αυτοματισμού",
+      "task_step": "Task",
+      "email_step": "Email",
+      "days_suffix": "μ",
+      "outcome_reached": "Μίλησα",
+      "outcome_no_answer": "Δεν απάντησε",
+      "exhausted_title": "Η αλυσίδα ολοκληρώθηκε",
+      "exhausted_body": "Όλες οι προσπάθειες απέτυχαν. Μετακίνηση του lead σε «{{stage}}»;",
+      "exhausted_cta": "Μετακίνηση σε {{stage}}",
+      "note_reached": "Η αλυσίδα σταμάτησε γιατί υπήρξε επικοινωνία — διάλεξε το επόμενο στάδιο χειροκίνητα.",
+      "note_exhausted": "Η αλυσίδα εξάντλησε τις προσπάθειες.",
+      "status": {
+        "active": "Ενεργή",
+        "paused": "Σε παύση",
+        "completed": "Ολοκληρώθηκε",
+        "stopped_reached": "Υπήρξε επικοινωνία",
+        "stopped_stage_change": "Σταμάτησε (αλλαγή σταδίου)",
+        "stopped_manual": "Σταμάτησε"
+      }
+    }
   },
   "kanban": {
     "title": "Pipeline Πωλήσεων",

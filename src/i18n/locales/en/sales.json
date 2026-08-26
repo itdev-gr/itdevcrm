@@ -1,7 +1,28 @@
 {
   "ud": {
     "nav": "Under Development",
-    "title": "Under Development pipeline"
+    "title": "Under Development pipeline",
+    "cadence": {
+      "title": "Automation chain",
+      "task_step": "Task",
+      "email_step": "Email",
+      "days_suffix": "d",
+      "outcome_reached": "Reached",
+      "outcome_no_answer": "No answer",
+      "exhausted_title": "Chain finished",
+      "exhausted_body": "Every attempt failed. Move the lead to \"{{stage}}\"?",
+      "exhausted_cta": "Move to {{stage}}",
+      "note_reached": "The chain stopped because contact was made — pick the next stage manually.",
+      "note_exhausted": "The chain ran out of attempts.",
+      "status": {
+        "active": "Active",
+        "paused": "Paused",
+        "completed": "Finished",
+        "stopped_reached": "Contact made",
+        "stopped_stage_change": "Stopped (stage change)",
+        "stopped_manual": "Stopped"
+      }
+    }
   },
   "kanban": {
     "title": "Sales pipeline",
