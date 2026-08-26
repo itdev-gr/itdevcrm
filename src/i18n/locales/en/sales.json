@@ -15,7 +15,8 @@
       "decision_reached": "Contact was made — pick the lead's next stage.",
       "move_cta": "Move to {{stage}}",
       "open_lead": "Open lead",
-      "needs_decision_badge": "Needs a decision"
+      "needs_decision_badge": "Needs a decision",
+      "all_clear": "All clear — nothing needs you right now."
     },
     "cadence": {
       "title": "Automation chain",
