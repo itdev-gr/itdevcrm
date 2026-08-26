@@ -16,7 +16,8 @@
       "move_cta": "Move to {{stage}}",
       "open_lead": "Open lead",
       "needs_decision_badge": "Needs a decision",
-      "all_clear": "All clear — nothing needs you right now."
+      "all_clear": "All clear — nothing needs you right now.",
+      "last_call_hint": "Last call today (from the phone system)"
     },
     "cadence": {
       "title": "Automation chain",
@@ -37,6 +38,28 @@
         "stopped_reached": "Contact made",
         "stopped_stage_change": "Stopped (stage change)",
         "stopped_manual": "Stopped"
+      },
+      "pause": "Pause",
+      "resume": "Resume",
+      "paused_note": "Automations are paused for this lead — resume to keep working the chain.",
+      "paused_error": "This chain is paused — resume it first.",
+      "note_placeholder": "Note (optional) — lands on the timeline",
+      "submit": "Log it",
+      "cancel": "Cancel",
+      "dialog_description": "Log the call outcome",
+      "next_step": {
+        "title": "What happens next?",
+        "offer": "Offer sent",
+        "meeting": "Meeting booked",
+        "not_interested": "Not interested",
+        "none": "Nothing yet"
+      },
+      "snooze": {
+        "title": "Snooze",
+        "tomorrow": "Tomorrow 10:00",
+        "plus2": "In 2 days, 10:00",
+        "plus7": "In a week, 10:00",
+        "apply": "Set"
       }
     }
   },

@@ -73,19 +73,60 @@ function invalidateCadenceQueries(qc: QueryClient): void {
   }
 }
 
-/** Close a cadence task with its outcome («Μίλησα» / «Δεν απάντησε»). */
+/** Close a cadence task with its outcome («Μίλησα» / «Δεν απάντησε»), with an
+ *  optional one-line note that lands on the lead timeline. */
 export function useCompleteCadenceTask() {
   const qc = useQueryClient();
-  return useMutation<CompleteCadenceResult, Error, { taskId: string; outcome: 'reached' | 'no_answer' }>({
-    mutationFn: async ({ taskId, outcome }) => {
-      const { data, error } = await supabase.rpc('ud_complete_cadence_task', {
+  return useMutation<
+    CompleteCadenceResult,
+    Error,
+    { taskId: string; outcome: 'reached' | 'no_answer'; note?: string | undefined }
+  >({
+    mutationFn: async ({ taskId, outcome, note }) => {
+      // Cast: the generated types predate the 3-arg (p_note) signature.
+      const { data, error } = await supabase.rpc('ud_complete_cadence_task' as never, {
         p_task_id: taskId,
         p_outcome: outcome,
-      });
+        p_note: note ?? null,
+      } as never);
       if (error) throw new Error(error.message);
       const res = data as CompleteCadenceResult;
       if (!res.ok) throw new Error(res.error ?? 'cadence_complete_failed');
       return res;
+    },
+    onSuccess: () => invalidateCadenceQueries(qc),
+  });
+}
+
+/** Push an open chain task's due date («πάρε με Πέμπτη») without burning a step. */
+export function useSnoozeCadenceTask() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { taskId: string; dueAt: string }>({
+    mutationFn: async ({ taskId, dueAt }) => {
+      const { data, error } = await supabase.rpc('ud_snooze_cadence_task' as never, {
+        p_task_id: taskId,
+        p_due: dueAt,
+      } as never);
+      if (error) throw new Error(error.message);
+      const res = data as { ok: boolean; error?: string };
+      if (!res.ok) throw new Error(res.error ?? 'snooze_failed');
+    },
+    onSuccess: () => invalidateCadenceQueries(qc),
+  });
+}
+
+/** Pause / resume a lead's live automation chain (owner or admin). */
+export function useSetRunPaused() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { leadId: string; paused: boolean }>({
+    mutationFn: async ({ leadId, paused }) => {
+      const { data, error } = await supabase.rpc('ud_set_run_paused' as never, {
+        p_lead_id: leadId,
+        p_paused: paused,
+      } as never);
+      if (error) throw new Error(error.message);
+      const res = data as { ok: boolean; error?: string };
+      if (!res.ok) throw new Error(res.error ?? 'pause_failed');
     },
     onSuccess: () => invalidateCadenceQueries(qc),
   });

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Clock, Mail, Phone } from 'lucide-react';
+import { Check, Clock, Mail, Pause, Phone, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { cn } from '@/lib/utils';
-import { useLeadCadence, type CadenceStepRow } from './hooks/useLeadCadence';
+import { useLeadCadence, useSetRunPaused, type CadenceStepRow } from './hooks/useLeadCadence';
 import { CadenceFinalMoveDialog, CadenceOutcomeButtons } from './CadenceOutcomeButtons';
+import { CadenceSnoozeButton } from './CadenceSnoozeButton';
 
 const STATUS_TONE: Record<string, string> = {
   active: 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200',
@@ -35,6 +36,7 @@ export function LeadCadenceBox({
   const locale = lang === 'el' ? 'el-GR' : 'en-US';
   const { data, isLoading } = useLeadCadence(leadId);
   const { data: allStages = [] } = usePipelineStages();
+  const setPaused = useSetRunPaused();
   // Hosted HERE (not in the buttons) so the confirm survives the open-task row
   // unmounting when the final task completes and the query refetches.
   const [finalMove, setFinalMove] = useState<string | null>(null);
@@ -68,6 +70,30 @@ export function LeadCadenceBox({
         >
           {t(`ud.cadence.status.${run.status}`)}
         </span>
+        {(run.status === 'active' || run.status === 'paused') && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            disabled={setPaused.isPending}
+            onClick={() =>
+              setPaused.mutate({ leadId, paused: run.status === 'active' })
+            }
+          >
+            {run.status === 'active' ? (
+              <>
+                <Pause className="size-3" />
+                {t('ud.cadence.pause')}
+              </>
+            ) : (
+              <>
+                <Play className="size-3" />
+                {t('ud.cadence.resume')}
+              </>
+            )}
+          </Button>
+        )}
       </header>
 
       <ol className="space-y-1.5">
@@ -137,8 +163,16 @@ export function LeadCadenceBox({
       {openTask && run.status === 'active' && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[#1a9696]/30 bg-[#1a9696]/5 px-3 py-2.5">
           <span className="text-sm font-medium">{openTask.title}</span>
-          <CadenceOutcomeButtons taskId={openTask.id} leadId={leadId} onExhausted={setFinalMove} />
+          <span className="flex items-center gap-1">
+            <CadenceSnoozeButton taskId={openTask.id} />
+            <CadenceOutcomeButtons taskId={openTask.id} leadId={leadId} onExhausted={setFinalMove} />
+          </span>
         </div>
+      )}
+      {run.status === 'paused' && (
+        <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
+          {t('ud.cadence.paused_note')}
+        </p>
       )}
 
       <CadenceFinalMoveDialog leadId={leadId} stageId={finalMove} onClose={() => setFinalMove(null)} />

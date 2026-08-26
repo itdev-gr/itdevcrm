@@ -103,6 +103,13 @@ export function UnderDevKanbanPage() {
       month: '2-digit',
     }).format(new Date(iso));
   const cadenceBadgeFor = (leadId: string) => {
+    if (overview.pausedLeads.has(leadId)) {
+      return (
+        <p className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+          ⏸ {t('ud.cadence.status.paused')}
+        </p>
+      );
+    }
     const task = overview.taskByLead.get(leadId);
     if (task) {
       const overdue = new Date(task.due_at) < new Date();

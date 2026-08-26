@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Phone } from 'lucide-react';
+import { AlertTriangle, Pause, Phone, PhoneIncoming, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CallLink } from '@/components/CallLink';
 import { FilterSelect, PageHeader } from '@/components/layout/page-shell';
@@ -11,6 +11,8 @@ import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { stageAccent } from '@/lib/stage-colors';
 import { cn } from '@/lib/utils';
 import { CadenceFinalMoveDialog, CadenceOutcomeButtons } from './CadenceOutcomeButtons';
+import { CadenceSnoozeButton } from './CadenceSnoozeButton';
+import { useSetRunPaused } from './hooks/useLeadCadence';
 import {
   useCadenceOverview,
   type CadenceDecision,
@@ -68,6 +70,7 @@ export function SalesTasksPage() {
   const [ownerFilter, setOwnerFilter] = useState<string | 'all'>(isAdmin ? 'all' : meId ?? 'all');
   const [groupFilter, setGroupFilter] = useState<Group | null>(null);
   const [finalMove, setFinalMove] = useState<{ leadId: string; stageId: string } | null>(null);
+  const setPaused = useSetRunPaused();
 
   const stageById = new Map(stages.map((s) => [s.id, s]));
   const nameFor = (id: string | null) =>
@@ -177,6 +180,17 @@ export function SalesTasksPage() {
           ) : (
             <span className="text-muted-foreground">—</span>
           )}
+          {overview.lastCallByLead.has(lead.id) && (
+            <span
+              className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 dark:text-emerald-400"
+              title={t('ud.tasks.last_call_hint')}
+            >
+              <PhoneIncoming className="size-3" />
+              {new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(
+                new Date(overview.lastCallByLead.get(lead.id)!),
+              )}
+            </span>
+          )}
         </span>
         <span className="hidden lg:flex">{stageChip(lead.stage_id)}</span>
         {showOwnerCol && (
@@ -184,12 +198,37 @@ export function SalesTasksPage() {
             {nameFor(task.user_id).split(' ')[0]}
           </span>
         )}
-        <span className="col-span-full mt-1.5 flex justify-end lg:col-span-1 lg:mt-0" onClick={stop}>
-          <CadenceOutcomeButtons
-            taskId={task.id}
-            leadId={lead.id}
-            onExhausted={(stageId) => setFinalMove({ leadId: lead.id, stageId })}
-          />
+        <span
+          className="col-span-full mt-1.5 flex items-center justify-end gap-1 lg:col-span-1 lg:mt-0"
+          onClick={stop}
+        >
+          {overview.pausedLeads.has(lead.id) ? (
+            <>
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
+                <Pause className="size-3" />
+                {t('ud.cadence.status.paused')}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={setPaused.isPending}
+                onClick={() => setPaused.mutate({ leadId: lead.id, paused: false })}
+              >
+                <Play className="size-3.5" />
+                {t('ud.cadence.resume')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <CadenceSnoozeButton taskId={task.id} />
+              <CadenceOutcomeButtons
+                taskId={task.id}
+                leadId={lead.id}
+                onExhausted={(stageId) => setFinalMove({ leadId: lead.id, stageId })}
+              />
+            </>
+          )}
         </span>
       </li>
     );

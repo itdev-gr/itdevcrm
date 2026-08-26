@@ -48,6 +48,10 @@ export type CadenceOverview = {
   decisionByLead: Map<string, CadenceDecision>;
   /** cadence_step_id → «x/y» position among the chain's task steps. */
   stepLabelById: Map<string, string>;
+  /** Leads whose live chain is paused. */
+  pausedLeads: Set<string>;
+  /** leadId → ISO of today's most recent PBX call auto-comment. */
+  lastCallByLead: Map<string, string>;
 };
 
 type LiveRunRow = { id: string; lead_id: string; status: string; next_event_at: string | null };
@@ -73,7 +77,9 @@ export function useCadenceOverview() {
   const query = useQuery({
     queryKey: queryKeys.salesCadenceOverview(null),
     queryFn: async () => {
-      const [tasksRes, liveRes, endedRes, cadRes] = await Promise.all([
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const [tasksRes, liveRes, endedRes, cadRes, callsRes] = await Promise.all([
         supabase
           .from('user_tasks')
           .select(`id, title, due_at, user_id, cadence_run_id, cadence_step_id, ${LEAD_EMBED}`)
@@ -90,8 +96,16 @@ export function useCadenceOverview() {
           .in('status', ['completed', 'stopped_reached'])
           .order('started_at', { ascending: false }),
         supabase.from('ud_cadences').select('*, steps:ud_cadence_steps(*)'),
+        // Today's PBX call auto-comments — proof of attempted contact per lead.
+        supabase
+          .from('comments')
+          .select('parent_id, created_at')
+          .eq('parent_type', 'lead')
+          .like('task_key', 'call:%')
+          .gte('created_at', startOfToday.toISOString())
+          .order('created_at', { ascending: true }),
       ]);
-      for (const r of [tasksRes, liveRes, endedRes, cadRes]) {
+      for (const r of [tasksRes, liveRes, endedRes, cadRes, callsRes]) {
         if (r.error) throw new Error(r.error.message);
       }
       return {
@@ -99,6 +113,7 @@ export function useCadenceOverview() {
         live: (liveRes.data ?? []) as unknown as LiveRunRow[],
         ended: (endedRes.data ?? []) as unknown as EndedRunRow[],
         cadences: (cadRes.data ?? []) as unknown as (CadenceRow & { steps: CadenceStepRow[] })[],
+        calls: (callsRes.data ?? []) as { parent_id: string; created_at: string }[],
       };
     },
   });
@@ -110,12 +125,14 @@ export function useCadenceOverview() {
     needsDecision: [],
     decisionByLead: new Map(),
     stepLabelById: new Map(),
+    pausedLeads: new Set(),
+    lastCallByLead: new Map(),
   };
   if (!query.data || stages.length === 0) {
     return { ...query, overview: empty };
   }
 
-  const { tasks, live, ended, cadences } = query.data;
+  const { tasks, live, ended, cadences, calls } = query.data;
   const stageById = new Map(stages.map((s) => [s.id, s]));
   const udStageByCode = new Map(
     stages.filter((s) => s.board === 'under_development').map((s) => [s.code, s]),
@@ -133,10 +150,13 @@ export function useCadenceOverview() {
   for (const t of tasks) if (t.lead) taskByLead.set(t.lead.id, t);
 
   const liveLeadIds = new Set(live.map((r) => r.lead_id));
+  const pausedLeads = new Set(live.filter((r) => r.status === 'paused').map((r) => r.lead_id));
   const pendingEmailByLead = new Map<string, string>();
   for (const r of live) {
     if (r.status === 'active' && r.next_event_at) pendingEmailByLead.set(r.lead_id, r.next_event_at);
   }
+  const lastCallByLead = new Map<string, string>();
+  for (const call of calls) lastCallByLead.set(call.parent_id, call.created_at);
 
   // Newest ended run per lead, only for leads still parked on a non-terminal
   // UD stage with nothing live and no open task — those need a human decision.
@@ -173,6 +193,8 @@ export function useCadenceOverview() {
     needsDecision,
     decisionByLead: new Map(needsDecision.map((d) => [d.lead.id, d])),
     stepLabelById,
+    pausedLeads,
+    lastCallByLead,
   };
   return { ...query, overview };
 }

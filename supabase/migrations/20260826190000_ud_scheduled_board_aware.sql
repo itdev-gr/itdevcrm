@@ -8,9 +8,12 @@
 -- don't-drag-backwards guard uses is_terminal instead of a hardcoded code
 -- list (identical outcome for the sales board: won/not_interested/dead_end).
 --
--- Base body: 20260511000003_scheduled_for.sql. Classic-board behavior is
--- byte-equivalent; only leads sitting on under_development change target.
--- ROLLBACK: re-apply the 20260511000003 body.
+-- Base body: 20260511000004_offer_followup.sql (which added the
+-- pg_trigger_depth guard — the first cut of this migration was mistakenly
+-- based on 20260511000003 and dropped that guard; restored same day).
+-- Classic-board behavior is byte-equivalent; only leads sitting on
+-- under_development change target.
+-- ROLLBACK: re-apply the 20260511000004 body.
 -- =============================================================================
 
 create or replace function public.leads_sync_stage_on_scheduled_for()
@@ -20,6 +23,12 @@ declare
   target_stage_id uuid;
   cur record;
 begin
+  -- When invoked from within another trigger (e.g. the offers after-insert
+  -- handler) the caller has already chosen the target stage — leave it alone.
+  if pg_trigger_depth() > 1 then
+    return new;
+  end if;
+
   if new.scheduled_for is null then
     return new;
   end if;
