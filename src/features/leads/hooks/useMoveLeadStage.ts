@@ -13,6 +13,12 @@ export function useMoveLeadStage() {
     onSuccess: (_d, vars) => {
       void qc.invalidateQueries({ queryKey: queryKeys.leads() });
       void qc.invalidateQueries({ queryKey: queryKeys.lead(vars.leadId) });
+      // Stage changes drive the UD cadence engine (chains stop/start, tasks
+      // superseded/created server-side) — refresh those surfaces too.
+      void qc.invalidateQueries({ queryKey: queryKeys.leadCadence(vars.leadId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.leadTasks(vars.leadId) });
+      void qc.invalidateQueries({ queryKey: ['user-tasks'] });
+      void qc.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }
