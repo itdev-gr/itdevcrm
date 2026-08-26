@@ -1,5 +1,7 @@
 # Payment system — full audit, 2026-08-26
 
+**Headline exposure, in three numbers (2026-08-26):** clients are being wrongly charged VAT they were told they would not pay — **€977.11** collected so far and still growing on brand-new deals (A0). **€24,493.87** is already overdue and sitting in deal stages that no reminder or reconciliation job will ever reach (B1). And **€1,001** of revenue already recorded as paid has been silently deleted from the ledger, with no period lock or immutability guard to stop it happening again (B2).
+
 Read-only audit of the whole money path: every payment method, every VAT rule, the renewal generator, the status machine, the reminder pipeline, the accounting-stage lifecycle, and the integrations that carry money out of the CRM. **Nothing was changed** — no code, no data, no schema, no migration. Every number below was measured against the production database (project `xujlrclyzxrvxszepquy`) on **2026-08-26** unless a different date is stated on the number itself.
 
 This audit is the successor to `docs/system-analysis/2026-08-04-accounting-full-audit.md` (findings A0–A8) and to the 2026-08-06 job-lifecycle sweep recorded in the `accounting-audit-open-findings` memory note. Section B maps every one of those older findings to its status today.
@@ -10,10 +12,10 @@ Seven independent research tasks each probed one subsystem with exact SQL agains
 
 Two method notes that materially shaped the results:
 
-- **The repo is trustworthy.** All 11 money functions deployed in prod are byte-for-byte what their newest migration says (F8, checked 2026-08-26). There is **zero live-vs-repo drift**. Where a document and the database disagree, the database is right and the document is stale.
+- **The repo is trustworthy.** All 11 money functions deployed in prod are byte-for-byte — modulo `CREATE OR REPLACE` whitespace re-emission (F8) — what their newest migration says, checked 2026-08-26. There is **zero live-vs-repo drift**. Where a document and the database disagree, the database is right and the document is stale.
 - **Several of this audit's own starting queries were wrong**, in ways that manufacture convincing-looking bugs (43 "stuck overdue" rows, 126 "missed reminders", 22 "silently dead" billing chains — all false). Those query traps are catalogued in Appendix 1 so a future re-run does not rediscover them as findings.
 
-Where a finding is new, it carries a **B-number** (B1–B16). Where it re-measures an older finding, it carries that finding's original letter (A0–A8, or S1–S3 for the 2026-08-06 sweep items).
+Where a finding is new, it carries a **B-number** (B1–B17). Where it re-measures an older finding, it carries that finding's original letter (A0–A8, or S1–S3 for the 2026-08-06 sweep items).
 
 ---
 
@@ -35,7 +37,7 @@ Two secondary mechanisms make it permanent:
 - `ensure_recurring_payments()` copies `vat_rate` forward verbatim from the previous row, so a wrong first period reproduces itself every cycle, indefinitely, until a human edits a row by hand (deal `005510`'s second `ads` period, pending, start 2026-08-27, inherited 24%).
 - The defect reaches far-future one-off renewal rows too: deal `000338` carries a `domains` row dated **`start_date = 2028-05-11`** at 24% VAT against a 0%-VAT job — €4.80 that will silently over-collect in 2028 unless someone notices first.
 
-**Evidence (2026-08-26).** Paid rows on cash/no-VAT deals carrying VAT: **12 deals / 19 rows / €977.11 collected** (2026-08-06 baseline: 11 deals / 19 rows / €912.31). Movement over 20 days: **+1 deal, +€64.80**. Worst rows: `000299` €264.93, `000508` €144.00, `000329` €96.00, `000257` €96.00, `005023` €64.80, `006881` €64.80. Two of the affected deals — `006851` (created 2026-08-03) and `006881` (created 2026-08-11) — were created *after* both the 2026-07-02 `cash_charge_vat` fix and the 2026-07-20 country-VAT centralization, which proves the cause is live code and not historical residue.
+**Evidence (2026-08-26).** Paid rows on cash/no-VAT deals carrying VAT: **12 deals / 19 rows / €977.11 collected** (2026-08-06 baseline: 11 deals / 19 rows / €912.31). Movement over 20 days: **+1 deal, +€64.80**. Worst rows: `000299` €264.93, `000508` €144.00, `000329` €96.00, `000257` €96.00, `005023` €64.80, `006881` €64.80. Three of the affected deals — `006851` (created 2026-08-03), `006881` (created 2026-08-11) and `005510` (created 2026-07-27) — were created *after* both the 2026-07-02 `cash_charge_vat` fix and the 2026-07-20 country-VAT centralization, which proves the cause is live code and not historical residue.
 
 **Fix direction.** Give `seed_deal_payments()` the same `case when payment_method='cash' and not cash_charge_vat then 0.00 …` guard the two job-release functions already carry; separately decide (owner) what to do about the €977.11 already collected and about the already-seeded wrong rows still pending.
 
@@ -98,18 +100,6 @@ This substantiates, with live instances, the 2026-08-04 audit's A7b claim that "
 
 ---
 
-#### B4. Closing a deal never cleans up its billing state — 21 closed deals still look like active recurring revenue, 16 carry phantom overdue balances
-
-**What happens.** `close_deal()` moves jobs to a terminal stage but leaves `jobs.billing_active = true`, `jobs.archived = false`, and any outstanding `deal_payments` rows exactly as they were. Any report, dashboard or MRR figure that trusts `jobs.billing_active` without also checking the deal's accounting stage **overstates active recurring revenue**, and AR/aging views show overdue balances for engagements that are officially finished.
-
-**Root cause.** `deals_close_jobs_on_close()` sets `status='completed'`, `completed_at`, clears the block and moves `stage_id` — it never touches `billing_active` or `archived`, and `close_deal` never touches `deal_payments` at all.
-
-**Evidence (2026-08-26).** 21 non-archived, `billing_active` recurring jobs sit on `closed`-stage deals (`000052, 000113, 000132, 000135, 000144, 000162, 000176, 000188, 000219, 000223, 000242, 000246, 000254, 000287, 000298, 000313, 000315, 000320, 000336, 000349, 000364`), of which **16 also still carry a lingering `overdue` `deal_payments` row** from before close. This re-measures the 2026-08-06 sweep's "~20 churned jobs on `closed` still hold `billing_active = true`" item — unchanged, and now root-caused. Reassuringly, these do **not** generate client emails: the reminder classifier does not cover `closed` (which is B1's mechanism working in our favour here).
-
-**Fix direction.** Have `deals_close_jobs_on_close()` clear `billing_active` (and decide, as policy, whether outstanding rows on a closed deal should be cancelled or left as a receivable).
-
----
-
 ### Tier 2 — silent failure risk
 
 #### B5. Automatic release from `on_hold` has been dead since 2026-07-02; a deal that owes nothing can be stuck on hold forever
@@ -121,6 +111,20 @@ This substantiates, with live instances, the 2026-08-04 audit's A7b claim that "
 **Evidence (2026-08-26).** 341 `on_hold → paid_in_full` transitions in `activity_log` between 2026-06-23 and today. **Before** the 2026-07-02 swap: 80 transitions, 34 of them (42.5%) with a `null user_id` — the signature of an automatic, trigger-driven release. **After**: 261 transitions, only 1 (0.4%) null — ~260 releases absorbed by named staff in 8 weeks. The deadlock case is live: deal **`000233`** has been `on_hold` since at least 2026-07-16 with every row `paid` or `cancelled` — **nothing owed** — and the 04:00 integrity cron has flagged it **4 times** (2026-07-16, 07-23, 08-16, 08-19), all still `resolved_at IS NULL` today. `deal-lifecycle.md` records the same failure shape (deal `000403`, stuck on hold while fully paid) as the reason the current model was adopted.
 
 **Fix direction.** Add a narrow carve-out to `reconcile_deal_stage` — release `on_hold` when the recomputed `deal_next_due` is NULL (everything paid or excused) — which is strictly narrower than reverting decision B; and update the two lifecycle docs either way.
+
+---
+
+#### B4. Closing a deal never cleans up its billing state — hygiene/reporting risk, no money at stake: 21 closed deals still look like active recurring revenue, 16 carry phantom overdue balances
+
+*(Placed in this tier, not Tier 1, per F20's verdict: on refutation this is a data-hygiene and reporting-accuracy gap, not a case of money actually being lost or mis-collected.)*
+
+**What happens.** `close_deal()` moves jobs to a terminal stage but leaves `jobs.billing_active = true`, `jobs.archived = false`, and any outstanding `deal_payments` rows exactly as they were. Any report, dashboard or MRR figure that trusts `jobs.billing_active` without also checking the deal's accounting stage **overstates active recurring revenue**, and AR/aging views show overdue balances for engagements that are officially finished. No client is billed and no cash actually moves because of this — the reminder classifier does not cover `closed` deals either (see below) — so the exposure is entirely to internal reporting accuracy, not to collected or collectible money.
+
+**Root cause.** `deals_close_jobs_on_close()` sets `status='completed'`, `completed_at`, clears the block and moves `stage_id` — it never touches `billing_active` or `archived`, and `close_deal` never touches `deal_payments` at all.
+
+**Evidence (2026-08-26).** 21 non-archived, `billing_active` recurring jobs sit on `closed`-stage deals (`000052, 000113, 000132, 000135, 000144, 000162, 000176, 000188, 000219, 000223, 000242, 000246, 000254, 000287, 000298, 000313, 000315, 000320, 000336, 000349, 000364`), of which **16 also still carry a lingering `overdue` `deal_payments` row** from before close. This re-measures the 2026-08-06 sweep's "~20 churned jobs on `closed` still hold `billing_active = true`" item — unchanged, and now root-caused. Reassuringly, these do **not** generate client emails: the reminder classifier does not cover `closed` (which is B1's mechanism working in our favour here).
+
+**Fix direction.** Have `deals_close_jobs_on_close()` clear `billing_active` (and decide, as policy, whether outstanding rows on a closed deal should be cancelled or left as a receivable).
 
 ---
 
@@ -138,7 +142,7 @@ This substantiates, with live instances, the 2026-08-04 audit's A7b claim that "
 
 #### B7. Alert coverage does not point at the bugs that cost money — 0 of 27 checks can see A0
 
-**What happens.** Two alert surfaces exist and are easy to conflate: (A) `reconcile_payment_integrity()`, 2 checks, unattended nightly cron, no UI (B6); (B) `accounting_integrity_alerts()`, **25 checks**, on-demand RPC behind an authenticated admin/accounting session. **27 checks combined.** Mapped against the five live bug classes this audit confirmed:
+**What happens.** Two alert surfaces exist and are easy to conflate: (A) `reconcile_payment_integrity()`, 2 checks, unattended nightly cron, no UI (B6); (B) `accounting_integrity_alerts()`, **25 checks** — a direct 2026-08-26 recount against the live function body, superseding the findings file's provisional 20-check (F14) and 22-check (F44) counts, which were taken at an earlier point in the audit — on-demand RPC behind an authenticated admin/accounting session. **27 checks combined.** Mapped against the five live bug classes this audit confirmed:
 
 | bug class | cron (2 checks) | on-demand (25 checks) |
 |---|---|---|
@@ -200,7 +204,7 @@ This substantiates, with live instances, the 2026-08-04 audit's A7b claim that "
 
 **Fix direction.** One-line denominator fix (`list.filter(p => p.status !== 'cancelled')`), and disable-or-confirm the toggle for cancelled rows.
 
-*Backend note:* all 12 DB-side consumers of `deal_payments.status='cancelled'` were inventoried and **every one handles it correctly** (the CHECK, the partial unique index, `deal_next_due`, `ensure_recurring_payments`, both duplicate-period defences, `reconcile_deal_stage`, `reconcile_payment_integrity`, `accounting_integrity_alerts`, `enqueue_payment_reminders`). The gaps are exclusively frontend.
+*Backend note:* all 12 DB-side consumers of `deal_payments.status='cancelled'` were inventoried and **every one handles it correctly** — the CHECK (`deal_payments_status_check`), the partial unique index (`deal_payments_recurring_period_key_unique_v2`), the no-duplicate-period trigger (`deal_payments_no_duplicate_period`), `deal_next_due`, `ensure_recurring_payments`, the release-from-on-hold trigger (`deal_payments_release_from_on_hold`), `reconcile_deal_stage`, `reconcile_block_lifecycle`, `reconcile_payment_integrity`, `accounting_integrity_alerts`, `enqueue_payment_reminders`, and `recompute_job_period_dates` — 12 named, 12 claimed. The gaps are exclusively frontend.
 
 ---
 
@@ -240,6 +244,10 @@ Four documents describe mechanisms that were replaced weeks before the previous 
 
 Dead code, all confirmed unreachable from any live path by a full catalog + trigger scan: `target_accounting_stage()` (0 callers in any function, trigger or `src/`), `deal_payments_release_from_on_hold()` and `deal_payments_move_to_awaiting()` (functions kept, triggers dropped), `move_overdue_deals_to_on_hold()` (its cron `daily_move_overdue_deals_to_on_hold` is `active: false` and correctly superseded).
 
+#### B17. A stale `on_hold` block survives a deal's move into `partial_payment` (`000063`) — already caught by an existing alert, nobody has acted on it
+
+Deal `000063` (one of B1's 15 `partial_payment` deals, €1,274.83 balance) has its `local_seo` job sitting at `is_blocked=true, blocked_reason='account_on_hold'` even though the deal itself is now `partial_payment`, not `on_hold`. The flag is a leftover from before the deal left `on_hold`: `deals_hold_jobs_on_stage_change()`'s handling of a stage change *into* `partial_payment` is a no-op (`deal-lifecycle.md` line 61), so the block is never re-evaluated once the deal moves off `on_hold`. This is exactly the population the on-demand `stale_block` check (`accounting_integrity_alerts` check 9) is designed to catch, and it is confirmed still firing for this job today. **Fix direction.** Either widen `deals_hold_jobs_on_stage_change()` to re-evaluate blocks on a move to `partial_payment`, or treat the existing `stale_block` alert as sufficient and simply action it for this job.
+
 ---
 
 ## B. Cross-reference: 2026-08-04 audit + 2026-08-06 sweep → status today
@@ -250,25 +258,25 @@ All re-measurements dated **2026-08-26**. "Not re-measured" means this audit's p
 |---|---|---|---|
 | **A0** | Cash/no-VAT deals charged VAT on payment rows | **WORSE** — and root cause now identified (`seed_deal_payments` ignores `cash_charge_vat`); self-perpetuating through renewals; reaches rows dated 2028 | 11 deals / 19 rows / €912.31 (08-06) → **12 deals / 19 rows / €977.11** |
 | **A1** | Pause/Resume report failure on every success (`ok` key) | **FIXED** — migration `20260806090000`, verified live 2026-08-06. Not re-tested in this audit; no downstream symptom observed | — |
-| **A2** | `partial_payment` has no automatic exit | **STILL OPEN** — identical live code; extended by **B1** (also un-remindable). 1 of the 15 shows the renewal-block mechanism live (`000415`, 2 `local_seo` jobs stuck in `done`); the other 9 recurring jobs keep invoicing normally, since billing is not gated on `partial_payment` | 18 deals (08-06) → **15 deals / €11,809.35**; all 15 owe something; no €0-owed trap today |
+| **A2** | `partial_payment` has no automatic exit | **STILL OPEN** — identical live code; extended by **B1** (also un-remindable). 1 of the 15 shows the renewal-block mechanism live (`000415`, 2 `local_seo` jobs stuck in `done`); the other 9 recurring jobs keep invoicing normally, since billing is not gated on `partial_payment`. **This formally answers the prior audit's E5**: `000041` — the prior audit's "owes €0 since June" deal — no longer owes €0; its sole remaining balance (€24.80, the smallest of the 15) is a `domains` renewal not due until **2027-05-28**, so it is not a collections item today, and the original E5 €0-owed scenario is gone | 18 deals (08-06) → **15 deals / €11,809.35**; all 15 owe something; no €0-owed trap today |
 | **A3** | Stale twin rows keep deals unpaid on paper (`004556`, `006095`) | **STILL OPEN (partial)** — `004556` is still parked in `partial_payment` with a €496 balance whose oldest unpaid row is dated 2026-07-06, matching the twin's signature; `006095` is no longer in `partial_payment`. A dedicated twin-row query was not re-run | partial |
 | **A4** | One stage rule, two implementations, one day apart | **STALE-CLOSED — do not action.** The mechanism did not exist on the day A4 was written: `reconcile_block_lifecycle` stopped calling `target_accounting_stage` on 2026-07-02, a month earlier. Confirmed twice (call-site grep, then a full live-catalog + trigger scan finding **0 callers**). The 5 deals sitting at today's boundary are all correctly `awaiting_payment` under the single `<` rule. Simplification D4 is moot for the same reason | 7 boundary deals (08-04) → 5, all correct |
 | **A5** | Renewal generator ignores `cancelled` | **FIXED** (`20260806210000`) **and inert.** The cancelled-topped population is growing as expected from normal pausing, but **all 67 have `billing_active = false`** — the risky combination (cancelled head + billing-active job + non-closed deal) returns **0 rows**. The `job_resume_billing` decoupling risk the fix's own header flagged has not materialised in 20 days | 47 of 410 chains (08-06) → **67 of 425**; live exposure **0** |
 | **A6** | Nothing detects overlapping periods | **STILL OPEN, but static** — no new overlap has appeared since 2026-08-06 despite the generator running nightly; 2 of the 3 affected chains have since been paused independently. The double-billed periods themselves are still uncorrected in the ledger (owner decision) | 4 pairs (08-06) → **still exactly 4 pairs across 3 chains** (`000173` ×2, `000067`, `000051`) |
 | **A7** | Job price changes never reach the recurring schedule | **IMPROVED** — and both previously-known artifacts (`000415`, `000406`) have dropped out. A **new shape** appeared: 3 jobs at `monthly_amount = 0.00` while their chains actively bill €200–€300 (the *understatement* mirror of A7's original framing) → owner decision. **Per-job drift sums are still not money owed** (grouped billing / service swaps); the €993.94 absolute-delta figure is context only | 30 rows (08-06) → **9 rows** |
-| **A7b** | *Mixed-rate group VAT overcharge* | **Not re-measured** | — |
-| **A7b** | *Payments panel truncates net silently* | **Not re-measured**; the related column-precision gap is confirmed as **B13** | — |
-| **A7b** | *The ledger is a fully mutable view; paid rows hard-deletable* | **CONFIRMED live and quantified → B2.** Views cannot drift (they are plain views over `deal_payments`); the exposure is the unguarded source table — 17 silent mutations, 9 silent deletions, €1,001 net | new live evidence |
-| **A7b** | *Reminder gate `created_at::date < start_date` mutes same-day rows* | **STILL LIVE, by design** — confirmed present in the live enqueuer body; it was added deliberately on 2026-07-01 after 4 wrongly-dunned same-day payments (`20260701030000`). The trade-off it makes (late-spawned rows never remind) is unchanged | confirmed present |
-| **A7b** | *`paid_at::date` evaluated in UTC / month attribution* | **Not re-measured** | — |
-| **A7b** | *`vat_missing` doesn't trim country; dismissals never expire* | **Not re-measured** | — |
-| **A7b** | *Expense spawner lacks the end-date guard; document/PDF notes* | **Out of scope** — this audit covered income, not expenses or documents | — |
+| **A7b-1** | *Mixed-rate group VAT overcharge* | **Not re-measured** | — |
+| **A7b-2** | *Payments panel truncates net silently* | **Not re-measured**; the related column-precision gap is confirmed as **B13** | — |
+| **A7b-3** | *The ledger is a fully mutable view; paid rows hard-deletable* | **CONFIRMED live and quantified → B2.** Views cannot drift (they are plain views over `deal_payments`); the exposure is the unguarded source table — 17 silent mutations, 9 silent deletions, €1,001 net | new live evidence |
+| **A7b-4** | *Reminder gate `created_at::date < start_date` mutes same-day rows* | **STILL LIVE, by design** — confirmed present in the live enqueuer body; it was added deliberately on 2026-07-01 after 4 wrongly-dunned same-day payments (`20260701030000`). The trade-off it makes (late-spawned rows never remind) is unchanged | confirmed present |
+| **A7b-5** | *`paid_at::date` evaluated in UTC / month attribution* | **Not re-measured** | — |
+| **A7b-6** | *`vat_missing` doesn't trim country; dismissals never expire* | **Not re-measured** | — |
+| **A7b-7** | *Expense spawner lacks the end-date guard; document/PDF notes* | **Out of scope** — this audit covered income, not expenses or documents | — |
 | **A8** | Frontend permission gates, MRR tile, invalidation, one-click un-pay | **Not systematically re-audited.** Two new frontend defects were found in the surfaces this audit did touch (**B11**), one of which — the unguarded one-click status toggle — is the same class as A8's "one-click un-pay wipes `paid_at` with no confirmation" | partial |
 | **S1** | 2026-08-06 sweep: three one-time `web_dev` jobs never invoiced, €2,350 net (`000233` €800, `000280` €750, `000420` €800) | **Not re-measured — still an open owner decision.** Two cross-links worth noting: `000233` is also B5's deadlocked deal, and `000420` appears twice in B2's silent-mutation list (2026-08-21) | — |
 | **S2** | 2026-08-06 sweep: `release_jobs_for_deal`'s `partial_payment_pending` blocking is unreachable dead code | **Not re-measured** — carried forward (same item as prior audit's simplification D2) | — |
 | **S3** | 2026-08-06 sweep: `000045-AISEOLOC` payment line on a zero-amount child; ~20 churned `closed` jobs still `billing_active` | **STILL OPEN, root-caused → B4** — 21 such closed deals, 16 of them also carrying a lingering `overdue` row, because `deals_close_jobs_on_close()` never touches billing state. The `000045` line item was not re-checked | ~20 → **21** |
 
-**New this audit:** B1–B16 (section A). **Verified-clean list from 2026-08-06** (no job on an archived stage, no billing-only card on a board, no off-board job on a paid-in-full deal, no AI-SEO parent missing a child, no card lagging its paid periods, the 13 duplicate service groups) was **not re-hunted**, per the plan's own instruction; nothing this audit found contradicts it.
+**New this audit:** B1–B17 (section A). **Verified-clean list from 2026-08-06** (no job on an archived stage, no billing-only card on a board, no off-board job on a paid-in-full deal, no AI-SEO parent missing a child, no card lagging its paid periods, the 13 duplicate service groups) was **not re-hunted**, per the plan's own instruction; nothing this audit found contradicts it.
 
 ---
 
@@ -284,7 +292,7 @@ These need a human answer before any code or data is touched. They are deliberat
 4. **A6 — the 4 overlapping paid periods** (`000173` ×2, `000067`, `000051`, unchanged since 2026-08-06). `000173` is a probable double charge of €379.03 for the same month. Refund, credit note, or accept?
 5. **B2 — the 6 unexplained hard deletions on real client deals** (≈€701 net of the €1,001 total; the other ~€300 is plausibly `HARN-*` sandbox cleanup). Should these be reconstructed, or written up as accepted? And the 17 silent mutations — particularly `000041` €950→€1900, `000079` €500→€250, `000477` €200→€0 — do they each have a story?
 6. **S1 — the €2,350 of never-invoiced one-time `web_dev` jobs** (`000233` €800, `000280` €750, `000420` €800, figures from 2026-08-06, not re-measured today): invoice, write off, or confirm they were taken outside the CRM?
-7. **A7 successor — 3 jobs at `monthly_amount = 0.00` while actively billing** €300 / €230 / €200 (`000090-WEBSEO`, `000289-LOCALSEO`, `000416-WEBSEO`, all billed within 3 weeks of 2026-08-26). Which side is authoritative — the job card price or the payment chain? *Do not read the €993.94 aggregate drift figure as money owed.*
+7. **A7 successor — 3 jobs at `monthly_amount = 0.00` while actively billing** €300 / €230 / €200 (`000090-WEBSEO`, `000289-LOCALSEO`, `000416-WEBSEO`, all billed within 3 weeks of 2026-08-26). Which side is authoritative — the job card price or the payment chain? *Do not read the €993.94 aggregate drift figure as money owed.* **Carried forward from the prior audit's section E item 2:** `005523` (`005523-LOCALSEO`, €241.94/242.00 job vs €200.00 billed, ≈€42/month) is still in today's 9-row A7 drift set (F22) and still has the same "which price is authoritative" question open. The other two deals named alongside it in that same 2026-08-04 question, `000071` and `000224`, are **no longer in today's drift set** — they dropped out along with the previously-known `000415`/`000406` artifacts.
 
 **Policy and design**
 
@@ -292,7 +300,7 @@ These need a human answer before any code or data is touched. They are deliberat
 9. **Should `partial_payment` deals be remindable, escalate automatically to `on_hold`, or neither?** This decides B1 and A2 together. Note €24,493.87 is currently overdue behind this question (2026-08-26).
 10. **Should the ledger become append-only with reversals, or stay editable?** (Item 8 of the prior audit's section G, unchanged.) Concretely: should a `paid` row past a closed month be undeletable, and should amount/status edits require a reversal entry?
 11. **Should reminders be suppressed for hard-bounced addresses** (B8), and should the system stop dunning after N bounces?
-12. **78 deals have `suppress_payment_reminders = true`** (2026-08-26). About 37 have nothing outstanding — harmless. The other ~41 carry a real muted balance; the top 10 alone are **≈€8,896 in overdue balance that nothing will ever nudge** (`000298` €1,246.20, `000177` €1,078.80, `000216` €900.00, `000092` €868.00, `000498`/`000192`/`000057` €744.00 each, `000160` €543.12, `005690` €503.01, `000050` €500.96). No dashboard and no alert check anywhere references `suppress_payment_reminders`. Should suppressed-and-owing be a periodic review, or a permanent decision per deal? (The ledger figures are as-recorded; they were not verified against bank records.)
+12. **78 deals have `suppress_payment_reminders = true`** (2026-08-26). About 37 have nothing outstanding — harmless. The other ~41 carry a real muted balance; the top 10 alone are **≈€7,900 in overdue balance that nothing will ever nudge** (`000298` €1,246.20, `000177` €1,078.80, `000216` €900.00, `000092` €868.00, `000498`/`000192`/`000057` €744.00 each, `000160` €543.12, `005690` €503.01, `000050` €500.96 — these sum to **€7,872.09** on an overdue basis, or €7,896.89 if summed on unpaid-total instead; both round to ≈€7,900, not the €8,896 an earlier arithmetic pass claimed). No dashboard and no alert check anywhere references `suppress_payment_reminders`. Should suppressed-and-owing be a periodic review, or a permanent decision per deal? (The ledger figures are as-recorded; they were not verified against bank records. Note the underlying finding, F37, is itself internally inconsistent between its own heading, "roughly €8,500," and its body, "≈€8,896" — neither matches the correct sum; this report uses the recomputed figure.)
 13. **Which alert gets built first?** B7 shows 3 of 5 live bug classes have no detection at all. A0 is the highest-value target — it is the only one currently costing collected money.
 14. **Process question:** deal `000233` produced 4 admin notifications over 5 weeks and none was actioned; 342 alerts sit unresolved across 217 deals. Is this a staffing/triage gap, a missing UI (B6), or both?
 15. **A3 — deal `004556`**: cancel the stale twin row so the deal can leave `partial_payment`?
@@ -341,7 +349,7 @@ Confirmed healthy on **2026-08-26**, so these do not need re-hunting:
 
 ## Appendix 1 — query traps (do not re-run these SQL shapes)
 
-Six of this audit's own starting queries produced convincing false findings. Any future re-measurement must use the corrected forms.
+Seven of this audit's own starting queries produced convincing false findings. Any future re-measurement must use the corrected forms.
 
 | trap | why it is wrong | corrected form |
 |---|---|---|
@@ -360,7 +368,7 @@ Six of this audit's own starting queries produced convincing false findings. Any
 - **Every task's findings are represented.** Task 1 baseline/drift → section E, B16, Appendix 1. Task 2 VAT → A0, B3, C2, B7. Task 3 renewals → A5, A6, A7, B4, B12, B15. Task 4 status machine → E, B11, B5 (`000233`), Appendix 1. Task 5 reminders → B1, B8, B10, B14, C12, D. Task 6 lifecycle → A2 detail, A4 closure, B5, B6, B7. Task 7 integrations → B2, B13, D (won-push), B9, B10.
 - **No REFUTED finding is presented as a bug.** A4, the 43 stale-overdue rows, the 126 missed reminders, `000048`, `006122`, the zero-value rows, the 21 "dead" chains, the 5× duplicate send, `payment_due_today`, and the won-push comparison are all in section D only.
 - **Every money figure carries its measurement date.** All are 2026-08-26 unless the text states otherwise (2026-08-04 and 2026-08-06 baselines are labelled as such; S1's €2,350 is explicitly marked not re-measured).
-- **The A7 caveat is respected.** No per-job price-drift sum is quoted as money owed anywhere; the €993.94 figure appears once, labelled as context only.
+- **The A7 caveat is respected.** No per-job price-drift sum is quoted as money owed anywhere; the €993.94 figure appears **three times** in this report (section B's cross-reference table, section C item 7, and this appendix), and every one of the three is explicitly labelled as context only, not money owed.
 - **Corrections from review applied.** The alert coverage figure is **0 of 27** (2 cron checks + 25 on-demand checks), not 0 of 22. The ledger mutability split is 17 silent + 7 documented mutations and 9 silent + 0 documented deletions, not an undifferentiated 24/9.
 - **Owner decisions are separated from bugs** (section C), as in the 2026-08-04 audit's sections E and G.
 - **Read-only mandate honoured.** No code, data, schema or migration was changed by this audit. Every fix in section A is stated as a direction, not applied.
