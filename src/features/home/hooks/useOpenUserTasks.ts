@@ -22,7 +22,9 @@ export function useOpenUserTasks(params: { assigneeUserId: string | null }) {
       let q = supabase
         .from('user_tasks')
         .select('*, client:clients(id, name)')
-        .is('completed_at', null);
+        .is('completed_at', null)
+        // Cadence tasks belong to the Sales Tasks surface (own badge/page).
+        .is('cadence_run_id', null);
       if (assigneeUserId) q = q.eq('user_id', assigneeUserId);
       const { data, error } = await q.order('due_at', { ascending: true });
       if (error) throw new Error(error.message);

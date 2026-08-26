@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useLeadIntakeCount } from '@/features/leads/hooks/useLeadIntake';
+import { useSalesTasksBadge } from '@/features/under_development/hooks/useSalesTasksBadge';
 import { useAlertsCount } from '@/features/accounting/alerts/hooks/useAlertsCount';
 import { useTaskBadgeCounts } from '@/features/tasks/hooks/useTaskBadgeCounts';
 import { sidebarLinkClass, sidebarSectionClass } from './sidebar-nav-styles';
@@ -37,6 +38,16 @@ function LeadIntakeBadge() {
   return (
     <span className="ml-auto rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
       {data}
+    </span>
+  );
+}
+
+function SalesTasksBadge() {
+  const count = useSalesTasksBadge();
+  if (count <= 0) return null;
+  return (
+    <span className="ml-auto rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white">
+      {count}
     </span>
   );
 }
@@ -202,6 +213,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             >
               <Hammer className="size-4 shrink-0 opacity-80" />
               {t('sales:ud.nav')}
+            </NavLink>
+            <NavLink to="/sales/tasks" className={({ isActive }) => sidebarLinkClass(isActive)}>
+              <ListChecks className="size-4 shrink-0 opacity-80" />
+              {t('sales:ud.tasks.nav')}
+              <SalesTasksBadge />
             </NavLink>
           </div>
         </div>

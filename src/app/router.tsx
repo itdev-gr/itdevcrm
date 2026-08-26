@@ -102,6 +102,10 @@ const UnderDevKanbanPage = lazyPage(
   () => import('@/features/under_development/UnderDevKanbanPage'),
   'UnderDevKanbanPage',
 );
+const SalesTasksPage = lazyPage(
+  () => import('@/features/under_development/SalesTasksPage'),
+  'SalesTasksPage',
+);
 const AccountingOnboardingKanbanPage = lazyPage(
   () => import('@/features/accounting/AccountingOnboardingKanbanPage'),
   'AccountingOnboardingKanbanPage',
@@ -259,6 +263,7 @@ export const router = createBrowserRouter([
               },
               { path: 'docs', element: <SalesBoardDocsPage /> },
               { path: 'under-development', element: <UnderDevKanbanPage /> },
+              { path: 'tasks', element: <SalesTasksPage /> },
             ],
           },
           {

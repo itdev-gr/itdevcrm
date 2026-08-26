@@ -41,7 +41,12 @@ export function useTaskBoardData(params: { meId: string; allTeam: boolean; cutof
   const userTasks = useQuery<BoardUserTaskRow[]>({
     queryKey: [...queryKeys.tasksBoardUser(scope, cutoffIso), userIdList],
     queryFn: async () => {
-      let q = supabase.from('user_tasks').select('*, lead:leads(id, title, code), client:clients(id, name)');
+      let q = supabase
+        .from('user_tasks')
+        .select('*, lead:leads(id, title, code), client:clients(id, name)')
+        // Cadence (Under Development chain) tasks live on the dedicated Sales
+        // Tasks page — they never mix into the general board.
+        .is('cadence_run_id', null);
       if (!allTeam) q = q.or(`user_id.eq.${meId},created_by.eq.${meId}`);
       // open, or resolved within the window, or any-age with an unread reply.
       // Only emit id.in.(...) when non-empty — PostgREST rejects an empty list.

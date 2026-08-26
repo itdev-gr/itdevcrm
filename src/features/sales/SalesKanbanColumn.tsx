@@ -21,6 +21,8 @@ type ColumnProps = {
   isLoading: boolean;
   nameFor: (userId: string | null) => string;
   locked?: boolean;
+  /** UD board only: per-lead next-step / needs-decision badge. */
+  cadenceBadgeFor?: ((leadId: string) => React.ReactNode) | undefined;
 };
 
 export function SalesKanbanColumn({
@@ -36,6 +38,7 @@ export function SalesKanbanColumn({
   isLoading,
   nameFor,
   locked = false,
+  cadenceBadgeFor,
 }: ColumnProps) {
   const { t } = useTranslation('sales');
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
@@ -83,6 +86,7 @@ export function SalesKanbanColumn({
                   lead={l}
                   ownerName={nameFor(l.owner_user_id)}
                   wonByName={nameFor(l.won_by_user_id)}
+                  cadenceBadge={cadenceBadgeFor?.(l.id)}
                 />
               </div>
             ))}
@@ -114,6 +118,7 @@ type ContainerProps = {
   sortBy: SortBy;
   nameFor: (userId: string | null) => string;
   locked?: boolean;
+  cadenceBadgeFor?: ((leadId: string) => React.ReactNode) | undefined;
 };
 
 export function SalesKanbanColumnContainer({
@@ -126,6 +131,7 @@ export function SalesKanbanColumnContainer({
   sortBy,
   nameFor,
   locked,
+  cadenceBadgeFor,
 }: ContainerProps) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useColumnLeads(
     stageId,
@@ -147,6 +153,7 @@ export function SalesKanbanColumnContainer({
       isLoading={isLoading}
       nameFor={nameFor}
       locked={locked ?? false}
+      cadenceBadgeFor={cadenceBadgeFor}
     />
   );
 }

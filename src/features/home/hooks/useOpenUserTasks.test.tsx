@@ -7,7 +7,9 @@ const { order, eq, is, from } = vi.hoisted(() => {
   const order = vi.fn();
   const eq: ReturnType<typeof vi.fn> = vi.fn();
   eq.mockReturnValue({ eq, order });
-  const is = vi.fn().mockReturnValue({ eq, order });
+  // .is() chains twice now (completed_at + the cadence exclusion).
+  const is: ReturnType<typeof vi.fn> = vi.fn();
+  is.mockReturnValue({ is, eq, order });
   const select = vi.fn().mockReturnValue({ is });
   const from = vi.fn().mockReturnValue({ select });
   return { order, eq, is, from };
@@ -36,6 +38,8 @@ describe('useOpenUserTasks', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(from).toHaveBeenCalledWith('user_tasks');
     expect(is).toHaveBeenCalledWith('completed_at', null);
+    // Cadence (UD chain) tasks live on the Sales Tasks page, never here.
+    expect(is).toHaveBeenCalledWith('cadence_run_id', null);
     expect(eq).toHaveBeenCalledWith('user_id', 'u1');
     expect(order).toHaveBeenCalledWith('due_at', { ascending: true });
     expect(result.current.data?.[0]?.id).toBe('p1');
@@ -43,7 +47,8 @@ describe('useOpenUserTasks', () => {
 
   it('skips the assignee filter when assigneeUserId is null (admin all-team)', async () => {
     const orderDirect = vi.fn().mockResolvedValue({ data: [], error: null });
-    const isAll = vi.fn().mockReturnValue({ order: orderDirect });
+    const isAll: ReturnType<typeof vi.fn> = vi.fn();
+    isAll.mockReturnValue({ is: isAll, order: orderDirect });
     const selectAll = vi.fn().mockReturnValue({ is: isAll });
     from.mockReturnValueOnce({ select: selectAll });
 

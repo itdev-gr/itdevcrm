@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle, Clock, Mail } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -26,6 +27,8 @@ import { useSalesKanbanRealtime } from '@/features/sales/useSalesKanbanRealtime'
 import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
 import { useSalesBoardFilterStore } from '@/features/sales/salesBoardFilterStore';
+import { cn } from '@/lib/utils';
+import { useCadenceOverview } from './hooks/useCadenceOverview';
 import type { SortBy } from '@/features/sales/salesKanbanColumns';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
 
@@ -90,6 +93,50 @@ export function UnderDevKanbanPage() {
   // Resolve owner/won-by names once (same as the classic board).
   const ownerName = new Map(owners.map((o) => [o.user_id, o.full_name || o.email]));
   const nameFor = (id: string | null) => (id ? (ownerName.get(id) ?? '') : '');
+
+  // Per-card chain state: next task (red when overdue), scheduled email, or a
+  // needs-decision warning — nothing on this board is ever invisibly stalled.
+  const { overview } = useCadenceOverview();
+  const fmtShort = (iso: string) =>
+    new Intl.DateTimeFormat(lang === 'el' ? 'el-GR' : 'en-US', {
+      day: '2-digit',
+      month: '2-digit',
+    }).format(new Date(iso));
+  const cadenceBadgeFor = (leadId: string) => {
+    const task = overview.taskByLead.get(leadId);
+    if (task) {
+      const overdue = new Date(task.due_at) < new Date();
+      return (
+        <p
+          className={cn(
+            'flex items-center gap-1.5 text-[10px] font-medium',
+            overdue ? 'text-red-600 dark:text-red-400' : 'text-[#157777] dark:text-[#7ad4d4]',
+          )}
+        >
+          <Clock className="size-3 shrink-0" />
+          {task.title} · {fmtShort(task.due_at)}
+        </p>
+      );
+    }
+    const email = overview.pendingEmailByLead.get(leadId);
+    if (email) {
+      return (
+        <p className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+          <Mail className="size-3 shrink-0" />
+          Email · {fmtShort(email)}
+        </p>
+      );
+    }
+    if (overview.decisionByLead.has(leadId)) {
+      return (
+        <p className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="size-3 shrink-0" />
+          {t('ud.tasks.needs_decision_badge')}
+        </p>
+      );
+    }
+    return null;
+  };
 
   if (isLoading) return <div className="p-8">…</div>;
 
@@ -210,6 +257,7 @@ export function UnderDevKanbanPage() {
               sortBy={sortBy}
               nameFor={nameFor}
               locked={isStageMoveBlocked(s, userId)}
+              cadenceBadgeFor={cadenceBadgeFor}
             />
           ))}
         </div>

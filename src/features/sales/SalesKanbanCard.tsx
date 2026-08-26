@@ -17,10 +17,13 @@ export function SalesKanbanCard({
   lead,
   ownerName,
   wonByName,
+  cadenceBadge,
 }: {
   lead: LeadRow;
   ownerName?: string;
   wonByName?: string;
+  /** UD board only: the lead's next-step / needs-decision line. */
+  cadenceBadge?: React.ReactNode;
 }) {
   const { t, i18n } = useTranslation('leads');
   const { t: tDeals } = useTranslation('deals');
@@ -132,6 +135,8 @@ export function SalesKanbanCard({
               }).format(new Date(lead.scheduled_for))}
             </p>
           )}
+
+          {cadenceBadge}
 
           <div
             className="flex items-center gap-1.5 border-t border-border/50 pt-2 text-[10px] text-muted-foreground"

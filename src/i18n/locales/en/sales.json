@@ -2,6 +2,21 @@
   "ud": {
     "nav": "Under Development",
     "title": "Under Development pipeline",
+    "tasks": {
+      "nav": "Sales Tasks",
+      "title": "Sales Tasks",
+      "group_decision": "Needs a decision",
+      "group_overdue": "Overdue",
+      "group_today": "Today",
+      "group_upcoming": "Upcoming",
+      "group_empty": "Nothing here.",
+      "step": "step {{step}}",
+      "decision_exhausted": "The chain ran out of attempts — no next step is scheduled.",
+      "decision_reached": "Contact was made — pick the lead's next stage.",
+      "move_cta": "Move to {{stage}}",
+      "open_lead": "Open lead",
+      "needs_decision_badge": "Needs a decision"
+    },
     "cadence": {
       "title": "Automation chain",
       "task_step": "Task",

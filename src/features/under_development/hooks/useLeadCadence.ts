@@ -67,6 +67,7 @@ function invalidateCadenceQueries(qc: QueryClient): void {
     ['tasks'],
     ['leads'],
     ['comments'],
+    ['sales-cadence'],
   ] as const) {
     void qc.invalidateQueries({ queryKey: [...queryKey] });
   }

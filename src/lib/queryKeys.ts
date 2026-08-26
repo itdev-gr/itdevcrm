@@ -110,6 +110,9 @@ export const queryKeys = {
   myCommission: () => ['my-commission'] as const,
   leadEmails: (leadId: string) => ['lead-emails', leadId] as const,
   leadCadence: (leadId: string) => ['lead-cadence', leadId] as const,
+  salesCadenceOverview: (owner: string | null) =>
+    ['sales-cadence', 'overview', owner ?? 'all'] as const,
+  salesTasksBadge: (userId: string) => ['sales-cadence', 'badge', userId] as const,
   aiChatConversations: () => ['ai-chat', 'conversations'] as const,
   aiChatMessages: (conversationId: string) => ['ai-chat', 'messages', conversationId] as const,
 };

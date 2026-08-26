@@ -52,6 +52,7 @@ export function useResolvedArchive(params: { meId: string; limit: number }) {
           .from('user_tasks')
           .select('id, title, importance, completed_at')
           .eq('user_id', meId)
+          .is('cadence_run_id', null)
           .not('completed_at', 'is', null)
           .order('completed_at', { ascending: false })
           .limit(limit),

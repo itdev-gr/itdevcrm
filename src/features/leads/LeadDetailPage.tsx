@@ -367,7 +367,7 @@ function LeadDetailContent() {
         <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-              <LeadCadenceBox leadId={lead.id} />
+              <LeadCadenceBox leadId={lead.id} stageId={lead.stage_id} />
               <LeadEmailsBox leadId={lead.id} />
               <LeadForm lead={lead} />
               {lead.intake_log ? (

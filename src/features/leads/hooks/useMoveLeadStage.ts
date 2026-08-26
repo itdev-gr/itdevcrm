@@ -19,6 +19,7 @@ export function useMoveLeadStage() {
       void qc.invalidateQueries({ queryKey: queryKeys.leadTasks(vars.leadId) });
       void qc.invalidateQueries({ queryKey: ['user-tasks'] });
       void qc.invalidateQueries({ queryKey: ['comments'] });
+      void qc.invalidateQueries({ queryKey: ['sales-cadence'] });
     },
   });
 }

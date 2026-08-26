@@ -2,6 +2,21 @@
   "ud": {
     "nav": "Υπό Ανάπτυξη",
     "title": "Pipeline Υπό Ανάπτυξη",
+    "tasks": {
+      "nav": "Sales Tasks",
+      "title": "Sales Tasks",
+      "group_decision": "Χρειάζονται απόφαση",
+      "group_overdue": "Εκπρόθεσμα",
+      "group_today": "Σήμερα",
+      "group_upcoming": "Επερχόμενα",
+      "group_empty": "Τίποτα εδώ.",
+      "step": "βήμα {{step}}",
+      "decision_exhausted": "Η αλυσίδα εξάντλησε τις προσπάθειες — δεν υπάρχει προγραμματισμένο επόμενο βήμα.",
+      "decision_reached": "Υπήρξε επικοινωνία — διάλεξε το επόμενο στάδιο του lead.",
+      "move_cta": "Μετακίνηση σε {{stage}}",
+      "open_lead": "Άνοιγμα καρτέλας",
+      "needs_decision_badge": "Χρειάζεται απόφαση"
+    },
     "cadence": {
       "title": "Αλυσίδα αυτοματισμού",
       "task_step": "Task",

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Clock, Mail, Phone } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { cn } from '@/lib/utils';
 import { useLeadCadence, type CadenceStepRow } from './hooks/useLeadCadence';
 import { CadenceFinalMoveDialog, CadenceOutcomeButtons } from './CadenceOutcomeButtons';
@@ -19,11 +21,20 @@ const STATUS_TONE: Record<string, string> = {
  * state, the open task with its outcome buttons, and what the chain will do
  * next. Renders nothing for leads that never entered a chain.
  */
-export function LeadCadenceBox({ leadId }: { leadId: string }) {
+export function LeadCadenceBox({
+  leadId,
+  stageId,
+}: {
+  leadId: string;
+  /** The lead's current stage — used to keep offering the suggested terminal
+   *  move while an exhausted chain's lead still sits on a working stage. */
+  stageId?: string | null | undefined;
+}) {
   const { t, i18n } = useTranslation('sales');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const locale = lang === 'el' ? 'el-GR' : 'en-US';
   const { data, isLoading } = useLeadCadence(leadId);
+  const { data: allStages = [] } = usePipelineStages();
   // Hosted HERE (not in the buttons) so the confirm survives the open-task row
   // unmounting when the final task completes and the query refetches.
   const [finalMove, setFinalMove] = useState<string | null>(null);
@@ -135,9 +146,37 @@ export function LeadCadenceBox({ leadId }: { leadId: string }) {
       {run.status === 'stopped_reached' && (
         <p className="mt-3 text-xs text-muted-foreground">{t('ud.cadence.note_reached')}</p>
       )}
-      {run.status === 'completed' && run.exhausted_at && (
-        <p className="mt-3 text-xs text-muted-foreground">{t('ud.cadence.note_exhausted')}</p>
-      )}
+      {run.status === 'completed' &&
+        run.exhausted_at &&
+        (() => {
+          // The suggestion never dies with the dialog: while the lead still
+          // sits on a working stage, keep offering the chain's terminal move.
+          const target = cadence.final_move_stage_code
+            ? allStages.find(
+                (s) => s.board === 'under_development' && s.code === cadence.final_move_stage_code,
+              )
+            : undefined;
+          const current = stageId ? allStages.find((s) => s.id === stageId) : undefined;
+          const offerMove = target && stageId !== target.id && current && !current.is_terminal;
+          return (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">{t('ud.cadence.note_exhausted')}</p>
+              {offerMove && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-amber-500/50 text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
+                  onClick={() => setFinalMove(target.id)}
+                >
+                  {t('ud.tasks.move_cta', {
+                    stage: (target.display_names as { en: string; el: string })[lang],
+                  })}
+                </Button>
+              )}
+            </div>
+          );
+        })()}
     </section>
   );
 }

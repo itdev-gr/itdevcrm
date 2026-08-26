@@ -56,7 +56,18 @@ export function UserTaskDetailDialog({
       ),
     });
   }
-  if (card.leadName) rows.push({ label: c('tasks_page.lead_label'), value: card.leadName });
+  if (card.leadName) {
+    rows.push({
+      label: c('tasks_page.lead_label'),
+      value: card.link ? (
+        <Link to={card.link} className="hover:text-primary hover:underline">
+          {card.leadName}
+        </Link>
+      ) : (
+        card.leadName
+      ),
+    });
+  }
 
   // Dual-resolve: the primary button depends on who has stamped which side.
   const state = cardDualResolveState(card);
