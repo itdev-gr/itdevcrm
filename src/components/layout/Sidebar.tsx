@@ -9,6 +9,7 @@ import {
   Columns3,
   FileText,
   Globe,
+  Hammer,
   Home,
   LifeBuoy,
   ListChecks,
@@ -194,6 +195,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             <NavLink to="/contracts" className={({ isActive }) => sidebarLinkClass(isActive)}>
               <FileText className="size-4 shrink-0 opacity-80" />
               {t('contracts:nav.title')}
+            </NavLink>
+            <NavLink
+              to="/sales/under-development"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <Hammer className="size-4 shrink-0 opacity-80" />
+              {t('sales:ud.nav')}
             </NavLink>
           </div>
         </div>

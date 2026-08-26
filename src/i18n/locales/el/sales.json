@@ -1,4 +1,8 @@
 {
+  "ud": {
+    "nav": "Υπό Ανάπτυξη",
+    "title": "Pipeline Υπό Ανάπτυξη"
+  },
   "kanban": {
     "title": "Pipeline Πωλήσεων",
     "empty_column": "Σύρετε leads εδώ",

@@ -1,4 +1,8 @@
 {
+  "ud": {
+    "nav": "Under Development",
+    "title": "Under Development pipeline"
+  },
   "kanban": {
     "title": "Sales pipeline",
     "empty_column": "Drop leads here",

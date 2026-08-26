@@ -16,9 +16,14 @@ import { Label } from '@/components/ui/label';
 import { useCreateLead } from './hooks/useCreateLead';
 import { COUNTRIES } from '@/lib/countries';
 
-type Props = { open: boolean; onOpenChange: (v: boolean) => void };
+type Props = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  /** Stage the new lead lands on; when omitted the DB default-stage trigger decides. */
+  stageId?: string | undefined;
+};
 
-export function CreateLeadDialog({ open, onOpenChange }: Props) {
+export function CreateLeadDialog({ open, onOpenChange, stageId }: Props) {
   const { t } = useTranslation('leads');
   const create = useCreateLead();
   const navigate = useNavigate();
@@ -50,6 +55,7 @@ export function CreateLeadDialog({ open, onOpenChange }: Props) {
         company_name: company.trim() || null,
         country: country || null,
         notes: leadInfo.trim() || null,
+        ...(stageId ? { stage_id: stageId } : {}),
       });
       onOpenChange(false);
       navigate(`/leads/${id}`);

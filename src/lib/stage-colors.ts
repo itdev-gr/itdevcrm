@@ -60,6 +60,11 @@ const BY_CODE: Record<string, StageAccent> = {
     columnBorder: 'border-t-zinc-500',
     dot: 'bg-zinc-500',
   },
+  not_found: {
+    badge: 'bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
+    columnBorder: 'border-t-stone-400',
+    dot: 'bg-stone-400',
+  },
   // Accounting onboarding
   new: {
     badge: 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200',
