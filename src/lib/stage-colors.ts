@@ -147,6 +147,11 @@ const BY_CODE: Record<string, StageAccent> = {
     columnBorder: 'border-t-purple-500',
     dot: 'bg-purple-500',
   },
+  report: {
+    badge: 'bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-200',
+    columnBorder: 'border-t-teal-500',
+    dot: 'bg-teal-500',
+  },
   gsc_ga4_setup: {
     badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200',
     columnBorder: 'border-t-blue-500',
