@@ -143,5 +143,17 @@
     "save_failed": "Could not save the expense.",
     "delete_failed": "Could not delete the expense.",
     "upload_failed": "Could not upload the receipt."
+  },
+  "period_locks": {
+    "title": "Period locks",
+    "description": "Locking a month freezes every paid row it contains — amounts, VAT, status, dates and service can no longer be changed or deleted until it is unlocked.",
+    "status_locked": "Locked",
+    "status_open": "Open",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "confirm_lock_title": "Lock {{period}}?",
+    "confirm_lock_desc": "Paid rows in this month will be frozen — amount, VAT, status, dates and service can't be edited or deleted until you unlock it again.",
+    "confirm_unlock_title": "Unlock {{period}}?",
+    "confirm_unlock_desc": "Paid rows in this month become editable again."
   }
 }

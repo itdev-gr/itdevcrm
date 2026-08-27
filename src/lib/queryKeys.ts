@@ -19,6 +19,7 @@ export const queryKeys = {
     filters ? (['deals', filters] as const) : (['deals'] as const),
   deal: (id: string) => ['deal', id] as const,
   dealEmails: (dealId: string) => ['deal-emails', dealId] as const,
+  jobEmails: (jobId: string) => ['job-emails', jobId] as const,
   jobsForClient: (clientId: string) => ['jobs', 'client', clientId] as const,
   comments: (parentType: string, parentId: string) => ['comments', parentType, parentId] as const,
   // Prefix key: mark-seen invalidates by (dealId); the query itself also keys
@@ -105,6 +106,7 @@ export const queryKeys = {
     ['accounting-ledger', from, to] as const,
   accountingPLSummary: (from: string, to: string, includePendingExpenses = false) =>
     ['accounting-pl-summary', from, to, includePendingExpenses] as const,
+  accountingPeriodLocks: () => ['accounting-period-locks'] as const,
   callStatsToday: () => ['call-stats', 'today'] as const,
   breakToday: () => ['break', 'today'] as const,
   myCommission: () => ['my-commission'] as const,

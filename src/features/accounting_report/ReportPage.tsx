@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/layout/page-shell';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { rangeForPreset, type RangePreset, type DateRange } from './utils/formatRange';
 import { useLedger, type LedgerRow } from './hooks/useLedger';
 import { usePLSummary } from './hooks/usePLSummary';
@@ -15,9 +16,11 @@ import { TransactionDrawer } from './components/TransactionDrawer';
 import { ExportMenu } from './components/ExportMenu';
 import { NewExpenseDialog } from './components/NewExpenseDialog';
 import { ExpenseDetailDialog } from './components/ExpenseDetailDialog';
+import { PeriodLockControl } from './components/PeriodLockControl';
 
 export function ReportPage() {
   const { t } = useTranslation('accounting_report');
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   useExpensesRealtime();
   useDealPaymentsRealtime();
 
@@ -91,6 +94,8 @@ export function ReportPage() {
         includePendingExpenses={includePendingExpenses}
         onIncludePendingExpensesChange={setIncludePendingExpenses}
       />
+
+      {isAdmin && <PeriodLockControl />}
 
       <IncomeBreakdown rows={incomeRows} onSelectGroup={openIncomeGroup} />
       <ExpenseBreakdown

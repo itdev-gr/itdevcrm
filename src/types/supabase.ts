@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_period_locks: {
+        Row: {
+          locked_at: string
+          locked_by: string | null
+          period: string
+        }
+        Insert: {
+          locked_at?: string
+          locked_by?: string | null
+          period: string
+        }
+        Update: {
+          locked_at?: string
+          locked_by?: string | null
+          period?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_period_locks_locked_by_fkey"
+            columns: ["locked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       activity_log: {
         Row: {
           action: string
@@ -8062,6 +8088,21 @@ export type Database = {
         Returns: boolean
       }
       job_billing_ref_count: { Args: { p_job_id: string }; Returns: number }
+      job_email_statuses: {
+        Args: { p_job_id: string }
+        Returns: {
+          bounced_at: string
+          created_at: string
+          dedupe_key: string
+          delivered_at: string
+          error: string
+          id: string
+          identity: string
+          status: string
+          template_key: string
+          to_email: string
+        }[]
+      }
       job_emails: {
         Args: { p_job_id: string }
         Returns: {
@@ -8131,6 +8172,7 @@ export type Database = {
       }
       lead_is_dead_end: { Args: { p_lead_id: string }; Returns: boolean }
       lead_shuffle_pool: { Args: never; Returns: string[] }
+      lock_accounting_period: { Args: { p_period: string }; Returns: undefined }
       lock_deal: { Args: { target_deal_id: string }; Returns: Json }
       mark_overdue_payments: { Args: never; Returns: number }
       mentionable_users: {
@@ -8394,6 +8436,10 @@ export type Database = {
       unblock_client: { Args: { target_client_id: string }; Returns: Json }
       unblock_job: { Args: { target_job_id: string }; Returns: Json }
       undismiss_integrity_alert: { Args: { p_id: string }; Returns: undefined }
+      unlock_accounting_period: {
+        Args: { p_period: string }
+        Returns: undefined
+      }
       unresolve_task: {
         Args: { p_kind: string; p_task_id: string }
         Returns: undefined
