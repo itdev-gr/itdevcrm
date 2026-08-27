@@ -51,3 +51,12 @@ old `exportPDF.ts` was deleted and `jspdf` removed from deps). Properties:
 103 pending expenses (€57k, mostly the 2026-08-03 bulk import) are invisible
 to the paid-only P&L until reconciled; all expenses carry `vat_rate=0`; 13
 dateless pending payment rows are invisible to month grouping.
+
+**Update 2026-08-28** — these caveats are now watched rather than merely known:
+the pending-expense backlog stands at 105 rows / €61,917.66 gross, and the
+dateless-payment population is 19 rows (13 `pending` **plus 6 already `paid`**),
+each nagging daily through the `payment_missing_dates` alert. The guards, period
+locks and alert kinds that police the money tables — and the rest of the open
+owner decisions — are documented in **`financial-controls.md`**, which every
+change to `deal_payments`, `expenses`, VAT or period figures should be read
+against.

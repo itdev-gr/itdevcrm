@@ -40,6 +40,7 @@ export const DOC_AREAS: DocArea[] = [
       { slug: 'renewal-close', title: 'Renewal & close', file: 'accounting/renewal-close.md' },
       { slug: 'payment-reminders', title: 'Payment reminders', file: 'accounting/payment-reminders.md' },
       { slug: 'reporting', title: 'Income/expense reporting', file: 'accounting/reporting.md' },
+      { slug: 'financial-controls', title: 'Financial controls (the money contract)', file: 'accounting/financial-controls.md' },
     ],
   },
   {
