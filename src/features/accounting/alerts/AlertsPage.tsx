@@ -9,14 +9,18 @@ import {
   severityLabel,
   type AlertRow,
 } from './alertPresenters';
+import { cronAlertKindLabel, cronAlertLink, groupCronAlerts } from './cronAlertPresenters';
 import { useIntegrityAlerts } from './hooks/useIntegrityAlerts';
+import { useCronAlerts } from './hooks/useCronAlerts';
+import { useResolveCronAlert, useResolveCronAlertsKind } from './hooks/useResolveCronAlert';
 import {
   useDismissAlert,
   useDismissedAlerts,
   useUndismissAlert,
 } from './hooks/useAlertDismissals';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/lib/datetime';
+import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
 const CATEGORY_LABEL: Record<AlertRow['category'], string> = {
@@ -31,6 +35,7 @@ type Tab = 'open' | 'ignored';
 export default function AccountingAlertsPage() {
   const { t } = useTranslation('accounting');
   const [tab, setTab] = useState<Tab>('open');
+  const isAdmin = useAuthStore((state) => state.isAdmin);
 
   const { data: alerts, isLoading } = useIntegrityAlerts();
   const dismissed = useDismissedAlerts();
@@ -183,7 +188,123 @@ export default function AccountingAlertsPage() {
             ))}
           </ul>
         )}
+
+        {isAdmin && <NightlyChecksSection />}
       </div>
     </div>
+  );
+}
+
+/**
+ * The 04:00 `reconcile_payment_integrity()` cron persists its own two checks
+ * (duplicate_period, flip_out_of_paid_in_full) into `data_integrity_alerts`
+ * — a separate table/population from the live `accounting_integrity_alerts()`
+ * RPC above, with no dismissal mechanism: a row stays open until explicitly
+ * resolved. Admin-only (RLS already restricts SELECT to admins; this gate
+ * just avoids rendering an always-empty section for everyone else).
+ */
+function NightlyChecksSection() {
+  const { t } = useTranslation('accounting');
+  const { data, isLoading } = useCronAlerts();
+  const rows = data ?? [];
+  const groups = groupCronAlerts(rows);
+  const resolveOne = useResolveCronAlert();
+  const resolveKind = useResolveCronAlertsKind();
+
+  return (
+    <section className="mt-6 flex flex-col gap-3 border-t border-border/70 pt-5">
+      <header className="flex items-center gap-3">
+        <h2 className="text-sm font-semibold">
+          {t('accounting:alerts.cron_title', { defaultValue: 'Νυχτερινοί έλεγχοι' })}
+        </h2>
+        <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+          {rows.length}
+        </span>
+      </header>
+      <p className="text-xs text-muted-foreground">
+        {t('accounting:alerts.cron_help', {
+          defaultValue:
+            'Ευρήματα του νυχτερινού ελέγχου (04:00). «Επίλυση» σημαίνει «το είδα» — δεν αλλάζει δεδομένα.',
+        })}
+      </p>
+
+      {isLoading ? (
+        <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">…</div>
+      ) : groups.length === 0 ? (
+        <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
+          {t('accounting:alerts.cron_empty', { defaultValue: 'Κανένα ανοιχτό θέμα' })}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {groups.map((group) => (
+            <div
+              key={group.kind}
+              className="flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-3 shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">{cronAlertKindLabel(group.kind)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t('accounting:alerts.cron_group_meta', {
+                    defaultValue: '{{count}} open · oldest {{age}}',
+                    count: group.count,
+                    age: relativeFromNow(group.oldest),
+                  })}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto"
+                  disabled={resolveKind.isPending}
+                  onClick={() => resolveKind.mutate(group.kind)}
+                >
+                  {t('accounting:alerts.cron_resolve_all', { defaultValue: 'Resolve all' })}
+                </Button>
+              </div>
+              <ul className="flex flex-col gap-1.5">
+                {group.rows.map((row) => {
+                  const link = cronAlertLink(row);
+                  return (
+                    <li
+                      key={row.id}
+                      className="flex items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {row.subject_type} {row.subject_id.slice(0, 8)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(row.detected_at)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {Object.entries(row.details as Record<string, unknown>)
+                            .map(([k, v]) => `${k}: ${String(v)}`)
+                            .join(' · ')}
+                        </p>
+                      </div>
+                      {link && (
+                        <Button asChild variant="outline" size="sm" className="shrink-0">
+                          <Link to={link}>{t('accounting:alerts.open_deal', { defaultValue: 'Open deal' })}</Link>
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0"
+                        disabled={resolveOne.isPending}
+                        onClick={() => resolveOne.mutate(row.id)}
+                      >
+                        {t('accounting:alerts.cron_resolve', { defaultValue: 'Resolve' })}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

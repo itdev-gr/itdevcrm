@@ -7838,6 +7838,7 @@ export type Database = {
         }[]
       }
       deal_next_due: { Args: { p_deal_id: string }; Returns: string }
+      deal_vat_rate: { Args: { p_deal_id: string }; Returns: number }
       delete_announcement: { Args: { p_id: string }; Returns: Json }
       delete_jobs: { Args: { p_ids: string[] }; Returns: Json }
       delete_leads: { Args: { p_ids: string[] }; Returns: Json }
@@ -8288,6 +8289,11 @@ export type Database = {
           lead_id: string
           staff_user_id: string
         }[]
+      }
+      resolve_integrity_alert: { Args: { p_id: string }; Returns: undefined }
+      resolve_integrity_alerts_kind: {
+        Args: { p_kind: string }
+        Returns: number
       }
       resolve_task: {
         Args: { p_kind: string; p_task_id: string }

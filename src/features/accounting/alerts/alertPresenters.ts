@@ -57,11 +57,20 @@ export function groupAlertsBySubject(rows: AlertRow[]): { code: string; rows: Al
 }
 
 /** Link a row to its DEAL (preferred — accounting works at the deal level),
- *  else its client, else its job. Null if none. */
+ *  else its client, else its job, else its expense list. Null if none.
+ *
+ *  Checks 26-28 (payment_vat_mismatch, paid_backdate_gap, payment_missing_dates
+ *  — subject_type 'deal_payment') already carry deal_id, so they fall through
+ *  to the first branch with no special-casing needed. Checks 29-30
+ *  (expense_stale_pending, expense_zero_vat_streak — subject_type 'expense')
+ *  carry neither deal_id nor job_id, so without this branch they'd resolve to
+ *  null (no link shown); expenses have no per-row detail route, so this
+ *  points at the list page instead of a specific record. */
 export function alertLink(row: AlertRow): string | null {
   if (row.deal_id) return '/deals/' + row.deal_id;
   if (row.subject_type === 'client') return '/clients/' + row.subject_id;
   if (row.job_id) return '/jobs/' + row.job_id;
+  if (row.subject_type === 'expense') return '/accounting/expenses';
   return null;
 }
 
@@ -70,6 +79,7 @@ export function alertLinkLabel(row: AlertRow): string {
   if (row.deal_id) return 'Open deal';
   if (row.subject_type === 'client') return 'Open client';
   if (row.job_id) return 'Open job';
+  if (row.subject_type === 'expense') return 'Open expenses';
   return 'Open';
 }
 

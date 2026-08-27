@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupAlerts, groupAlertsBySubject, alertLink, severityLabel, type AlertRow } from './alertPresenters';
+import { groupAlerts, groupAlertsBySubject, alertLink, alertLinkLabel, severityLabel, type AlertRow } from './alertPresenters';
 const mk = (o: Partial<AlertRow>): AlertRow => ({ check_key:'x',severity:'amber',category:'money',subject_type:'deal',subject_id:'s',subject_code:'000001',title:'t',detail:'d',deal_id:'D',job_id:null,signature:'', ...o });
 describe('alertPresenters', () => {
   it('links deal-first (deal > client > job)', () => {
@@ -8,6 +8,29 @@ describe('alertPresenters', () => {
     expect(alertLink(mk({ job_id:null, deal_id:null, subject_type:'client', subject_id:'C1' }))).toBe('/clients/C1');
     expect(alertLink(mk({ job_id:null, deal_id:null }))).toBeNull();
   });
+  it('links the new money checks (26-30, Task 5) by their subject_type', () => {
+    // 26 payment_vat_mismatch, 27 paid_backdate_gap, 28 payment_missing_dates:
+    // subject_type 'deal_payment', but deal_id is always set — falls through
+    // to the deal branch with no special-casing.
+    expect(
+      alertLink(mk({ check_key: 'payment_vat_mismatch', subject_type: 'deal_payment', deal_id: 'D1', job_id: null })),
+    ).toBe('/deals/D1');
+    expect(
+      alertLink(mk({ check_key: 'paid_backdate_gap', subject_type: 'deal_payment', deal_id: 'D2', job_id: null })),
+    ).toBe('/deals/D2');
+    expect(
+      alertLinkLabel(mk({ check_key: 'payment_missing_dates', subject_type: 'deal_payment', deal_id: 'D3', job_id: null })),
+    ).toBe('Open deal');
+    // 29 expense_stale_pending, 30 expense_zero_vat_streak: subject_type
+    // 'expense', no deal_id/job_id — routes to the expenses list.
+    expect(
+      alertLink(mk({ check_key: 'expense_stale_pending', subject_type: 'expense', deal_id: null, job_id: null })),
+    ).toBe('/accounting/expenses');
+    expect(
+      alertLinkLabel(mk({ check_key: 'expense_zero_vat_streak', subject_type: 'expense', deal_id: null, job_id: null })),
+    ).toBe('Open expenses');
+  });
+
   it('maps severity to importance label', () => {
     expect(severityLabel('red')).toBe('High');
     expect(severityLabel('amber')).toBe('Medium');
