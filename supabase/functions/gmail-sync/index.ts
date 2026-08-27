@@ -112,10 +112,12 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
   const { data: cur } = await admin.from('user_google_sync')
     .select('last_synced_at, backfilled_at, backfill_page_token').eq('user_id', uid).maybeSingle();
 
-  // Shared boxes backfill 90 days, paged 200/run; staff keep the single-run 10d.
+  // Shared boxes backfill 90 days; staff 60 (2026-08-27: widened from 10 so a
+  // filing-rule fix + backfill reset can recover previously-skipped mail —
+  // the suffixed-job-code / additional-contacts gap). Both paged 200/run.
   // -in:drafts: Gmail auto-saves a draft the moment a recipient is typed, and
   // those empty no-subject drafts were being captured as real mail (2026-08-25).
-  const backfillQ = shared ? 'newer_than:90d -in:drafts' : 'newer_than:10d -in:drafts';
+  const backfillQ = shared ? 'newer_than:90d -in:drafts' : 'newer_than:60d -in:drafts';
   const backfilling = !cur?.backfilled_at || cur?.backfill_page_token;
   let q = backfillQ;
   let pageToken: string | undefined = cur?.backfill_page_token ?? undefined;
