@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 
 export type DashboardLead = {
   id: string;
@@ -16,16 +17,21 @@ export function useDashboardLeads(range: { from: string; to: string }) {
   return useQuery({
     queryKey: ['dashboard-leads', range.from, range.to] as const,
     queryFn: async (): Promise<DashboardLead[]> => {
-      const { data, error } = await supabase
-        .from('leads')
-        .select(
-          'id, created_at, owner_user_id, source, estimated_one_time_value, estimated_monthly_value, stage:pipeline_stages(terminal_outcome)',
-        )
-        .eq('archived', false)
-        .gte('created_at', `${range.from}T00:00:00Z`)
-        .lte('created_at', `${range.to}T23:59:59Z`);
-      if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as DashboardLead[];
+      // Paged drain: the cohort is already >3k leads on the default preset —
+      // an unranged select silently truncates at PostgREST's 1000-row page.
+      const rows = await fetchAllPages(() =>
+        supabase
+          .from('leads')
+          .select(
+            'id, created_at, owner_user_id, source, estimated_one_time_value, estimated_monthly_value, stage:pipeline_stages(terminal_outcome)',
+          )
+          .eq('archived', false)
+          .gte('created_at', `${range.from}T00:00:00Z`)
+          .lte('created_at', `${range.to}T23:59:59Z`)
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true }),
+      );
+      return rows as unknown as DashboardLead[];
     },
   });
 }
@@ -47,14 +53,16 @@ export function useDashboardDeals() {
   return useQuery({
     queryKey: ['dashboard-deals'] as const,
     queryFn: async (): Promise<DashboardDeal[]> => {
-      const { data, error } = await supabase
-        .from('deals')
-        .select(
-          'won_by_user_id, one_time_value, recurring_monthly_value, invoiced_date, actual_close_date, accounting_stage:accounting_stage_id ( code )',
-        )
-        .eq('archived', false);
-      if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as DashboardDeal[];
+      const rows = await fetchAllPages(() =>
+        supabase
+          .from('deals')
+          .select(
+            'id, won_by_user_id, one_time_value, recurring_monthly_value, invoiced_date, actual_close_date, accounting_stage:accounting_stage_id ( code )',
+          )
+          .eq('archived', false)
+          .order('id', { ascending: true }),
+      );
+      return rows as unknown as DashboardDeal[];
     },
   });
 }

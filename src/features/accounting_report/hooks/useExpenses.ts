@@ -60,8 +60,19 @@ export function useExpenses(filters: ExpenseFilters = {}) {
       if (filters.categoryId) q = q.eq('category_id', filters.categoryId);
       if (filters.billingType) q = q.eq('billing_type', filters.billingType);
       if (filters.vendor) q = q.ilike('vendor', `%${filters.vendor}%`);
-      if (filters.from) q = q.gte('start_date', filters.from);
-      if (filters.to) q = q.lte('start_date', filters.to);
+      // Month window matches the ledger's attribution (coalesce(paid_at::date,
+      // start_date)): paid rows filter on when they were PAID, unpaid rows on
+      // their due date — previously both filtered on start_date, so a row paid
+      // in a later month kept showing under its due month (audit E25).
+      if (filters.from && filters.to) {
+        q = q.or(
+          `and(paid_at.gte.${filters.from}T00:00:00Z,paid_at.lte.${filters.to}T23:59:59.999Z),` +
+            `and(paid_at.is.null,start_date.gte.${filters.from},start_date.lte.${filters.to})`,
+        );
+      } else {
+        if (filters.from) q = q.gte('start_date', filters.from);
+        if (filters.to) q = q.lte('start_date', filters.to);
+      }
       const { data, error } = await q.order('start_date', { ascending: false });
       if (error) throw new Error(error.message);
       return (data ?? []) as unknown as ExpenseListRow[];

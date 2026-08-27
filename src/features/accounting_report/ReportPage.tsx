@@ -73,6 +73,7 @@ export function ReportPage() {
             summary={summary.data}
             incomeRows={incomeRows}
             expenseRows={expenseRows}
+            includePendingExpenses={includePendingExpenses}
           />
         )}
       </PageHeader>

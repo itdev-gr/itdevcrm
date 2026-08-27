@@ -127,7 +127,8 @@
   "export": {
     "menu": "Εξαγωγή",
     "csv": "Λήψη CSV",
-    "pdf": "Λήψη PDF"
+    "pdf": "Λήψη PDF",
+    "pdf_failed": "Η δημιουργία PDF απέτυχε: {{message}}"
   },
   "status": {
     "pending": "Εκκρεμές",

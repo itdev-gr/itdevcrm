@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 
 /**
  * Contracted MRR: monthly recurring jobs at face value plus yearly jobs at
@@ -17,17 +18,20 @@ export function useContractedMRR() {
   return useQuery({
     queryKey: ['accounting-contracted-mrr'] as const,
     queryFn: async (): Promise<number> => {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('amount_net, billing_type, clients!inner(archived)')
-        .eq('status', 'active')
-        .eq('archived', false)
-        .neq('billing_type', 'one_time')
-        .eq('clients.archived', false);
-      if (error) throw new Error(error.message);
-      return (
-        (data ?? []) as { amount_net: number | null; billing_type: string }[]
-      ).reduce((s, r) => s + monthlyEquivalent(r.billing_type, r.amount_net), 0);
+      const rows = await fetchAllPages(() =>
+        supabase
+          .from('jobs')
+          .select('id, amount_net, billing_type, clients!inner(archived)')
+          .eq('status', 'active')
+          .eq('archived', false)
+          .neq('billing_type', 'one_time')
+          .eq('clients.archived', false)
+          .order('id', { ascending: true }),
+      );
+      return (rows as unknown as { amount_net: number | null; billing_type: string }[]).reduce(
+        (s, r) => s + monthlyEquivalent(r.billing_type, r.amount_net),
+        0,
+      );
     },
   });
 }

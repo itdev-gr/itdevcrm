@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Download } from 'lucide-react';
+import { ChevronDown, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import type { LedgerRow } from '../hooks/useLedger';
 import type { PLSummary } from '../hooks/usePLSummary';
 import { downloadCSV, ledgerRowsToCSV } from '../utils/exportCSV';
-import { downloadPDF } from '../utils/exportPDF';
 
 export type ExportMenuProps = {
   rangeLabel: string;
@@ -15,11 +15,19 @@ export type ExportMenuProps = {
   summary: PLSummary;
   incomeRows: LedgerRow[];
   expenseRows: LedgerRow[];
+  includePendingExpenses?: boolean;
 };
 
-export function ExportMenu({ rangeLabel, from, to, summary, incomeRows, expenseRows }: ExportMenuProps) {
+export function ExportMenu({
+  from,
+  to,
+  incomeRows,
+  expenseRows,
+  includePendingExpenses = false,
+}: ExportMenuProps) {
   const { t } = useTranslation('accounting_report');
   const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,9 +44,42 @@ export function ExportMenu({ rangeLabel, from, to, summary, incomeRows, expenseR
     downloadCSV(`accounting-${from}-to-${to}.csv`, ledgerRowsToCSV(all));
     setOpen(false);
   }
-  function pdf() {
-    downloadPDF(`accounting-${from}-to-${to}.pdf`, { rangeLabel, summary, incomeRows, expenseRows });
-    setOpen(false);
+  // Server-side PDF (api/report-pdf): complete paged data, Greek-capable
+  // rendering, admin-gated — replaces the old client-side jsPDF export that
+  // garbled Greek and capped at 40 rows per side (audit E28/E29).
+  async function pdf() {
+    setGenerating(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('no session');
+      const params = new URLSearchParams({
+        from,
+        to,
+        includePending: String(includePendingExpenses),
+      });
+      const resp = await fetch(`/api/report-pdf?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp.ok) {
+        const body = (await resp.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? `HTTP ${resp.status}`);
+      }
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `accounting-report-${from}-to-${to}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setOpen(false);
+    } catch (e) {
+      alert(t('export.pdf_failed', { message: (e as Error).message }));
+    } finally {
+      setGenerating(false);
+    }
   }
 
   return (
@@ -59,9 +100,11 @@ export function ExportMenu({ rangeLabel, from, to, summary, incomeRows, expenseR
           </button>
           <button
             type="button"
-            className="block w-full border-t border-border/60 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted"
-            onClick={pdf}
+            disabled={generating}
+            className="flex w-full items-center gap-2 border-t border-border/60 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted disabled:opacity-60"
+            onClick={() => void pdf()}
           >
+            {generating && <Loader2 className="size-3.5 animate-spin" />}
             {t('export.pdf')}
           </button>
         </div>

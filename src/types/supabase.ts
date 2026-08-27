@@ -7440,6 +7440,8 @@ export type Database = {
           billing_type: string | null
           category_key: string | null
           counterparty: string | null
+          deal_code: string | null
+          deal_id: string | null
           direction: string | null
           event_date: string | null
           period: string | null
@@ -8154,6 +8156,25 @@ export type Database = {
         }[]
       }
       pick_next_sales_assignee: { Args: never; Returns: string }
+      pl_summary_for_range: {
+        Args: {
+          p_from: string
+          p_include_pending_expenses?: boolean
+          p_to: string
+        }
+        Returns: {
+          expense_rows: number
+          income_rows: number
+          net_profit_gross: number
+          net_profit_net: number
+          total_expense_gross: number
+          total_expense_net: number
+          total_expense_vat: number
+          total_income_gross: number
+          total_income_net: number
+          total_income_vat: number
+        }[]
+      }
       process_email_sequences: { Args: never; Returns: number }
       process_webdev_intake_auto: { Args: never; Returns: number }
       process_webdev_intake_followups: { Args: never; Returns: number }

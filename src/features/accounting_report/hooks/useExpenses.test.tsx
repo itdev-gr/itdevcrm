@@ -3,20 +3,22 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { order, ilike, gte, lte, eq, from } = vi.hoisted(() => {
+const { order, ilike, gte, lte, eq, or, from } = vi.hoisted(() => {
   const order = vi.fn();
   const lte = vi.fn();
   const gte = vi.fn();
   const ilike = vi.fn();
   const eq = vi.fn();
-  const chain: Record<string, unknown> = { eq, ilike, gte, lte, order };
+  const or = vi.fn();
+  const chain: Record<string, unknown> = { eq, ilike, gte, lte, or, order };
   eq.mockReturnValue(chain);
   ilike.mockReturnValue(chain);
   gte.mockReturnValue(chain);
   lte.mockReturnValue(chain);
+  or.mockReturnValue(chain);
   const select = vi.fn().mockReturnValue(chain);
   const from = vi.fn().mockReturnValue({ select });
-  return { order, ilike, gte, lte, eq, from };
+  return { order, ilike, gte, lte, eq, or, from };
 });
 
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
@@ -52,8 +54,14 @@ describe('useExpenses', () => {
     expect(eq).toHaveBeenCalledWith('status', 'paid');
     expect(eq).toHaveBeenCalledWith('category_id', 'cat-1');
     expect(ilike).toHaveBeenCalledWith('vendor', '%ado%');
-    expect(gte).toHaveBeenCalledWith('start_date', '2026-06-01');
-    expect(lte).toHaveBeenCalledWith('start_date', '2026-06-30');
+    // Month window follows the ledger's attribution (audit E25): paid rows by
+    // paid_at, unpaid rows by start_date — expressed as one OR filter.
+    expect(or).toHaveBeenCalledWith(
+      'and(paid_at.gte.2026-06-01T00:00:00Z,paid_at.lte.2026-06-30T23:59:59.999Z),' +
+        'and(paid_at.is.null,start_date.gte.2026-06-01,start_date.lte.2026-06-30)',
+    );
+    expect(gte).not.toHaveBeenCalled();
+    expect(lte).not.toHaveBeenCalled();
     expect(order).toHaveBeenCalledWith('start_date', { ascending: false });
     expect(result.current.data?.[0]?.vendor).toBe('Adobe');
   });

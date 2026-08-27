@@ -8,12 +8,14 @@ const rows: LedgerRow[] = [
     status: 'paid', amount_net: 100, vat_amount: 24, amount_gross: 124,
     category_key: 'web_seo', counterparty: 'ACME Ltd, "Athens"',
     billing_type: 'recurring_monthly', source_table: 'deal_payments', source_id: 'x',
+    deal_id: 'd1', deal_code: '000001',
   },
   {
     direction: 'out', event_date: '2026-06-12', period: '2026-06',
     status: 'paid', amount_net: 40, vat_amount: 9.6, amount_gross: 49.6,
     category_key: 'software', counterparty: 'Adobe',
     billing_type: 'recurring_monthly', source_table: 'expenses', source_id: 'y',
+    deal_id: null, deal_code: null,
   },
 ];
 

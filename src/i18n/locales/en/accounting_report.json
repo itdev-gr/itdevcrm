@@ -127,7 +127,8 @@
   "export": {
     "menu": "Export",
     "csv": "Download CSV",
-    "pdf": "Download PDF"
+    "pdf": "Download PDF",
+    "pdf_failed": "PDF generation failed: {{message}}"
   },
   "status": {
     "pending": "Pending",
