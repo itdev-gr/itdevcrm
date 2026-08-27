@@ -259,3 +259,56 @@ describe('PaymentsPanel mark paid asks for a real payment date', () => {
     });
   });
 });
+
+/**
+ * A cancelled row must never get the same one-click toggle as pending/paid
+ * rows — the DB guard (deal_payments_cancel_revive_trg) raises on a direct
+ * cancelled -> paid update, so the UI has to route through a confirmed
+ * restore-to-pending step instead.
+ */
+describe('PaymentsPanel cancelled row restore', () => {
+  beforeEach(() => updateSpy.mockClear());
+
+  it('shows a cancelled badge instead of the paid-date popover trigger', () => {
+    paymentRow.value = { ...row, status: 'cancelled' };
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    expect(screen.getByText('payments.status_cancelled')).toBeInTheDocument();
+    expect(screen.queryByLabelText('payments.paid_date_label')).not.toBeInTheDocument();
+  });
+
+  it('asks for confirmation instead of updating immediately', () => {
+    paymentRow.value = { ...row, status: 'cancelled' };
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    expect(screen.queryByText('payments.restore_confirm_title')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('payments.status_cancelled'));
+
+    expect(screen.getByText('payments.restore_confirm_title')).toBeInTheDocument();
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+
+  it('restores to pending with paid_at cleared once confirmed', () => {
+    paymentRow.value = { ...row, status: 'cancelled', paid_at: '2026-06-01T00:00:00Z' };
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    fireEvent.click(screen.getByText('payments.status_cancelled'));
+    fireEvent.click(screen.getByText('payments.restore_to_pending'));
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      id: 'p1',
+      patch: { status: 'pending', paid_at: null },
+    });
+  });
+
+  it('does not restore when the dialog is dismissed', () => {
+    paymentRow.value = { ...row, status: 'cancelled' };
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    fireEvent.click(screen.getByText('payments.status_cancelled'));
+    fireEvent.click(screen.getByText('cancel'));
+
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+});

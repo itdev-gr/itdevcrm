@@ -8,16 +8,13 @@ import { CopyableCode } from '@/components/CopyableCode';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
+import { paidBadge } from './accountingKanbanBadge';
 import type { AccountingDealRow } from './hooks/useAccountingDeals';
 import type { PlannedService } from '@/features/deals/ServicesPlannedField';
 
 function paymentSummary(rows: AccountingDealRow['deal_payments']) {
   const list = rows ?? [];
-  if (list.length === 0)
-    return { status: 'pending' as const, invoiced: false, nextDue: null as string | null };
-  const paid = list.filter((p) => p.status === 'paid').length;
-  const status: 'pending' | 'partial' | 'paid' =
-    paid === 0 ? 'pending' : paid === list.length ? 'paid' : 'partial';
+  const { label: status } = paidBadge(list);
   const invoiced = list.length > 0 && list.every((p) => !!p.invoice_number);
   const upcoming = list
     .filter((p) => p.status === 'pending' && p.end_date)

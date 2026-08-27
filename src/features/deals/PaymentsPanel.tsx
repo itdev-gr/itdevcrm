@@ -78,6 +78,7 @@ function PaymentRow({
   const update = useUpdateDealPayment(dealId);
   const remove = useDeleteDealPayment(dealId);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState(false);
 
   const [label, setLabel] = useState(row.label ?? '');
   const [start, setStart] = useState(row.start_date ?? '');
@@ -106,6 +107,16 @@ function PaymentRow({
     // Un-marking clears paid_at immediately — no date to ask for.
     update
       .mutateAsync({ id: row.id, patch: { status: 'pending', paid_at: null } })
+      .catch(reportError);
+  }
+
+  function restoreToPending() {
+    // A cancelled row cannot go straight back to paid (the DB guard raises on
+    // that) — it must land on pending first, as a deliberate two-step, so
+    // this always asks for confirmation instead of being a one-click toggle.
+    update
+      .mutateAsync({ id: row.id, patch: { status: 'pending', paid_at: null } })
+      .then(() => setConfirmRestore(false))
       .catch(reportError);
   }
 
@@ -197,6 +208,30 @@ function PaymentRow({
           >
             {t('payments.status_paid')}
           </button>
+        ) : row.status === 'cancelled' ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirmRestore(true)}
+              className="rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground line-through"
+            >
+              {t('payments.status_cancelled', { defaultValue: 'Cancelled' })}
+            </button>
+            <ConfirmDialog
+              open={confirmRestore}
+              onOpenChange={setConfirmRestore}
+              title={t('payments.restore_confirm_title', {
+                defaultValue: 'Restore this payment to pending?',
+              })}
+              description={t('payments.restore_confirm_desc', {
+                defaultValue:
+                  'A cancelled payment cannot be marked paid directly — it must go through pending first.',
+              })}
+              confirmLabel={t('payments.restore_to_pending', { defaultValue: 'Restore to pending' })}
+              pending={update.isPending}
+              onConfirm={restoreToPending}
+            />
+          </>
         ) : (
           <Popover
             open={paidPopoverOpen}
@@ -211,16 +246,12 @@ function PaymentRow({
                 className={`rounded px-2 py-1 text-xs font-medium ${
                   row.status === 'overdue'
                     ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
-                    : row.status === 'cancelled'
-                      ? 'bg-muted text-muted-foreground line-through'
-                      : 'bg-muted text-muted-foreground'
+                    : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {row.status === 'overdue'
                   ? t('payments.status_overdue', { defaultValue: 'Overdue' })
-                  : row.status === 'cancelled'
-                    ? t('payments.status_cancelled', { defaultValue: 'Cancelled' })
-                    : t('payments.status_pending')}
+                  : t('payments.status_pending')}
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-56 space-y-2 p-2">
