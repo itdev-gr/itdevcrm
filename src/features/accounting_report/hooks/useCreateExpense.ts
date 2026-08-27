@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { invalidateFinancialReports } from '@/lib/financialInvalidations';
+import { todayLocalISO } from '@/features/deals/paymentsPaidDate';
 
 export type CreateExpenseInput = {
   categoryId: string;
@@ -14,6 +15,9 @@ export type CreateExpenseInput = {
   paidByUserId?: string | null;
   notes?: string | null;
   markPaid?: boolean;
+  /** yyyy-mm-dd; only meaningful when markPaid is true. Defaults to today
+   *  (local) when markPaid is true and this is omitted. */
+  paidDate?: string;
   autopay?: boolean;
 };
 
@@ -35,7 +39,7 @@ export function useCreateExpense() {
           payment_method: input.paymentMethod ?? null,
           notes: input.notes ?? null,
           paid_by: isPaid ? (input.paidByUserId ?? null) : null,
-          paid_at: isPaid ? new Date().toISOString() : null,
+          paid_at: isPaid ? `${input.paidDate ?? todayLocalISO()}T00:00:00Z` : null,
           status: isPaid ? 'paid' : 'pending',
           autopay: input.autopay === true,
         })

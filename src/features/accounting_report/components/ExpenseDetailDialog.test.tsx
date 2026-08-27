@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 import '@/lib/i18n';
+import { todayLocalISO, maxPaidDateISO } from '@/features/deals/paymentsPaidDate';
 
 const { autopayMutateAsync, markPaidMutateAsync, detailData } = vi.hoisted(() => ({
   autopayMutateAsync: vi.fn(),
@@ -130,11 +131,9 @@ describe('ExpenseDetailDialog — Mark paid asks for the real payment date', () 
     fireEvent.click(screen.getByRole('button', { name: 'Mark paid' }));
 
     const dateInput = screen.getByLabelText('Payment date') as HTMLInputElement;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayLocalISO();
     expect(dateInput.value).toBe(today);
-    expect(dateInput.max).toBe(
-      new Date(Date.now() + 86400000).toISOString().slice(0, 10),
-    );
+    expect(dateInput.max).toBe(maxPaidDateISO());
 
     fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: 'cash' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));

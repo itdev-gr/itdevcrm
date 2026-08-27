@@ -207,5 +207,16 @@
       "alerts": "Which alerts are open?",
       "client": "What's going on with client "
     }
+  },
+  "alerts": {
+    "cron_title": "Nightly checks",
+    "cron_help": "Findings from the nightly check (04:00). \"Resolve\" means \"I've seen this\" — it does not change any data.",
+    "cron_empty": "No open issues",
+    "cron_group_meta": "{{count}} open · oldest {{age}}",
+    "cron_resolve_all": "Resolve all",
+    "cron_resolve": "Resolve",
+    "open_deal": "Open deal",
+    "cron_resolve_all_confirm_title": "Resolve all \"{{kind}}\" alerts?",
+    "cron_resolve_all_confirm_desc": "This marks every open alert of this kind as resolved. It cannot be undone — there is no bulk \"un-resolve\"."
   }
 }

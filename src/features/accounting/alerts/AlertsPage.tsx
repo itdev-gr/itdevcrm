@@ -20,6 +20,7 @@ import {
 } from './hooks/useAlertDismissals';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
@@ -210,29 +211,23 @@ function NightlyChecksSection() {
   const groups = groupCronAlerts(rows);
   const resolveOne = useResolveCronAlert();
   const resolveKind = useResolveCronAlertsKind();
+  const [confirmKind, setConfirmKind] = useState<string | null>(null);
 
   return (
     <section className="mt-6 flex flex-col gap-3 border-t border-border/70 pt-5">
       <header className="flex items-center gap-3">
-        <h2 className="text-sm font-semibold">
-          {t('accounting:alerts.cron_title', { defaultValue: 'Νυχτερινοί έλεγχοι' })}
-        </h2>
+        <h2 className="text-sm font-semibold">{t('accounting:alerts.cron_title')}</h2>
         <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
           {rows.length}
         </span>
       </header>
-      <p className="text-xs text-muted-foreground">
-        {t('accounting:alerts.cron_help', {
-          defaultValue:
-            'Ευρήματα του νυχτερινού ελέγχου (04:00). «Επίλυση» σημαίνει «το είδα» — δεν αλλάζει δεδομένα.',
-        })}
-      </p>
+      <p className="text-xs text-muted-foreground">{t('accounting:alerts.cron_help')}</p>
 
       {isLoading ? (
         <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">…</div>
       ) : groups.length === 0 ? (
         <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
-          {t('accounting:alerts.cron_empty', { defaultValue: 'Κανένα ανοιχτό θέμα' })}
+          {t('accounting:alerts.cron_empty')}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -245,7 +240,6 @@ function NightlyChecksSection() {
                 <span className="font-semibold">{cronAlertKindLabel(group.kind)}</span>
                 <span className="text-xs text-muted-foreground">
                   {t('accounting:alerts.cron_group_meta', {
-                    defaultValue: '{{count}} open · oldest {{age}}',
                     count: group.count,
                     age: relativeFromNow(group.oldest),
                   })}
@@ -255,9 +249,9 @@ function NightlyChecksSection() {
                   size="sm"
                   className="ml-auto"
                   disabled={resolveKind.isPending}
-                  onClick={() => resolveKind.mutate(group.kind)}
+                  onClick={() => setConfirmKind(group.kind)}
                 >
-                  {t('accounting:alerts.cron_resolve_all', { defaultValue: 'Resolve all' })}
+                  {t('accounting:alerts.cron_resolve_all')}
                 </Button>
               </div>
               <ul className="flex flex-col gap-1.5">
@@ -285,7 +279,7 @@ function NightlyChecksSection() {
                       </div>
                       {link && (
                         <Button asChild variant="outline" size="sm" className="shrink-0">
-                          <Link to={link}>{t('accounting:alerts.open_deal', { defaultValue: 'Open deal' })}</Link>
+                          <Link to={link}>{t('accounting:alerts.open_deal')}</Link>
                         </Button>
                       )}
                       <Button
@@ -295,7 +289,7 @@ function NightlyChecksSection() {
                         disabled={resolveOne.isPending}
                         onClick={() => resolveOne.mutate(row.id)}
                       >
-                        {t('accounting:alerts.cron_resolve', { defaultValue: 'Resolve' })}
+                        {t('accounting:alerts.cron_resolve')}
                       </Button>
                     </li>
                   );
@@ -305,6 +299,24 @@ function NightlyChecksSection() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmKind !== null}
+        onOpenChange={(o) => {
+          if (!o) setConfirmKind(null);
+        }}
+        title={t('accounting:alerts.cron_resolve_all_confirm_title', {
+          kind: confirmKind ? cronAlertKindLabel(confirmKind) : '',
+        })}
+        description={t('accounting:alerts.cron_resolve_all_confirm_desc')}
+        confirmLabel={t('accounting:alerts.cron_resolve_all')}
+        pending={resolveKind.isPending}
+        onConfirm={async () => {
+          if (!confirmKind) return;
+          await resolveKind.mutateAsync(confirmKind).catch(() => undefined);
+          setConfirmKind(null);
+        }}
+      />
     </section>
   );
 }

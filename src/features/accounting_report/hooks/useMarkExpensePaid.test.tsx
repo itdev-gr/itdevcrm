@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
+import { todayLocalISO } from '@/features/deals/paymentsPaidDate';
 
 const { single, eq, update, from, getUser } = vi.hoisted(() => {
   const single = vi.fn();
@@ -69,7 +70,7 @@ describe('useMarkExpensePaid', () => {
       await result.current.mutateAsync({ id: 'e1', paymentMethod: 'cash' });
     });
     const payload = update.mock.calls[0]![0];
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayLocalISO();
     expect(payload.paid_at).toBe(`${today}T00:00:00Z`);
   });
 });

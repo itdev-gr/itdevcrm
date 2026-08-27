@@ -86,4 +86,25 @@ describe('useCreateExpense', () => {
     expect(payload.paid_by).toBe('user-1');
     expect(typeof payload.paid_at).toBe('string');
   });
+
+  it('uses the given paidDate for paid_at at midnight UTC when markPaid=true', async () => {
+    const { result } = renderHook(() => useCreateExpense(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({
+        categoryId: 'cat-1',
+        billingType: 'one_time',
+        amountNet: 50,
+        vatRate: 24,
+        startDate: '2026-06-01',
+        paymentMethod: 'cash',
+        markPaid: true,
+        paidByUserId: 'user-1',
+        paidDate: '2026-06-01',
+      });
+    });
+    const payload = insert.mock.calls[0]![0];
+    expect(payload.paid_at).toBe('2026-06-01T00:00:00Z');
+  });
 });

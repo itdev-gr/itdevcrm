@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { maxPaidDateISO } from '@/features/deals/paymentsPaidDate';
 import { useExpenseCategories } from '../hooks/useExpenseCategories';
 import { useCreateExpense } from '../hooks/useCreateExpense';
 import { useSetExpenseAutopay } from '../hooks/useSetExpenseAutopay';
@@ -52,6 +53,13 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
   const [notes, setNotes] = useState('');
   const [autopayOn, setAutopayOn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // I1 (entry half): the paid-date field only appears once "Save & mark
+  // paid" is actually engaged — a plain "Save" (pending) never needs it.
+  // Default = the expense's own start_date (the period being recorded),
+  // matching the autopay convention (settle_autopay_expenses writes
+  // paid_at = start_date), not "today".
+  const [showPaidDate, setShowPaidDate] = useState(false);
+  const [paidDate, setPaidDate] = useState('');
 
   // No preselection: the previous silent '24' default meant staff always
   // overrode it (135/135 live rows landed at 0%). Forcing a conscious pick
@@ -104,6 +112,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
         paidByUserId: userId,
         notes: notes || null,
         markPaid,
+        ...(markPaid ? { paidDate: paidDate || startDate } : {}),
         autopay: wantsAutopay,
       });
       if (wantsAutopay && created?.id) {
@@ -119,6 +128,18 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
     } catch {
       setError(t('errors.save_failed'));
     }
+  }
+
+  // "Save & mark paid" is a two-click affordance: the first click reveals
+  // the paid-date field (defaulted to the expense's own start_date) instead
+  // of submitting blind; the second click (paidDate now populated) submits.
+  function onMarkPaidClick() {
+    if (!showPaidDate) {
+      setPaidDate(startDate);
+      setShowPaidDate(true);
+      return;
+    }
+    void submit(true);
   }
 
   if (!open) return null;
@@ -259,6 +280,20 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
           />
         </label>
 
+        {showPaidDate && (
+          <label className="mt-3 block text-sm">
+            {t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
+            <input
+              type="date"
+              aria-label={t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
+              value={paidDate}
+              max={maxPaidDateISO()}
+              onChange={(e) => setPaidDate(e.target.value)}
+              className="mt-1 block w-full rounded border px-2 py-1"
+            />
+          </label>
+        )}
+
         <label className="mt-3 block text-sm">
           {t('expense_form.notes')}
           <textarea
@@ -281,7 +316,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
           <button
             type="button"
             className="rounded border px-3 py-1.5 text-sm"
-            onClick={() => submit(true)}
+            onClick={onMarkPaidClick}
             disabled={create.isPending}
           >
             {t('expense_form.submit_and_mark_paid')}

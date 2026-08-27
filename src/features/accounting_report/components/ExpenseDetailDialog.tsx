@@ -1,14 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { todayLocalISO, maxPaidDateISO } from '@/features/deals/paymentsPaidDate';
 import { useExpenseDetail } from '../hooks/useExpenseDetail';
 import { ExpenseEditForm } from './ExpenseEditForm';
-
-/** One day after today — the latest paid_at the DB guard (money_paid_needs_date) allows. */
-function tomorrowDateString(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
 
 function formatPaidAt(iso: string | null, locale: string): string {
   if (!iso) return '';
@@ -43,7 +37,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
 
   const [showPaidForm, setShowPaidForm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
-  const [paidDate, setPaidDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [paidDate, setPaidDate] = useState(() => todayLocalISO());
   const [autopayMethod, setAutopayMethod] = useState('');
   const [showAutopayMethod, setShowAutopayMethod] = useState(false);
   const [autopayError, setAutopayError] = useState<string | null>(null);
@@ -205,7 +199,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
                   <button
                     type="button"
                     onClick={() => {
-                      setPaidDate(new Date().toISOString().slice(0, 10));
+                      setPaidDate(todayLocalISO());
                       setShowPaidForm(true);
                     }}
                     className="rounded border px-3 py-1.5 text-sm"
@@ -229,7 +223,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
                         type="date"
                         aria-label={t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
                         value={paidDate}
-                        max={tomorrowDateString()}
+                        max={maxPaidDateISO()}
                         onChange={(ev) => setPaidDate(ev.target.value)}
                         className="mt-1 block rounded border px-2 py-1"
                       />

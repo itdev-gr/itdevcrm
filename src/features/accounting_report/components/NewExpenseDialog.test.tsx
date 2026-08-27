@@ -54,10 +54,14 @@ describe('NewExpenseDialog — Save & mark paid', () => {
     expect(mutateAsync).not.toHaveBeenCalled();
   });
 
-  it('allows "Save & mark paid" once a payment method is provided', async () => {
+  it('allows "Save & mark paid" once a payment method is provided (after the paid-date field is confirmed)', async () => {
     render(wrap(<NewExpenseDialog open onClose={() => {}} />));
     fillRequiredFields();
     fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: 'Bank' } });
+    // First click reveals the paid-date field — does not submit yet.
+    fireEvent.click(screen.getByRole('button', { name: 'Save & mark paid' }));
+    expect(mutateAsync).not.toHaveBeenCalled();
+    // Second click submits.
     fireEvent.click(screen.getByRole('button', { name: 'Save & mark paid' }));
 
     expect(mutateAsync).toHaveBeenCalledTimes(1);
@@ -234,6 +238,50 @@ describe('NewExpenseDialog — paid-by wiring', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ paidByUserId: 'user-1' }));
+  });
+});
+
+describe('NewExpenseDialog — mark-paid date (I1 entry half)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mutateAsync.mockResolvedValue({ id: 'e1' });
+  });
+
+  it('is not shown until "Save & mark paid" is engaged', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    expect(screen.queryByLabelText('Payment date')).toBeNull();
+  });
+
+  it('defaults to the expense start date, not today', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields(); // start date 2026-06-01
+    fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: 'Bank' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & mark paid' }));
+
+    expect((screen.getByLabelText('Payment date') as HTMLInputElement).value).toBe('2026-06-01');
+  });
+
+  it('submits the user-edited paid date, not the default', async () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: 'Bank' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & mark paid' }));
+    fireEvent.change(screen.getByLabelText('Payment date'), { target: { value: '2026-06-03' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & mark paid' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ markPaid: true, paidDate: '2026-06-03' }),
+    );
+  });
+
+  it('omits paidDate entirely for the plain "Save" (pending) path', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ markPaid: false }));
+    expect(mutateAsync.mock.calls[0]![0]).not.toHaveProperty('paidDate');
   });
 });
 

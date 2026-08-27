@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { invalidateFinancialReports } from '@/lib/financialInvalidations';
+import { todayLocalISO } from '@/features/deals/paymentsPaidDate';
 
 export function useMarkExpensePaid() {
   const qc = useQueryClient();
@@ -17,7 +18,7 @@ export function useMarkExpensePaid() {
     }) => {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id ?? null;
-      const date = paidDate ?? new Date().toISOString().slice(0, 10);
+      const date = paidDate ?? todayLocalISO();
       const { data, error } = await supabase
         .from('expenses')
         .update({

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { FilterBar, FilterSelect, PageHeader, SegmentedControl } from '@/components/layout/page-shell';
+import { todayLocalISO, maxPaidDateISO } from '@/features/deals/paymentsPaidDate';
 import { useExpenses } from './hooks/useExpenses';
 import { useExpenseCategories } from './hooks/useExpenseCategories';
 import { useExpensesRealtime } from './hooks/useExpensesRealtime';
@@ -15,13 +16,6 @@ import { NewExpenseDialog } from './components/NewExpenseDialog';
 import { ExpenseRow } from './components/ExpenseRow';
 import { ExpensesSummaryBar } from './components/ExpensesSummaryBar';
 import { monthOptions, monthRange } from './utils/monthFilter';
-
-/** One day after today — the latest paid_at the DB guard (money_paid_needs_date) allows. */
-function tomorrowDateString(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
 
 type StatusFilter = 'all' | 'pending' | 'paid';
 
@@ -38,7 +32,7 @@ export function ExpensesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkMethod, setBulkMethod] = useState('');
-  const [bulkDate, setBulkDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [bulkDate, setBulkDate] = useState(() => todayLocalISO());
   const [bulkPending, setBulkPending] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const markPaid = useMarkExpensePaid();
@@ -61,6 +55,15 @@ export function ExpensesPage() {
     { value: 'pending', label: t('expenses_list.status_pending') },
     { value: 'paid', label: t('expenses_list.status_paid') },
   ];
+
+  // M7: a bulk selection made under one filter view shouldn't silently
+  // survive into a different one (e.g. selecting rows under "pending", then
+  // switching to "paid" and clicking "Mark selected paid" on cards that were
+  // never re-checked against the new list).
+  const filterKey = `${status}|${categoryId}|${vendor}|${month}`;
+  useEffect(() => {
+    setSelected(new Set());
+  }, [filterKey]);
 
   function toggleSelected(id: string) {
     setSelected((prev) => {
@@ -149,7 +152,7 @@ export function ExpensesPage() {
             onOpenChange={(open) => {
               setBulkOpen(open);
               setBulkError(null);
-              if (open) setBulkDate(new Date().toISOString().slice(0, 10));
+              if (open) setBulkDate(todayLocalISO());
             }}
           >
             <PopoverTrigger asChild>
@@ -172,7 +175,7 @@ export function ExpensesPage() {
                 type="date"
                 aria-label={t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
                 value={bulkDate}
-                max={tomorrowDateString()}
+                max={maxPaidDateISO()}
                 onChange={(e) => setBulkDate(e.target.value)}
                 className="h-8 text-xs"
               />

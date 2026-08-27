@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 import '@/lib/i18n';
+import { todayLocalISO } from '@/features/deals/paymentsPaidDate';
 import type { ExpenseListRow } from './hooks/useExpenses';
 
 const { markPaidMutateAsync, expensesData } = vi.hoisted(() => ({
@@ -77,7 +78,7 @@ describe('ExpensesPage — bulk mark paid', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mark selected paid' }));
 
     const dateInput = screen.getByLabelText('Payment date') as HTMLInputElement;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayLocalISO();
     expect(dateInput.value).toBe(today);
   });
 
@@ -112,5 +113,33 @@ describe('ExpensesPage — bulk mark paid', () => {
     expensesData.current = [row({ id: 'e1', status: 'paid' })];
     render(<ExpensesPage />);
     expect(screen.queryByLabelText('Select row')).toBeNull();
+  });
+});
+
+describe('ExpensesPage — M7 clears selection when filters change', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    markPaidMutateAsync.mockResolvedValue({});
+    expensesData.current = [row({ id: 'e1' }), row({ id: 'e2' })];
+  });
+
+  it('drops the bulk selection when the status filter changes', () => {
+    render(<ExpensesPage />);
+    fireEvent.click(screen.getAllByLabelText('Select row')[0]!);
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pending' }));
+
+    expect(screen.queryByText('1 selected')).toBeNull();
+  });
+
+  it('drops the bulk selection when the vendor search changes', () => {
+    render(<ExpensesPage />);
+    fireEvent.click(screen.getAllByLabelText('Select row')[0]!);
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search vendor…'), { target: { value: 'COSMOTE' } });
+
+    expect(screen.queryByText('1 selected')).toBeNull();
   });
 });

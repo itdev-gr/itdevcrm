@@ -95,17 +95,31 @@ Migration `20260827190000_accounting_period_locks.sql`.
 `public.money_period_lock_guard()` — **one** trigger function with a
 `tg_table_name` branch (plpgsql resolves `old`/`new` field access at execution
 time, so the `deal_payments` branch never evaluates on `expenses` and vice
-versa), attached as `deal_payments_period_lock_trg` and
-`expenses_period_lock_trg` (BEFORE UPDATE OR DELETE). For a row that is
-`status='paid'` with a `paid_at` inside a locked month it raises:
+versa), attached as `deal_payments_period_lock_trg` / `expenses_period_lock_trg`
+(BEFORE UPDATE OR DELETE) **and**, since the 2026-08-28 lock-guard hardening
+(`20260828120000_lock_guard_hardening.sql`), `deal_payments_period_lock_ins_trg`
+/ `expenses_period_lock_ins_trg` (BEFORE INSERT — same function, an
+INSERT-specific branch). The strengthened guarantee is genuinely: **no paid
+money enters, leaves, or changes in a locked month.** It raises:
 
-- on UPDATE of a money-relevant field — *"period YYYY-MM is locked — unlock the month before editing paid rows"*
-- on DELETE — *"period YYYY-MM is locked — paid rows cannot be deleted (unlock the month first)"*
+- on INSERT of a row that is already `status='paid'` in a locked month —
+  *"period YYYY-MM is locked — cannot insert paid rows into a closed month"*
+  (closes the hole where a paid row could be written straight into a closed
+  month, bypassing UPDATE/DELETE checks entirely)
+- on UPDATE of a money-relevant field, where the row **is or becomes**
+  `status='paid'` and **either its old or its new period** is locked — *"period
+  YYYY-MM is locked — unlock the month before editing paid rows"* (closes the
+  hole where a paid row could be re-dated INTO a locked month from an unlocked
+  one, or OUT of a locked month into an unlocked one, since only the OLD
+  period used to be checked)
+- on DELETE of a paid row whose period is locked — *"period YYYY-MM is locked
+  — paid rows cannot be deleted (unlock the month first)"*
 
 Money-relevant fields are the amounts, `vat_rate`, `paid_at`, `start_date`,
 `status`, plus `service_type` (deal_payments) and `vendor`/`category_id`
 (expenses). Harmless fields — `notes`, `label`, receipt attachments, `autopay`
-— stay editable in a locked month by design.
+— stay editable in a locked month by design (a same-period edit to only these
+fields is still allowed, exactly as before the hardening).
 
 `public.lock_accounting_period(p_period text)` /
 `public.unlock_accounting_period(p_period text)` — SECURITY DEFINER, admin-only
@@ -179,8 +193,8 @@ standing population out-of-band, run the check's own detector SQL, not the RPC.
 
 | # | `check_key` | Severity / category | What it means | Expected standing population |
 | --- | --- | --- | --- | --- |
-| 26 | `payment_vat_mismatch` | amber / money | A non-cancelled `deal_payments` row whose `vat_rate` disagrees with `deal_vat_rate(deal_id)`. Signature carries both sides, so editing either value re-surfaces the row instead of hiding behind a stale dismissal. | **46 — by design, until the owner decides.** 25 are the **A0** population (cash/no-VAT deals that were nonetheless charged VAT — real money collected that shouldn't have been), 21 are the **B3** mirror (online deals whose `vat_rate` was copied forward at 0% and never corrected — raising it now re-invoices a client). Neither is fixable by code. |
-| 27 | `paid_backdate_gap` | red / lifecycle | `status='paid'` stamped more than 30 days after the row's own `start_date` — income attributed to the wrong month. Reference case: deal 000205, period started 2026-04-02, `paid_at` stamped 2026-08-06. | **0.** Standing guard; 0 is the healthy state. The historical class was repaired in Task 1. |
+| 26 | `payment_vat_mismatch` | amber / money | A non-cancelled `deal_payments` row whose `vat_rate` disagrees with `deal_vat_rate(deal_id)`. Signature carries both sides, so editing either value re-surfaces the row instead of hiding behind a stale dismissal. | **46 — by design, until the owner decides.** 25 are the **A0** population (cash/no-VAT deals that were nonetheless charged VAT — real money collected that shouldn't have been), 21 are the **B3** mirror (online deals whose `vat_rate` was copied forward at 0% and never corrected — raising it now re-invoices a client). Neither is fixable by code. **The B3 half is not static** — `ensure_recurring_payments` copies `vat_rate` forward from the previous period by design (see rule 4), so every renewal on one of those 21 deals mints another 0%-that-should-be-nonzero row. Read this as standing-population-plus-drift, not a fixed 46: expect the number to climb by roughly one row per affected deal per renewal until the owner decides B3. |
+| 27 | `paid_backdate_gap` | red / lifecycle | `status='paid'` stamped more than 30 days after the row's own `start_date` — income attributed to the wrong month. Reference case: deal 000205, period started 2026-04-02, `paid_at` stamped 2026-08-06. Since the 2026-08-28 final-review fix this also watches `expenses` (same predicate, `subject_type='expense'`) — the class was previously only checked on `deal_payments`. | **0.** Standing guard; 0 is the healthy state on both tables. The historical class was repaired in Task 1. |
 | 28 | `payment_missing_dates` | amber / missing | A non-cancelled payment row with `start_date is null`. Every date-driven mechanism downstream (renewals, due chips, reminders, check 27) silently no-ops on a dateless row. | **19** — 13 `pending` + **6 already `paid`**. The paid ones are worse: money changed hands into a row no month can see. |
 | 29 | `expense_stale_pending` | amber / lifecycle | An expense still `pending` more than 60 days after its own `end_date` — either it was paid and nobody flipped it, or it is two months overdue. | **0** (verified firing against a planted probe). |
 | 30 | `expense_zero_vat_streak` | grey / possible_mistakes | A `software` / `ads_spend` / `hosting_domains` expense entered in the last 7 days at 0% VAT. Does not fix the "all expenses are 0% VAT" finding (E5) — it nudges the question at entry. | **~6**, and it moves: it is a rolling 7-day window, so this number naturally rises and falls with entry activity. |
@@ -216,6 +230,25 @@ payment row):
 - **`on_hold` auto-releases at zero balance** → `paid_in_full`, unblocking jobs
   held with `blocked_reason='account_on_hold'`. (Deal 000233 had been stuck
   on_hold with a €0 balance for 5+ weeks; released at rollout.)
+
+**Side effect: moving a deal `on_hold → partial_payment` unblocks its jobs on
+the next payment write, even if nothing manually unblocked them.** This is
+enacted behavior, not a bug. `reconcile_deal_stage`'s `on_hold` branch only
+ever exits automatically to `paid_in_full` (zero balance) or stays on
+`on_hold` — it never targets `partial_payment` itself. But an accountant can
+manually move a deal's stage from `on_hold` to `partial_payment` on the
+Kanban board directly (bypassing the RPC), and that manual move does **not**
+unblock the deal's jobs — only `reconcile_deal_stage` does that, and it
+wasn't the one that made the move. The next `deal_payments`/`expenses` write
+on that deal fires the `deal_payments_reconcile_stage` trigger, which calls
+`reconcile_deal_stage` again; because `cur_code` is now `partial_payment`, it
+falls into that stage's own branch, and — since `v_target` there is anything
+other than `on_hold` — falls through to the function's shared unblock tail
+(the same inline `update public.jobs set is_blocked=false, ...` used by the
+`awaiting_payment`/`paid_in_full` path), clearing any job still blocked with
+`blocked_reason='account_on_hold'`. In short: a manual `on_hold →
+partial_payment` move looks unblocked immediately on the board but the jobs
+stay blocked until the next payment-table write touches that deal.
 
 ### Reminder eligibility of backfilled rows — read this before promising a client an email
 
@@ -368,6 +401,14 @@ Live function definitions confirmed present, with `md5(pg_get_functiondef)`:
 | `resolve_integrity_alerts_kind` | DEFINER | `5b7487f7654af33b6314711a3dfd9edf` |
 | `reconcile_deal_stage` | DEFINER | `6c8933fe97414d97e149844197fd21b4` |
 
+**Superseded by the 2026-08-28 final-review fix** (`20260828120000_lock_guard_hardening.sql`,
+after this rollout snapshot was taken): `money_period_lock_guard` →
+`8e0e2f5d0d2bd1fc3bbba4e675f5be0e` (INSERT arm + both-sides period check) and
+`accounting_integrity_alerts` → `f9f2a5c154e5ad438c6848a892c36766` (check 27
+extended to `expenses`). `deal_vat_rate`'s body is unchanged
+(`e62c3bde0af42131d92860f439fe1f76` still current) — that fix only tightened
+its EXECUTE grants (M3), which `pg_get_functiondef` doesn't reflect.
+
 ---
 
 ## File references
@@ -380,6 +421,7 @@ Live function definitions confirmed present, with `md5(pg_get_functiondef)`:
 | `20260827200000_money_integrity_checks.sql` | `deal_vat_rate()`, checks 26-30 on `accounting_integrity_alerts()`, seed/recurring refactored onto the helper |
 | `20260828090000_resolve_integrity_alerts.sql` | `resolve_integrity_alert()`, `resolve_integrity_alerts_kind()` |
 | `20260828100000_lifecycle_partial_and_release.sql` | `reconcile_deal_stage()` — `partial_payment` escalation + `on_hold` auto-release |
+| `20260828120000_lock_guard_hardening.sql` | Final-review fixes: `money_period_lock_guard()` gains an INSERT arm (`*_period_lock_ins_trg`) + both-sides (old/new) period check on UPDATE; `accounting_integrity_alerts()` check 27 extended to `expenses`; explicit execute grants on `deal_vat_rate()` |
 | `20260702100000_job_billing_pause.sql` | (earlier) `'cancelled'` payment status + `job_pause_billing` / `job_resume_billing` |
 
 Frontend: `src/features/accounting_report/components/PeriodLockControl.tsx`,

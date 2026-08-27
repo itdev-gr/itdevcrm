@@ -15,7 +15,7 @@ import {
 } from './hooks/useDealPayments';
 import { useJobsBilling } from './hooks/useJobsBilling';
 import { PrepayDialog } from './PrepayDialog';
-import { maxPaidDateString, paidAtFromDate, todayDateString } from './paymentsPaidDate';
+import { maxPaidDateISO, paidAtFromDate, todayLocalISO } from './paymentsPaidDate';
 import type { PlannedService } from './ServicesPlannedField';
 
 const RECURRING: string[] = ['recurring_monthly', 'recurring_yearly'];
@@ -89,7 +89,7 @@ function PaymentRow({
   const [vatRate, setVatRate] = useState(String(row.vat_rate ?? 24));
   const [invoice, setInvoice] = useState(row.invoice_number ?? '');
   const [paidPopoverOpen, setPaidPopoverOpen] = useState(false);
-  const [paidDate, setPaidDate] = useState(() => todayDateString());
+  const [paidDate, setPaidDate] = useState(() => todayLocalISO());
 
   // Round to cents the same way the DB generated column does, so the preview
   // always matches what gets stored.
@@ -237,7 +237,7 @@ function PaymentRow({
             open={paidPopoverOpen}
             onOpenChange={(open) => {
               setPaidPopoverOpen(open);
-              if (open) setPaidDate(todayDateString());
+              if (open) setPaidDate(todayLocalISO());
             }}
           >
             <PopoverTrigger asChild>
@@ -262,7 +262,7 @@ function PaymentRow({
                 type="date"
                 aria-label={t('payments.paid_date_label', { defaultValue: 'Payment date' })}
                 value={paidDate}
-                max={maxPaidDateString()}
+                max={maxPaidDateISO()}
                 onChange={(e) => setPaidDate(e.target.value)}
                 className="h-8 text-xs"
               />
