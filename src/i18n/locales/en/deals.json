@@ -87,6 +87,8 @@
     },
     "card_invoiced": "Invoiced",
     "status_overdue": "Overdue",
+    "paid_date_label": "Payment date",
+    "confirm_mark_paid": "Mark paid",
     "vat_mismatch": "Client's country VAT is {{rate}}%",
     "prepay_button": "Prepay",
     "prepay_title": "Prepay months",

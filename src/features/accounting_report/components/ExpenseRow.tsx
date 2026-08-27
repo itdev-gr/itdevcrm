@@ -5,6 +5,9 @@ import type { ExpenseListRow } from '../hooks/useExpenses';
 export type ExpenseRowProps = {
   row: ExpenseListRow;
   onClick: (id: string) => void;
+  /** Bulk mark-paid selection — only pending rows are selectable. */
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 };
 
 const STATUS_STYLES = {
@@ -12,7 +15,7 @@ const STATUS_STYLES = {
   paid: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
 } as const;
 
-export function ExpenseRow({ row, onClick }: ExpenseRowProps) {
+export function ExpenseRow({ row, onClick, selected, onToggleSelect }: ExpenseRowProps) {
   const { t, i18n } = useTranslation('accounting_report');
   const isEl = i18n.language.startsWith('el');
   const categoryName = isEl ? row.category?.name_el : row.category?.name_en;
@@ -24,6 +27,18 @@ export function ExpenseRow({ row, onClick }: ExpenseRowProps) {
       onClick={() => onClick(row.id)}
       data-testid={`expense-row-${row.id}`}
     >
+      {onToggleSelect && (
+        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+          {row.status === 'pending' && (
+            <input
+              type="checkbox"
+              aria-label={t('expenses_list.select_row', { defaultValue: 'Select row' })}
+              checked={!!selected}
+              onChange={() => onToggleSelect(row.id)}
+            />
+          )}
+        </td>
+      )}
       <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{row.start_date}</td>
       <td className="max-w-[160px] truncate px-4 py-3 font-medium">
         {categoryName ?? row.category_id}

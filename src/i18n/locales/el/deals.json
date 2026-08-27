@@ -87,6 +87,8 @@
     },
     "card_invoiced": "Τιμολογήθηκε",
     "status_overdue": "Εκπρόθεσμο",
+    "paid_date_label": "Ημερομηνία πληρωμής",
+    "confirm_mark_paid": "Σήμανση ως πληρωμένο",
     "vat_mismatch": "Ο ΦΠΑ της χώρας του πελάτη είναι {{rate}}%",
     "prepay_button": "Προπληρωμή",
     "prepay_title": "Προπληρωμή μηνών",

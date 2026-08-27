@@ -5,6 +5,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   useAddDealPayment,
   useDealPayments,
@@ -14,6 +15,7 @@ import {
 } from './hooks/useDealPayments';
 import { useJobsBilling } from './hooks/useJobsBilling';
 import { PrepayDialog } from './PrepayDialog';
+import { maxPaidDateString, paidAtFromDate, todayDateString } from './paymentsPaidDate';
 import type { PlannedService } from './ServicesPlannedField';
 
 const RECURRING: string[] = ['recurring_monthly', 'recurring_yearly'];
@@ -85,6 +87,8 @@ function PaymentRow({
   );
   const [vatRate, setVatRate] = useState(String(row.vat_rate ?? 24));
   const [invoice, setInvoice] = useState(row.invoice_number ?? '');
+  const [paidPopoverOpen, setPaidPopoverOpen] = useState(false);
+  const [paidDate, setPaidDate] = useState(() => todayDateString());
 
   // Round to cents the same way the DB generated column does, so the preview
   // always matches what gets stored.
@@ -98,17 +102,21 @@ function PaymentRow({
     update.mutateAsync({ id: row.id, patch }).catch(reportError);
   }
 
-  function toggleStatus() {
-    // Pending and overdue both flip to paid; paid flips back to pending.
-    const next = row.status === 'paid' ? 'pending' : 'paid';
+  function markPending() {
+    // Un-marking clears paid_at immediately — no date to ask for.
+    update
+      .mutateAsync({ id: row.id, patch: { status: 'pending', paid_at: null } })
+      .catch(reportError);
+  }
+
+  function confirmMarkPaid() {
+    if (!paidDate) return;
     update
       .mutateAsync({
         id: row.id,
-        patch: {
-          status: next,
-          paid_at: next === 'paid' ? new Date().toISOString() : null,
-        },
+        patch: { status: 'paid', paid_at: paidAtFromDate(paidDate) },
       })
+      .then(() => setPaidPopoverOpen(false))
       .catch(reportError);
   }
 
@@ -181,27 +189,64 @@ function PaymentRow({
         €{grossPreview.toFixed(2)}
       </td>
       <td className="px-2 py-2">
-        <button
-          type="button"
-          onClick={toggleStatus}
-          className={`rounded px-2 py-1 text-xs font-medium ${
-            row.status === 'paid'
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
-              : row.status === 'overdue'
-                ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
-                : row.status === 'cancelled'
-                  ? 'bg-muted text-muted-foreground line-through'
-                  : 'bg-muted text-muted-foreground'
-          }`}
-        >
-          {row.status === 'paid'
-            ? t('payments.status_paid')
-            : row.status === 'overdue'
-              ? t('payments.status_overdue', { defaultValue: 'Overdue' })
-              : row.status === 'cancelled'
-                ? t('payments.status_cancelled', { defaultValue: 'Cancelled' })
-                : t('payments.status_pending')}
-        </button>
+        {row.status === 'paid' ? (
+          <button
+            type="button"
+            onClick={markPending}
+            className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+          >
+            {t('payments.status_paid')}
+          </button>
+        ) : (
+          <Popover
+            open={paidPopoverOpen}
+            onOpenChange={(open) => {
+              setPaidPopoverOpen(open);
+              if (open) setPaidDate(todayDateString());
+            }}
+          >
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={`rounded px-2 py-1 text-xs font-medium ${
+                  row.status === 'overdue'
+                    ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+                    : row.status === 'cancelled'
+                      ? 'bg-muted text-muted-foreground line-through'
+                      : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {row.status === 'overdue'
+                  ? t('payments.status_overdue', { defaultValue: 'Overdue' })
+                  : row.status === 'cancelled'
+                    ? t('payments.status_cancelled', { defaultValue: 'Cancelled' })
+                    : t('payments.status_pending')}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 space-y-2 p-2">
+              <Label className="text-xs">
+                {t('payments.paid_date_label', { defaultValue: 'Payment date' })}
+              </Label>
+              <Input
+                type="date"
+                aria-label={t('payments.paid_date_label', { defaultValue: 'Payment date' })}
+                value={paidDate}
+                max={maxPaidDateString()}
+                onChange={(e) => setPaidDate(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={!paidDate || update.isPending}
+                onClick={confirmMarkPaid}
+                className="w-full"
+              >
+                {t('payments.confirm_mark_paid', { defaultValue: 'Mark paid' })}
+              </Button>
+            </PopoverContent>
+          </Popover>
+        )}
       </td>
       <td className="px-2 py-2">
         <Input

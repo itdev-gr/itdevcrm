@@ -43,4 +43,33 @@ describe('useMarkExpensePaid', () => {
     const invalidated = invalidateSpy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey));
     expect(invalidated).toContain(JSON.stringify(['dashboard-monthly-pl']));
   });
+
+  it('carries the chosen paidDate as paid_at at midnight UTC', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const { result } = renderHook(() => useMarkExpensePaid(), {
+      wrapper: ({ children }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
+    });
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: 'e1',
+        paymentMethod: 'cash',
+        paidDate: '2026-08-20',
+      });
+    });
+    const payload = update.mock.calls[0]![0];
+    expect(payload.paid_at).toBe('2026-08-20T00:00:00Z');
+  });
+
+  it('defaults paidDate to today when omitted', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const { result } = renderHook(() => useMarkExpensePaid(), {
+      wrapper: ({ children }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
+    });
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'e1', paymentMethod: 'cash' });
+    });
+    const payload = update.mock.calls[0]![0];
+    const today = new Date().toISOString().slice(0, 10);
+    expect(payload.paid_at).toBe(`${today}T00:00:00Z`);
+  });
 });

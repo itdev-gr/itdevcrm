@@ -1,4 +1,4 @@
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, screen } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import type { DealPaymentRow } from './hooks/useDealPayments';
 
@@ -195,5 +195,67 @@ describe('PaymentsPanel delete confirmation', () => {
     fireEvent.click(getByLabelText('payments.remove_row'));
 
     expect(queryByText('payments.remove_confirm_plain')).toBeInTheDocument();
+  });
+});
+
+/**
+ * Marking a row paid must never blindly stamp "now" — the DB guard
+ * (money_paid_needs_date) requires a real, non-future paid_at, so the UI has
+ * to ask for the date instead of assuming it.
+ */
+describe('PaymentsPanel mark paid asks for a real payment date', () => {
+  beforeEach(() => updateSpy.mockClear());
+
+  it('opens a date popover instead of marking paid immediately', () => {
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    fireEvent.click(screen.getByText('payments.status_pending'));
+
+    expect(updateSpy).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('payments.paid_date_label')).toBeInTheDocument();
+  });
+
+  it('defaults the popover date to today and submits it as paid_at at midnight UTC', () => {
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    fireEvent.click(screen.getByText('payments.status_pending'));
+
+    const dateInput = screen.getByLabelText('payments.paid_date_label') as HTMLInputElement;
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    expect(dateInput.value).toBe(todayStr);
+
+    fireEvent.click(screen.getByText('payments.confirm_mark_paid'));
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      id: 'p1',
+      patch: { status: 'paid', paid_at: `${todayStr}T00:00:00Z` },
+    });
+  });
+
+  it('submits a user-chosen past date instead of today', () => {
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    fireEvent.click(screen.getByText('payments.status_pending'));
+
+    fireEvent.change(screen.getByLabelText('payments.paid_date_label'), {
+      target: { value: '2026-08-01' },
+    });
+    fireEvent.click(screen.getByText('payments.confirm_mark_paid'));
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      id: 'p1',
+      patch: { status: 'paid', paid_at: '2026-08-01T00:00:00Z' },
+    });
+  });
+
+  it('un-marking a paid row is immediate — no popover, paid_at cleared', () => {
+    paymentRow.value = { ...row, status: 'paid', paid_at: '2026-08-01T00:00:00Z' };
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    fireEvent.click(screen.getByText('payments.status_paid'));
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      id: 'p1',
+      patch: { status: 'pending', paid_at: null },
+    });
   });
 });

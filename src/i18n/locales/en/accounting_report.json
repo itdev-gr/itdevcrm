@@ -109,6 +109,7 @@
     "title": "Expense",
     "edit": "Edit",
     "mark_paid": "Mark paid",
+    "paid_date": "Payment date",
     "delete": "Delete",
     "delete_confirm": "Delete this expense? This cannot be undone.",
     "created_by": "Created by",
@@ -122,7 +123,10 @@
     "category_all": "All categories",
     "month_all": "All time",
     "empty": "No expenses match these filters.",
-    "bulk_mark_paid": "Mark selected paid"
+    "bulk_mark_paid": "Mark selected paid",
+    "select_row": "Select row",
+    "selected_count": "{{count}} selected",
+    "clear_selection": "Clear"
   },
   "export": {
     "menu": "Export",

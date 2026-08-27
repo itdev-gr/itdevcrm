@@ -4,8 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 import '@/lib/i18n';
 
-const { autopayMutateAsync, detailData } = vi.hoisted(() => ({
+const { autopayMutateAsync, markPaidMutateAsync, detailData } = vi.hoisted(() => ({
   autopayMutateAsync: vi.fn(),
+  markPaidMutateAsync: vi.fn(),
   detailData: { current: null as Record<string, unknown> | null },
 }));
 
@@ -13,7 +14,7 @@ vi.mock('../hooks/useExpenseDetail', () => ({
   useExpenseDetail: () => ({ data: detailData.current, isLoading: false }),
 }));
 vi.mock('../hooks/useMarkExpensePaid', () => ({
-  useMarkExpensePaid: () => ({ mutateAsync: vi.fn() }),
+  useMarkExpensePaid: () => ({ mutateAsync: markPaidMutateAsync }),
 }));
 vi.mock('../hooks/useDeleteExpense', () => ({
   useDeleteExpense: () => ({ mutateAsync: vi.fn() }),
@@ -113,6 +114,52 @@ describe('ExpenseDetailDialog — Autopay', () => {
     render(wrap(<ExpenseDetailDialog open id="e1" onClose={() => {}} />));
     fireEvent.click(screen.getByRole('button', { name: 'Disable autopay' }));
     expect(autopayMutateAsync).toHaveBeenCalledWith({ id: 'e1', enabled: false });
+  });
+});
+
+describe('ExpenseDetailDialog — Mark paid asks for the real payment date', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    markPaidMutateAsync.mockResolvedValue({});
+  });
+
+  it('defaults the date input to today and submits it as paidDate', () => {
+    detailData.current = baseExpense({ status: 'pending' });
+    render(wrap(<ExpenseDetailDialog open id="e1" onClose={() => {}} />));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark paid' }));
+
+    const dateInput = screen.getByLabelText('Payment date') as HTMLInputElement;
+    const today = new Date().toISOString().slice(0, 10);
+    expect(dateInput.value).toBe(today);
+    expect(dateInput.max).toBe(
+      new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+    );
+
+    fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: 'cash' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(markPaidMutateAsync).toHaveBeenCalledWith({
+      id: 'e1',
+      paymentMethod: 'cash',
+      paidDate: today,
+    });
+  });
+
+  it('submits a user-chosen past date instead of today', () => {
+    detailData.current = baseExpense({ status: 'pending' });
+    render(wrap(<ExpenseDetailDialog open id="e1" onClose={() => {}} />));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark paid' }));
+    fireEvent.change(screen.getByLabelText('Payment method'), { target: { value: 'cash' } });
+    fireEvent.change(screen.getByLabelText('Payment date'), { target: { value: '2026-08-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(markPaidMutateAsync).toHaveBeenCalledWith({
+      id: 'e1',
+      paymentMethod: 'cash',
+      paidDate: '2026-08-01',
+    });
   });
 });
 

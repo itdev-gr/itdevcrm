@@ -3,15 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { FilterBar, FilterSelect, PageHeader, SegmentedControl } from '@/components/layout/page-shell';
 import { useExpenses } from './hooks/useExpenses';
 import { useExpenseCategories } from './hooks/useExpenseCategories';
 import { useExpensesRealtime } from './hooks/useExpensesRealtime';
+import { useMarkExpensePaid } from './hooks/useMarkExpensePaid';
 import { ExpenseDetailDialog } from './components/ExpenseDetailDialog';
 import { NewExpenseDialog } from './components/NewExpenseDialog';
 import { ExpenseRow } from './components/ExpenseRow';
 import { ExpensesSummaryBar } from './components/ExpensesSummaryBar';
 import { monthOptions, monthRange } from './utils/monthFilter';
+
+/** One day after today — the latest paid_at the DB guard (money_paid_needs_date) allows. */
+function tomorrowDateString(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
 
 type StatusFilter = 'all' | 'pending' | 'paid';
 
@@ -25,6 +35,13 @@ export function ExpensesPage() {
   const [month, setMonth] = useState('');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkMethod, setBulkMethod] = useState('');
+  const [bulkDate, setBulkDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [bulkPending, setBulkPending] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const markPaid = useMarkExpensePaid();
 
   const cats = useExpenseCategories();
   const isEl = i18n.language.startsWith('el');
@@ -44,6 +61,33 @@ export function ExpensesPage() {
     { value: 'pending', label: t('expenses_list.status_pending') },
     { value: 'paid', label: t('expenses_list.status_paid') },
   ];
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function onBulkMarkPaid() {
+    if (!bulkMethod || selected.size === 0) return;
+    setBulkPending(true);
+    setBulkError(null);
+    try {
+      for (const id of selected) {
+        await markPaid.mutateAsync({ id, paymentMethod: bulkMethod, paidDate: bulkDate });
+      }
+      setSelected(new Set());
+      setBulkOpen(false);
+      setBulkMethod('');
+    } catch (err) {
+      setBulkError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBulkPending(false);
+    }
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
@@ -95,6 +139,61 @@ export function ExpensesPage() {
         </span>
       </FilterBar>
 
+      {selected.size > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/50 px-3 py-2">
+          <span className="text-xs text-muted-foreground">
+            {t('expenses_list.selected_count', { count: selected.size, defaultValue: '{{count}} selected' })}
+          </span>
+          <Popover
+            open={bulkOpen}
+            onOpenChange={(open) => {
+              setBulkOpen(open);
+              setBulkError(null);
+              if (open) setBulkDate(new Date().toISOString().slice(0, 10));
+            }}
+          >
+            <PopoverTrigger asChild>
+              <Button type="button" size="sm" variant="outline">
+                {t('expenses_list.bulk_mark_paid')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 space-y-2 p-3">
+              <Label className="text-xs">{t('expense_form.payment_method')}</Label>
+              <Input
+                aria-label={t('expense_form.payment_method')}
+                value={bulkMethod}
+                onChange={(e) => setBulkMethod(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <Label className="text-xs">
+                {t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
+              </Label>
+              <Input
+                type="date"
+                aria-label={t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
+                value={bulkDate}
+                max={tomorrowDateString()}
+                onChange={(e) => setBulkDate(e.target.value)}
+                className="h-8 text-xs"
+              />
+              {bulkError && <p className="text-xs text-red-600 dark:text-red-400">{bulkError}</p>}
+              <Button
+                type="button"
+                size="sm"
+                className="w-full"
+                disabled={!bulkMethod || !bulkDate || bulkPending}
+                onClick={onBulkMarkPaid}
+              >
+                {t('expenses_list.bulk_mark_paid')}
+              </Button>
+            </PopoverContent>
+          </Popover>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            {t('expenses_list.clear_selection', { defaultValue: 'Clear' })}
+          </Button>
+        </div>
+      )}
+
       <ExpensesSummaryBar rows={rows} />
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
@@ -113,6 +212,7 @@ export function ExpensesPage() {
             <table className="w-full min-w-[760px] border-collapse text-sm">
               <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
                 <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3 font-medium"></th>
                   <th className="px-4 py-3 font-medium">{t('expense_form.start_date')}</th>
                   <th className="px-4 py-3 font-medium">{t('expense_form.category')}</th>
                   <th className="px-4 py-3 font-medium">{t('expense_form.vendor')}</th>
@@ -124,7 +224,13 @@ export function ExpensesPage() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <ExpenseRow key={r.id} row={r} onClick={setDetailId} />
+                  <ExpenseRow
+                    key={r.id}
+                    row={r}
+                    onClick={setDetailId}
+                    selected={selected.has(r.id)}
+                    onToggleSelect={toggleSelected}
+                  />
                 ))}
               </tbody>
             </table>

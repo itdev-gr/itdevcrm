@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import '@/lib/i18n';
 import { ExpenseRow } from './ExpenseRow';
 import type { ExpenseListRow } from '../hooks/useExpenses';
@@ -50,5 +50,49 @@ describe('ExpenseRow — autopay badge', () => {
   it('hides the badge when autopay is off', () => {
     renderRow(row());
     expect(screen.queryByText(/Autopay/)).toBeNull();
+  });
+});
+
+describe('ExpenseRow — bulk mark-paid selection checkbox', () => {
+  it('does not render a checkbox column when onToggleSelect is not passed', () => {
+    renderRow(row());
+    expect(screen.queryByLabelText('Select row')).toBeNull();
+  });
+
+  it('shows a checkbox for pending rows and calls onToggleSelect on change', () => {
+    const onToggleSelect = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <ExpenseRow row={row({ status: 'pending' })} onClick={() => {}} onToggleSelect={onToggleSelect} />
+        </tbody>
+      </table>,
+    );
+    fireEvent.click(screen.getByLabelText('Select row'));
+    expect(onToggleSelect).toHaveBeenCalledWith('e1');
+  });
+
+  it('hides the checkbox for already-paid rows', () => {
+    render(
+      <table>
+        <tbody>
+          <ExpenseRow row={row({ status: 'paid' })} onClick={() => {}} onToggleSelect={vi.fn()} />
+        </tbody>
+      </table>,
+    );
+    expect(screen.queryByLabelText('Select row')).toBeNull();
+  });
+
+  it('clicking the checkbox does not also open the row detail dialog', () => {
+    const onClick = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <ExpenseRow row={row({ status: 'pending' })} onClick={onClick} onToggleSelect={vi.fn()} />
+        </tbody>
+      </table>,
+    );
+    fireEvent.click(screen.getByLabelText('Select row'));
+    expect(onClick).not.toHaveBeenCalled();
   });
 });

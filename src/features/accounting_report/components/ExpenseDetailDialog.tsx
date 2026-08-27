@@ -3,6 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useExpenseDetail } from '../hooks/useExpenseDetail';
 import { ExpenseEditForm } from './ExpenseEditForm';
 
+/** One day after today — the latest paid_at the DB guard (money_paid_needs_date) allows. */
+function tomorrowDateString(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 function formatPaidAt(iso: string | null, locale: string): string {
   if (!iso) return '';
   try {
@@ -36,6 +43,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
 
   const [showPaidForm, setShowPaidForm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [paidDate, setPaidDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [autopayMethod, setAutopayMethod] = useState('');
   const [showAutopayMethod, setShowAutopayMethod] = useState(false);
   const [autopayError, setAutopayError] = useState<string | null>(null);
@@ -54,7 +62,7 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
 
   async function onMarkPaid() {
     if (!id || !paymentMethod) return;
-    await markPaid.mutateAsync({ id, paymentMethod });
+    await markPaid.mutateAsync({ id, paymentMethod, paidDate });
     setShowPaidForm(false);
     setPaymentMethod('');
   }
@@ -196,7 +204,10 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
                 {!showPaidForm ? (
                   <button
                     type="button"
-                    onClick={() => setShowPaidForm(true)}
+                    onClick={() => {
+                      setPaidDate(new Date().toISOString().slice(0, 10));
+                      setShowPaidForm(true);
+                    }}
                     className="rounded border px-3 py-1.5 text-sm"
                   >
                     {t('expense_detail.mark_paid')}
@@ -212,9 +223,21 @@ export function ExpenseDetailDialog({ open, id, onClose }: ExpenseDetailDialogPr
                         className="mt-1 block rounded border px-2 py-1"
                       />
                     </label>
+                    <label className="text-sm">
+                      {t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
+                      <input
+                        type="date"
+                        aria-label={t('expense_detail.paid_date', { defaultValue: 'Payment date' })}
+                        value={paidDate}
+                        max={tomorrowDateString()}
+                        onChange={(ev) => setPaidDate(ev.target.value)}
+                        className="mt-1 block rounded border px-2 py-1"
+                      />
+                    </label>
                     <button
                       type="button"
                       onClick={onMarkPaid}
+                      disabled={!paidDate}
                       className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
                     >
                       {t('expense_form.submit')}
