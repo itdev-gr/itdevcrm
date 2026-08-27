@@ -72,6 +72,10 @@
     "recurring_yearly": "Yearly",
     "amount_net": "Amount (net)",
     "vat_rate": "VAT rate (%)",
+    "vat_0": "0%",
+    "vat_24": "24%",
+    "vat_custom": "Custom",
+    "vat_custom_input": "Custom VAT rate (%)",
     "amount_gross": "Gross",
     "start_date": "Start date",
     "end_date": "End date",
@@ -81,6 +85,7 @@
     "receipt": "Receipt",
     "upload_receipt": "Upload receipt",
     "view_receipt": "View receipt",
+    "no_receipt_note": "Saving without a receipt",
     "submit": "Save",
     "submit_and_mark_paid": "Save & mark paid",
     "cancel": "Cancel",
@@ -93,7 +98,8 @@
       "payment_method_required": "Add a payment method to mark this expense as paid.",
       "file_too_large": "File is larger than 10 MB.",
       "file_wrong_type": "Only PDF / PNG / JPEG / WebP are allowed.",
-      "autopay_requires_method": "A payment method is required for autopay"
+      "autopay_requires_method": "A payment method is required for autopay",
+      "vat_required": "Choose a VAT rate."
     }
   },
   "autopay": {

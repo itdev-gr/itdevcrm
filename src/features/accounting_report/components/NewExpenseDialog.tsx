@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { useExpenseCategories } from '../hooks/useExpenseCategories';
 import { useCreateExpense } from '../hooks/useCreateExpense';
 import { useSetExpenseAutopay } from '../hooks/useSetExpenseAutopay';
@@ -10,6 +11,7 @@ export type NewExpenseDialogProps = {
 };
 
 type BillingType = 'one_time' | 'recurring_monthly' | 'recurring_yearly';
+type VatChoice = '0' | '24' | 'custom';
 
 function autoEndDate(start: string, billingType: BillingType): string | null {
   if (!start) return null;
@@ -35,13 +37,15 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
   const cats = useExpenseCategories();
   const create = useCreateExpense();
   const autopayMut = useSetExpenseAutopay();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
   const isEl = i18n.language.startsWith('el');
 
   const [categoryId, setCategoryId] = useState('');
   const [vendor, setVendor] = useState('');
   const [billingType, setBillingType] = useState<BillingType>('one_time');
   const [amountNet, setAmountNet] = useState('');
-  const [vatRate, setVatRate] = useState('24');
+  const [vatChoice, setVatChoice] = useState<VatChoice | null>(null);
+  const [vatCustom, setVatCustom] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -49,8 +53,17 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
   const [autopayOn, setAutopayOn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const grossNum =
-    Number(amountNet || 0) + (Number(amountNet || 0) * Number(vatRate || 0)) / 100;
+  // No preselection: the previous silent '24' default meant staff always
+  // overrode it (135/135 live rows landed at 0%). Forcing a conscious pick
+  // means "no choice yet" (null) is a distinct state from "0% chosen".
+  const vatRateValue: number | null =
+    vatChoice === null
+      ? null
+      : vatChoice === 'custom'
+        ? (vatCustom === '' || Number.isNaN(Number(vatCustom)) ? null : Number(vatCustom))
+        : Number(vatChoice);
+
+  const grossNum = Number(amountNet || 0) + (Number(amountNet || 0) * (vatRateValue ?? 0)) / 100;
 
   function onBillingChange(bt: BillingType) {
     setBillingType(bt);
@@ -69,6 +82,7 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
     setError(null);
     if (!categoryId) return setError(t('expense_form.validation.category_required'));
     if (!amountNet) return setError(t('expense_form.validation.amount_required'));
+    if (vatRateValue === null) return setError(t('expense_form.validation.vat_required'));
     if (!startDate) return setError(t('expense_form.validation.start_date_required'));
     if (endDate && endDate < startDate)
       return setError(t('expense_form.validation.end_date_after_start'));
@@ -83,10 +97,11 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
         vendor: vendor || null,
         billingType,
         amountNet: Number(amountNet),
-        vatRate: Number(vatRate),
+        vatRate: vatRateValue,
         startDate,
         endDate: endDate || null,
         paymentMethod: paymentMethod || null,
+        paidByUserId: userId,
         notes: notes || null,
         markPaid,
         autopay: wantsAutopay,
@@ -178,16 +193,31 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
               className="mt-1 block w-full rounded border px-2 py-1"
             />
           </label>
-          <label>
-            {t('expense_form.vat_rate')}
-            <input
-              aria-label={t('expense_form.vat_rate')}
-              type="number" step="0.01" min="0" max="100"
-              value={vatRate}
-              onChange={(e) => setVatRate(e.target.value)}
-              className="mt-1 block w-full rounded border px-2 py-1"
-            />
-          </label>
+          <div>
+            <p>{t('expense_form.vat_rate')}</p>
+            <div className="mt-1 flex gap-1">
+              {(['0', '24', 'custom'] as VatChoice[]).map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  aria-label={t(`expense_form.vat_${choice}`)}
+                  onClick={() => setVatChoice(choice)}
+                  className={`rounded border px-2 py-1 text-xs ${vatChoice === choice ? 'bg-primary text-primary-foreground' : ''}`}
+                >
+                  {t(`expense_form.vat_${choice}`)}
+                </button>
+              ))}
+            </div>
+            {vatChoice === 'custom' && (
+              <input
+                aria-label={t('expense_form.vat_custom_input')}
+                type="number" step="0.01" min="0" max="100"
+                value={vatCustom}
+                onChange={(e) => setVatCustom(e.target.value)}
+                className="mt-1 block w-full rounded border px-2 py-1"
+              />
+            )}
+          </div>
           <div>
             {t('expense_form.amount_gross')}
             <div data-testid="amount-gross-display" className="mt-1 rounded border bg-muted px-2 py-1">
@@ -239,6 +269,8 @@ export function NewExpenseDialog({ open, onClose }: NewExpenseDialogProps) {
             rows={2}
           />
         </label>
+
+        <p className="mt-3 text-xs text-muted-foreground">{t('expense_form.no_receipt_note')}</p>
 
         {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 

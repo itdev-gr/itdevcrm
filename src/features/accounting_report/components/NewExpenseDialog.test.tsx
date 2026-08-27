@@ -20,6 +20,9 @@ vi.mock('../hooks/useCreateExpense', () => ({
 vi.mock('../hooks/useSetExpenseAutopay', () => ({
   useSetExpenseAutopay: () => ({ mutateAsync: autopayMutateAsync, isPending: false }),
 }));
+vi.mock('@/lib/stores/authStore', () => ({
+  useAuthStore: (sel: (s: { user: { id: string } }) => unknown) => sel({ user: { id: 'user-1' } }),
+}));
 
 import { NewExpenseDialog } from './NewExpenseDialog';
 
@@ -31,6 +34,7 @@ function wrap(ui: ReactNode) {
 function fillRequiredFields() {
   fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'cat-1' } });
   fireEvent.change(screen.getByLabelText('Amount (net)'), { target: { value: '100' } });
+  fireEvent.click(screen.getByRole('button', { name: '24%' }));
   fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2026-06-01' } });
 }
 
@@ -145,5 +149,111 @@ describe('NewExpenseDialog — Autopay', () => {
 
     expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ autopay: false }));
     expect(autopayMutateAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('NewExpenseDialog — explicit VAT choice', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mutateAsync.mockResolvedValue({ id: 'e1' });
+  });
+
+  it('blocks submit until a VAT rate is chosen, with the validation message', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    // Fill everything except VAT — no segment clicked.
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'cat-1' } });
+    fireEvent.change(screen.getByLabelText('Amount (net)'), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2026-06-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText('Choose a VAT rate.')).toBeTruthy();
+  });
+
+  it('has no VAT segment preselected', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    const zero = screen.getByRole('button', { name: '0%' });
+    const twentyFour = screen.getByRole('button', { name: '24%' });
+    expect(zero.className).not.toContain('bg-primary');
+    expect(twentyFour.className).not.toContain('bg-primary');
+  });
+
+  it('sets vat_rate to 0 when the 0% segment is chosen', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'cat-1' } });
+    fireEvent.change(screen.getByLabelText('Amount (net)'), { target: { value: '100' } });
+    fireEvent.click(screen.getByRole('button', { name: '0%' }));
+    fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2026-06-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ vatRate: 0 }));
+  });
+
+  it('sets vat_rate to 24 when the 24% segment is chosen', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ vatRate: 24 }));
+  });
+
+  it('opens a numeric input for Custom and sends the typed value', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'cat-1' } });
+    fireEvent.change(screen.getByLabelText('Amount (net)'), { target: { value: '100' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Custom' }));
+    fireEvent.change(screen.getByLabelText('Custom VAT rate (%)'), { target: { value: '13' } });
+    fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2026-06-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ vatRate: 13 }));
+  });
+
+  it('blocks submit when Custom is chosen but left empty', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'cat-1' } });
+    fireEvent.change(screen.getByLabelText('Amount (net)'), { target: { value: '100' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Custom' }));
+    fireEvent.change(screen.getByLabelText('Start date'), { target: { value: '2026-06-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText('Choose a VAT rate.')).toBeTruthy();
+  });
+});
+
+describe('NewExpenseDialog — paid-by wiring', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mutateAsync.mockResolvedValue({ id: 'e1' });
+  });
+
+  it('includes the current user id as paidByUserId in the create payload', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ paidByUserId: 'user-1' }));
+  });
+});
+
+describe('NewExpenseDialog — receipt nudge', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mutateAsync.mockResolvedValue({ id: 'e1' });
+  });
+
+  it('renders a non-blocking note about saving without a receipt', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    expect(screen.getByText('Saving without a receipt')).toBeTruthy();
+  });
+
+  it('does not block submit', () => {
+    render(wrap(<NewExpenseDialog open onClose={() => {}} />));
+    fillRequiredFields();
+    expect(screen.getByText('Saving without a receipt')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
   });
 });
