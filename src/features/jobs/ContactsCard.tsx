@@ -74,13 +74,16 @@ function ContactsForm({ client, clientId }: { client: ClientShape; clientId: str
     // clients:edit (accounting/admin only) and fails with 0 rows and NO error
     // for everyone else — the autosave used to report success while nothing
     // was saved. The RPC allows any clients:view holder and raises on failure.
+    // Omitted args fall back to the RPC's `default null`, which clears the
+    // column — exactly what an erased field means (exactOptionalPropertyTypes
+    // forbids passing explicit undefined).
     const { error } = await supabase.rpc('update_client_contacts', {
       p_client_id: clientId,
-      p_first: next.contact_first_name ?? undefined,
-      p_last: next.contact_last_name ?? undefined,
-      p_email: next.email ?? undefined,
-      p_phone: next.phone ?? undefined,
-      p_info: next.contact_info ?? undefined,
+      ...(next.contact_first_name != null && { p_first: next.contact_first_name }),
+      ...(next.contact_last_name != null && { p_last: next.contact_last_name }),
+      ...(next.email != null && { p_email: next.email }),
+      ...(next.phone != null && { p_phone: next.phone }),
+      ...(next.contact_info != null && { p_info: next.contact_info }),
       p_additional: next.additional_contacts as unknown as never,
     });
     if (error) throw new Error(error.message);
