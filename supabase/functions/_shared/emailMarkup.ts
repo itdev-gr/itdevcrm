@@ -12,8 +12,8 @@
 // {{variables}} are interpolated by the caller BEFORE rendering.
 
 const P_STYLE = 'margin:0 0 12px';
-const H_STYLE = 'font-size:16px;font-weight:700;margin:24px 0 8px';
-const UL_STYLE = 'margin:0 0 12px 20px;padding:0';
+const H_STYLE = 'font-size:16px;font-weight:700;margin:24px 0 8px;font-family:Arial,sans-serif';
+const UL_STYLE = 'margin:0 0 12px;padding-left:20px';
 const LI_STYLE = 'margin:4px 0';
 const A_STYLE = 'color:#2563eb;text-decoration:underline';
 
@@ -81,10 +81,11 @@ export function markupToText(text: string): string {
 }
 
 export function renderEmailMarkup(text: string): { html: string; text: string } {
-  const html = text
+  const src = text.replace(/\r\n?/g, '\n');
+  const html = src
     .split(/\n\s*\n/)
     .map(renderBlock)
     .filter(Boolean)
     .join('');
-  return { html, text: markupToText(text) };
+  return { html, text: markupToText(src) };
 }

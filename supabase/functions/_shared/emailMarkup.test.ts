@@ -15,14 +15,14 @@ describe('renderEmailMarkup', () => {
 
   it('renders a "## " line as an h3 heading', () => {
     const { html } = renderEmailMarkup('## 1. Πρόσβαση στη διαχείριση\n\nκείμενο');
-    expect(html).toContain('<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px">1. Πρόσβαση στη διαχείριση</h3>');
+    expect(html).toContain('<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px;font-family:Arial,sans-serif">1. Πρόσβαση στη διαχείριση</h3>');
     expect(html).toContain('<p style="margin:0 0 12px">κείμενο</p>');
   });
 
   it('renders a block of "- " lines as a bullet list with inline bold', () => {
     const { html } = renderEmailMarkup('- **Όνομα χρήστη**\n- Ιδανικά, **πλήρη δικαιώματα**');
     expect(html).toBe(
-      '<ul style="margin:0 0 12px 20px;padding:0">' +
+      '<ul style="margin:0 0 12px;padding-left:20px">' +
         '<li style="margin:4px 0"><strong>Όνομα χρήστη</strong></li>' +
         '<li style="margin:4px 0">Ιδανικά, <strong>πλήρη δικαιώματα</strong></li>' +
         '</ul>',
@@ -55,6 +55,13 @@ describe('renderEmailMarkup', () => {
 
   it('returns empty html/text for a blank body', () => {
     expect(renderEmailMarkup('   \n\n ')).toEqual({ html: '', text: '' });
+  });
+
+  it('normalises CRLF so the plain-text part carries no \\r', () => {
+    const { html, text } = renderEmailMarkup('α\r\n\r\n**β**');
+    expect(html).toBe('<p style="margin:0 0 12px">α</p><p style="margin:0 0 12px"><strong>β</strong></p>');
+    expect(text).toBe('α\n\nβ');
+    expect(text).not.toContain('\r');
   });
 });
 

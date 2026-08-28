@@ -135,7 +135,7 @@ describe('email templates', () => {
       { code: '000123' },
     );
     expect(r.subject).toBe('000123 - Πρόσβαση');
-    expect(r.html).toContain('<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px">1. Πρόσβαση</h3>');
+    expect(r.html).toContain('<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px;font-family:Arial,sans-serif">1. Πρόσβαση</h3>');
     expect(r.html).toContain('Για τις <strong>βελτιώσεις</strong> σας:');
     expect(r.html).toContain('<li style="margin:4px 0"><strong>Όνομα χρήστη</strong></li>');
     expect(r.html).toContain('<a href="mailto:info@itdev.gr"');
