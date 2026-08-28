@@ -7,6 +7,8 @@ export type OfferEmailVars = {
   owner_name: string;
   offer_number: string;
   validity_days: number;
+  /** Public no-login link (https://www.itdevcrm.com/o/<public_token>). */
+  offer_url: string;
 };
 
 export type OfferTemplate = { key: string; subject: string; body: string };
@@ -24,14 +26,20 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/** Bare http(s) URLs in already-escaped text become links (mirrors the server's
+ *  linkify in send-email/templates.ts; sanitizeEmailHtml allows <a href>). */
+function linkify(escaped: string): string {
+  return escaped.replace(/https?:\/\/[^\s<]+/g, (url) => `<a href="${url}">${url}</a>`);
+}
+
 /** Plain template text → paragraphs: blank-line-separated blocks become <p>,
- *  single newlines inside a block become <br>. */
+ *  single newlines inside a block become <br>, URLs become links. */
 export function textToHtml(text: string): string {
   return text
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     .filter(Boolean)
-    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`)
+    .map((block) => `<p>${linkify(escapeHtml(block)).replace(/\n/g, '<br>')}</p>`)
     .join('');
 }
 

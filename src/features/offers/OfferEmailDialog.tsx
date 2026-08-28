@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SendEmailDialog } from '@/features/email/SendEmailDialog';
-import type { EmailAttachmentRef } from '@/features/email/hooks/useEmailAttachmentStaging';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUser } from '@/features/users/hooks/useUser';
 import { useLead } from '@/features/leads/hooks/useLead';
@@ -9,6 +8,7 @@ import { categoryLabel, SERVICE_TYPES } from '@/lib/offers/serviceLabels';
 import type { OfferItem } from '@/lib/offers/types';
 import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
+import { PUBLIC_OFFER_BASE } from './publicOfferLink';
 import { useEnsureOfferPdf, type OfferPdfInfo } from './hooks/useEnsureOfferPdf';
 import { useOfferEmailTemplates } from './hooks/useOfferEmailTemplates';
 import { buildOfferEmail, buildServiceBlockHtml, interpolate, textToHtml, type OfferEmailVars, type OfferTemplate } from './offerEmailBody';
@@ -16,7 +16,7 @@ import { buildOfferEmail, buildServiceBlockHtml, interpolate, textToHtml, type O
 type Props = { offerId: string; open: boolean; onClose: () => void };
 
 // Fallbacks so the composer still opens if the seed rows were deleted.
-const FALLBACK_INTRO: OfferTemplate = { key: 'offer_email_intro', subject: 'Η προσφορά μας — {{offer_number}}', body: 'Αγαπητέ/ή {{name}}, θα βρείτε συνημμένη την προσφορά μας.' };
+const FALLBACK_INTRO: OfferTemplate = { key: 'offer_email_intro', subject: 'Η προσφορά μας — {{offer_number}}', body: 'Αγαπητέ/ή {{name}}, θα βρείτε την προσφορά μας εδώ:\n{{offer_url}}' };
 // No sign-off here: the Gmail signature is appended automatically at send.
 const FALLBACK_OUTRO: OfferTemplate = { key: 'offer_email_outro', subject: '', body: 'Παραμένουμε στη διάθεσή σας για οποιαδήποτε απορία.' };
 
@@ -69,6 +69,7 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     owner_name: me?.full_name ?? '',
     offer_number: offer?.offer_number ?? '',
     validity_days: offer?.validity_days ?? 14,
+    offer_url: offer ? `${PUBLIC_OFFER_BASE}${offer.public_token}` : '',
   }), [lead, me, offer]);
 
   const outro = byKey.get('offer_email_outro') ?? FALLBACK_OUTRO;
@@ -111,7 +112,7 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
               className="rounded border px-3 py-1.5 text-sm"
               onClick={() => setSkipPdf(true)}
             >
-              {t('offer_composer.continue_without_pdf')}
+              {t('offer_composer.continue_anyway')}
             </button>
             <button
               type="button"
@@ -140,16 +141,6 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     );
   }
 
-  const initialAttachments: EmailAttachmentRef[] = pdfInfo
-    ? [{
-        bucket: 'offer-pdfs',
-        path: pdfInfo.path,
-        filename: `${offer.offer_number ?? 'offer'}.pdf`,
-        mimeType: 'application/pdf',
-        bytes: pdfInfo.bytes,
-      }]
-    : [];
-
   const availableTypes = SERVICE_TYPES.filter(
     (type) => byKey.has(`offer_svc_${type}`) && !offerTypes.includes(type) && !extraTypes.has(type),
   );
@@ -162,7 +153,6 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
       subject={draft.subject}
       body={draft.html}
       dedupeKey={dedupeKey}
-      initialAttachments={initialAttachments}
       onClose={onClose}
       onSent={() => {
         if (offer.status === 'draft') updateStatus.mutate('sent');

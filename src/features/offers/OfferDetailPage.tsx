@@ -9,6 +9,7 @@ import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
 import { useDownloadOfferPdf } from './hooks/useDownloadOfferPdf';
 import { OfferEmailDialog } from './OfferEmailDialog';
+import { publicOfferUrl } from './publicOfferLink';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatEur } from '@/lib/offers/calculate';
 import type { OfferItem, OfferTotals } from '@/lib/offers/types';
@@ -33,6 +34,7 @@ export function OfferDetailPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [emailOpen, setEmailOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // ?send=1 (set by the offer builder): auto-open the email composer once,
   // then strip the param so refresh/back doesn't re-open it.
@@ -114,6 +116,17 @@ export function OfferDetailPage() {
               ))}
             </select>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              void navigator.clipboard.writeText(publicOfferUrl(offer.public_token));
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2000);
+            }}
+          >
+            {linkCopied ? '✓ Αντιγράφηκε' : 'Δημόσιο link'}
+          </Button>
           <Button
             type="button"
             variant="outline"

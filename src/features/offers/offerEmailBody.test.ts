@@ -6,6 +6,7 @@ const vars: OfferEmailVars = {
   owner_name: 'Μάριος',
   offer_number: 'OFR-202608-0042',
   validity_days: 14,
+  offer_url: 'https://www.itdevcrm.com/o/6f1a2b3c-4d5e-6f70-8192-a3b4c5d6e7f8',
 };
 
 describe('interpolate (parity with send-email templates.ts)', () => {
@@ -29,6 +30,22 @@ describe('textToHtml', () => {
 
   it('escapes HTML in the template text', () => {
     expect(textToHtml('1 < 2 & "x"')).toBe('<p>1 &lt; 2 &amp; &quot;x&quot;</p>');
+  });
+
+  it('turns a bare URL into a link (so {{offer_url}} is clickable)', () => {
+    expect(textToHtml('Δείτε εδώ:\nhttps://www.itdevcrm.com/o/abc-123')).toBe(
+      '<p>Δείτε εδώ:<br><a href="https://www.itdevcrm.com/o/abc-123">https://www.itdevcrm.com/o/abc-123</a></p>',
+    );
+  });
+
+  it('links a URL inside a sentence without swallowing trailing text', () => {
+    expect(textToHtml('Πατήστε https://example.com/x και μετά απαντήστε.')).toBe(
+      '<p>Πατήστε <a href="https://example.com/x">https://example.com/x</a> και μετά απαντήστε.</p>',
+    );
+  });
+
+  it('leaves URL-free text unchanged and never double-escapes', () => {
+    expect(textToHtml('Χωρίς σύνδεσμο & τέλος')).toBe('<p>Χωρίς σύνδεσμο &amp; τέλος</p>');
   });
 });
 

@@ -6295,6 +6295,7 @@ export type Database = {
           notes: string | null
           offer_number: string | null
           pdf_path: string | null
+          public_token: string
           sent_at: string | null
           status: string
           totals: Json
@@ -6315,6 +6316,7 @@ export type Database = {
           notes?: string | null
           offer_number?: string | null
           pdf_path?: string | null
+          public_token?: string
           sent_at?: string | null
           status?: string
           totals?: Json
@@ -6335,6 +6337,7 @@ export type Database = {
           notes?: string | null
           offer_number?: string | null
           pdf_path?: string | null
+          public_token?: string
           sent_at?: string | null
           status?: string
           totals?: Json
