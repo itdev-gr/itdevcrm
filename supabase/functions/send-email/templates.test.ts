@@ -124,4 +124,35 @@ describe('email templates', () => {
     );
     expect(r.subject).toBe('005467 - Καλώς ήρθατε');
   });
+
+  it('renders markdown-lite markup from an admin-edited template body', () => {
+    const r = renderDbTemplate(
+      {
+        subject: '{{code}} - Πρόσβαση',
+        body: '## 1. Πρόσβαση\n\nΓια τις **βελτιώσεις** σας:\n\n- **Όνομα χρήστη**\n- Κωδικό\n\n**Email:** info@itdev.gr\nhttps://shorturl.at/OqTid',
+        client_facing: true,
+      },
+      { code: '000123' },
+    );
+    expect(r.subject).toBe('000123 - Πρόσβαση');
+    expect(r.html).toContain('<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px">1. Πρόσβαση</h3>');
+    expect(r.html).toContain('Για τις <strong>βελτιώσεις</strong> σας:');
+    expect(r.html).toContain('<li style="margin:4px 0"><strong>Όνομα χρήστη</strong></li>');
+    expect(r.html).toContain('<a href="mailto:info@itdev.gr"');
+    expect(r.html).toContain('<a href="https://shorturl.at/OqTid"');
+    expect(r.html).not.toContain('**');
+    expect(r.html).not.toContain('## ');
+    // plain-text twin: markers stripped, structure kept, signature appended
+    expect(r.text.startsWith('1. Πρόσβαση\n\nΓια τις βελτιώσεις σας:\n\n- Όνομα χρήστη\n- Κωδικό\n\nEmail: info@itdev.gr\nhttps://shorturl.at/OqTid')).toBe(true);
+    expect(r.text).toContain('IT DEV');
+  });
+
+  it('keeps interpolating {{variables}} before markup rendering', () => {
+    const r = renderDbTemplate(
+      { subject: 'S', body: 'Γεια **{{name}}**', client_facing: false },
+      { name: 'Μαρία' },
+    );
+    expect(r.html).toContain('<strong>Μαρία</strong>');
+    expect(r.text).toBe('Γεια Μαρία');
+  });
 });

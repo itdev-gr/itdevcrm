@@ -2,6 +2,7 @@
 // Each template returns { subject, html, text }. Keep `data` shapes documented here.
 
 import { renderSignatureHtml, renderSignatureText } from '../_shared/signature.ts';
+import { renderEmailMarkup } from '../_shared/emailMarkup.ts';
 
 export type Rendered = { subject: string; html: string; text: string };
 
@@ -309,7 +310,11 @@ export function renderDbTemplate(
   opts?: { sigHtml?: string },
 ): Rendered {
   const subject = cleanSubject(interpolate(row.subject, data));
-  const bodyText = interpolate(row.body, data);
+  // Admin-edited bodies may carry markdown-lite markup (**bold**, ## heading,
+  // - bullets, links). One shared renderer feeds both the HTML and the
+  // plain-text part — and the admin preview uses the same module.
+  const body = renderEmailMarkup(interpolate(row.body, data));
+  const bodyText = body.text;
   // Unsubscribe opt-out footer removed per product decision (2026-06-24): no
   // emails carry the "…πατήστε εδώ" line anymore.
   const footer = '';
@@ -327,7 +332,7 @@ export function renderDbTemplate(
     ? opts.sigHtml
     : (row.client_facing !== false ? COMPANY_SIG_HTML : '');
   const html = shell(
-    `<p>${linkify(escapeHtml(bodyText)).replace(/\n/g, '<br/>')}</p>${cta}${footer}`,
+    `${body.html}${cta}${footer}`,
     sig,
   );
   return {
