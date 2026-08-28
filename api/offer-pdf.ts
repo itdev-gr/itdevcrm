@@ -1,27 +1,12 @@
 import { withSentry, captureApiError } from './_sentry.js';
-// All runtime imports are deferred until inside the handler so a failed
-// dependency surfaces as a 500 with a real stack instead of Vercel's
-// opaque FUNCTION_INVOCATION_FAILED at module-load time.
+// Staff offer-PDF endpoint: Bearer-JWT auth, RLS-scoped offer read, then the
+// shared generation core (api/_offer-pdf-core.ts) renders + stores the PDF and
+// we hand back a short-lived signed URL. The public no-login variant lives in
+// api/offer-view.ts.
+// Runtime imports are deferred until inside the handler so a failed dependency
+// surfaces as a 500 with a real stack instead of Vercel's opaque
+// FUNCTION_INVOCATION_FAILED at module-load time.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { resolveOfferRecipient, type RecipientSource } from './_recipient.js';
-
-type OfferItem = {
-  category: string;
-  itemId: string;
-  label: string;
-  description: string;
-  unitPrice: number;
-  qty: number;
-  lineTotal: number;
-};
-
-type OfferTotals = {
-  subtotal: number;
-  discountAmount: number;
-  taxable: number;
-  vatAmount: number;
-  total: number;
-};
 
 export const config = { maxDuration: 60 };
 
@@ -56,10 +41,8 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     return;
   }
 
-  // Defer the supabase + template imports so a failed module load lands
-  // inside the outer handler's try/catch rather than crashing cold start.
   const { createClient } = await import('@supabase/supabase-js');
-  const { renderOfferHtml } = await import('./_pdf-template.js');
+  const { generateOfferPdf } = await import('./_offer-pdf-core.js');
 
   // Service-role client used for storage + DB updates.
   const admin = createClient(supabaseUrl, serviceRoleKey);
@@ -78,119 +61,15 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     return;
   }
 
-  const { data: offer, error } = await userClient
-    .from('offers').select('*').eq('id', offerId).single();
-  if (error || !offer) {
-    res.status(404).json({ error: error?.message ?? 'not found' });
+  const result = await generateOfferPdf(userClient, admin, offerId);
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
     return;
   }
-
-  // Resolve the recipient printed at the top of the PDF. Prefer a linked
-  // client; otherwise fall back to the originating lead — most offers are
-  // drafted from an un-converted lead (no client_id), and without this the
-  // header printed the literal word "Client".
-  let client: RecipientSource = null;
-  if (offer.client_id) {
-    const { data } = await userClient
-      .from('clients').select('name, email, contact_first_name, contact_last_name')
-      .eq('id', offer.client_id).single();
-    client = data;
-  }
-  let lead: RecipientSource = null;
-  if (!client && offer.lead_id) {
-    const { data } = await userClient
-      .from('leads').select('company_name, email, contact_first_name, contact_last_name')
-      .eq('id', offer.lead_id).single();
-    lead = data;
-  }
-  const { clientName, companyName, email } = resolveOfferRecipient(client, lead);
-
-  // Service descriptions (admin-edited offer_svc_* template bodies) render
-  // inside the PDF's «Δυνατότητες - Υπηρεσίες» section — the offer email
-  // deliberately no longer carries them.
-  const items = (offer.items as unknown as OfferItem[]) ?? [];
-  const categories = [...new Set(items.map((it) => it.category).filter(Boolean))];
-  const serviceBlocks: Record<string, string> = {};
-  if (categories.length > 0) {
-    const { data: tpls } = await admin
-      .from('email_templates')
-      .select('key, body')
-      .in('key', categories.map((c) => `offer_svc_${c}`));
-    for (const tpl of (tpls ?? []) as { key: string; body: string }[]) {
-      serviceBlocks[tpl.key.replace(/^offer_svc_/, '')] = tpl.body;
-    }
-  }
-
-  const html = renderOfferHtml({
-    offerId: offer.id,
-    offerNumber: offer.offer_number,
-    clientName,
-    companyName,
-    email,
-    currency: offer.currency,
-    vatPercent: Number(offer.vat_percent),
-    validityDays: offer.validity_days,
-    notes: offer.notes,
-    items,
-    totals: (offer.totals as unknown as OfferTotals) ?? {
-      subtotal: 0, discountAmount: 0, taxable: 0, vatAmount: 0, total: 0,
-    },
-    createdAt: offer.created_at,
-    serviceBlocks,
-  });
-
-  const puppeteer = await import('puppeteer-core');
-  const chromium = await import('@sparticuz/chromium');
-  const executablePath = await chromium.default.executablePath();
-  const browser = await puppeteer.default.launch({
-    args: chromium.default.args,
-    defaultViewport: chromium.default.defaultViewport,
-    executablePath,
-    headless: chromium.default.headless as boolean | 'new',
-  });
-  let pdf: Uint8Array;
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    // Render as a single tall page (no page breaks). Measure the rendered
-    // body height in px and convert to mm via the 96 DPI ratio
-    // (1 mm = 3.779527559 px). 297 mm = A4 height — use as a floor so
-    // tiny offers still come out at A4 size.
-    // Wait for webfonts before measuring — Inter's metrics differ from the
-    // fallback, and an undershot height spills the tail onto a nearly-blank
-    // second page whose background paints as a huge dead area. Same fix as
-    // contract-pdf (569c9dc): fonts.ready + an 8mm sub-pixel buffer.
-    const bodyHeight = await page.evaluate(async () => {
-      await document.fonts.ready;
-      return document.body.scrollHeight;
-    });
-    const pageHeightMm = Math.max(bodyHeight / 3.779527559 + 8, 297);
-    pdf = await page.pdf({
-      width: '210mm',
-      height: `${pageHeightMm}mm`,
-      margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
-      printBackground: true,
-      preferCSSPageSize: true,
-      displayHeaderFooter: false,
-    });
-  } finally {
-    await browser.close();
-  }
-
-  const path = `offers/${offer.id}.pdf`;
-  const { error: uploadErr } = await admin.storage
-    .from('offer-pdfs')
-    .upload(path, pdf, { contentType: 'application/pdf', upsert: true });
-  if (uploadErr) {
-    res.status(500).json({ error: 'upload failed: ' + uploadErr.message });
-    return;
-  }
-
-  await admin.from('offers').update({ pdf_path: path }).eq('id', offer.id);
 
   const { data: signed } = await admin.storage
-    .from('offer-pdfs').createSignedUrl(path, 60 * 5);
-  res.status(200).json({ url: signed?.signedUrl ?? null, path, bytes: pdf.length });
+    .from('offer-pdfs').createSignedUrl(result.path, 60 * 5);
+  res.status(200).json({ url: signed?.signedUrl ?? null, path: result.path, bytes: result.bytes });
 }
 
 export default withSentry('offer-pdf', handler);

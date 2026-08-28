@@ -21,6 +21,7 @@ import {
   settingsTrClass,
 } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
+import { textToHtml } from '@/features/offers/offerEmailBody';
 import {
   useEmailTemplates,
   useUpdateEmailTemplate,
@@ -136,6 +137,16 @@ function TemplateEditor({ tpl }: { tpl: EmailTemplateRow }) {
                 ))}
               </p>
             )}
+            <div>
+              <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t('email_automations.preview', { defaultValue: 'Προεπισκόπηση' })}
+              </div>
+              <div
+                className="mt-1.5 max-h-56 overflow-y-auto rounded-lg border border-border/60 bg-muted/25 p-3 text-sm [&_p]:mb-2 [&_p:last-child]:mb-0"
+                // Safe: textToHtml escapes all template text before adding <p>/<br>/<a>.
+                dangerouslySetInnerHTML={{ __html: textToHtml(body) }}
+              />
+            </div>
           </div>
 
           <DialogFooter>

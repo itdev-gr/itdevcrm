@@ -65,7 +65,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
 
   const { data: offer, error } = await admin
     .from('offers')
-    .select('id, pdf_path, offer_number')
+    .select('id, pdf_path, pdf_generated_at, offer_number, items')
     .eq('public_token', token)
     .maybeSingle();
   if (error) throw new Error(`offer-view lookup: ${error.message}`);

@@ -223,7 +223,15 @@ export function OfferDetailPage() {
           <tbody>
             {items.map((it) => (
               <tr key={`${it.category}-${it.itemId}`} className="border-t">
-                <td className="px-3 py-2">{it.label}</td>
+                <td className="px-3 py-2">
+                  {it.label}
+                  {(it.subpackages ?? []).map((sp) => (
+                    <div key={sp.label} className="text-xs text-muted-foreground">
+                      + {sp.label}
+                      {sp.price > 0 ? ` (${formatEur(sp.price)})` : ''}
+                    </div>
+                  ))}
+                </td>
                 <td className="px-3 py-2 text-xs text-muted-foreground">{it.description}</td>
                 <td className="px-3 py-2 text-right">{it.qty}</td>
                 <td className="px-3 py-2 text-right">{formatEur(it.unitPrice)}</td>

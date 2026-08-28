@@ -2,6 +2,8 @@
 // No @/ aliases, no src/lib imports — must run in Vercel serverless context.
 // Faithful port of Offer_system-main/src/lib/pdf-template.ts with CRM arg adaptations.
 
+import { categoryLabel } from '../src/lib/offers/serviceLabels.js';
+
 export type OfferItem = {
   category: string;
   itemId: string;
@@ -10,6 +12,8 @@ export type OfferItem = {
   unitPrice: number;
   qty: number;
   lineTotal: number;
+  /** Selected sub-packages (label + price folded into lineTotal). */
+  subpackages?: { label: string; price: number }[];
 };
 
 export type OfferTotals = {
@@ -58,19 +62,11 @@ function formatCurrency(amount: number, currency: string): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 }
 
-// Category code → human label mapping
-const CATEGORY_LABELS: Record<string, string> = {
-  web_seo: 'Web SEO',
-  local_seo: 'Local SEO',
-  web_dev: 'Web Development',
-  social_media: 'Social Media',
-  ai_seo: 'AI SEO',
-  hosting: 'Hosting',
-  ads: 'Ads',
-};
-
+// Category labels come from the shared map (all 10 service types, Greek —
+// the PDF is a Greek document); previously a local 7-entry copy left
+// maintenance/franchise/domains printing their raw codes.
 function getCategoryLabel(code: string): string {
-  return CATEGORY_LABELS[code] ?? code;
+  return categoryLabel(code, 'el');
 }
 
 // Monthly suffix applies to these category codes (matching the source template's human-label logic)
@@ -131,6 +127,12 @@ export function renderOfferHtml(args: Args): string {
               <li class="text-sm text-gray-700 list-disc list-inside">
                 ${escapeHtml(item.label)}
                 ${item.description ? `<span class="text-xs text-gray-500"> — ${escapeHtml(item.description)}</span>` : ''}
+                ${(item.subpackages ?? []).length > 0 ? `
+                <ul class="ml-5 mt-1 space-y-0.5">
+                  ${(item.subpackages ?? [])
+                    .map((sp) => `<li class="text-xs text-gray-600 list-[circle] list-inside">${escapeHtml(sp.label)}</li>`)
+                    .join('')}
+                </ul>` : ''}
               </li>
             `
               )
@@ -150,6 +152,9 @@ export function renderOfferHtml(args: Args): string {
         <td class="px-4 py-3">
           <p class="text-sm font-medium text-gray-900">${escapeHtml(item.label)}</p>
           ${item.description ? `<p class="text-xs text-gray-500">${escapeHtml(item.description)}</p>` : ''}
+          ${(item.subpackages ?? [])
+            .map((sp) => `<p class="text-xs text-gray-500">+ ${escapeHtml(sp.label)}${sp.price > 0 ? ` (${formatCurrency(sp.price, args.currency)})` : ''}</p>`)
+            .join('')}
         </td>
         <td class="px-4 py-3 text-sm text-gray-900 text-right">${item.qty}</td>
         <td class="px-4 py-3 text-sm text-gray-900 text-right">${formatCurrency(item.unitPrice, args.currency)}${isMonthlyItem(item) ? ' / μήνα' : ''}</td>

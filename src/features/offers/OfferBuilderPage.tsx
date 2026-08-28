@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 
 import { useLead } from '@/features/leads/hooks/useLead';
-import { useOfferCatalog, type CatalogPackage } from './hooks/useOfferCatalog';
+import { useOfferCatalog, type CatalogPackage, type CatalogSubpackage } from './hooks/useOfferCatalog';
 import { useCreateOffer } from './hooks/useCreateOffer';
 import { OfferSummaryPanel } from './OfferSummaryPanel';
 import type { OfferItem } from '@/lib/offers/types';
@@ -31,6 +31,10 @@ function categoryLabel(serviceType: string): string {
 
 function getLabel(pkg: CatalogPackage): string {
   return pkg.display_names[lang] ?? pkg.display_names['en'] ?? pkg.code;
+}
+
+function getSubLabel(sp: CatalogSubpackage): string {
+  return sp.display_names[lang] ?? sp.display_names['en'] ?? sp.code;
 }
 
 function getUnitPrice(pkg: CatalogPackage, customPrice: number): number {
@@ -143,11 +147,10 @@ export function OfferBuilderPage() {
       // after this effect, so we can't call it here without re-ordering.
       const key = `${pkg.service_type}-${pkg.code}`;
       const subCodes = ps.subpackage_codes ?? [];
-      const subTotal = subCodes.length > 0
-        ? pkg.subpackages
-            .filter((sp) => subCodes.includes(sp.code))
-            .reduce((sum, sp) => sum + sp.price, 0)
-        : 0;
+      const chosenSubs = subCodes.length > 0
+        ? pkg.subpackages.filter((sp) => subCodes.includes(sp.code))
+        : [];
+      const subTotal = chosenSubs.reduce((sum, sp) => sum + sp.price, 0);
       nextItems.set(key, {
         category: pkg.service_type,
         itemId: pkg.code,
@@ -156,6 +159,9 @@ export function OfferBuilderPage() {
         unitPrice,
         qty: 1,
         lineTotal: unitPrice + subTotal,
+        ...(chosenSubs.length > 0
+          ? { subpackages: chosenSubs.map((sp) => ({ label: getSubLabel(sp), price: sp.price })) }
+          : {}),
       });
       if (subCodes.length > 0) {
         nextSubpackages.set(key, new Set(subCodes));
@@ -186,9 +192,8 @@ export function OfferBuilderPage() {
       unitPrice: number,
       subSet: Set<string>,
     ): OfferItem | null => {
-      const subTotal = pkg.subpackages
-        .filter((sp) => subSet.has(sp.code))
-        .reduce((sum, sp) => sum + sp.price, 0);
+      const chosenSubs = pkg.subpackages.filter((sp) => subSet.has(sp.code));
+      const subTotal = chosenSubs.reduce((sum, sp) => sum + sp.price, 0);
       return {
         category: pkg.service_type,
         itemId: pkg.code,
@@ -197,6 +202,9 @@ export function OfferBuilderPage() {
         unitPrice,
         qty: 1,
         lineTotal: unitPrice + subTotal,
+        ...(chosenSubs.length > 0
+          ? { subpackages: chosenSubs.map((sp) => ({ label: getSubLabel(sp), price: sp.price })) }
+          : {}),
       };
     },
     [],

@@ -47,4 +47,36 @@ describe('renderOfferHtml service blocks', () => {
     expect(html).toContain('A &lt;b&gt;bold&lt;/b&gt; &amp; claim');
     expect(html).not.toContain('A <b>bold</b>');
   });
+
+  it('labels every service type in Greek, including the formerly missing ones', () => {
+    const html = renderOfferHtml({
+      ...baseArgs,
+      items: [
+        { category: 'maintenance', itemId: 'support', label: 'Support plan', description: '', unitPrice: 50, qty: 1, lineTotal: 50 },
+        { category: 'domains', itemId: 'domain', label: 'Domain', description: '', unitPrice: 15, qty: 1, lineTotal: 15 },
+        { category: 'franchise', itemId: 'fr', label: 'Franchise pack', description: '', unitPrice: 100, qty: 1, lineTotal: 100 },
+      ],
+    });
+    expect(html).toContain('Υποστήριξη');
+    expect(html).toContain('Domains');
+    expect(html).toContain('Franchise');
+    expect(html).not.toContain('>maintenance<');
+  });
+
+  it('renders selected sub-packages under their item, with prices in the table', () => {
+    const html = renderOfferHtml({
+      ...baseArgs,
+      items: [{
+        category: 'web_dev', itemId: 'site', label: 'Ιστοσελίδα', description: '',
+        unitPrice: 900, qty: 1, lineTotal: 1000,
+        subpackages: [
+          { label: 'Extra σελίδα', price: 50 },
+          { label: 'Μετάφραση', price: 50 },
+        ],
+      }],
+    });
+    expect(html).toContain('Extra σελίδα');
+    expect(html).toContain('Μετάφραση');
+    expect(html).toContain('+ Extra σελίδα (€50.00)');
+  });
 });

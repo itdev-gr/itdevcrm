@@ -6,6 +6,9 @@ export type OfferItem = {
   unitPrice: number;
   qty: number;
   lineTotal: number;
+  /** Selected sub-packages — their prices are folded into lineTotal, but the
+   *  labels are persisted so the PDF/detail views can show what's included. */
+  subpackages?: { label: string; price: number }[];
 };
 
 export type OfferTotals = {
