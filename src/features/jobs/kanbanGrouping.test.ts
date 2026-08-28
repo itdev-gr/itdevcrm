@@ -197,8 +197,8 @@ describe('compareJobs', () => {
     expect([...tied].sort(compareJobs('due_soon')).map((r) => r.id)).toEqual(['c', 'b', 'a']);
   });
 
-  // Local SEO "Closed → Disconnect": pending (red) cards first, then disconnected
-  // (green), then everything else; newest first inside each group.
+  // Local SEO "Closed → Disconnect": cards that still need the disconnect (red)
+  // are pinned to the top in EVERY sort mode; disconnected (green) sort normally.
   const closed = { id: 'ls-closed', code: 'closed', board: 'local_seo', display_names: {} };
   const opt = { id: 'ls-opt', code: 'optimize', board: 'local_seo', display_names: {} };
   function dcJob(id: string, over: Partial<JobRow>): JobRow {
@@ -207,35 +207,45 @@ describe('compareJobs', () => {
       service_type: 'local_seo',
       created_at: '2026-06-10T00:00:00Z',
       updated_at: '2026-06-10T00:00:00Z',
+      period_due_date: '2026-07-10',
       disconnected_at: null,
       ...over,
     } as JobRow;
   }
+  const pinRows = [
+    dcJob('green-new', { stage: closed, disconnected_at: '2026-08-28T10:00:00Z', created_at: '2026-06-30T00:00:00Z', updated_at: '2026-06-30T00:00:00Z', period_due_date: '2026-07-01' }),
+    dcJob('other-new', { stage: opt, created_at: '2026-06-25T00:00:00Z', updated_at: '2026-06-25T00:00:00Z', period_due_date: '2026-07-02' }),
+    dcJob('red-old', { stage: closed, created_at: '2026-06-01T00:00:00Z', updated_at: '2026-06-01T00:00:00Z', period_due_date: '2026-07-30' }),
+  ];
 
-  it('disconnect: pending-disconnect first, then disconnected, then the rest', () => {
-    const rows = [
-      dcJob('other', { stage: opt }),
-      dcJob('green', { stage: closed, disconnected_at: '2026-08-28T10:00:00Z' }),
-      dcJob('red', { stage: closed }),
-    ];
-    expect([...rows].sort(compareJobs('disconnect')).map((r) => r.id)).toEqual(['red', 'green', 'other']);
+  it.each<SortBy>(['newest', 'oldest', 'recent', 'stale', 'due_soon', 'due_far'])(
+    '%s: a pending-disconnect (red) card is pinned first even when the sort would put it last',
+    (sortBy) => {
+      const ids = [...pinRows].sort(compareJobs(sortBy)).map((r) => r.id);
+      expect(ids[0]).toBe('red-old');
+    },
+  );
+
+  it('newest: disconnected (green) cards are NOT pinned — they sort with the rest', () => {
+    const ids = [...pinRows].sort(compareJobs('newest')).map((r) => r.id);
+    expect(ids).toEqual(['red-old', 'green-new', 'other-new']);
   });
 
-  it('disconnect: newest created first inside each group, id desc on ties', () => {
+  it('oldest: two red cards keep the chosen order between themselves', () => {
     const rows = [
-      dcJob('red-old', { stage: closed, created_at: '2026-06-01T00:00:00Z' }),
-      dcJob('red-new', { stage: closed, created_at: '2026-06-20T00:00:00Z' }),
-      dcJob('a', { stage: closed, created_at: '2026-06-20T00:00:00Z' }),
+      dcJob('red-b', { stage: closed, created_at: '2026-06-20T00:00:00Z' }),
+      dcJob('red-a', { stage: closed, created_at: '2026-06-01T00:00:00Z' }),
+      dcJob('other', { stage: opt, created_at: '2026-05-01T00:00:00Z' }),
     ];
-    expect([...rows].sort(compareJobs('disconnect')).map((r) => r.id)).toEqual(['red-new', 'a', 'red-old']);
+    expect([...rows].sort(compareJobs('oldest')).map((r) => r.id)).toEqual(['red-a', 'red-b', 'other']);
   });
 
-  it('disconnect: web_seo closed cards are "the rest" (indicator is Local SEO only)', () => {
+  it('web_seo closed cards are never pinned (indicator is Local SEO only)', () => {
     const rows = [
-      dcJob('ws', { service_type: 'web_seo', stage: { ...closed, board: 'web_seo' } }),
-      dcJob('ls', { stage: closed }),
+      dcJob('ws', { service_type: 'web_seo', stage: { ...closed, board: 'web_seo' }, created_at: '2026-06-30T00:00:00Z' }),
+      dcJob('ls-other', { stage: opt, created_at: '2026-06-01T00:00:00Z' }),
     ];
-    expect([...rows].sort(compareJobs('disconnect')).map((r) => r.id)).toEqual(['ls', 'ws']);
+    expect([...rows].sort(compareJobs('newest')).map((r) => r.id)).toEqual(['ws', 'ls-other']);
   });
 });
 

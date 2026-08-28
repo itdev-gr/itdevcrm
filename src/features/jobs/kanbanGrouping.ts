@@ -23,17 +23,13 @@ export function hasBlockedColumn(board: string): boolean {
   return BLOCKED_COLUMN_BOARDS.has(board);
 }
 
-export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale' | 'due_soon' | 'due_far' | 'disconnect';
+export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale' | 'due_soon' | 'due_far';
 
-// 'disconnect' sort: Local SEO "Closed → Disconnect" cards that still need the
-// disconnect (red) first, then already-disconnected (green), then the rest.
-const DISCONNECT_RANK: Record<NonNullable<ReturnType<typeof disconnectStatus>>, number> = {
-  needs_disconnect: 0,
-  disconnected: 1,
-};
-function disconnectRank(job: JobRow): number {
-  const status = disconnectStatus(job);
-  return status ? DISCONNECT_RANK[status] : 2;
+// Local SEO "Closed → Disconnect": cards that still need the disconnect (red)
+// are pinned to the top of their column in EVERY sort mode, so the team cannot
+// miss them. Already-disconnected (green) cards sort normally with the rest.
+function pinRank(job: JobRow): number {
+  return disconnectStatus(job) === 'needs_disconnect' ? 0 : 1;
 }
 
 /**
@@ -44,14 +40,10 @@ function disconnectRank(job: JobRow): number {
  *  - due_soon / due_far:   by period_due_date (nulls always last — a job with
  *                          no scheduled due date is never useful at the top
  *                          of a "sort by due" view)
- *  - disconnect:           pending-disconnect (red) → disconnected (green) →
- *                          rest; newest created first inside each group
+ * In every mode, cards that still need the Local SEO disconnect (red) come
+ * first — see pinRank.
  */
 export function compareJobs(sortBy: SortBy): (a: JobRow, b: JobRow) => number {
-  if (sortBy === 'disconnect') {
-    const byNewest = compareJobs('newest');
-    return (a, b) => disconnectRank(a) - disconnectRank(b) || byNewest(a, b);
-  }
   const key: 'created_at' | 'updated_at' | 'period_due_date' =
     sortBy === 'recent' || sortBy === 'stale'
       ? 'updated_at'
@@ -60,6 +52,8 @@ export function compareJobs(sortBy: SortBy): (a: JobRow, b: JobRow) => number {
         : 'created_at';
   const ascending = sortBy === 'oldest' || sortBy === 'stale' || sortBy === 'due_soon';
   return (a, b) => {
+    const pin = pinRank(a) - pinRank(b);
+    if (pin !== 0) return pin;
     const va = a[key];
     const vb = b[key];
     // Nulls always go last, regardless of direction.

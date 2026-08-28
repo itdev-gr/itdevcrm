@@ -27,7 +27,6 @@ import { groupJobsForBoard, hasBlockedColumn } from './kanbanGrouping';
 import type { SortBy } from './kanbanGrouping';
 import { useJobsBoardSortStore } from './jobsBoardSortStore';
 import { stageCompletesJob } from './stageCompletion';
-import { DISCONNECT_BOARDS } from './disconnectStatus';
 
 const SERVICE_LABELS: Record<ServiceType, { en: string; el: string }> = {
   web_seo: { en: 'Web SEO', el: 'Web SEO' },
@@ -65,13 +64,9 @@ const SORT_OPTIONS: { value: SortBy; en: string; el: string }[] = [
   { value: 'due_soon', en: 'Due date (soonest)', el: 'Ημ. λήξης (πλησιέστερη)' },
   { value: 'due_far',  en: 'Due date (latest)',  el: 'Ημ. λήξης (μακρύτερη)' },
 ];
-// Only boards with the Closed → Disconnect indicator get the disconnect sort.
-const DISCONNECT_SORT_OPTION: { value: SortBy; en: string; el: string } = {
-  value: 'disconnect', en: 'Disconnect (pending first)', el: 'Αποσύνδεση (εκκρεμείς πρώτα)',
-};
-function sortOptionsFor(serviceType: ServiceType) {
-  return DISCONNECT_BOARDS.has(serviceType) ? [...SORT_OPTIONS, DISCONNECT_SORT_OPTION] : SORT_OPTIONS;
-}
+// A persisted value that is no longer a valid mode (e.g. the short-lived
+// 'disconnect' sort) falls back to newest instead of leaving the select blank.
+const VALID_SORTS = new Set<string>(SORT_OPTIONS.map((o) => o.value));
 
 export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   useJobsRealtime(serviceType);
@@ -85,9 +80,10 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const sortBy = useJobsBoardSortStore((s) =>
-    userId ? s.byUserBoard[`${userId}:${serviceType}`] ?? 'newest' : 'newest',
+  const sortByRaw = useJobsBoardSortStore((s) =>
+    userId ? (s.byUserBoard[`${userId}:${serviceType}`] ?? 'newest') : 'newest',
   );
+  const sortBy: SortBy = VALID_SORTS.has(sortByRaw) ? sortByRaw : 'newest';
   const setSortBy = useJobsBoardSortStore((s) => s.setSortBy);
   const [searchParams, setSearchParams] = useSearchParams();
   // Admins always see every job in the department — the Only-mine filter
@@ -189,7 +185,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
             }}
             className="w-44"
           >
-            {sortOptionsFor(serviceType).map((o) => (
+            {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o[lang]}</option>
             ))}
           </FilterSelect>
