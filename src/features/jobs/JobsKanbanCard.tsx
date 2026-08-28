@@ -18,6 +18,7 @@ import { canViewJobPricing } from './permissions';
 import { groupIdForServiceType } from './serviceTaskMatch';
 import { useServiceTaskCounts } from './hooks/useServiceTaskCounts';
 import { JobEmailStatusBadge } from './JobEmailStatusBadge';
+import { JobDisconnectBadge } from './JobDisconnectBadge';
 import { useAuthStore } from '@/lib/stores/authStore';
 import type { JobRow } from './hooks/useJobs';
 
@@ -143,6 +144,7 @@ export function JobsKanbanCard({
                   {openTaskCount}
                 </span>
               )}
+              <JobDisconnectBadge job={job} />
               {job.is_blocked && (
                 <span
                   className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-semibold text-red-800 dark:bg-red-950/50 dark:text-red-200"

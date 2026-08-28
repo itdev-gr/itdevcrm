@@ -1,6 +1,21 @@
 {
   "part_of_ai_seo": "Μέρος του AI SEO {{code}}",
   "view_billing_record": "Προβολή χρέωσης",
+  "disconnect": {
+    "pill_needs": "Αποσύνδεση",
+    "pill_needs_title": "Ο πελάτης έκλεισε — αποσυνδεθείτε από το Google Business Profile",
+    "pill_done": "Αποσυνδέθηκε",
+    "pill_done_title": "Αποσυνδέθηκε από το Google Business Profile στις {{date}}",
+    "card_title": "Ο πελάτης έκλεισε — αποσυνδεθείτε από το Google Business Profile",
+    "card_body": "Αφαιρέστε την πρόσβαση του γραφείου μας από το GBP του πελάτη και μετά πατήστε Αποσύνδεση.",
+    "button": "Αποσύνδεση",
+    "confirm_title": "Σήμανση ως αποσυνδεδεμένο;",
+    "confirm_body": "Επιβεβαιώστε ότι η πρόσβασή μας στο Google Business Profile του πελάτη έχει αφαιρεθεί.",
+    "done_title": "Αποσυνδέθηκε στις {{date}}",
+    "done_by": "από {{name}}",
+    "undo": "Αναίρεση",
+    "error": "Αποτυχία ενημέρωσης: {{msg}}"
+  },
   "renewal": {
     "action": "Αποστολή σε Renewal",
     "title": "Αποστολή κάρτας σε Renewal",

@@ -1,6 +1,21 @@
 {
   "part_of_ai_seo": "Part of AI SEO {{code}}",
   "view_billing_record": "View billing record",
+  "disconnect": {
+    "pill_needs": "Disconnect",
+    "pill_needs_title": "Client closed — disconnect from the Google Business Profile",
+    "pill_done": "Disconnected",
+    "pill_done_title": "Disconnected from the Google Business Profile on {{date}}",
+    "card_title": "Client closed — disconnect from the Google Business Profile",
+    "card_body": "Remove our agency access from the client's GBP, then press Disconnect.",
+    "button": "Disconnect",
+    "confirm_title": "Mark as disconnected?",
+    "confirm_body": "Confirm that our access to the client's Google Business Profile has been removed.",
+    "done_title": "Disconnected on {{date}}",
+    "done_by": "by {{name}}",
+    "undo": "Undo",
+    "error": "Could not update: {{msg}}"
+  },
   "renewal": {
     "action": "Send to Renewal",
     "title": "Send card to Renewal",
