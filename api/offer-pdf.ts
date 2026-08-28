@@ -139,8 +139,15 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     // body height in px and convert to mm via the 96 DPI ratio
     // (1 mm = 3.779527559 px). 297 mm = A4 height — use as a floor so
     // tiny offers still come out at A4 size.
-    const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
-    const pageHeightMm = Math.max(bodyHeight / 3.779527559, 297);
+    // Wait for webfonts before measuring — Inter's metrics differ from the
+    // fallback, and an undershot height spills the tail onto a nearly-blank
+    // second page whose background paints as a huge dead area. Same fix as
+    // contract-pdf (569c9dc): fonts.ready + an 8mm sub-pixel buffer.
+    const bodyHeight = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return document.body.scrollHeight;
+    });
+    const pageHeightMm = Math.max(bodyHeight / 3.779527559 + 8, 297);
     pdf = await page.pdf({
       width: '210mm',
       height: `${pageHeightMm}mm`,
