@@ -70,7 +70,19 @@ function ContactsForm({ client, clientId }: { client: ClientShape; clientId: str
   }, [fullName, email, phone, contactInfo, additional]);
 
   const status = useAutoSave(patch, async (next) => {
-    const { error } = await supabase.from('clients').update(next).eq('id', clientId);
+    // Contact-fields-only RPC: a direct clients UPDATE is RLS-gated on
+    // clients:edit (accounting/admin only) and fails with 0 rows and NO error
+    // for everyone else — the autosave used to report success while nothing
+    // was saved. The RPC allows any clients:view holder and raises on failure.
+    const { error } = await supabase.rpc('update_client_contacts', {
+      p_client_id: clientId,
+      p_first: next.contact_first_name,
+      p_last: next.contact_last_name,
+      p_email: next.email,
+      p_phone: next.phone,
+      p_info: next.contact_info,
+      p_additional: next.additional_contacts as unknown as never,
+    });
     if (error) throw new Error(error.message);
   });
 

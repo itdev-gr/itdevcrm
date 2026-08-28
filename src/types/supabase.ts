@@ -8450,6 +8450,18 @@ export type Database = {
         Args: { p_kind: string; p_task_id: string }
         Returns: undefined
       }
+      update_client_contacts: {
+        Args: {
+          p_additional?: Json
+          p_client_id: string
+          p_email?: string
+          p_first?: string
+          p_info?: string
+          p_last?: string
+          p_phone?: string
+        }
+        Returns: undefined
+      }
       update_job_billing: {
         Args: {
           p_amount_net?: number
