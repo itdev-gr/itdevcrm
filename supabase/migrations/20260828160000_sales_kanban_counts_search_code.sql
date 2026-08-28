@@ -12,7 +12,11 @@
 --
 -- Base body: 20260826120000_under_development_board.sql (4-arg, p_board).
 -- Same signature → no PostgREST overload ambiguity, no types:gen needed.
--- LIVE DRIFT CHECK: pending — apply via Supabase MCP apply_migration, then record pre/post md5(pg_get_functiondef) here.
+-- LIVE DRIFT CHECK 2026-08-28 (md5(pg_get_functiondef)), APPLIED same day
+-- (via Management API query endpoint — Supabase MCP unavailable in that session):
+--   sales_kanban_counts    pre  1ff94f2748faf73e3d09204a3cd8f897 (= 20260826120000, 4-arg)
+--                          post 76400b0cde2d018969ed1992dc4a0c0a
+--   verified: sales_kanban_counts(null,null,'006250','sales') -> not_interested total 1
 
 create or replace function public.sales_kanban_counts(
   p_owner uuid default null,
