@@ -76,11 +76,11 @@ function ContactsForm({ client, clientId }: { client: ClientShape; clientId: str
     // was saved. The RPC allows any clients:view holder and raises on failure.
     const { error } = await supabase.rpc('update_client_contacts', {
       p_client_id: clientId,
-      p_first: next.contact_first_name,
-      p_last: next.contact_last_name,
-      p_email: next.email,
-      p_phone: next.phone,
-      p_info: next.contact_info,
+      p_first: next.contact_first_name ?? undefined,
+      p_last: next.contact_last_name ?? undefined,
+      p_email: next.email ?? undefined,
+      p_phone: next.phone ?? undefined,
+      p_info: next.contact_info ?? undefined,
       p_additional: next.additional_contacts as unknown as never,
     });
     if (error) throw new Error(error.message);
