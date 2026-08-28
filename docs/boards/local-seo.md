@@ -31,7 +31,8 @@ here (see "AI SEO cards" below).
 | 8   | **Done**               | Ολοκληρωμένο            | **A monthly rest, not the end.** Use it for "this period's work is finished, waiting for the client to renew." It is **not** terminal — the next payment automatically restarts the job in **Renewal**. (To end the engagement for good, accounting **Closes** the deal, which sends the job to **Closed**.)  |
 | 9   | **Suspended**          | Σε Αναστολή             | Google suspended the profile (or the listing is otherwise down). Work the reinstatement: appeal, evidence documents, compliance fixes. High-priority parking — the client is invisible on Maps while here.                               |
 | 10  | **Verification**       | Επαλήθευση              | The profile is awaiting Google verification (postcard, video, phone). Track the verification attempt, retry if it fails, and move to Optimize/Rank tracking once verified.                                                               |
-| 11  | **🔒 Blocked**         | Μπλοκαρισμένο           | **Virtual column — not a real stage.** Every blocked job is displayed here automatically instead of its own column. See below.                                                                                                           |
+| 11  | **Closed**             | Κλειστό                 | **Terminal.** Accounting closed the deal — the engagement is over. The card shows a red **Disconnect** pill: remove our agency access from the client's Google Business Profile, then open the job and press **Disconnect** in the red banner at the top of Overview. The pill and banner turn green **Disconnected** (date + who). **Undo** is there for mis-clicks or if the client comes back and you reconnect. |
+| 12  | **🔒 Blocked**         | Μπλοκαρισμένο           | **Virtual column — not a real stage.** Every blocked job is displayed here automatically instead of its own column. See below.                                                                                                           |
 
 ## The Blocked column
 
@@ -61,7 +62,10 @@ here (see "AI SEO cards" below).
 - **Done = monthly rest:** Done means "finished for this period, waiting for
   renewal," not the end of the job — the next payment restarts it in Renewal.
 - **Deal Closed → Closed:** when accounting closes the deal, all of its jobs move
-  to **Done/Closed** as the permanent end of the work.
+  to **Closed** as the permanent end of the work. A closed Local SEO job carries
+  a red **Disconnect** reminder (card + job page) until the team removes our GBP
+  access and presses **Disconnect** on the job page; it then reads green
+  **Disconnected**.
 
 ## AI SEO cards
 
