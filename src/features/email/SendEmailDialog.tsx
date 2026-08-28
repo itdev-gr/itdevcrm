@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSendEmail, type SendEmailVars } from './useSendEmail';
+import { useDeptCc } from './useDeptCc';
 import { RichTextEditor } from './RichTextEditor';
 import { useGoogleConnection } from './useGoogleConnection';
 import { MySignaturePreview } from './SignaturePreview';
@@ -45,7 +46,18 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const [toEmail, setToEmail] = useState(to);
   const [ccText, setCcText] = useState('');
+  const [ccTouched, setCcTouched] = useState(false);
   const [bccText, setBccText] = useState('');
+
+  // Show the department archive copy IN the Cc field (owner rule: the team
+  // must SEE which mailbox gets the copy). The server still Bcc's the
+  // department as a fallback if the user removes it, deduped against To/Cc.
+  const deptCc = useDeptCc(identity === 'personal');
+  useEffect(() => {
+    if (identity !== 'personal' || ccTouched || ccText !== '') return;
+    const boxes = deptCc.data ?? [];
+    if (boxes.length > 0) setCcText(boxes.join(', '));
+  }, [identity, ccTouched, ccText, deptCc.data]);
   const [subj, setSubj] = useState(subject);
   const [text, setText] = useState(body);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +114,7 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
                 className="mt-1 block w-full rounded border px-2 py-1" />
             </label>
             <label className="mt-3 block text-sm">{t('dialog.cc', { defaultValue: 'Cc' })}
-              <input aria-label={t('dialog.cc', { defaultValue: 'Cc' })} value={ccText} onChange={(e) => setCcText(e.target.value)}
+              <input aria-label={t('dialog.cc', { defaultValue: 'Cc' })} value={ccText} onChange={(e) => { setCcText(e.target.value); setCcTouched(true); }}
                 placeholder={t('dialog.recipients_hint', { defaultValue: 'email, email — up to 10' })}
                 className="mt-1 block w-full rounded border px-2 py-1" />
             </label>

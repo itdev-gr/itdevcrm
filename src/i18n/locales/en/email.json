@@ -14,7 +14,7 @@
     "failed": "Sending failed.",
     "to_required": "Recipient email is required.",
     "signature_hint": "Your IT DEV signature is added automatically when the email is sent.",
-    "dept_bcc_hint": "A copy is sent automatically to your department's mailbox.",
+    "dept_bcc_hint": "Your department is Cc'd so the team can see this email. If you remove it, it still receives a hidden copy.",
     "signature_preview": "Preview signature"
   },
   "proforma": {
