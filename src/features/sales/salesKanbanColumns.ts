@@ -36,18 +36,28 @@ export function pickNextId(ids: { id: string }[], currentId: string): string | n
   return wrapAround?.id ?? null;
 }
 
+// The `leads` columns the kanban search box matches. ONE list, mirrored
+// verbatim by the SQL RPC sales_kanban_counts (column totals) — keep them in
+// sync or the headers will count leads the columns don't show (or vice versa).
+// `code` is the 6-digit lead code shown on every card (e.g. 006250);
+// business_profile_name / vat_number give parity with useLeadSearch.
+export const KANBAN_SEARCH_COLUMNS = [
+  'title',
+  'company_name',
+  'contact_first_name',
+  'contact_last_name',
+  'email',
+  'phone',
+  'code',
+  'business_profile_name',
+  'vat_number',
+] as const satisfies readonly string[];
+
 // PostgREST `or=` clause for the kanban search box; null when the term is empty.
 // Strips characters that would break the filter grammar (`%` `,` `(` `)`).
 export function searchOrClause(search: string): string | null {
   const v = search.replace(/[%,()]/g, ' ').trim();
   if (!v) return null;
   const like = `%${v}%`;
-  return [
-    `title.ilike.${like}`,
-    `company_name.ilike.${like}`,
-    `contact_first_name.ilike.${like}`,
-    `contact_last_name.ilike.${like}`,
-    `email.ilike.${like}`,
-    `phone.ilike.${like}`,
-  ].join(',');
+  return KANBAN_SEARCH_COLUMNS.map((col) => `${col}.ilike.${like}`).join(',');
 }

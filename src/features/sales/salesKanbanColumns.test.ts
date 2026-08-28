@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { KANBAN_PAGE_SIZE, orderForSort, pickNextId, searchOrClause } from './salesKanbanColumns';
+import {
+  KANBAN_PAGE_SIZE,
+  KANBAN_SEARCH_COLUMNS,
+  orderForSort,
+  pickNextId,
+  searchOrClause,
+} from './salesKanbanColumns';
 
 describe('salesKanbanColumns', () => {
   it('maps every sort option to a server order clause', () => {
@@ -15,6 +21,16 @@ describe('salesKanbanColumns', () => {
     const c = searchOrClause('acme');
     expect(c).toContain('title.ilike.%acme%');
     expect(c).toContain('phone.ilike.%acme%');
+    // one `<column>.ilike.%term%` per searchable column, nothing else
+    expect(c?.split(',')).toEqual(KANBAN_SEARCH_COLUMNS.map((col) => `${col}.ilike.%acme%`));
+  });
+
+  it('matches the lead code so "006250" finds lead 006250 in the kanban', () => {
+    expect(KANBAN_SEARCH_COLUMNS).toContain('code');
+    expect(searchOrClause('006250')).toContain('code.ilike.%006250%');
+    // parity with the lead typeahead (useLeadSearch): business profile + VAT too
+    expect(KANBAN_SEARCH_COLUMNS).toContain('business_profile_name');
+    expect(KANBAN_SEARCH_COLUMNS).toContain('vat_number');
   });
 
   it('strips PostgREST-breaking characters from the search term', () => {
