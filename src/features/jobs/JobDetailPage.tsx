@@ -42,6 +42,7 @@ import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { useJob } from './hooks/useJob';
 import { filterAssignableOwners } from './assignableOwners';
 import { JobEmailStatusBadge } from './JobEmailStatusBadge';
+import { JobEmailsBox } from './JobEmailsBox';
 import { JobFollowupButton } from './JobFollowupButton';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
@@ -461,6 +462,7 @@ function JobDetailContent() {
                 />
               )}
               <ContactsCard client={job.client ?? null} />
+              <JobEmailsBox jobId={job.id} clientId={job.client_id} />
               <section className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
                 <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Project info
