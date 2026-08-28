@@ -78,6 +78,7 @@ import { jobAmountLabel } from './jobAmount';
 import { canViewJobPricing } from './permissions';
 import { JobBillingEditCard } from './JobBillingEditCard';
 import { JobBillingPauseCard } from './JobBillingPauseCard';
+import { JobDisconnectCard } from './JobDisconnectCard';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
@@ -450,6 +451,7 @@ function JobDetailContent() {
         <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+              <JobDisconnectCard job={job} />
               <JobNotesCard
                 jobId={job.id}
                 dealId={job.deal_id}
