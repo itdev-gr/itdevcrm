@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { CopyableCode } from '@/components/CopyableCode';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useOffer } from './hooks/useOffer';
+import { useOfferViews } from './hooks/useOfferViews';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
 import { useDownloadOfferPdf } from './hooks/useDownloadOfferPdf';
 import { OfferEmailDialog } from './OfferEmailDialog';
@@ -29,6 +30,7 @@ export function OfferDetailPage() {
   const { offerId = '' } = useParams<{ offerId: string }>();
   const { t } = useTranslation('common');
   const { data: offer, isLoading, error } = useOffer(offerId);
+  const views = useOfferViews(offerId);
   const updateStatus = useUpdateOfferStatus(offerId);
   const download = useDownloadOfferPdf();
   const navigate = useNavigate();
@@ -79,6 +81,11 @@ export function OfferDetailPage() {
               className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[offer.status as Status]}`}
             >
               {offer.status}
+            </span>
+            <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {views.data && views.data.count > 0
+                ? `👀 Άνοιξε ${views.data.count} ${views.data.count === 1 ? 'φορά' : 'φορές'} · ${formatDate(views.data.lastViewedAt as string)}`
+                : '👀 Δεν έχει ανοιχτεί ακόμα'}
             </span>
           </div>
           <p className="text-xs text-muted-foreground">

@@ -10,6 +10,7 @@ import { withSentry } from './_sentry.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { rateLimit } from './_rate-limit.js';
+import { isSuspectedBotUa } from './_bot-ua.js';
 
 const TOKEN_RE = /^[0-9a-f-]{36}$/i;
 const RATE_LIMIT = { limit: 30, windowMs: 60_000 };
@@ -64,7 +65,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
 
   const { data: offer, error } = await admin
     .from('offers')
-    .select('pdf_path, offer_number')
+    .select('id, pdf_path, offer_number')
     .eq('public_token', token)
     .maybeSingle();
   if (error) throw new Error(`offer-view lookup: ${error.message}`);
@@ -72,18 +73,45 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     fallbackPage(res, 404, 'Η προσφορά δεν βρέθηκε. Ελέγξτε τον σύνδεσμο ή επικοινωνήστε μαζί μας.');
     return;
   }
-  if (!offer.pdf_path) {
+
+  // Record the open (fire-and-forget — never blocks or fails the PDF). The
+  // offer_views AFTER INSERT trigger posts the «άνοιξε την προσφορά» comment
+  // on the lead/deal card; scanner-bot UAs are recorded but never surfaced.
+  const userAgent = Array.isArray(req.headers['user-agent'])
+    ? req.headers['user-agent'][0]
+    : req.headers['user-agent'];
+  void admin
+    .from('offer_views')
+    .insert({
+      offer_id: offer.id,
+      ip: firstForwardedFor(req.headers['x-forwarded-for']),
+      user_agent: (userAgent ?? '').slice(0, 500) || null,
+      suspected_bot: isSuspectedBotUa(userAgent),
+    })
+    .then(({ error: viewErr }) => {
+      if (viewErr) console.error('offer-view: view insert failed:', viewErr.message);
+    });
+  // Self-healing: regenerate when the stored PDF is missing or predates the
+  // latest edit of a service-description template — so links sent before a
+  // copy change (or before generation succeeded at all) serve a fresh PDF on
+  // first open. Regeneration only runs when actually stale, so repeat opens
+  // stream the stored object.
+  const { generateOfferPdf, isPdfStale } = await import('./_offer-pdf-core.js');
+  let bytes: Buffer | null = null;
+  if (await isPdfStale(admin, offer)) {
+    const result = await generateOfferPdf(admin, admin, offer.id);
+    if (result.ok) bytes = Buffer.from(result.pdf);
+    else console.error('offer-view: regeneration failed:', result.error);
+  }
+  if (!bytes && offer.pdf_path) {
+    const { data: blob, error: dlErr } = await admin.storage.from('offer-pdfs').download(offer.pdf_path);
+    if (!dlErr && blob) bytes = Buffer.from(await blob.arrayBuffer());
+  }
+  if (!bytes) {
     fallbackPage(res, 200, 'Η προσφορά δεν είναι διαθέσιμη αυτή τη στιγμή. Παρακαλούμε δοκιμάστε ξανά σε λίγο ή επικοινωνήστε μαζί μας.');
     return;
   }
 
-  const { data: blob, error: dlErr } = await admin.storage.from('offer-pdfs').download(offer.pdf_path);
-  if (dlErr || !blob) {
-    fallbackPage(res, 200, 'Η προσφορά δεν είναι διαθέσιμη αυτή τη στιγμή. Παρακαλούμε δοκιμάστε ξανά σε λίγο ή επικοινωνήστε μαζί μας.');
-    return;
-  }
-
-  const bytes = Buffer.from(await blob.arrayBuffer());
   const filename = `${(offer.offer_number ?? 'offer').replace(/[^A-Za-z0-9._-]/g, '_')}.pdf`;
   res.status(200)
     .setHeader('Content-Type', 'application/pdf')

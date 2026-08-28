@@ -3149,6 +3149,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates_backup_20260828: {
+        Row: {
+          backed_up_at: string | null
+          body: string | null
+          client_facing: boolean | null
+          description: string | null
+          key: string | null
+          subject: string | null
+          updated_at: string | null
+          variables: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          body?: string | null
+          client_facing?: boolean | null
+          description?: string | null
+          key?: string | null
+          subject?: string | null
+          updated_at?: string | null
+          variables?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          body?: string | null
+          client_facing?: boolean | null
+          description?: string | null
+          key?: string | null
+          subject?: string | null
+          updated_at?: string | null
+          variables?: string | null
+        }
+        Relationships: []
+      }
       email_templates_dropped_backup_20260702: {
         Row: {
           body: string
@@ -3580,6 +3613,8 @@ export type Database = {
           deal_id: string
           description: string | null
           details: Json
+          disconnected_at: string | null
+          disconnected_by: string | null
           done_at: string | null
           id: string
           installment_plan: string
@@ -3627,6 +3662,8 @@ export type Database = {
           deal_id: string
           description?: string | null
           details?: Json
+          disconnected_at?: string | null
+          disconnected_by?: string | null
           done_at?: string | null
           id?: string
           installment_plan?: string
@@ -3674,6 +3711,8 @@ export type Database = {
           deal_id?: string
           description?: string | null
           details?: Json
+          disconnected_at?: string | null
+          disconnected_by?: string | null
           done_at?: string | null
           id?: string
           installment_plan?: string
@@ -6278,6 +6317,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      offer_views: {
+        Row: {
+          id: string
+          ip: string | null
+          offer_id: string
+          suspected_bot: boolean
+          user_agent: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          ip?: string | null
+          offer_id: string
+          suspected_bot?: boolean
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          ip?: string | null
+          offer_id?: string
+          suspected_bot?: boolean
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_views_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
           },
         ]
       }
