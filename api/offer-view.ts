@@ -96,12 +96,19 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // copy change (or before generation succeeded at all) serve a fresh PDF on
   // first open. Regeneration only runs when actually stale, so repeat opens
   // stream the stored object.
-  const { generateOfferPdf, isPdfStale } = await import('./_offer-pdf-core.js');
+  // The whole regeneration attempt is best-effort: any throw (chromium
+  // bundling, puppeteer launch, template render) must degrade to the stored
+  // PDF or the friendly page — never a raw 500 at a client.
   let bytes: Buffer | null = null;
-  if (await isPdfStale(admin, offer)) {
-    const result = await generateOfferPdf(admin, admin, offer.id);
-    if (result.ok) bytes = Buffer.from(result.pdf);
-    else console.error('offer-view: regeneration failed:', result.error);
+  try {
+    const { generateOfferPdf, isPdfStale } = await import('./_offer-pdf-core.js');
+    if (await isPdfStale(admin, offer)) {
+      const result = await generateOfferPdf(admin, admin, offer.id);
+      if (result.ok) bytes = Buffer.from(result.pdf);
+      else console.error('offer-view: regeneration failed:', result.error);
+    }
+  } catch (e) {
+    console.error('offer-view: regeneration threw:', (e as Error).message);
   }
   if (!bytes && offer.pdf_path) {
     const { data: blob, error: dlErr } = await admin.storage.from('offer-pdfs').download(offer.pdf_path);
