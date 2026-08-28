@@ -196,6 +196,47 @@ describe('compareJobs', () => {
     const tied = [dueJob('a', d), dueJob('c', d), dueJob('b', d)];
     expect([...tied].sort(compareJobs('due_soon')).map((r) => r.id)).toEqual(['c', 'b', 'a']);
   });
+
+  // Local SEO "Closed → Disconnect": pending (red) cards first, then disconnected
+  // (green), then everything else; newest first inside each group.
+  const closed = { id: 'ls-closed', code: 'closed', board: 'local_seo', display_names: {} };
+  const opt = { id: 'ls-opt', code: 'optimize', board: 'local_seo', display_names: {} };
+  function dcJob(id: string, over: Partial<JobRow>): JobRow {
+    return {
+      id,
+      service_type: 'local_seo',
+      created_at: '2026-06-10T00:00:00Z',
+      updated_at: '2026-06-10T00:00:00Z',
+      disconnected_at: null,
+      ...over,
+    } as JobRow;
+  }
+
+  it('disconnect: pending-disconnect first, then disconnected, then the rest', () => {
+    const rows = [
+      dcJob('other', { stage: opt }),
+      dcJob('green', { stage: closed, disconnected_at: '2026-08-28T10:00:00Z' }),
+      dcJob('red', { stage: closed }),
+    ];
+    expect([...rows].sort(compareJobs('disconnect')).map((r) => r.id)).toEqual(['red', 'green', 'other']);
+  });
+
+  it('disconnect: newest created first inside each group, id desc on ties', () => {
+    const rows = [
+      dcJob('red-old', { stage: closed, created_at: '2026-06-01T00:00:00Z' }),
+      dcJob('red-new', { stage: closed, created_at: '2026-06-20T00:00:00Z' }),
+      dcJob('a', { stage: closed, created_at: '2026-06-20T00:00:00Z' }),
+    ];
+    expect([...rows].sort(compareJobs('disconnect')).map((r) => r.id)).toEqual(['red-new', 'a', 'red-old']);
+  });
+
+  it('disconnect: web_seo closed cards are "the rest" (indicator is Local SEO only)', () => {
+    const rows = [
+      dcJob('ws', { service_type: 'web_seo', stage: { ...closed, board: 'web_seo' } }),
+      dcJob('ls', { stage: closed }),
+    ];
+    expect([...rows].sort(compareJobs('disconnect')).map((r) => r.id)).toEqual(['ls', 'ws']);
+  });
 });
 
 describe('groupJobsForBoard sortBy', () => {

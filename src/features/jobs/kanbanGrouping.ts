@@ -1,4 +1,5 @@
 import type { JobRow } from './hooks/useJobs';
+import { disconnectStatus } from './disconnectStatus';
 
 type StageLite = { id: string; board: string; code: string };
 
@@ -22,7 +23,18 @@ export function hasBlockedColumn(board: string): boolean {
   return BLOCKED_COLUMN_BOARDS.has(board);
 }
 
-export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale' | 'due_soon' | 'due_far';
+export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale' | 'due_soon' | 'due_far' | 'disconnect';
+
+// 'disconnect' sort: Local SEO "Closed → Disconnect" cards that still need the
+// disconnect (red) first, then already-disconnected (green), then the rest.
+const DISCONNECT_RANK: Record<NonNullable<ReturnType<typeof disconnectStatus>>, number> = {
+  needs_disconnect: 0,
+  disconnected: 1,
+};
+function disconnectRank(job: JobRow): number {
+  const status = disconnectStatus(job);
+  return status ? DISCONNECT_RANK[status] : 2;
+}
 
 /**
  * Comparator for kanban cards. All modes tie-break by id desc so identical
@@ -32,8 +44,14 @@ export type SortBy = 'newest' | 'oldest' | 'recent' | 'stale' | 'due_soon' | 'du
  *  - due_soon / due_far:   by period_due_date (nulls always last — a job with
  *                          no scheduled due date is never useful at the top
  *                          of a "sort by due" view)
+ *  - disconnect:           pending-disconnect (red) → disconnected (green) →
+ *                          rest; newest created first inside each group
  */
 export function compareJobs(sortBy: SortBy): (a: JobRow, b: JobRow) => number {
+  if (sortBy === 'disconnect') {
+    const byNewest = compareJobs('newest');
+    return (a, b) => disconnectRank(a) - disconnectRank(b) || byNewest(a, b);
+  }
   const key: 'created_at' | 'updated_at' | 'period_due_date' =
     sortBy === 'recent' || sortBy === 'stale'
       ? 'updated_at'
