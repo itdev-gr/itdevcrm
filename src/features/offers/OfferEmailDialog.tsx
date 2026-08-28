@@ -11,13 +11,14 @@ import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
 import { useEnsureOfferPdf, type OfferPdfInfo } from './hooks/useEnsureOfferPdf';
 import { useOfferEmailTemplates } from './hooks/useOfferEmailTemplates';
-import { buildOfferEmail, buildServiceBlockHtml, type OfferEmailVars, type OfferTemplate } from './offerEmailBody';
+import { buildOfferEmail, buildServiceBlockHtml, interpolate, textToHtml, type OfferEmailVars, type OfferTemplate } from './offerEmailBody';
 
 type Props = { offerId: string; open: boolean; onClose: () => void };
 
 // Fallbacks so the composer still opens if the seed rows were deleted.
 const FALLBACK_INTRO: OfferTemplate = { key: 'offer_email_intro', subject: 'Η προσφορά μας — {{offer_number}}', body: 'Αγαπητέ/ή {{name}}, θα βρείτε συνημμένη την προσφορά μας.' };
-const FALLBACK_OUTRO: OfferTemplate = { key: 'offer_email_outro', subject: '', body: 'Με εκτίμηση,\n{{owner_name}}' };
+// No sign-off here: the Gmail signature is appended automatically at send.
+const FALLBACK_OUTRO: OfferTemplate = { key: 'offer_email_outro', subject: '', body: 'Παραμένουμε στη διάθεσή σας για οποιαδήποτε απορία.' };
 
 /** Prefilled offer email: intro + one block per offered service + outro from
  *  admin-editable email_templates rows, offer PDF attached, sent from the
@@ -70,6 +71,8 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     validity_days: offer?.validity_days ?? 14,
   }), [lead, me, offer]);
 
+  const outro = byKey.get('offer_email_outro') ?? FALLBACK_OUTRO;
+
   const draft = useMemo(() => {
     if (!offer || !templates.data) return null;
     const serviceTpls = offerTypes
@@ -77,11 +80,11 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
       .filter((tpl): tpl is OfferTemplate => !!tpl);
     return buildOfferEmail({
       intro: byKey.get('offer_email_intro') ?? FALLBACK_INTRO,
-      outro: byKey.get('offer_email_outro') ?? FALLBACK_OUTRO,
+      outro,
       serviceTpls,
       vars,
     });
-  }, [offer, templates.data, offerTypes, byKey, vars]);
+  }, [offer, templates.data, offerTypes, byKey, outro, vars]);
 
   if (!open) return null;
 
@@ -164,7 +167,7 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
       onSent={() => {
         if (offer.status === 'draft') updateStatus.mutate('sent');
       }}
-      renderExtras={({ appendHtml }) =>
+      renderExtras={({ updateBody }) =>
         availableTypes.length > 0 ? (
           <div className="mt-3">
             <p className="text-xs text-muted-foreground">{t('offer_composer.add_service')}</p>
@@ -177,7 +180,15 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
                   onClick={() => {
                     const tpl = byKey.get(`offer_svc_${type}`);
                     if (!tpl) return;
-                    appendHtml(buildServiceBlockHtml(tpl, vars));
+                    const block = buildServiceBlockHtml(tpl, vars);
+                    // Stack the new block under the existing service blocks,
+                    // above the outro/CTA; if the outro was edited away, append.
+                    const outroHtml = textToHtml(interpolate(outro.body, vars));
+                    updateBody((cur) =>
+                      cur.includes(outroHtml)
+                        ? cur.replace(outroHtml, block + outroHtml)
+                        : cur + block,
+                    );
                     setExtraTypes((prev) => new Set(prev).add(type));
                   }}
                 >

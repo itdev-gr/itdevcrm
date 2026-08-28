@@ -31,8 +31,8 @@ export type SendEmailDialogProps = {
   initialAttachments?: EmailAttachmentRef[];
   onSent?: () => void;
   /** Extra controls rendered between the editor and the attach button.
-   *  `appendHtml` appends markup to the current body. */
-  renderExtras?: (ctx: { appendHtml: (html: string) => void }) => ReactNode;
+   *  `updateBody` maps the current body HTML to a new one. */
+  renderExtras?: (ctx: { updateBody: (fn: (cur: string) => string) => void }) => ReactNode;
 };
 
 export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, onClose, initialAttachments, onSent, renderExtras }: SendEmailDialogProps) {
@@ -123,7 +123,7 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
                 <RichTextEditor value={text} onChange={setText} disabled={send.isPending} ariaLabel={t('dialog.body')} />
               </div>
             </div>
-            {renderExtras?.({ appendHtml: (h) => setText((cur) => cur + h) })}
+            {renderExtras?.({ updateBody: (fn) => setText(fn) })}
             <div className="mt-3">
               <CommentAttachButton
                 pending={att.refs.map(refToChip)}
