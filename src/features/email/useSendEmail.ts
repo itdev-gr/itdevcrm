@@ -31,7 +31,19 @@ export function useSendEmail() {
           ...(vars.attachments && vars.attachments.length ? { attachments: vars.attachments } : {}),
         },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        // The edge function's JSON body carries the real error code; the
+        // FunctionsHttpError message is just "non-2xx status code".
+        let msg = error.message;
+        try {
+          const ctx = (error as { context?: { json?: () => Promise<{ error?: string }> } }).context;
+          if (ctx?.json) {
+            const j = await ctx.json();
+            if (j?.error) msg = j.error;
+          }
+        } catch { /* keep the generic message */ }
+        throw new Error(msg);
+      }
       if ((data as { status?: string })?.status === 'failed') {
         throw new Error((data as { error?: string }).error ?? 'send failed');
       }

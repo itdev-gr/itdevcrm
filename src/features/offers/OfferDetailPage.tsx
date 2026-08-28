@@ -1,4 +1,5 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,6 +8,7 @@ import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
 import { useDownloadOfferPdf } from './hooks/useDownloadOfferPdf';
+import { OfferEmailDialog } from './OfferEmailDialog';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatEur } from '@/lib/offers/calculate';
 import type { OfferItem, OfferTotals } from '@/lib/offers/types';
@@ -29,6 +31,17 @@ export function OfferDetailPage() {
   const updateStatus = useUpdateOfferStatus(offerId);
   const download = useDownloadOfferPdf();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [emailOpen, setEmailOpen] = useState(false);
+
+  // ?send=1 (set by the offer builder): auto-open the email composer once,
+  // then strip the param so refresh/back doesn't re-open it.
+  useEffect(() => {
+    if (searchParams.get('send') === '1') {
+      setEmailOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useDocumentTitle(
     formatPageTitle(offer?.client?.name, t('record_type.offer'), offer?.offer_number),
@@ -101,6 +114,13 @@ export function OfferDetailPage() {
               ))}
             </select>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setEmailOpen(true)}
+          >
+            Αποστολή με email
+          </Button>
           <Button
             type="button"
             onClick={async () => {
@@ -215,6 +235,8 @@ export function OfferDetailPage() {
           </tfoot>
         </table>
       </div>
+
+      <OfferEmailDialog offerId={offer.id} open={emailOpen} onClose={() => setEmailOpen(false)} />
     </div>
   );
 }

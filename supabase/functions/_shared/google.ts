@@ -6,8 +6,14 @@ import { parseAddressList } from './recipients.ts';
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-const b64url = (bytes: Uint8Array) =>
-  btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64url = (bytes: Uint8Array) => {
+  // String.fromCharCode(...big) overflows the arg limit — chunk it (same as
+  // attachments.toBase64). buildMime feeds whole MIME messages through here.
+  let bin = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
 const b64urlToBytes = (s: string) => {
   const b = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
   return Uint8Array.from(b, (c) => c.charCodeAt(0));

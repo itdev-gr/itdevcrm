@@ -63,9 +63,9 @@ describe('useEmailAttachmentStaging', () => {
     expect(result.current.refs[0]!.mimeType).toBe('application/octet-stream');
   });
 
-  it('rejects a >25 MB file with file_too_large and uploads nothing', async () => {
+  it('rejects a >18 MB file with file_too_large and uploads nothing', async () => {
     const { result } = renderHook(() => useEmailAttachmentStaging());
-    const file = fileOfSize(25 * 1024 * 1024 + 1);
+    const file = fileOfSize(18 * 1024 * 1024 + 1);
 
     await act(async () => {
       await result.current.addFiles([file]);
@@ -73,6 +73,18 @@ describe('useEmailAttachmentStaging', () => {
 
     expect(result.current.error).toBe('file_too_large');
     expect(upload).not.toHaveBeenCalled();
+    expect(result.current.refs).toHaveLength(0);
+  });
+
+  it('surfaces upload errors as the translatable code upload_failed', async () => {
+    upload.mockResolvedValueOnce({ error: { message: 'The object exceeded the maximum allowed size' } });
+    const { result } = renderHook(() => useEmailAttachmentStaging());
+
+    await act(async () => {
+      await result.current.addFiles([fileOfSize(1024)]);
+    });
+
+    expect(result.current.error).toBe('upload_failed');
     expect(result.current.refs).toHaveLength(0);
   });
 
@@ -142,5 +154,56 @@ describe('useEmailAttachmentStaging', () => {
 
     expect(remove).toHaveBeenCalledWith(paths);
     expect(result.current.refs).toHaveLength(0);
+  });
+
+  describe('pre-staged external refs', () => {
+    const pdfRef = {
+      bucket: 'offer-pdfs' as const,
+      path: 'offers/abc.pdf',
+      filename: 'OFR-202608-0001.pdf',
+      mimeType: 'application/pdf',
+      bytes: 2 * 1024 * 1024,
+    };
+
+    it('seeds initial refs and never deletes their storage objects on remove/cleanup', async () => {
+      const { result } = renderHook(() => useEmailAttachmentStaging([pdfRef]));
+      expect(result.current.refs).toHaveLength(1);
+
+      act(() => {
+        result.current.remove(0);
+      });
+      expect(remove).not.toHaveBeenCalled();
+      expect(result.current.refs).toHaveLength(0);
+    });
+
+    it('cleanup() deletes only the uploaded (non-external) paths', async () => {
+      const { result } = renderHook(() => useEmailAttachmentStaging([pdfRef]));
+
+      await act(async () => {
+        await result.current.addFiles([fileOfSize(1024, 'a.png')]);
+      });
+      const uploadedPath = result.current.refs[1]!.path;
+
+      await act(async () => {
+        await result.current.cleanup();
+      });
+
+      expect(remove).toHaveBeenCalledWith([uploadedPath]);
+      expect(result.current.refs).toHaveLength(0);
+    });
+
+    it('external bytes count toward the 18 MB total guard', async () => {
+      const { result } = renderHook(() =>
+        useEmailAttachmentStaging([{ ...pdfRef, bytes: 17 * 1024 * 1024 }]),
+      );
+
+      await act(async () => {
+        await result.current.addFiles([fileOfSize(2 * 1024 * 1024, 'b.png')]);
+      });
+
+      expect(result.current.error).toBe('attachments_too_large');
+      expect(upload).not.toHaveBeenCalled();
+      expect(result.current.refs).toHaveLength(1);
+    });
   });
 });

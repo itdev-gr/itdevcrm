@@ -35,9 +35,8 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { LeadTasksTab } from './LeadTasksTab';
-import { SendEmailDialog } from '@/features/email/SendEmailDialog';
+import { OfferEmailDialog } from '@/features/offers/OfferEmailDialog';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
-import { buildOfferDraft } from '@/features/email/buildDraft';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -186,11 +185,6 @@ function LeadDetailContent() {
     (currentStage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
     currentStage?.code ??
     '';
-  const offerDraft = buildOfferDraft(
-    lead.contact_first_name || lead.company_name || '',
-    latestOffer.data ? `${window.location.origin}/offers/${latestOffer.data}` : window.location.origin,
-  );
-
   async function onChangeStage(targetStageId: string) {
     if (!lead || !targetStageId || targetStageId === lead.stage_id) return;
     const targetStage = salesStages.find((s) => s.id === targetStageId);
@@ -290,7 +284,13 @@ function LeadDetailContent() {
           </div>
           <div className={detailHeaderActionsClass}>
             {currentStageCode === 'offer_sent' && (
-              <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setOfferEmailOpen(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                disabled={!latestOffer.data}
+                onClick={() => setOfferEmailOpen(true)}
+              >
                 {t('offer_email.send')}
               </Button>
             )}
@@ -425,15 +425,13 @@ function LeadDetailContent() {
         </TabsContent>
       </Tabs>
 
-      <SendEmailDialog
-        open={offerEmailOpen}
-        identity="personal"
-        to={lead.email ?? ''}
-        subject={offerDraft.subject}
-        body={offerDraft.body}
-        dedupeKey={`offer:${lead.id}`}
-        onClose={() => setOfferEmailOpen(false)}
-      />
+      {latestOffer.data && (
+        <OfferEmailDialog
+          offerId={latestOffer.data}
+          open={offerEmailOpen}
+          onClose={() => setOfferEmailOpen(false)}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDelete}

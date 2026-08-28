@@ -166,7 +166,7 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
 
   const { data: signed } = await admin.storage
     .from('offer-pdfs').createSignedUrl(path, 60 * 5);
-  res.status(200).json({ url: signed?.signedUrl ?? null });
+  res.status(200).json({ url: signed?.signedUrl ?? null, path, bytes: pdf.length });
 }
 
 export default withSentry('offer-pdf', handler);

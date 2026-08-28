@@ -2,14 +2,27 @@ import { useCallback, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { sanitizeStorageFileName } from '@/lib/sanitizeStorageKey';
 
-const MAX_FILE = 25 * 1024 * 1024;
+// Per-file cap matches the Gmail-path total guard (fetchMimeAttachments): a
+// single file above the total could never send anyway.
+const MAX_FILE = 18 * 1024 * 1024;
 const MAX_TOTAL = 18 * 1024 * 1024;
 
-export type EmailAttachmentRef = { bucket: 'attachments'; path: string; filename: string; mimeType: string; bytes: number };
+export type EmailAttachmentRef = {
+  // Buckets accepted by send-email's validateAttachmentRefs.
+  bucket: 'attachments' | 'offer-pdfs' | 'contract-pdfs';
+  path: string;
+  filename: string;
+  mimeType: string;
+  bytes: number;
+};
 
-export function useEmailAttachmentStaging() {
+// External refs point at durable objects owned elsewhere (e.g. the offer PDF
+// in offer-pdfs) — the composer must never delete those from storage.
+type StagedRef = EmailAttachmentRef & { external?: boolean };
+
+export function useEmailAttachmentStaging(initial: EmailAttachmentRef[] = []) {
   const stagingId = useRef(crypto.randomUUID());
-  const [refs, setRefs] = useState<EmailAttachmentRef[]>([]);
+  const [refs, setRefs] = useState<StagedRef[]>(() => initial.map((r) => ({ ...r, external: true })));
   const [pending, setPending] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +41,7 @@ export function useEmailAttachmentStaging() {
         const path = `email/${stagingId.current}/${Date.now()}-${sanitizeStorageFileName(file.name)}`;
         const { error: e } = await supabase.storage.from('attachments').upload(path, file, { contentType: file.type, upsert: false });
         setPending((p) => p.filter((f) => f !== file));
-        if (e) { setError(e.message); continue; }
+        if (e) { setError('upload_failed'); continue; }
         running += file.size;
         setRefs((r) => [...r, { bucket: 'attachments', path, filename: file.name, mimeType: file.type || 'application/octet-stream', bytes: file.size }]);
       }
@@ -38,19 +51,19 @@ export function useEmailAttachmentStaging() {
   }, [refs]);
 
   const remove = useCallback((index: number) => {
+    setError(null);
     setRefs((r) => {
       const ref = r[index];
-      if (ref) void supabase.storage.from('attachments').remove([ref.path]);
+      if (ref && !ref.external) void supabase.storage.from(ref.bucket).remove([ref.path]);
       return r.filter((_, i) => i !== index);
     });
   }, []);
 
-  const clear = useCallback(() => setRefs([]), []);
   const cleanup = useCallback(async () => {
-    const paths = refs.map((r) => r.path);
+    const paths = refs.filter((r) => !r.external).map((r) => r.path);
     if (paths.length) await supabase.storage.from('attachments').remove(paths);
     setRefs([]);
   }, [refs]);
 
-  return { refs, pending, busy, error, addFiles, remove, clear, cleanup };
+  return { refs, pending, busy, error, addFiles, remove, cleanup };
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSendEmail, type SendEmailVars } from './useSendEmail';
 import { RichTextEditor } from './RichTextEditor';
@@ -26,12 +26,19 @@ export type SendEmailDialogProps = {
   body: string;
   dedupeKey?: string;
   onClose: () => void;
+  /** Pre-staged attachments (durable objects, e.g. an offer PDF) shown as
+   *  removable chips; never deleted from storage by the dialog. */
+  initialAttachments?: EmailAttachmentRef[];
+  onSent?: () => void;
+  /** Extra controls rendered between the editor and the attach button.
+   *  `appendHtml` appends markup to the current body. */
+  renderExtras?: (ctx: { appendHtml: (html: string) => void }) => ReactNode;
 };
 
-export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, onClose }: SendEmailDialogProps) {
+export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, onClose, initialAttachments, onSent, renderExtras }: SendEmailDialogProps) {
   const { t } = useTranslation('email');
   const send = useSendEmail();
-  const att = useEmailAttachmentStaging();
+  const att = useEmailAttachmentStaging(initialAttachments ?? []);
   const dnd = useFileDropPaste((f) => void att.addFiles(f), send.isPending);
   const google = useGoogleConnection();
   const needsConnect = identity === 'personal' && !google.connected && !google.isLoading;
@@ -58,8 +65,10 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
       await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, cc, bcc, dedupeKey, attachments: att.refs });
       setDone(true);
       void att.cleanup();
-    } catch {
-      setError(t('dialog.failed'));
+      onSent?.();
+    } catch (e) {
+      const code = (e as Error).message;
+      setError(t(`errors.${code}`, { defaultValue: `${t('dialog.failed')} (${code})` }));
     }
   }
 
@@ -114,6 +123,7 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
                 <RichTextEditor value={text} onChange={setText} disabled={send.isPending} ariaLabel={t('dialog.body')} />
               </div>
             </div>
+            {renderExtras?.({ appendHtml: (h) => setText((cur) => cur + h) })}
             <div className="mt-3">
               <CommentAttachButton
                 pending={att.refs.map(refToChip)}

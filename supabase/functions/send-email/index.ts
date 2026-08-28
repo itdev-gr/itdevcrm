@@ -420,11 +420,17 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
       return { status: 'failed', error: (e as Error).message };
     }
   }
-  const raw = buildMime({
-    from: acct.google_email, to, subject, html, cc, bcc: mergedBcc,
-    attachments: mimeAtts.map((a) => ({ filename: a.filename, mimeType: a.mimeType, base64: a.base64 })),
-  });
-  const res = await sendGmail(access, raw);
+  let res: { ok: boolean; id?: string; error?: string };
+  try {
+    const raw = buildMime({
+      from: acct.google_email, to, subject, html, cc, bcc: mergedBcc,
+      attachments: mimeAtts.map((a) => ({ filename: a.filename, mimeType: a.mimeType, base64: a.base64 })),
+    });
+    res = await sendGmail(access, raw);
+  } catch (e) {
+    await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'failed', dedupe_key: dedupeKey, error: String((e as Error).message) });
+    return { status: 'failed', error: 'mime_build_failed' };
+  }
   // Keep the raw Gmail error in email_log for debugging; return a generic code to the client.
   await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: res.ok ? 'sent' : 'failed', resend_id: res.id ?? null, dedupe_key: dedupeKey, error: res.ok ? null : res.error });
   return res.ok ? { status: 'sent', id: res.id } : { status: 'failed', error: 'send_failed' };

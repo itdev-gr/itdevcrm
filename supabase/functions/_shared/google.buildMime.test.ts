@@ -101,6 +101,30 @@ describe('buildMime — with attachments (multipart/mixed)', () => {
     expect(mime).not.toContain('filename="e"vil');
   });
 
+  it('handles a ~300KB attachment without RangeError (chunked base64url)', () => {
+    // Regression: the old b64url spread the whole MIME message into
+    // String.fromCharCode and blew the V8 arg/stack limit on real files.
+    const big = new Uint8Array(300 * 1024);
+    for (let i = 0; i < big.length; i++) big[i] = i % 251;
+    const raw = buildMime({
+      from: 'a@itdev.gr',
+      to: 'c@x.gr',
+      subject: 'Η προσφορά μας',
+      html: '<p>συνημμένο</p>',
+      attachments: [{ filename: 'offer.pdf', mimeType: 'application/pdf', base64: toBase64(big) }],
+    });
+    const mime = decodeMime(raw);
+    expect(mime).toContain('multipart/mixed');
+    expect(mime).toContain('Content-Disposition: attachment; filename="offer.pdf"');
+
+    const boundary = mime.match(/boundary="(itdev_[0-9a-f]+)"/)![1];
+    const attSeg = mime.split(`--${boundary}`).find((s) => s.includes('Content-Disposition: attachment'))!;
+    const b64 = attSeg.split('\r\n\r\n')[1].replace(/[\r\n]/g, '').replace(/--$/, '');
+    const decoded = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    expect(decoded.length).toBe(big.length);
+    expect(decoded[123456]).toBe(123456 % 251);
+  });
+
   it('rejects a CRLF-injecting or empty mimeType, falling back to octet-stream', () => {
     const raw = buildMime({
       from: 'a@itdev.gr',

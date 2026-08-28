@@ -22,25 +22,13 @@ import { OfferSummaryPanel } from '@/features/offers/OfferSummaryPanel';
 import { seedFromOffer } from '@/lib/proformas/fromOffer';
 import type { OfferItem } from '@/lib/offers/types';
 import { calculateTotals } from '@/lib/offers/calculate';
+import { categoryLabel as sharedCategoryLabel } from '@/lib/offers/serviceLabels';
 import { effectiveVatRate } from '@/lib/countries';
 
 const lang: 'en' | 'el' = 'el';
 
-const CATEGORY_LABELS: Record<string, { en: string; el: string }> = {
-  web_seo: { en: 'Web SEO', el: 'Web SEO' },
-  local_seo: { en: 'Local SEO', el: 'Local SEO' },
-  web_dev: { en: 'Web Development', el: 'Ανάπτυξη Ιστοσελίδων' },
-  social_media: { en: 'Social Media', el: 'Social Media' },
-  ai_seo: { en: 'AI SEO', el: 'AI SEO' },
-  hosting: { en: 'Hosting', el: 'Φιλοξενία' },
-  ads: { en: 'Ads', el: 'Διαφημίσεις' },
-  maintenance: { en: 'Support', el: 'Υποστήριξη' },
-  franchise: { en: 'Franchise', el: 'Franchise' },
-  domains: { en: 'Domains', el: 'Domains' },
-};
-
 function categoryLabel(serviceType: string): string {
-  return CATEGORY_LABELS[serviceType]?.[lang] ?? serviceType;
+  return sharedCategoryLabel(serviceType, lang);
 }
 
 function getLabel(pkg: CatalogPackage): string {

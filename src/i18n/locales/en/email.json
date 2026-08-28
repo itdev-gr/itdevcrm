@@ -17,10 +17,6 @@
     "dept_bcc_hint": "A copy is sent automatically to your department's mailbox.",
     "signature_preview": "Preview signature"
   },
-  "offer": {
-    "subject": "Your offer from ITDEV",
-    "body": "Dear {{name}},\n\nThank you for your interest. You can view your offer here: {{offerUrl}}"
-  },
   "proforma": {
     "subject": "Your pro forma invoice from ITDEV",
     "body": "Dear {{name}},\n\nPlease find your pro forma invoice here: {{proFormaUrl}}"
@@ -66,7 +62,19 @@
     "link_prompt": "Enter URL:"
   },
   "errors": {
-    "file_too_large": "That file is over 25 MB and can't be attached.",
-    "attachments_too_large": "Attachments can total at most 18 MB."
+    "file_too_large": "That file is over 18 MB and can't be attached.",
+    "attachments_too_large": "Attachments can total at most 18 MB.",
+    "upload_failed": "The file could not be uploaded. Try again.",
+    "invalid_recipient": "The recipient address is not valid.",
+    "token_refresh_failed": "Google connection expired — reconnect and try again.",
+    "mime_build_failed": "The email could not be assembled (attachment problem).",
+    "send_failed": "Gmail rejected the send. Try again."
+  },
+  "offer_composer": {
+    "preparing": "Preparing offer email…",
+    "pdf_failed": "The offer PDF could not be generated.",
+    "retry": "Retry",
+    "continue_without_pdf": "Continue without PDF",
+    "add_service": "Add a service to the email"
   }
 }

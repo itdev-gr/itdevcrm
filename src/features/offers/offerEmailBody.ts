@@ -1,0 +1,58 @@
+// Pure assembly of the offer email from email_templates composer rows.
+// The result is HTML for the RichTextEditor, sent as templateKey 'custom' —
+// it must stay inside the sanitizeEmailHtml allowlist (p/br/strong etc., no <h*>).
+
+export type OfferEmailVars = {
+  name: string;
+  owner_name: string;
+  offer_number: string;
+  validity_days: number;
+};
+
+export type OfferTemplate = { key: string; subject: string; body: string };
+
+/** Mirrors the server's interpolate (send-email/templates.ts): unknown keys → ''. */
+export function interpolate(tpl: string, data: Record<string, string | number>): string {
+  return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k: string) => String(data[k] ?? ''));
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** Plain template text → paragraphs: blank-line-separated blocks become <p>,
+ *  single newlines inside a block become <br>. */
+export function textToHtml(text: string): string {
+  return text
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+
+/** One service block: bold heading (the template's subject) + its body. */
+export function buildServiceBlockHtml(tpl: OfferTemplate, vars: OfferEmailVars): string {
+  const heading = escapeHtml(interpolate(tpl.subject, vars));
+  return `<p><strong>${heading}</strong></p>${textToHtml(interpolate(tpl.body, vars))}`;
+}
+
+export function buildOfferEmail(opts: {
+  intro: OfferTemplate;
+  outro: OfferTemplate;
+  serviceTpls: OfferTemplate[];
+  vars: OfferEmailVars;
+}): { subject: string; html: string } {
+  const { intro, outro, serviceTpls, vars } = opts;
+  const subject = interpolate(intro.subject, vars);
+  const html = [
+    textToHtml(interpolate(intro.body, vars)),
+    ...serviceTpls.map((tpl) => buildServiceBlockHtml(tpl, vars)),
+    textToHtml(interpolate(outro.body, vars)),
+  ].join('');
+  return { subject, html };
+}
