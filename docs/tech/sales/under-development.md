@@ -33,7 +33,7 @@ pipeline ΔΕΝ αγγίχτηκε — templates/χρονισμοί του μέ�
   (board-aware OfferEmailDialog — lead σε στάδιο `ud_%`), με το
   `{{offer_url}}` (δημόσιο link `/o/<token>`, ανοίγματα → offer_views →
   σχόλιο στο lead). Τα κλασικά `offer_email_intro/outro` μένουν για τα λοιπά.
-- **Welcome email: ΔΕΝ υπάρχει στο UD** — το έγγραφο δεν προβλέπει email στο
+- **Welcome email**: στέλνεται ΑΜΕΣΩΣ με την είσοδο στο Νέο Lead (`ud_welcome`, step 5 της ud_first_call — owner approval 2026-08-28)· το ίδιο κείμενο μπήκε και στο κλασικό `lead_welcome`.
   Νέο Lead. Το κείμενο «Welcome» που έδωσε ο owner (28/08) είναι παρκαρισμένο
   εδώ για μελλοντική χρήση, μη εγκατεστημένο πουθενά.
 
