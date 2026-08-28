@@ -6368,6 +6368,7 @@ export type Database = {
           lead_id: string | null
           notes: string | null
           offer_number: string | null
+          pdf_generated_at: string | null
           pdf_path: string | null
           public_token: string
           sent_at: string | null
@@ -6389,6 +6390,7 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           offer_number?: string | null
+          pdf_generated_at?: string | null
           pdf_path?: string | null
           public_token?: string
           sent_at?: string | null
@@ -6410,6 +6412,7 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           offer_number?: string | null
+          pdf_generated_at?: string | null
           pdf_path?: string | null
           public_token?: string
           sent_at?: string | null
