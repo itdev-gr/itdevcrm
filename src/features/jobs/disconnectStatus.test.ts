@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { canToggleDisconnect, disconnectStatus } from './disconnectStatus';
 
-function job(over: Record<string, any> = {}) {
+function job(over: Record<string, unknown> = {}) {
   return {
     service_type: 'local_seo',
     stage: { id: 's-closed', code: 'closed', board: 'local_seo', display_names: {} },
