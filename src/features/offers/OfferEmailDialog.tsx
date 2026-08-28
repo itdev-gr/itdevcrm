@@ -4,14 +4,12 @@ import { SendEmailDialog } from '@/features/email/SendEmailDialog';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUser } from '@/features/users/hooks/useUser';
 import { useLead } from '@/features/leads/hooks/useLead';
-import { categoryLabel, SERVICE_TYPES } from '@/lib/offers/serviceLabels';
-import type { OfferItem } from '@/lib/offers/types';
 import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
 import { PUBLIC_OFFER_BASE } from './publicOfferLink';
 import { useEnsureOfferPdf, type OfferPdfInfo } from './hooks/useEnsureOfferPdf';
 import { useOfferEmailTemplates } from './hooks/useOfferEmailTemplates';
-import { buildOfferEmail, buildServiceBlockHtml, interpolate, textToHtml, type OfferEmailVars, type OfferTemplate } from './offerEmailBody';
+import { buildOfferEmail, type OfferEmailVars, type OfferTemplate } from './offerEmailBody';
 
 type Props = { offerId: string; open: boolean; onClose: () => void };
 
@@ -20,9 +18,9 @@ const FALLBACK_INTRO: OfferTemplate = { key: 'offer_email_intro', subject: 'Η �
 // No sign-off here: the Gmail signature is appended automatically at send.
 const FALLBACK_OUTRO: OfferTemplate = { key: 'offer_email_outro', subject: '', body: 'Παραμένουμε στη διάθεσή σας για οποιαδήποτε απορία.' };
 
-/** Prefilled offer email: intro + one block per offered service + outro from
- *  admin-editable email_templates rows, offer PDF attached, sent from the
- *  salesperson's Gmail. The salesperson edits everything before sending. */
+/** Prefilled offer email: intro (with the public offer link) + CTA outro from
+ *  admin-editable email_templates rows, sent from the salesperson's Gmail.
+ *  Service descriptions live in the generated PDF, not the email body. */
 export function OfferEmailDialog({ offerId, open, onClose }: Props) {
   const { t } = useTranslation('email');
   const { data: offer } = useOffer(open ? offerId : '');
@@ -37,7 +35,6 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
   const [pdfInfo, setPdfInfo] = useState<OfferPdfInfo | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [skipPdf, setSkipPdf] = useState(false);
-  const [extraTypes, setExtraTypes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!open) return;
@@ -47,16 +44,10 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     setPdfInfo(null);
     setPdfError(null);
     setSkipPdf(false);
-    setExtraTypes(new Set());
     generatePdf(offerId)
       .then(setPdfInfo)
       .catch((e: Error) => setPdfError(e.message));
   }, [open, offerId, generatePdf]);
-
-  const offerTypes = useMemo(() => {
-    const items = (offer?.items as unknown as OfferItem[]) ?? [];
-    return [...new Set(items.map((it) => it.category))];
-  }, [offer]);
 
   const byKey = useMemo(() => {
     const m = new Map<string, OfferTemplate>();
@@ -72,20 +63,14 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     offer_url: offer ? `${PUBLIC_OFFER_BASE}${offer.public_token}` : '',
   }), [lead, me, offer]);
 
-  const outro = byKey.get('offer_email_outro') ?? FALLBACK_OUTRO;
-
   const draft = useMemo(() => {
     if (!offer || !templates.data) return null;
-    const serviceTpls = offerTypes
-      .map((type) => byKey.get(`offer_svc_${type}`))
-      .filter((tpl): tpl is OfferTemplate => !!tpl);
     return buildOfferEmail({
       intro: byKey.get('offer_email_intro') ?? FALLBACK_INTRO,
-      outro,
-      serviceTpls,
+      outro: byKey.get('offer_email_outro') ?? FALLBACK_OUTRO,
       vars,
     });
-  }, [offer, templates.data, offerTypes, byKey, outro, vars]);
+  }, [offer, templates.data, byKey, vars]);
 
   if (!open) return null;
 
@@ -141,10 +126,6 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     );
   }
 
-  const availableTypes = SERVICE_TYPES.filter(
-    (type) => byKey.has(`offer_svc_${type}`) && !offerTypes.includes(type) && !extraTypes.has(type),
-  );
-
   return (
     <SendEmailDialog
       open
@@ -157,38 +138,6 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
       onSent={() => {
         if (offer.status === 'draft') updateStatus.mutate('sent');
       }}
-      renderExtras={({ updateBody }) =>
-        availableTypes.length > 0 ? (
-          <div className="mt-3">
-            <p className="text-xs text-muted-foreground">{t('offer_composer.add_service')}</p>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {availableTypes.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  className="rounded-full border px-2.5 py-0.5 text-xs hover:bg-accent"
-                  onClick={() => {
-                    const tpl = byKey.get(`offer_svc_${type}`);
-                    if (!tpl) return;
-                    const block = buildServiceBlockHtml(tpl, vars);
-                    // Stack the new block under the existing service blocks,
-                    // above the outro/CTA; if the outro was edited away, append.
-                    const outroHtml = textToHtml(interpolate(outro.body, vars));
-                    updateBody((cur) =>
-                      cur.includes(outroHtml)
-                        ? cur.replace(outroHtml, block + outroHtml)
-                        : cur + block,
-                    );
-                    setExtraTypes((prev) => new Set(prev).add(type));
-                  }}
-                >
-                  + {categoryLabel(type)}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null
-      }
     />
   );
 }

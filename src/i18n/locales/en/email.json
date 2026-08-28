@@ -74,7 +74,6 @@
     "preparing": "Preparing offer email…",
     "pdf_failed": "The offer PDF could not be generated.",
     "retry": "Retry",
-    "continue_anyway": "Continue anyway",
-    "add_service": "Add a service to the email"
+    "continue_anyway": "Continue anyway"
   }
 }

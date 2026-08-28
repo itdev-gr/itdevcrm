@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSendEmail, type SendEmailVars } from './useSendEmail';
 import { useDeptCc } from './useDeptCc';
@@ -27,16 +27,13 @@ export type SendEmailDialogProps = {
   body: string;
   dedupeKey?: string;
   onClose: () => void;
-  /** Pre-staged attachments (durable objects, e.g. an offer PDF) shown as
+  /** Pre-staged attachments (durable objects, e.g. a generated PDF) shown as
    *  removable chips; never deleted from storage by the dialog. */
   initialAttachments?: EmailAttachmentRef[];
   onSent?: () => void;
-  /** Extra controls rendered between the editor and the attach button.
-   *  `updateBody` maps the current body HTML to a new one. */
-  renderExtras?: (ctx: { updateBody: (fn: (cur: string) => string) => void }) => ReactNode;
 };
 
-export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, onClose, initialAttachments, onSent, renderExtras }: SendEmailDialogProps) {
+export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, onClose, initialAttachments, onSent }: SendEmailDialogProps) {
   const { t } = useTranslation('email');
   const send = useSendEmail();
   const att = useEmailAttachmentStaging(initialAttachments ?? []);
@@ -135,7 +132,6 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
                 <RichTextEditor value={text} onChange={setText} disabled={send.isPending} ariaLabel={t('dialog.body')} />
               </div>
             </div>
-            {renderExtras?.({ updateBody: (fn) => setText(fn) })}
             <div className="mt-3">
               <CommentAttachButton
                 pending={att.refs.map(refToChip)}

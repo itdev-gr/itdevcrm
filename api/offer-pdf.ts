@@ -105,6 +105,22 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
   }
   const { clientName, companyName, email } = resolveOfferRecipient(client, lead);
 
+  // Service descriptions (admin-edited offer_svc_* template bodies) render
+  // inside the PDF's «Δυνατότητες - Υπηρεσίες» section — the offer email
+  // deliberately no longer carries them.
+  const items = (offer.items as unknown as OfferItem[]) ?? [];
+  const categories = [...new Set(items.map((it) => it.category).filter(Boolean))];
+  const serviceBlocks: Record<string, string> = {};
+  if (categories.length > 0) {
+    const { data: tpls } = await admin
+      .from('email_templates')
+      .select('key, body')
+      .in('key', categories.map((c) => `offer_svc_${c}`));
+    for (const tpl of (tpls ?? []) as { key: string; body: string }[]) {
+      serviceBlocks[tpl.key.replace(/^offer_svc_/, '')] = tpl.body;
+    }
+  }
+
   const html = renderOfferHtml({
     offerId: offer.id,
     offerNumber: offer.offer_number,
@@ -115,11 +131,12 @@ async function runHandler(req: VercelRequest, res: VercelResponse): Promise<void
     vatPercent: Number(offer.vat_percent),
     validityDays: offer.validity_days,
     notes: offer.notes,
-    items: (offer.items as unknown as OfferItem[]) ?? [],
+    items,
     totals: (offer.totals as unknown as OfferTotals) ?? {
       subtotal: 0, discountAmount: 0, taxable: 0, vatAmount: 0, total: 0,
     },
     createdAt: offer.created_at,
+    serviceBlocks,
   });
 
   const puppeteer = await import('puppeteer-core');

@@ -43,24 +43,15 @@ export function textToHtml(text: string): string {
     .join('');
 }
 
-/** One service block: bold heading (the template's subject) + its body. */
-export function buildServiceBlockHtml(tpl: OfferTemplate, vars: OfferEmailVars): string {
-  const heading = escapeHtml(interpolate(tpl.subject, vars));
-  return `<p><strong>${heading}</strong></p>${textToHtml(interpolate(tpl.body, vars))}`;
-}
-
+/** Assemble the offer email: intro (subject + body with the offer link) and
+ *  the CTA outro. Service descriptions live in the generated PDF, not here. */
 export function buildOfferEmail(opts: {
   intro: OfferTemplate;
   outro: OfferTemplate;
-  serviceTpls: OfferTemplate[];
   vars: OfferEmailVars;
 }): { subject: string; html: string } {
-  const { intro, outro, serviceTpls, vars } = opts;
+  const { intro, outro, vars } = opts;
   const subject = interpolate(intro.subject, vars);
-  const html = [
-    textToHtml(interpolate(intro.body, vars)),
-    ...serviceTpls.map((tpl) => buildServiceBlockHtml(tpl, vars)),
-    textToHtml(interpolate(outro.body, vars)),
-  ].join('');
+  const html = textToHtml(interpolate(intro.body, vars)) + textToHtml(interpolate(outro.body, vars));
   return { subject, html };
 }

@@ -33,6 +33,9 @@ type Args = {
   items: OfferItem[];
   totals: OfferTotals;
   createdAt: string; // ISO timestamp
+  /** category code → plain-text service description (offer_svc_* template
+   *  bodies) rendered inside «Δυνατότητες - Υπηρεσίες» above the item bullets. */
+  serviceBlocks?: Record<string, string>;
 };
 
 // ---------------------------------------------------------------------------
@@ -78,6 +81,17 @@ function isMonthlyItem(item: OfferItem): boolean {
   return MONTHLY_CATEGORY_CODES.has(item.category) && !NON_MONTHLY_ITEM_IDS.has(item.itemId);
 }
 
+/** Plain template text → paragraphs: blank-line blocks become <p>, single
+ *  newlines become <br> (same semantics as the email composer's textToHtml). */
+function textToParagraphs(text: string): string {
+  return text
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p class="text-sm text-gray-700">${escapeHtml(block).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+
 // ---------------------------------------------------------------------------
 // Main render function
 // ---------------------------------------------------------------------------
@@ -109,6 +123,7 @@ export function renderOfferHtml(args: Args): string {
           <span class="font-medium">${escapeHtml(getCategoryLabel(category))}</span>
         </div>
         <div class="accordion-content border border-gray-200 border-t-0 bg-white">
+          ${args.serviceBlocks?.[category] ? `<div class="px-4 pt-4 space-y-2">${textToParagraphs(args.serviceBlocks[category])}</div>` : ''}
           <ul class="p-4 space-y-2">
             ${categoryItems
               .map(
