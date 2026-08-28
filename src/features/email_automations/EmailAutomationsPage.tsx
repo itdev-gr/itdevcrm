@@ -21,7 +21,7 @@ import {
   settingsTrClass,
 } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
-import { textToHtml } from '@/features/offers/offerEmailBody';
+import { templatePreviewHtml } from './templatePreview';
 import {
   useEmailTemplates,
   useUpdateEmailTemplate,
@@ -126,6 +126,9 @@ function TemplateEditor({ tpl }: { tpl: EmailTemplateRow }) {
                 rows={12}
                 className="mt-1.5 block w-full rounded-lg border border-input/80 bg-background px-3 py-2 font-mono text-xs shadow-sm focus:border-[#1a9696]/40 focus:outline-none focus:ring-2 focus:ring-[#1a9696]/20"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t('email_automations.markup_hint')}
+              </p>
             </div>
             {tpl.variables && (
               <p className="text-xs text-muted-foreground">
@@ -142,9 +145,9 @@ function TemplateEditor({ tpl }: { tpl: EmailTemplateRow }) {
                 {t('email_automations.preview', { defaultValue: 'Προεπισκόπηση' })}
               </div>
               <div
-                className="mt-1.5 max-h-56 overflow-y-auto rounded-lg border border-border/60 bg-muted/25 p-3 text-sm [&_p]:mb-2 [&_p:last-child]:mb-0"
-                // Safe: textToHtml escapes all template text before adding <p>/<br>/<a>.
-                dangerouslySetInnerHTML={{ __html: textToHtml(body) }}
+                className="mt-1.5 max-h-56 overflow-y-auto rounded-lg border border-border/60 bg-muted/25 p-3 text-sm [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-base [&_h3]:font-bold"
+                // Safe: the shared renderer escapes all template text before adding markup tags.
+                dangerouslySetInnerHTML={{ __html: templatePreviewHtml(body) }}
               />
             </div>
           </div>

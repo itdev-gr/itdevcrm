@@ -150,6 +150,7 @@
     "subject": "Subject",
     "body": "Body",
     "variables": "Available variables",
+    "markup_hint": "Formatting: **bold**, \"## Heading\" at line start, \"- \" for a list, blank line = new paragraph. URLs and e-mails become links automatically.",
     "save": "Save",
     "reset": "Reset",
     "step_day": "Day",
