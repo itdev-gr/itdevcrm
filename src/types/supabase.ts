@@ -7101,6 +7101,7 @@ export type Database = {
           cadence_id: string
           created_at: string
           delay_days: number
+          delay_hours: number
           enabled: boolean
           id: string
           kind: string
@@ -7113,6 +7114,7 @@ export type Database = {
           cadence_id: string
           created_at?: string
           delay_days?: number
+          delay_hours?: number
           enabled?: boolean
           id?: string
           kind: string
@@ -7125,6 +7127,7 @@ export type Database = {
           cadence_id?: string
           created_at?: string
           delay_days?: number
+          delay_hours?: number
           enabled?: boolean
           id?: string
           kind?: string
@@ -7828,6 +7831,8 @@ export type Database = {
           deal_id: string
           description: string | null
           details: Json
+          disconnected_at: string | null
+          disconnected_by: string | null
           done_at: string | null
           id: string
           installment_plan: string
@@ -8051,6 +8056,8 @@ export type Database = {
           deal_id: string
           description: string | null
           details: Json
+          disconnected_at: string | null
+          disconnected_by: string | null
           done_at: string | null
           id: string
           installment_plan: string

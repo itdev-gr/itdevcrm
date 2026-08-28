@@ -4,6 +4,8 @@
 
 export type OfferEmailVars = {
   name: string;
+  /** Lead code (e.g. 007005) — the owner's subject format carries it. */
+  code: string;
   owner_name: string;
   offer_number: string;
   validity_days: number;

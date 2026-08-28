@@ -65,7 +65,7 @@ export function useUpdateUdStep() {
   return useMutation<
     void,
     Error,
-    { id: string; patch: { delay_days?: number; enabled?: boolean; titles?: unknown } }
+    { id: string; patch: { delay_days?: number; delay_hours?: number; enabled?: boolean; titles?: unknown } }
   >({
     mutationFn: async ({ id, patch }) => {
       const { error } = await supabase

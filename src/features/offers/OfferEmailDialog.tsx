@@ -57,20 +57,29 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
 
   const vars: OfferEmailVars = useMemo(() => ({
     name: lead?.contact_first_name || lead?.company_name || '',
+    code: lead?.code ?? '',
     owner_name: me?.full_name ?? '',
     offer_number: offer?.offer_number ?? '',
     validity_days: offer?.validity_days ?? 14,
     offer_url: offer ? `${PUBLIC_OFFER_BASE}${offer.public_token}` : '',
   }), [lead, me, offer]);
 
+  // UD leads get the Under-Development copy (ΡΟΗ_ΝΕΟΥ_LEAD flow); everyone
+  // else keeps the classic intro/outro. Falls back to the classic rows if the
+  // ud rows are ever deleted.
+  const isUdLead = (lead?.stage?.code ?? '').startsWith('ud_');
   const draft = useMemo(() => {
     if (!offer || !templates.data) return null;
-    return buildOfferEmail({
-      intro: byKey.get('offer_email_intro') ?? FALLBACK_INTRO,
-      outro: byKey.get('offer_email_outro') ?? FALLBACK_OUTRO,
-      vars,
-    });
-  }, [offer, templates.data, byKey, vars]);
+    const intro =
+      (isUdLead ? byKey.get('ud_offer_email_intro') : undefined) ??
+      byKey.get('offer_email_intro') ??
+      FALLBACK_INTRO;
+    const outro =
+      (isUdLead ? byKey.get('ud_offer_email_outro') : undefined) ??
+      byKey.get('offer_email_outro') ??
+      FALLBACK_OUTRO;
+    return buildOfferEmail({ intro, outro, vars });
+  }, [offer, templates.data, byKey, vars, isUdLead]);
 
   if (!open) return null;
 

@@ -114,6 +114,12 @@ export function SalesAutomationsPage() {
             onSave={(v) => updateStep.mutate({ id: step.id, patch: { delay_days: v } })}
           />
           {t('ud.admin.days_after_previous')}
+          <DaysInput
+            value={step.delay_hours ?? 0}
+            disabled={updateStep.isPending}
+            onSave={(v) => updateStep.mutate({ id: step.id, patch: { delay_hours: v } })}
+          />
+          {t('ud.admin.hours_after_previous', { defaultValue: 'ώρες' })}
         </span>
         <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Checkbox

@@ -3,6 +3,7 @@ import { interpolate, textToHtml, buildOfferEmail, type OfferEmailVars } from '.
 
 const vars: OfferEmailVars = {
   name: 'Κώστας',
+  code: '007005',
   owner_name: 'Μάριος',
   offer_number: 'OFR-202608-0042',
   validity_days: 14,
@@ -60,5 +61,13 @@ describe('buildOfferEmail', () => {
     expect(idx('Αγαπητέ/ή Κώστας')).toBeGreaterThanOrEqual(0);
     expect(html).toContain(`<a href="${vars.offer_url}">`);
     expect(idx('Αγαπητέ/ή Κώστας')).toBeLessThan(idx('Παραμένουμε στη διάθεσή σας.'));
+  });
+});
+
+describe('UD subject format (ΡΟΗ_ΝΕΟΥ_LEAD)', () => {
+  it('interpolates name and lead code in the owner subject format', () => {
+    expect(interpolate('ITDEV Προσφορά | {{name}} ({{code}})', vars)).toBe(
+      'ITDEV Προσφορά | Κώστας (007005)',
+    );
   });
 });

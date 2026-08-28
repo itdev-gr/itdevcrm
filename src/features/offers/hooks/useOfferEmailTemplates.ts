@@ -12,7 +12,9 @@ export function useOfferEmailTemplates() {
       const { data, error } = await supabase
         .from('email_templates')
         .select('key, subject, body')
-        .or('key.like.offer_svc_%,key.in.(offer_email_intro,offer_email_outro)');
+        .or(
+          'key.like.offer_svc_%,key.in.(offer_email_intro,offer_email_outro,ud_offer_email_intro,ud_offer_email_outro)',
+        );
       if (error) throw new Error(error.message);
       return (data ?? []) as OfferTemplate[];
     },
