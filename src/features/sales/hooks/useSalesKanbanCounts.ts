@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { normalizeSearchTerm } from '../salesKanbanColumns';
 
 export type KanbanCountsFilter = {
   ownerId?: string;
@@ -12,7 +13,9 @@ export type KanbanCountsFilter = {
 
 /** True lead count per stage of one board (RLS-scoped via the SECURITY INVOKER RPC). */
 export function useSalesKanbanCounts(filter: KanbanCountsFilter) {
-  const search = filter.search?.trim() ?? '';
+  // Same normalizer as searchOrClause (column rows), so the header total and
+  // the cards agree for terms containing `% , ( )` (e.g. "Acme, Ltd", "50%").
+  const search = normalizeSearchTerm(filter.search ?? '');
   return useQuery({
     queryKey: queryKeys.salesKanbanCounts({
       owner: filter.ownerId,

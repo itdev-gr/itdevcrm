@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   KANBAN_PAGE_SIZE,
   KANBAN_SEARCH_COLUMNS,
+  normalizeSearchTerm,
   orderForSort,
   pickNextId,
   searchOrClause,
@@ -36,6 +37,21 @@ describe('salesKanbanColumns', () => {
   it('strips PostgREST-breaking characters from the search term', () => {
     const c = searchOrClause('a,b(c)%');
     expect(c).toContain('title.ilike.%a b c%');
+  });
+
+  it('normalizeSearchTerm strips % , ( ) and trims', () => {
+    expect(normalizeSearchTerm('Acme, Ltd')).toBe('Acme  Ltd');
+    expect(normalizeSearchTerm('  hello  ')).toBe('hello');
+    expect(normalizeSearchTerm('a,b(c)%')).toBe('a b c');
+    expect(normalizeSearchTerm('   ')).toBe('');
+  });
+
+  it('searchOrClause is built from normalizeSearchTerm, so "50%" has no live wildcard or doubled %%', () => {
+    expect(searchOrClause('50%')).toBe(
+      KANBAN_SEARCH_COLUMNS.map((col) => `${col}.ilike.%${normalizeSearchTerm('50%')}%`).join(','),
+    );
+    expect(searchOrClause('50%')).toContain('title.ilike.%50%');
+    expect(searchOrClause('50%')).not.toContain('%%');
   });
 
   it('uses a 50-lead page size', () => {

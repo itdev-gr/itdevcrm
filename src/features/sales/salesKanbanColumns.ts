@@ -53,10 +53,18 @@ export const KANBAN_SEARCH_COLUMNS = [
   'vat_number',
 ] as const satisfies readonly string[];
 
+// Normalizes a kanban search term for use in a PostgREST filter: strips
+// characters that would break the filter grammar (`%` `,` `(` `)`) and trims.
+// Shared by searchOrClause (column rows) and useSalesKanbanCounts (header
+// totals) so both send the exact same term to Postgres — otherwise a term
+// like "Acme, Ltd" or "50%" makes the header count disagree with the cards.
+export function normalizeSearchTerm(search: string): string {
+  return search.replace(/[%,()]/g, ' ').trim();
+}
+
 // PostgREST `or=` clause for the kanban search box; null when the term is empty.
-// Strips characters that would break the filter grammar (`%` `,` `(` `)`).
 export function searchOrClause(search: string): string | null {
-  const v = search.replace(/[%,()]/g, ' ').trim();
+  const v = normalizeSearchTerm(search);
   if (!v) return null;
   const like = `%${v}%`;
   return KANBAN_SEARCH_COLUMNS.map((col) => `${col}.ilike.${like}`).join(',');
