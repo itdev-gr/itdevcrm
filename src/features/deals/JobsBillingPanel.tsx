@@ -26,7 +26,21 @@ import { CustomScheduleEditor } from './CustomScheduleEditor';
 import { validateCustomSchedule, type ScheduleRow } from './customSchedule';
 import { billingErrorMessage, reportBillingError as reportError } from './billingErrors';
 import type { BillingType } from '@/lib/rpc';
-import { PauseCircle, PlayCircle } from 'lucide-react';
+import {
+  Archive,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  PauseCircle,
+  PlayCircle,
+  TriangleAlert,
+} from 'lucide-react';
+import {
+  formatMonthKey,
+  groupByMonth,
+  NO_PERIOD_KEY,
+  type MonthGroup,
+} from './paymentMonths';
 import { useJobPauseBilling, useJobResumeBilling } from '@/features/jobs/hooks/useJobBillingPause';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { canConvert } from '@/features/jobs/serviceConversion';
@@ -649,6 +663,83 @@ function PaymentCard({
   );
 }
 
+/**
+ * One month of payment cards in the overview: a slim summary header plus, when
+ * expanded, the cards themselves. Mirrors the PaymentsPanel month sections.
+ */
+function OverviewMonthSection({
+  group,
+  dealId,
+  readOnly,
+  expanded,
+  onToggle,
+}: {
+  group: MonthGroup<PaymentWithLines>;
+  dealId: string;
+  readOnly: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const { t, i18n } = useTranslation('deals');
+  const monthLabel =
+    group.key === NO_PERIOD_KEY
+      ? t('payments.no_period', { defaultValue: 'No period' })
+      : formatMonthKey(group.key, i18n?.language ?? 'el');
+
+  return (
+    <div className="space-y-1.5">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={t('payments.toggle_month', {
+          month: monthLabel,
+          defaultValue: 'Toggle month {{month}}',
+        })}
+        aria-expanded={expanded}
+        className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md bg-muted/50 px-2 py-1.5 text-left"
+      >
+        {expanded ? (
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+        )}
+        {group.hasOverdue ? (
+          <TriangleAlert className="h-3.5 w-3.5 text-red-500" />
+        ) : !group.hasOpen ? (
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+        ) : null}
+        <span className="text-[11px] font-medium capitalize text-foreground">{monthLabel}</span>
+        <span className="text-[11px] text-muted-foreground">
+          {t('payments.month_payments', {
+            count: group.billableCount,
+            defaultValue: '{{count}} payments',
+          })}
+          {' · '}
+          <span className="tabular-nums">€{group.gross.toFixed(2)}</span>
+          {' · '}
+          {group.hasOpen ? (
+            <span className={group.hasOverdue ? 'font-medium text-red-600 dark:text-red-400' : ''}>
+              {t('payments.month_paid_ratio', {
+                paid: group.paidCount,
+                total: group.billableCount,
+                defaultValue: '{{paid}}/{{total}} paid',
+              })}
+            </span>
+          ) : (
+            <span className="text-emerald-600 dark:text-emerald-400">
+              {t('payments.month_all_paid', { defaultValue: 'All paid' })}
+            </span>
+          )}
+        </span>
+      </button>
+      {expanded &&
+        group.rows.map((p) => (
+          <PaymentCard key={p.id} payment={p} dealId={dealId} readOnly={readOnly} />
+        ))}
+    </div>
+  );
+}
+
 /** A single bucket of the jobs-derived pricing summary. */
 type SummaryBucket = { net: number; vat: number; gross: number };
 
@@ -749,7 +840,32 @@ export function JobsBillingPanel({
   const [showAddWebsite, setShowAddWebsite] = useState(false);
 
   const jobs = useMemo(() => data?.jobs ?? [], [data]);
-  const payments = data?.payments ?? [];
+  const payments = useMemo(() => data?.payments ?? [], [data]);
+
+  // Same month grouping as the PaymentsPanel table: open months up top, fully
+  // paid months that have passed folded away under Past payments.
+  const { active: activePaymentMonths, past: pastPaymentMonths } = useMemo(
+    () =>
+      groupByMonth(payments, {
+        date: (p) => p.due_date,
+        gross: (p) => p.total_gross,
+        status: (p) => p.status,
+      }),
+    [payments],
+  );
+  const [monthOverrides, setMonthOverrides] = useState<Record<string, boolean>>({});
+  const [pastOpen, setPastOpen] = useState(false);
+  const pastGross = useMemo(
+    () => Math.round(pastPaymentMonths.reduce((sum, g) => sum + g.gross, 0) * 100) / 100,
+    [pastPaymentMonths],
+  );
+
+  function monthExpanded(group: MonthGroup<PaymentWithLines>, defaultExpanded: boolean): boolean {
+    return monthOverrides[group.key] ?? defaultExpanded;
+  }
+  function toggleMonth(group: MonthGroup<PaymentWithLines>, defaultExpanded: boolean) {
+    setMonthOverrides((o) => ({ ...o, [group.key]: !(o[group.key] ?? defaultExpanded) }));
+  }
 
   // Stable "Group 1 / 2 / …" labels for every billing group currently in use.
   const groupLabels = useMemo(() => {
@@ -859,9 +975,68 @@ export function JobsBillingPanel({
           <p className="text-sm text-muted-foreground">{t('jobs_billing.empty_payments')}</p>
         ) : (
           <div className="space-y-2">
-            {payments.map((p) => (
-              <PaymentCard key={p.id} payment={p} dealId={dealId} readOnly={readOnly} />
+            {activePaymentMonths.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                {t('payments.all_settled', { defaultValue: 'No open payments.' })}
+              </p>
+            )}
+            {activePaymentMonths.map((g) => (
+              <OverviewMonthSection
+                key={g.key}
+                group={g}
+                dealId={dealId}
+                readOnly={readOnly}
+                expanded={monthExpanded(g, g.hasOpen)}
+                onToggle={() => toggleMonth(g, g.hasOpen)}
+              />
             ))}
+
+            {pastPaymentMonths.length > 0 && (
+              <div className="rounded-md border">
+                <button
+                  type="button"
+                  onClick={() => setPastOpen((v) => !v)}
+                  aria-expanded={pastOpen}
+                  className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 px-2 py-1.5 text-left"
+                >
+                  {pastOpen ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                  <Archive className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-[11px] font-medium text-foreground">
+                    {t('payments.past_title', { defaultValue: 'Past payments' })}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {t('payments.past_months', {
+                      count: pastPaymentMonths.length,
+                      defaultValue: '{{count}} months',
+                    })}
+                    {' · '}
+                    <span className="tabular-nums">€{pastGross.toFixed(2)}</span>
+                    {' · '}
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      {t('payments.month_all_paid', { defaultValue: 'All paid' })}
+                    </span>
+                  </span>
+                </button>
+                {pastOpen && (
+                  <div className="space-y-2 border-t p-2">
+                    {pastPaymentMonths.map((g) => (
+                      <OverviewMonthSection
+                        key={g.key}
+                        group={g}
+                        dealId={dealId}
+                        readOnly={readOnly}
+                        expanded={monthExpanded(g, false)}
+                        onToggle={() => toggleMonth(g, false)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

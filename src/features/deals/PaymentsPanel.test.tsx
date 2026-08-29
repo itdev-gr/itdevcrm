@@ -9,6 +9,7 @@ vi.mock('react-i18next', () => ({
 
 const updateSpy = vi.fn().mockResolvedValue(undefined);
 const deleteSpy = vi.fn().mockResolvedValue(undefined);
+const bulkSpy = vi.fn().mockResolvedValue(undefined);
 
 // Flat mock of the data hooks so the update mutation is a spy and no supabase
 // client is touched.
@@ -18,6 +19,7 @@ vi.mock('./hooks/useDealPayments', () => ({
   useUpdateDealPayment: () => ({ mutateAsync: updateSpy, isPending: false }),
   useAddDealPayment: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteDealPayment: () => ({ mutateAsync: deleteSpy, isPending: false }),
+  useBulkMarkDealPaymentsPaid: () => ({ mutateAsync: bulkSpy, isPending: false }),
 }));
 
 // useJobsBilling is a react-query hook; stub it so the panel still renders
@@ -55,6 +57,13 @@ const row: DealPaymentRow = {
 
 function dateInputs(container: HTMLElement): HTMLInputElement[] {
   return Array.from(container.querySelectorAll('input[type="date"]'));
+}
+
+// A settled month that has passed lives inside the collapsed Past payments
+// archive: open the archive, then expand the month, to reach its rows.
+function openPastMonth() {
+  fireEvent.click(screen.getByText('payments.past_title'));
+  fireEvent.click(screen.getByLabelText('payments.toggle_month'));
 }
 
 beforeEach(() => {
@@ -250,6 +259,7 @@ describe('PaymentsPanel mark paid asks for a real payment date', () => {
   it('un-marking a paid row is immediate — no popover, paid_at cleared', () => {
     paymentRow.value = { ...row, status: 'paid', paid_at: '2026-08-01T00:00:00Z' };
     render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    openPastMonth();
 
     fireEvent.click(screen.getByText('payments.status_paid'));
 
@@ -272,6 +282,7 @@ describe('PaymentsPanel cancelled row restore', () => {
   it('shows a cancelled badge instead of the paid-date popover trigger', () => {
     paymentRow.value = { ...row, status: 'cancelled' };
     render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    openPastMonth();
 
     expect(screen.getByText('payments.status_cancelled')).toBeInTheDocument();
     expect(screen.queryByLabelText('payments.paid_date_label')).not.toBeInTheDocument();
@@ -280,6 +291,7 @@ describe('PaymentsPanel cancelled row restore', () => {
   it('asks for confirmation instead of updating immediately', () => {
     paymentRow.value = { ...row, status: 'cancelled' };
     render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    openPastMonth();
 
     expect(screen.queryByText('payments.restore_confirm_title')).not.toBeInTheDocument();
 
@@ -292,6 +304,7 @@ describe('PaymentsPanel cancelled row restore', () => {
   it('restores to pending with paid_at cleared once confirmed', () => {
     paymentRow.value = { ...row, status: 'cancelled', paid_at: '2026-06-01T00:00:00Z' };
     render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    openPastMonth();
 
     fireEvent.click(screen.getByText('payments.status_cancelled'));
     fireEvent.click(screen.getByText('payments.restore_to_pending'));
@@ -305,10 +318,78 @@ describe('PaymentsPanel cancelled row restore', () => {
   it('does not restore when the dialog is dismissed', () => {
     paymentRow.value = { ...row, status: 'cancelled' };
     render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    openPastMonth();
 
     fireEvent.click(screen.getByText('payments.status_cancelled'));
     fireEvent.click(screen.getByText('cancel'));
 
     expect(updateSpy).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Month grouping: an open (pending/overdue) month stays expanded in the main
+ * list; a fully paid month that has passed moves into the collapsed Past
+ * payments archive and is reachable, but not in the way, from there.
+ */
+describe('PaymentsPanel month grouping', () => {
+  it('keeps an open month expanded in the main list, with no Past section', () => {
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    expect(screen.getByText('payments.status_pending')).toBeInTheDocument();
+    expect(screen.queryByText('payments.past_title')).not.toBeInTheDocument();
+  });
+
+  it('moves a fully paid past month behind the Past payments toggle', () => {
+    paymentRow.value = { ...row, status: 'paid', paid_at: '2026-07-05T00:00:00Z' };
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    // Nothing open: the main list says so, the row itself is hidden.
+    expect(screen.getByText('payments.all_settled')).toBeInTheDocument();
+    expect(screen.queryByText('payments.status_paid')).not.toBeInTheDocument();
+
+    openPastMonth();
+    expect(screen.getByText('payments.status_paid')).toBeInTheDocument();
+  });
+});
+
+/**
+ * Bulk mark-paid sweeps a month's open rows in one action — and, like the
+ * per-row control, it must ask for the real payment date instead of stamping
+ * "now" (the DB guard money_paid_needs_date requires it).
+ */
+describe('PaymentsPanel bulk mark paid for a month', () => {
+  beforeEach(() => bulkSpy.mockClear());
+
+  it('opens a date popover instead of paying immediately', () => {
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+
+    fireEvent.click(screen.getByText('payments.bulk_mark_paid'));
+
+    expect(bulkSpy).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('payments.bulk_paid_date_label')).toBeInTheDocument();
+  });
+
+  it('submits the open row ids with the chosen date at midnight UTC', () => {
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    fireEvent.click(screen.getByText('payments.bulk_mark_paid'));
+
+    fireEvent.change(screen.getByLabelText('payments.bulk_paid_date_label'), {
+      target: { value: '2026-08-01' },
+    });
+    fireEvent.click(screen.getByText('payments.bulk_confirm_mark_paid'));
+
+    expect(bulkSpy).toHaveBeenCalledWith({
+      ids: ['p1'],
+      paid_at: '2026-08-01T00:00:00Z',
+    });
+  });
+
+  it('offers no bulk button on a month with nothing open', () => {
+    paymentRow.value = { ...row, status: 'paid', paid_at: '2026-07-05T00:00:00Z' };
+    render(<PaymentsPanel dealId="d1" services={[]} defaultVatRate={24} />);
+    openPastMonth();
+
+    expect(screen.queryByText('payments.bulk_mark_paid')).not.toBeInTheDocument();
   });
 });

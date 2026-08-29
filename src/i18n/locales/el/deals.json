@@ -109,7 +109,22 @@
     "remove_confirm_title": "Διαγραφή αυτής της περιόδου χρέωσης;",
     "remove_confirm_regenerates": "Η χρέωση για αυτή την υπηρεσία είναι ακόμα ενεργή, οπότε η νυχτερινή εργασία θα ξαναδημιουργήσει αυτή την περίοδο. Για να σταματήσεις τη χρέωση του πελάτη, χρησιμοποίησε το Pause billing στην κάρτα της υπηρεσίας.",
     "remove_confirm_plain": "Η γραμμή θα διαγραφεί οριστικά.",
-    "remove_row": "Διαγραφή περιόδου χρέωσης"
+    "remove_row": "Διαγραφή περιόδου χρέωσης",
+    "no_period": "Χωρίς περίοδο",
+    "toggle_month": "Άνοιγμα/κλείσιμο μήνα {{month}}",
+    "month_payments_one": "{{count}} πληρωμή",
+    "month_payments_other": "{{count}} πληρωμές",
+    "month_paid_ratio": "{{paid}}/{{total}} πληρωμένα",
+    "month_all_paid": "Όλα πληρωμένα",
+    "bulk_mark_paid_one": "Πληρώθηκαν όλα ({{count}})",
+    "bulk_mark_paid_other": "Πληρώθηκαν όλα ({{count}})",
+    "bulk_paid_date_label": "Ημερομηνία πληρωμής για όλο τον μήνα",
+    "bulk_confirm_mark_paid_one": "Σήμανση {{count}} ως πληρωμένης",
+    "bulk_confirm_mark_paid_other": "Σήμανση {{count}} ως πληρωμένων",
+    "past_title": "Παλιές πληρωμές",
+    "past_months_one": "{{count}} μήνας",
+    "past_months_other": "{{count}} μήνες",
+    "all_settled": "Δεν υπάρχουν ανοιχτές πληρωμές."
   },
   "actions": {
     "view": "Προβολή",

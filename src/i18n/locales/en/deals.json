@@ -109,7 +109,22 @@
     "remove_confirm_title": "Delete this billing period?",
     "remove_confirm_regenerates": "Billing for this service is still switched on, so the nightly job will create this period again. To stop charging the client, use Pause billing on the service card instead.",
     "remove_confirm_plain": "The row is removed permanently.",
-    "remove_row": "Delete billing period"
+    "remove_row": "Delete billing period",
+    "no_period": "No period",
+    "toggle_month": "Toggle month {{month}}",
+    "month_payments_one": "{{count}} payment",
+    "month_payments_other": "{{count}} payments",
+    "month_paid_ratio": "{{paid}}/{{total}} paid",
+    "month_all_paid": "All paid",
+    "bulk_mark_paid_one": "Mark all paid ({{count}})",
+    "bulk_mark_paid_other": "Mark all paid ({{count}})",
+    "bulk_paid_date_label": "Payment date for the whole month",
+    "bulk_confirm_mark_paid_one": "Mark {{count}} as paid",
+    "bulk_confirm_mark_paid_other": "Mark {{count}} as paid",
+    "past_title": "Past payments",
+    "past_months_one": "{{count}} month",
+    "past_months_other": "{{count}} months",
+    "all_settled": "No open payments."
   },
   "actions": {
     "view": "View",

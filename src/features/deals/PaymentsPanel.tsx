@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Archive, CheckCircle2, ChevronDown, ChevronRight, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ServiceTypeBadge } from '@/components/ServiceTypeBadge';
@@ -8,11 +9,19 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   useAddDealPayment,
+  useBulkMarkDealPaymentsPaid,
   useDealPayments,
   useDeleteDealPayment,
   useUpdateDealPayment,
   type DealPaymentRow,
 } from './hooks/useDealPayments';
+import {
+  currentMonthKey,
+  formatMonthKey,
+  groupPaymentsByMonth,
+  NO_PERIOD_KEY,
+  type PaymentMonthGroup,
+} from './paymentMonths';
 import { useJobsBilling } from './hooks/useJobsBilling';
 import { PrepayDialog } from './PrepayDialog';
 import { maxPaidDateISO, paidAtFromDate, todayLocalISO } from './paymentsPaidDate';
@@ -326,6 +335,177 @@ function PaymentRow({
   );
 }
 
+const COLUMN_COUNT = 10;
+
+/**
+ * One month of payments: a summary header row plus, when expanded, the payment
+ * rows themselves. Rendered as its own <tbody> so a group is one DOM unit.
+ */
+function MonthSection({
+  group,
+  dealId,
+  countryVatRate,
+  regeneratingChains,
+  expanded,
+  onToggle,
+}: {
+  group: PaymentMonthGroup;
+  dealId: string;
+  countryVatRate: number;
+  regeneratingChains: Set<string>;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const { t, i18n } = useTranslation('deals');
+  const bulk = useBulkMarkDealPaymentsPaid(dealId);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkDate, setBulkDate] = useState(() => todayLocalISO());
+
+  const monthLabel =
+    group.key === NO_PERIOD_KEY
+      ? t('payments.no_period', { defaultValue: 'No period' })
+      : formatMonthKey(group.key, i18n?.language ?? 'el');
+  const openRows = group.rows.filter((r) => r.status === 'pending' || r.status === 'overdue');
+
+  function confirmBulkPaid() {
+    if (!bulkDate) return;
+    bulk
+      .mutateAsync({ ids: openRows.map((r) => r.id), paid_at: paidAtFromDate(bulkDate) })
+      .then(() => setBulkOpen(false))
+      .catch(reportError);
+  }
+
+  return (
+    <tbody>
+      <tr className="border-t bg-muted/50">
+        <td colSpan={COLUMN_COUNT} className="px-2 py-1.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-label={t('payments.toggle_month', {
+                month: monthLabel,
+                defaultValue: 'Toggle month {{month}}',
+              })}
+              aria-expanded={expanded}
+              className="flex items-center gap-1.5 text-xs font-medium text-foreground"
+            >
+              {expanded ? (
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+              {group.hasOverdue ? (
+                <TriangleAlert className="h-3.5 w-3.5 text-red-500" />
+              ) : !group.hasOpen ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              ) : null}
+              <span className="capitalize">{monthLabel}</span>
+            </button>
+            <span className="text-xs text-muted-foreground">
+              {t('payments.month_payments', {
+                count: group.billableCount,
+                defaultValue: '{{count}} payments',
+              })}
+              {' · '}
+              <span className="tabular-nums">€{group.gross.toFixed(2)}</span>
+              {' · '}
+              {group.hasOpen ? (
+                <span className={group.hasOverdue ? 'font-medium text-red-600 dark:text-red-400' : ''}>
+                  {t('payments.month_paid_ratio', {
+                    paid: group.paidCount,
+                    total: group.billableCount,
+                    defaultValue: '{{paid}}/{{total}} paid',
+                  })}
+                </span>
+              ) : (
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {t('payments.month_all_paid', { defaultValue: 'All paid' })}
+                </span>
+              )}
+            </span>
+            {group.hasOpen && (
+              <Popover
+                open={bulkOpen}
+                onOpenChange={(open) => {
+                  setBulkOpen(open);
+                  if (open) setBulkDate(todayLocalISO());
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-xs">
+                    {t('payments.bulk_mark_paid', {
+                      count: openRows.length,
+                      defaultValue: 'Mark all paid ({{count}})',
+                    })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-56 space-y-2 p-2">
+                  <Label className="text-xs">
+                    {t('payments.paid_date_label', { defaultValue: 'Payment date' })}
+                  </Label>
+                  <Input
+                    type="date"
+                    aria-label={t('payments.bulk_paid_date_label', {
+                      defaultValue: 'Payment date for the whole month',
+                    })}
+                    value={bulkDate}
+                    max={maxPaidDateISO()}
+                    onChange={(e) => setBulkDate(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!bulkDate || bulk.isPending}
+                    onClick={confirmBulkPaid}
+                    className="w-full"
+                  >
+                    {t('payments.bulk_confirm_mark_paid', {
+                      count: openRows.length,
+                      defaultValue: 'Mark {{count}} as paid',
+                    })}
+                  </Button>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+        </td>
+      </tr>
+      {expanded &&
+        group.rows.map((p) => (
+          <PaymentRow
+            key={p.id}
+            row={p}
+            dealId={dealId}
+            countryVatRate={countryVatRate}
+            willRegenerate={regeneratingChains.has(chainKey(p.service_type, p.billing_type))}
+          />
+        ))}
+    </tbody>
+  );
+}
+
+function PaymentsTableHead() {
+  const { t } = useTranslation('deals');
+  return (
+    <thead className="bg-muted">
+      <tr className="text-xs text-muted-foreground">
+        <th className="px-2 py-2 font-normal">{t('payments.service')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.label')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.start')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.end')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.amount_net')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.vat_rate')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.amount_gross')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.status')}</th>
+        <th className="px-2 py-2 font-normal">{t('payments.invoice_number')}</th>
+        <th className="px-2 py-2 font-normal text-right"></th>
+      </tr>
+    </thead>
+  );
+}
+
 export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
   const { t } = useTranslation('deals');
   const { data: payments = [], isLoading } = useDealPayments(dealId);
@@ -344,6 +524,27 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
     }
     return keys;
   }, [billing]);
+
+  const { active: activeMonths, past: pastMonths } = useMemo(
+    () => groupPaymentsByMonth(payments, currentMonthKey()),
+    [payments],
+  );
+  // Manual open/close per month, layered over the derived default (open months
+  // expanded, settled ones collapsed). Keyed by month, so when a month's status
+  // changes the derived default takes over again only if never toggled by hand.
+  const [monthOverrides, setMonthOverrides] = useState<Record<string, boolean>>({});
+  const [pastOpen, setPastOpen] = useState(false);
+  const pastGross = useMemo(
+    () => Math.round(pastMonths.reduce((sum, g) => sum + g.gross, 0) * 100) / 100,
+    [pastMonths],
+  );
+
+  function monthExpanded(group: PaymentMonthGroup, defaultExpanded: boolean): boolean {
+    return monthOverrides[group.key] ?? defaultExpanded;
+  }
+  function toggleMonth(group: PaymentMonthGroup, defaultExpanded: boolean) {
+    setMonthOverrides((o) => ({ ...o, [group.key]: !(o[group.key] ?? defaultExpanded) }));
+  }
 
   const [showAdd, setShowAdd] = useState(false);
   const [showPrepay, setShowPrepay] = useState(false);
@@ -409,35 +610,81 @@ export function PaymentsPanel({ dealId, services, defaultVatRate }: Props) {
       {payments.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('payments.empty')}</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-muted">
-              <tr className="text-xs text-muted-foreground">
-                <th className="px-2 py-2 font-normal">{t('payments.service')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.label')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.start')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.end')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.amount_net')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.vat_rate')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.amount_gross')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.status')}</th>
-                <th className="px-2 py-2 font-normal">{t('payments.invoice_number')}</th>
-                <th className="px-2 py-2 font-normal text-right"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((p) => (
-                <PaymentRow
-                  key={p.id}
-                  row={p}
-                  dealId={dealId}
-                  countryVatRate={defaultVatRate}
-                  willRegenerate={regeneratingChains.has(chainKey(p.service_type, p.billing_type))}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {activeMonths.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t('payments.all_settled', { defaultValue: 'No open payments.' })}
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-md border">
+              <table className="w-full text-left text-sm">
+                <PaymentsTableHead />
+                {activeMonths.map((g) => (
+                  <MonthSection
+                    key={g.key}
+                    group={g}
+                    dealId={dealId}
+                    countryVatRate={defaultVatRate}
+                    regeneratingChains={regeneratingChains}
+                    expanded={monthExpanded(g, g.hasOpen)}
+                    onToggle={() => toggleMonth(g, g.hasOpen)}
+                  />
+                ))}
+              </table>
+            </div>
+          )}
+
+          {pastMonths.length > 0 && (
+            <div className="rounded-md border">
+              <button
+                type="button"
+                onClick={() => setPastOpen((v) => !v)}
+                aria-expanded={pastOpen}
+                className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-2 py-2 text-left"
+              >
+                {pastOpen ? (
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+                <Archive className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-foreground">
+                  {t('payments.past_title', { defaultValue: 'Past payments' })}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t('payments.past_months', {
+                    count: pastMonths.length,
+                    defaultValue: '{{count}} months',
+                  })}
+                  {' · '}
+                  <span className="tabular-nums">€{pastGross.toFixed(2)}</span>
+                  {' · '}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {t('payments.month_all_paid', { defaultValue: 'All paid' })}
+                  </span>
+                </span>
+              </button>
+              {pastOpen && (
+                <div className="overflow-x-auto border-t">
+                  <table className="w-full text-left text-sm">
+                    <PaymentsTableHead />
+                    {pastMonths.map((g) => (
+                      <MonthSection
+                        key={g.key}
+                        group={g}
+                        dealId={dealId}
+                        countryVatRate={defaultVatRate}
+                        regeneratingChains={regeneratingChains}
+                        expanded={monthExpanded(g, false)}
+                        onToggle={() => toggleMonth(g, false)}
+                      />
+                    ))}
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {showAdd && (

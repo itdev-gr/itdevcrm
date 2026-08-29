@@ -90,6 +90,33 @@ export function useAddDealPayment(dealId: string) {
   });
 }
 
+export function useBulkMarkDealPaymentsPaid(dealId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: captureMutation(
+      'deal_payments',
+      'update',
+      async ({ ids, paid_at }: { ids: string[]; paid_at: string }) => {
+        if (ids.length === 0) return;
+        const { error } = await supabase
+          .from('deal_payments')
+          .update({ status: 'paid', paid_at })
+          .in('id', ids)
+          // Only open rows: a cancelled row must go through pending first (the
+          // DB guard raises on cancelled -> paid), so never sweep those along.
+          .in('status', ['pending', 'overdue']);
+        if (error) throw new Error(error.message);
+      },
+    ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: dealPaymentsKey(dealId) });
+      void qc.invalidateQueries({ queryKey: jobsBillingKey(dealId) });
+      void qc.invalidateQueries({ queryKey: ['accounting-deals'] });
+      invalidateFinancialReports(qc);
+    },
+  });
+}
+
 export function useDeleteDealPayment(dealId: string) {
   const qc = useQueryClient();
   return useMutation({
