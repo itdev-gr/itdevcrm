@@ -394,6 +394,14 @@ export function renderOfferHtml(args: Args): string {
               <p>Ποσό: (σύμφωνα με προσφορά)</p>
             </div>
             <div class="border border-gray-200 rounded-lg p-4">
+              <p class="font-semibold text-gray-900 mb-2">Εθνική Τράπεζα Ελλάδος (NBG)</p>
+              <p>IBAN: GR44 0110 1670 0000 9100 4687 462</p>
+              <p>SWIFT/BIC: ETHNGRAA</p>
+              <p>Δικαιούχος: IT DEV EE</p>
+              <p>Α.Φ.Μ.: 802223278</p>
+              <p>Ποσό: (σύμφωνα με προσφορά)</p>
+            </div>
+            <div class="border border-gray-200 rounded-lg p-4">
               <p class="font-semibold text-gray-900 mb-2">Revolut Business</p>
               <p>IBAN: LT16 3250 0205 4385 1135</p>
               <p>SWIFT/BIC: REVOLT21</p>
