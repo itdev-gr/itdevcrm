@@ -41,3 +41,23 @@ pipeline ΔΕΝ αγγίχτηκε — templates/χρονισμοί του μέ�
 
 `/sales-automations`: μέρες ΚΑΙ ώρες ανά βήμα, enable/disable, thresholds.
 Κείμενα: `/admin/email-automations` (DB rows are authoritative).
+
+## Κύκλος ζωής — κανένα task δεν επιζεί του lead του (2026-08-30)
+
+- **Stage move** (και στα terminal Not Interested / Not Found / Dead End): το
+  `trg_ud_leads_cadence_upd` σταματά το ζωντανό run και κλείνει το ανοιχτό
+  task («superseded»)· τα terminal stages δεν έχουν cadence, άρα δεν ξεκινά
+  τίποτα.
+- **Archive**: `trg_ud_leads_stop_on_archive` → το run σταματά
+  (`stopped_manual`), το task κλείνει. Το unarchive ΔΕΝ ξαναξεκινά αλυσίδα —
+  ο πωλητής αποφασίζει μετακινώντας stage.
+- **Delete**: `trg_ud_leads_delete_cadence_tasks` σβήνει πρώτα τα cadence
+  tasks του lead, ώστε να μην ορφανεύουν στο γενικό tasks board.
+
+(migration `20260830090000_ud_stop_on_archive_delete.sql`, live-verified E2E)
+
+## Εκκρεμότητες (2026-08-30, αποφάσεις owner)
+
+- Re-engagement 90 ημερών: ΔΕΝ θα γίνει προς το παρόν (απόφαση 2026-08-30).
+- Migration του κλασικού pipeline στο UD: αργότερα — ο owner θα ειδοποιήσει.
+- `scheduled_confirm` gate: παραμένει OFF στην prod μέχρι να το ανάψει ο owner.
