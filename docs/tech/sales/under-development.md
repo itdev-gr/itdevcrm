@@ -56,6 +56,16 @@ pipeline ΔΕΝ αγγίχτηκε — templates/χρονισμοί του μέ�
 
 (migration `20260830090000_ud_stop_on_archive_delete.sql`, live-verified E2E)
 
+## Parking (2026-08-30)
+
+Πρώτο column του board (`ud_parking`, position 5) — ΝΕΚΡΟ κατά κατασκευή:
+κανένα cadence δεν δένει πάνω του, οπότε ό,τι μπαίνει εκεί δεν ανοίγει task
+ούτε στέλνει email· και το πάρκάρισμα lead με ζωντανό chain το σταματά
+(ο γενικός stage-change trigger). Προορισμός: το μελλοντικό migration του
+κλασικού pipeline — τα leads θα μπουν μαζικά στο Parking και θα βγαίνουν
+σταδιακά στο Νέο Lead, ώστε να μην ανοίξουν εκατοντάδες tasks μονομιάς.
+(migration `20260830120000_ud_parking_stage.sql`, live-verified E2E)
+
 ## Εκκρεμότητες (2026-08-30, αποφάσεις owner)
 
 - Re-engagement 90 ημερών: ΔΕΝ θα γίνει προς το παρόν (απόφαση 2026-08-30).
