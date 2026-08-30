@@ -9,6 +9,7 @@ if (!$SUP_URL || !$SUP_KEY) { fwrite(STDERR, "missing SUPABASE env\n"); exit(1);
 
 $EXT = ['101','102','103','104','203','204','205','206','207','208','303','500','501','601'];
 $isExt = array_flip($EXT);
+$extStartDate = ["601" => "2026-08-25"]; // present on the box; currently unused
 
 $startTs = strtotime('today 00:00:00');
 $endTs   = strtotime('today 23:59:59');
@@ -16,18 +17,24 @@ $res = yeastar_cdr_range($startTs, $endTs);
 $cdr = $res['data'] ?? [];
 $today = date('Y-m-d');
 
-function agentExt($c, $isExt) {
+// Internal calls credit BOTH extensions (caller and callee) so each side's
+// talk time includes internal conversations; from==to rows credit once.
+function agentExts($c, $isExt) {
     $t = $c['call_type'] ?? ''; $f = $c['call_from_number'] ?? ''; $to = $c['call_to_number'] ?? '';
-    if ($t === 'Outbound')  return isset($isExt[$f])  ? $f  : null;
-    if ($t === 'Inbound')   return isset($isExt[$to]) ? $to : null;
-    if ($t === 'Internal')  return isset($isExt[$f])  ? $f  : null;
-    return null;
+    if ($t === 'Outbound')  return isset($isExt[$f])  ? [$f]  : [];
+    if ($t === 'Inbound')   return isset($isExt[$to]) ? [$to] : [];
+    if ($t === 'Internal') {
+        $exts = [];
+        if (isset($isExt[$f])) $exts[] = $f;
+        if (isset($isExt[$to]) && $to !== $f) $exts[] = $to;
+        return $exts;
+    }
+    return [];
 }
 
 $agg = [];
 foreach ($cdr as $c) {
-    $ext = agentExt($c, $isExt);
-    if (!$ext) continue;
+    foreach (agentExts($c, $isExt) as $ext) {
     if (!isset($agg[$ext])) $agg[$ext] = [
         'total'=>0,'inbound'=>0,'outbound'=>0,'internal'=>0,'answered'=>0,'missed'=>0,
         'missed_inbound'=>0,'talk_seconds'=>0,'ring_seconds'=>0,'nums'=>[],'recent'=>[]];
@@ -45,7 +52,8 @@ foreach ($cdr as $c) {
     if ($isAns) $a['answered']++; else $a['missed']++;
     $a['talk_seconds'] += $talk;
     $a['ring_seconds'] += $ring;
-    $other = ($type === 'Inbound') ? ($c['call_from_number'] ?? '') : ($c['call_to_number'] ?? '');
+    if ($type === 'Internal') $other = ($ext === ($c['call_from_number'] ?? '')) ? ($c['call_to_number'] ?? '') : ($c['call_from_number'] ?? '');
+    else $other = ($type === 'Inbound') ? ($c['call_from_number'] ?? '') : ($c['call_to_number'] ?? '');
     if ($other !== '') $a['nums'][$other] = true;
     if (count($a['recent']) < 15) {
         $ts = (int)($c['timestamp'] ?? 0);
@@ -58,6 +66,7 @@ foreach ($cdr as $c) {
         ];
     }
     unset($a);
+    }
 }
 
 $rows = [];
