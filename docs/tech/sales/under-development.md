@@ -66,8 +66,24 @@ pipeline ΔΕΝ αγγίχτηκε — templates/χρονισμοί του μέ�
 σταδιακά στο Νέο Lead, ώστε να μην ανοίξουν εκατοντάδες tasks μονομιάς.
 (migration `20260830120000_ud_parking_stage.sql`, live-verified E2E)
 
-## Εκκρεμότητες (2026-08-30, αποφάσεις owner)
+## Go-live: όλα τα νέα leads στο UD (2026-08-31)
+
+Το migration ΕΓΙΝΕ (31/8): όλα τα ζωντανά leads του κλασικού board πήγαν στο
+UD (Parking 5.156 μοιρασμένα, Dead End 818, Won 611) και το κλασικό board
+έμεινε μόνο με αρχειοθετημένα. Τα ΝΕΑ εισερχόμενα (Meta/φόρμες/imports →
+lead_intake) πλέον προσγειώνονται στο **ud_new_lead** (migration
+`20260831120000_intake_release_to_ud.sql`): release/bulk/auto-release
+δείχνουν εκεί, το re-engage merge ανεβάζει το υπάρχον lead σε ud_new_lead
+(η αλυσίδα ξαναρχίζει), και τα guards «είναι ήδη πελάτης» έμαθαν το
+`ud_won`. Ροή: intake → auto-release → ud_new_lead → owner από τη ρόδα →
+task «1η Κλήση».
+
+## Εκκρεμότητες (2026-08-31, αποφάσεις owner)
 
 - Re-engagement 90 ημερών: ΔΕΝ θα γίνει προς το παρόν (απόφαση 2026-08-30).
-- Migration του κλασικού pipeline στο UD: αργότερα — ο owner θα ειδοποιήσει.
+- Welcome email (ud_welcome): ΚΛΕΙΣΤΟ με εντολή owner — νέα leads δεν
+  παίρνουν κανένα email εισόδου μέχρι να το ξανανοίξει.
+- Κλασικά email_sequences (no_answer/offer_sent/reengage): ενεργά αλλά
+  αδρανή — κανένα lead δεν κάθεται πια σε κλασικά στάδια.
 - `scheduled_confirm` gate: παραμένει OFF στην prod μέχρι να το ανάψει ο owner.
+- Το κλασικό board μένει στο sidebar ως αρχείο· απόσυρση όποτε πει ο owner.
