@@ -78,7 +78,8 @@
         "lead_not_found": "Lead not found.",
         "not_current_task": "This is not the chain's current task anymore — refresh the page.",
         "run_paused": "This chain is paused — resume it first.",
-        "save_failed": "Save failed: {{msg}}"
+        "save_failed": "Save failed: {{msg}}",
+        "cadence_task_delete_blocked": "Automation tasks can't be deleted while open — complete them with an outcome instead."
       }
     },
     "admin": {

@@ -14,6 +14,7 @@ export const UD_ERROR_CODES = [
   'lead_not_found',
   'not_current_task',
   'run_paused',
+  'cadence_task_delete_blocked',
 ] as const;
 
 /** Translate a raw cadence error (exact code match) or pass it through. */

@@ -131,6 +131,9 @@ export function useCadenceOverview() {
         calls: calls as { parent_id: string; created_at: string }[],
       };
     },
+    // Multi-rep call sheet: without realtime, a 60s poll keeps "open task"
+    // lists honest across tabs/reps (2026-08-31 audit; badge already polls).
+    refetchInterval: 60_000,
   });
 
   const empty: CadenceOverview = {

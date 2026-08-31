@@ -12,6 +12,9 @@ describe('udErrorMessage', () => {
     expect(udErrorMessage(t(), 'already_completed')).toBe('This task was already completed.');
     expect(udErrorMessage(t(), 'not_current_task')).toMatch(/refresh the page/i);
     expect(udErrorMessage(t(), 'permission_denied')).toMatch(/permission/i);
+    expect(udErrorMessage(t(), 'cadence_task_delete_blocked')).toBe(
+      "Automation tasks can't be deleted while open — complete them with an outcome instead.",
+    );
   });
   it('passes unknown messages through unchanged', () => {
     expect(udErrorMessage(t(), 'TypeError: fetch failed')).toBe('TypeError: fetch failed');

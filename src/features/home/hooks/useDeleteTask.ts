@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { captureMutation } from '@/lib/sentry/captureMutation';
 
 export function useDeleteTask() {
   const qc = useQueryClient();
+  const { t } = useTranslation('sales');
   return useMutation<void, Error, string>({
     mutationFn: captureMutation<string, void>(
       'user_tasks',
@@ -16,7 +18,13 @@ export function useDeleteTask() {
           .delete()
           .eq('id', id)
           .select('id');
-        if (error) throw new Error(error.message);
+        if (error) {
+          throw new Error(
+            error.message.includes('cadence_task_delete_blocked')
+              ? t('ud.cadence.errors.cadence_task_delete_blocked')
+              : error.message,
+          );
+        }
         if (!data || data.length === 0) throw new Error('Task was not deleted (no permission).');
       },
     ),

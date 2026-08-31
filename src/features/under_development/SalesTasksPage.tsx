@@ -12,6 +12,7 @@ import { stageAccent } from '@/lib/stage-colors';
 import { cn } from '@/lib/utils';
 import { CadenceFinalMoveDialog, CadenceOutcomeButtons } from './CadenceOutcomeButtons';
 import { CadenceSnoozeButton } from './CadenceSnoozeButton';
+import { isDueToday } from './salesTaskDue';
 import { useSetRunPaused } from './hooks/useLeadCadence';
 import {
   useCadenceOverview,
@@ -88,7 +89,7 @@ export function SalesTasksPage() {
   startOfToday.setHours(0, 0, 0, 0);
   const fmtDue = (iso: string) => {
     const d = new Date(iso);
-    return d >= startOfToday && d.getDate() === now.getDate()
+    return isDueToday(iso, now)
       ? new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(d)
       : new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(d);
   };
