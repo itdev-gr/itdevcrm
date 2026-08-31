@@ -28,6 +28,9 @@ export type JobRow = JobBase & {
     id: string;
     code: string | null;
     title: string | null;
+    // Only useJob's query selects this column; undefined here means "not fetched",
+    // not "never paid" — new callers must not treat it as never-paid without
+    // selecting the column (delete_jobs RPC backstops the actual gate server-side).
     first_paid_in_full_at?: string | null;
   } | null;
   stage?: { id: string; code: string; board: string; display_names: unknown } | null;
