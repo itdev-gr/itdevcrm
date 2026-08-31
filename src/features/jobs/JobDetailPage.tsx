@@ -52,6 +52,7 @@ import { JobDisconnectBadge } from './JobDisconnectBadge';
 import { MonthlyTasksPanel } from './MonthlyTasksPanel';
 import { JobInfoPanel } from './JobInfoPanel';
 import { HostingInfoSection } from './HostingInfoSection';
+import { HostingRenewalCard } from './HostingRenewalCard';
 import { ClientIntakeSection } from './ClientIntakeSection';
 import { DownloadAllAssetsButton } from './DownloadAllAssetsButton';
 import { infoFieldsFor } from './serviceInfoFields';
@@ -730,6 +731,9 @@ function JobDetailContent() {
               />
               {job.service_type === 'web_dev' && <HostingInfoSection clientId={job.client_id} />}
               {job.service_type === 'web_dev' && <ClientIntakeSection job={job} />}
+              {job.service_type === 'hosting' && (
+                <HostingRenewalCard jobId={job.id} dealId={job.deal_id} />
+              )}
               {areasForJob(job).map((area) => (
                 <ServiceAttachmentsSection
                   key={area.kind}

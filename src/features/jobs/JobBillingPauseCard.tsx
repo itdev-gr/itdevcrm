@@ -114,7 +114,11 @@ export function JobBillingPauseCard({
         open={confirmPause}
         onOpenChange={setConfirmPause}
         title="Pause billing for this service?"
-        description="Unpaid payments for this service will be cancelled (kept in history) and no new periods will be generated. The deal can move to Paid In Full on its other services. Paused months are never back-billed."
+        description={
+          billingType === 'recurring_yearly'
+            ? 'Unpaid payments for this service will be cancelled (kept in history) and no new periods will be generated. NOTE for yearly services: resuming starts a fresh year from the resume day — re-set the real renewal date on the job afterwards.'
+            : 'Unpaid payments for this service will be cancelled (kept in history) and no new periods will be generated. The deal can move to Paid In Full on its other services. Paused months are never back-billed.'
+        }
         confirmLabel="Pause billing"
         pending={pause.isPending}
         onConfirm={onPause}

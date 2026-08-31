@@ -9,7 +9,7 @@ export function HostingListPage() {
       description="Yearly hosting — Active & Done."
       dueColumnLabel="Renewal due"
       doneStageCodes={['closed']}
-      showBlocked={false}
+      showBlocked
     />
   );
 }
