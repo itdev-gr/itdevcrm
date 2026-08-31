@@ -291,13 +291,14 @@ export function SalesTasksPage() {
     </li>
   );
 
-  const fmtMeeting = (iso: string) => {
+  // Date over time, stacked — the narrow time column can't fit both inline.
+  const fmtMeetingParts = (iso: string): string[] => {
     const d = new Date(iso);
     const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(d);
     const isToday = d >= startOfToday && d.getDate() === now.getDate() && d.getMonth() === now.getMonth();
     return isToday
-      ? time
-      : `${new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(d)} ${time}`;
+      ? [time]
+      : [new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(d), time];
   };
 
   const meetingRow = (m: MeetingLead) => {
@@ -310,11 +311,13 @@ export function SalesTasksPage() {
       >
         <span
           className={cn(
-            'text-xs tabular-nums font-semibold',
+            'flex flex-col text-xs leading-tight tabular-nums font-semibold',
             passed ? 'text-red-600 dark:text-red-400' : 'text-blue-700 dark:text-blue-300',
           )}
         >
-          {fmtMeeting(m.scheduled_for)}
+          {fmtMeetingParts(m.scheduled_for).map((part) => (
+            <span key={part}>{part}</span>
+          ))}
         </span>
         <span className="flex min-w-0 items-center gap-1.5">
           <CalendarClock

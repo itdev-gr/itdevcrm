@@ -5,6 +5,15 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar, Trash2, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FilterSelect, DetailTabsList, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRecordBadgeClass, detailHeaderRowClass, detailHeaderSelectClass, detailHeaderTitleClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
@@ -57,6 +66,10 @@ function LeadDetailContent() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const del = useDeleteLeads();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Moving to Scheduled goes through a meeting date prompt (mirrors the
+  // kanban drag dialog).
+  const [scheduleMove, setScheduleMove] = useState<{ stageId: string } | null>(null);
+  const [scheduleAt, setScheduleAt] = useState('');
 
   // "Next" walks the current lead's own kanban column, matching the board the
   // user just left: the same saved sort AND the same active owner/source/search
@@ -196,6 +209,14 @@ function LeadDetailContent() {
       alert(tSales('kanban.locked_move'));
       return;
     }
+    // Scheduled means a meeting: ask for the date/time first (same rule as the
+    // kanban drag) — otherwise the lead sits in Scheduled with no meeting, off
+    // the calendar and off the reps' meeting list.
+    if (targetStage && (targetStage.code === 'ud_scheduled' || targetStage.code === 'scheduled')) {
+      setScheduleAt('');
+      setScheduleMove({ stageId: targetStageId });
+      return;
+    }
     if (wonStage && targetStageId === wonStage.id) {
       try {
         const result = await convert.mutateAsync(leadId);
@@ -213,8 +234,53 @@ function LeadDetailContent() {
     }
   }
 
+  async function confirmScheduleMove() {
+    if (!scheduleMove || !scheduleAt || !lead) return;
+    try {
+      await moveStage.mutateAsync({ leadId, stageId: scheduleMove.stageId });
+      await update.mutateAsync({
+        id: leadId,
+        patch: { scheduled_for: new Date(scheduleAt).toISOString() },
+      });
+    } catch (err) {
+      alert((err as Error).message);
+    }
+    setScheduleMove(null);
+  }
+
   return (
     <div className="flex min-h-full flex-col gap-1.5 px-4 py-2 sm:px-6 lg:px-8 lg:h-full lg:min-h-0 lg:overflow-hidden">
+      <Dialog
+        open={!!scheduleMove}
+        onOpenChange={(open) => {
+          if (!open) setScheduleMove(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{tSales('ud.schedule_dialog.title')}</DialogTitle>
+            <DialogDescription>{tSales('ud.schedule_dialog.desc')}</DialogDescription>
+          </DialogHeader>
+          <Input
+            type="datetime-local"
+            aria-label={tSales('ud.schedule_dialog.title')}
+            value={scheduleAt}
+            onChange={(e) => setScheduleAt(e.target.value)}
+          />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setScheduleMove(null)}>
+              {tSales('ud.cadence.cancel')}
+            </Button>
+            <Button
+              type="button"
+              disabled={!scheduleAt || moveStage.isPending || update.isPending}
+              onClick={() => void confirmScheduleMove()}
+            >
+              {tSales('ud.schedule_dialog.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className={detailHeaderCardClass}>
         <div className={detailHeaderRowClass}>
           <div className={detailHeaderMainClass}>
