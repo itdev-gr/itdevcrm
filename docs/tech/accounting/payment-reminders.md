@@ -1,5 +1,17 @@
 # Payment reminders
 
+> **Current behavior (2026-08-31)** — parts of this doc predate the July/August
+> rewrites. The live rules are: reminders fire ONLY for deals in accounting
+> stage `awaiting_payment` (due-soon window: due within the next 7 days) or
+> `on_hold` (overdue at 1–6 days past due, final notice at ≥7); one aggregated
+> email per (deal, template, due date); back-dated rows
+> (`created_at::date >= start_date`) never remind; clients with `status='done'`
+> never get email; `deals.suppress_payment_reminders` mutes a deal; and — new —
+> **a deal with zero PAID payments never gets any automated reminder** (first
+> collections are handled personally; migration `20260831230000`). Authoritative
+> chain: migrations `20260701020000` → `20260702140000` → `20260729100000` →
+> `20260729110000` → `20260831230000`; harness `supabase/tests/enqueue_payment_reminders.sql`.
+
 **Purpose** — The daily cron that queues client payment-reminder emails relative to each unpaid payment's due date (`deal_payments.start_date`), at −7 / +1 / +7 days, with per-deal suppression and idempotent dedupe.
 
 ## Data model

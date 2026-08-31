@@ -11,6 +11,7 @@
 --   * client.status='done'                 -> never email closed clients
 --   * deal_payments.created_at::date >= due -> back-dated rows suppressed
 --   * wrong column                          -> no email
+--   * no PAID row on the deal              -> no email (first-payment rule, SL18)
 -- Chain: run_daily_payment_reminders() moves (reconcile) THEN sends (enqueue).
 --
 -- NOTE: overdue scenarios seed created_at BEFORE the due date (forward-looking),
@@ -27,6 +28,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending');
   perform public.enqueue_payment_reminders();
@@ -48,6 +53,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 3, now() - interval '33 days', 'overdue');
   perform public.enqueue_payment_reminders();
@@ -69,6 +78,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 9, now() - interval '39 days', 'overdue');
   perform public.enqueue_payment_reminders();
@@ -188,6 +201,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending');
   perform public.enqueue_payment_reminders();
@@ -277,6 +294,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 3, now() - interval '33 days', 'overdue');
   perform public.run_daily_payment_reminders();   -- reconcile (move) THEN enqueue (send)
@@ -298,6 +319,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 6, now() - interval '36 days', 'overdue');
   perform public.enqueue_payment_reminders();
@@ -319,6 +344,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 7, now() - interval '37 days', 'overdue');
   perform public.enqueue_payment_reminders();
@@ -340,6 +369,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending'),
            (v_deal,'hosting',1,'recurring_monthly',200,24, current_date + 3, 'pending');
@@ -367,6 +400,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending'),
            (v_deal,'web_seo',1,'recurring_monthly',100,24, current_date + 5, 'pending');
@@ -392,6 +429,10 @@ begin
             (select id from public.pipeline_stages where board='sales' and code='won'),
             (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
     returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal
+  -- (guard added by 20260831230000; without this seed the scenario is silenced).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
   insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
     values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending')
     returning id into v_paid;
@@ -408,4 +449,26 @@ begin
     raise exception 'RESULT :: FAIL SL17 :: expected 1 row covering only the un-reminded payment (248.00), got rows=% amount=%', v_rows, v_amount;
   end if;
   raise exception 'RESULT :: PASS SL17 :: legacy-reminded payment excluded; other aggregates alone (248.00)';
+end $$;
+
+-- ---- SL18 (GUARD first payment): awaiting + due 3d but ZERO paid rows -> no email
+do $$
+declare v_client uuid; v_deal uuid; v_any int;
+begin
+  insert into public.clients (name, email, country) values ('sl18_'||gen_random_uuid()::text,'sl18@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL18','sl18','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  -- Deliberately NO paid row: a client who has never paid anything must get no
+  -- automated reminder even in awaiting_payment (owner rule 2026-08-31).
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_any <> 0 then
+    raise exception 'RESULT :: FAIL SL18 :: never-paid deal must get NO reminder, got %', v_any;
+  end if;
+  raise exception 'RESULT :: PASS SL18 :: never-paid deal -> no reminder (first-payment rule)';
 end $$;
