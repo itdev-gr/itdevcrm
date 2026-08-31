@@ -1,5 +1,6 @@
 import { withSentry } from './_sentry.js';
 import { secretMatches } from './_secret.js';
+import { leadTitle } from './_lead-title';
 // api/meta-lead.ts
 // Public Meta lead-ad ingestion. Zapier sends each lead here (GET with query
 // params, or POST with a JSON body — both supported).
@@ -393,9 +394,8 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   }
 
   const { first, last } = splitFullName(fullName ?? '');
-  // Franchise leads are titled by the person; every other form keeps the form name.
-  const title = (isFranchise ? (fullName ?? formName) : formName ?? 'Meta lead')?.slice(0, 200)
-    ?? 'Meta lead';
+  // Owner 2026-08-31: title = «Contact name (Form)» — see api/_lead-title.ts.
+  const title = leadTitle(fullName, formName, isFranchise);
   const source = isFranchise ? 'franchise' : 'meta';
 
   // ---- Intake queue --------------------------------------------------------
