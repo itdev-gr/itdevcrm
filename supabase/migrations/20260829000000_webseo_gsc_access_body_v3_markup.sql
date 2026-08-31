@@ -8,7 +8,11 @@
 -- Backup: appends the current row to email_templates_backup_20260828
 -- (created by 20260828200000; locked down, RLS on).
 --
--- LIVE DRIFT CHECK: pending — record pre/post md5(body) here when applied.
+-- LIVE DRIFT CHECK 2026-08-31 (md5(body)), APPLIED 2026-08-31 via Management API
+-- (send-email edge fn with the markup renderer was deployed 2026-08-28, before this):
+--   webseo_gsc_access  pre  26a8fda61bebe0538775f964ded5c893 (2209 chars, = v2 20260828200000)
+--                      post 01c0c834b08ec4d2c1431317129b58c2 (2434 chars)
+--   backup: email_templates_backup_20260828 = 2 rows; test send delivered to the owner.
 
 insert into public.email_templates_backup_20260828
   select now(), t.* from public.email_templates t where t.key = 'webseo_gsc_access';

@@ -4,7 +4,7 @@
 
 ## Data model
 
-- **`public.email_templates`** — `key` (`'webseo_gsc_access'`, `'localseo_gbp_access'`), `subject`, `body` (plain text; newlines → `<br>`, URLs auto-linkified by the send-email function), `client_facing=true`. Seeded in `20260624080000_seo_onboarding_emails.sql`; editable later in the email-templates admin UI (DB row is authoritative).
+- **`public.email_templates`** — `key` (`'webseo_gsc_access'`, `'localseo_gbp_access'`), `subject`, `body` (markdown-lite since 2026-08-31: `**bold**`, `## heading`, `- bullets`, blank-line paragraphs; URLs and e-mails auto-linked — rendered by `supabase/functions/_shared/emailMarkup.ts`, the same module the admin preview uses; offer composer `offer_*`/`ud_offer_*` rows are the exception, still plain text via `textToHtml`), `client_facing=true`. Seeded in `20260624080000_seo_onboarding_emails.sql`; editable later in the email-templates admin UI (DB row is authoritative).
 - **`public.email_automation_settings`** — `key`, `enabled`. Relevant keys: per-automation `webseo_gsc` / `localseo_gbp`; department masters `dept_technical` (+ `dept_sales`, `dept_accounting`); legacy master `global`.
 - **`public.email_outbox`** (`20260602000001_email_tables.sql`) — `identity` (`'sales'|'accounting'|'internal'`), `to_email`, `template_key`, `data jsonb`, `dedupe_key`, `status` (`'pending'|'sent'|'failed'`; `'sending'` used transiently). The trigger inserts here with `identity='accounting'`.
 - **`public.email_log`** — audit + idempotency; `status` becomes `'sent'`, then the Resend delivery webhook advances it to `'delivered'`/`'bounced'`/`'complained'`.
