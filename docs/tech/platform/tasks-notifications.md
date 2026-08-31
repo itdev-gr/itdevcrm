@@ -11,6 +11,8 @@
 
 Notification **types** seen across triggers: `mention`, `task_assigned`, `task_resolved`, `task_started`, `task_comment`, `lead_noshow`, `constant_na_suggestion`, `overdue`. Payload convention mirrors `mention`: `{ parent_type, parent_id, author_id, title, … }` so the notification column's existing link helpers resolve it (`parent_type` ∈ `deal`/`job`/`user_task`/`lead`/`client`).
 
+**Channel mentions & deal RLS** (20260831130000) — mentions on the deal channel threads (`deal_dev`/`deal_seo`/`deal_ads`/`deal_social`) additionally carry `payload.target_job_id`: `fanout_mention_notifications()` resolves the deal's newest non-archived job matching the channel, **per recipient** (the seo channel spans `web_seo`/`local_seo`/`ai_seo`, so a job in the recipient's own groups wins). `readPath()` (notification-presenters) takes an optional viewer `{groupCodes, isAdmin}`; viewers without deal access (not admin and no `accounting`/`sales` group) are routed to `/jobs/<target_job_id>` — the job page renders the same shared channel thread and passes jobs RLS — everyone else keeps `/deals/<id>`. Same pattern as the June-2026 task fix (`task_target_job_id()`, 20260630000000). JobDetailPage hides its deal link for viewers the deal page would reject.
+
 ## Flow
 
 ```mermaid
