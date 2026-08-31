@@ -24,7 +24,12 @@ export type JobRow = JobBase & {
       | { full_name?: string | null; email?: string | null; phone?: string | null; info?: string | null }[]
       | null;
   } | null;
-  deal?: { id: string; code: string | null; title: string | null } | null;
+  deal?: {
+    id: string;
+    code: string | null;
+    title: string | null;
+    first_paid_in_full_at?: string | null;
+  } | null;
   stage?: { id: string; code: string; board: string; display_names: unknown } | null;
   details?: Record<string, unknown> | null;
   parent_job_id: string | null;

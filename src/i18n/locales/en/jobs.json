@@ -51,7 +51,8 @@
     "button": "Delete",
     "title": "Delete this job?",
     "confirm": "Permanently delete this job and its tasks and comments. This cannot be undone.",
-    "billing_warning": "This job is on {{count}} billing line(s) — they will be unlinked (their amounts are kept)."
+    "billing_warning": "This job is on {{count}} billing line(s) — they will be unlinked (their amounts are kept).",
+    "not_allowed_paid": "This deal has already been Paid In Full at least once — only an admin can delete this job."
   },
   "monthly_tasks": {
     "title": "This month's tasks",

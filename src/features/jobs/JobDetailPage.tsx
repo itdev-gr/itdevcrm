@@ -35,7 +35,11 @@ import {
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { channelLabelFor, jobCommentThread } from '@/features/comments/commentChannels';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
-import { areasForJob, canUploadArea, SERVICE_AREA_KINDS } from '@/features/attachments/serviceAreas';
+import {
+  areasForJob,
+  canUploadArea,
+  SERVICE_AREA_KINDS,
+} from '@/features/attachments/serviceAreas';
 import { ServiceAttachmentsSection } from '@/features/attachments/ServiceAttachmentsSection';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
@@ -75,7 +79,7 @@ import { cn } from '@/lib/utils';
 import { industryLabel } from '@/lib/industries';
 import { isNotAccessible } from '@/lib/notAccessibleError';
 import { jobAmountLabel } from './jobAmount';
-import { canViewJobPricing } from './permissions';
+import { canDeleteJob, canViewJobPricing } from './permissions';
 import { JobBillingEditCard } from './JobBillingEditCard';
 import { JobBillingPauseCard } from './JobBillingPauseCard';
 import { JobDisconnectCard } from './JobDisconnectCard';
@@ -114,6 +118,7 @@ function JobDetailContent() {
   const canSeeDeal = canOpenDeals({ groupCodes, isAdmin });
   const canEditBilling = isAdmin || groupCodes.includes('accounting');
   const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
+  const canDelete = canDeleteJob(isAdmin, groupCodes, job?.deal?.first_paid_in_full_at ?? null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const del = useDeleteJobs();
@@ -162,7 +167,8 @@ function JobDetailContent() {
     ),
   );
 
-  if (isLoading) return <div className="px-4 py-6 sm:px-6 lg:px-8 text-sm text-muted-foreground">…</div>;
+  if (isLoading)
+    return <div className="px-4 py-6 sm:px-6 lg:px-8 text-sm text-muted-foreground">…</div>;
   if (error || !job) {
     const denied = isNotAccessible(error);
     return (
@@ -409,7 +415,7 @@ function JobDetailContent() {
                 Archive
               </Button>
             )}
-            {isAdmin && (
+            {canDelete && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -452,7 +458,10 @@ function JobDetailContent() {
           </TabsTrigger>
         </DetailTabsList>
 
-        <TabsContent value="overview" className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <TabsContent
+          value="overview"
+          className="mt-1 outline-none lg:min-h-0 lg:flex-1 lg:overflow-hidden"
+        >
           <div className={`${detailOverviewWithCommentsGridClass} lg:h-full lg:min-h-0`}>
             <div className="min-w-0 space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
               <JobDisconnectCard job={job} />
@@ -462,13 +471,14 @@ function JobDetailContent() {
                 description={job.description ?? null}
                 parentJobId={job.parent_job_id ?? null}
               />
-              {job.billing_type === 'recurring_monthly' && infoFieldsFor(job.service_type).length === 0 && (
-                <MonthlyTasksPanel
-                  jobId={job.id}
-                  serviceType={job.service_type}
-                  isBlocked={!!job.is_blocked}
-                />
-              )}
+              {job.billing_type === 'recurring_monthly' &&
+                infoFieldsFor(job.service_type).length === 0 && (
+                  <MonthlyTasksPanel
+                    jobId={job.id}
+                    serviceType={job.service_type}
+                    isBlocked={!!job.is_blocked}
+                  />
+                )}
               <ContactsCard client={job.client ?? null} />
               <JobEmailsBox jobId={job.id} clientId={job.client_id} />
               <section className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
@@ -478,10 +488,7 @@ function JobDetailContent() {
                 <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {canEditBilling && (
                     <div className="sm:col-span-2">
-                      <label
-                        htmlFor="job-title"
-                        className="text-[11px] text-muted-foreground"
-                      >
+                      <label htmlFor="job-title" className="text-[11px] text-muted-foreground">
                         Job title
                       </label>
                       <Input
@@ -579,7 +586,9 @@ function JobDetailContent() {
                       return (
                         <div>
                           <dt className="text-[11px] text-muted-foreground">Industry</dt>
-                          <dd className="mt-0.5 text-sm font-medium">{industryLabel(code, lang)}</dd>
+                          <dd className="mt-0.5 text-sm font-medium">
+                            {industryLabel(code, lang)}
+                          </dd>
                         </div>
                       );
                     })()}
@@ -596,20 +605,22 @@ function JobDetailContent() {
                       </span>
                     </dd>
                   </div>
-                  {canViewPricing && job.parent_job_id == null && Number(job.amount_net ?? 0) > 0 && (
-                    <div>
-                      <dt className="text-[11px] text-muted-foreground">
-                        {job.billing_type === 'recurring_monthly'
-                          ? 'Monthly'
-                          : job.billing_type === 'recurring_yearly'
-                            ? 'Yearly'
-                            : 'One-time'}
-                      </dt>
-                      <dd className="mt-0.5 text-sm font-medium tabular-nums">
-                        {jobAmountLabel(job.billing_type, job.amount_net, lang)}
-                      </dd>
-                    </div>
-                  )}
+                  {canViewPricing &&
+                    job.parent_job_id == null &&
+                    Number(job.amount_net ?? 0) > 0 && (
+                      <div>
+                        <dt className="text-[11px] text-muted-foreground">
+                          {job.billing_type === 'recurring_monthly'
+                            ? 'Monthly'
+                            : job.billing_type === 'recurring_yearly'
+                              ? 'Yearly'
+                              : 'One-time'}
+                        </dt>
+                        <dd className="mt-0.5 text-sm font-medium tabular-nums">
+                          {jobAmountLabel(job.billing_type, job.amount_net, lang)}
+                        </dd>
+                      </div>
+                    )}
                   {job.client && (
                     <div>
                       <dt className="text-[11px] text-muted-foreground">Client</dt>
@@ -635,7 +646,9 @@ function JobDetailContent() {
                             {job.deal.code ?? job.deal.title}
                           </Link>
                         ) : (
-                          <span className="text-sm font-medium">{job.deal.code ?? job.deal.title}</span>
+                          <span className="text-sm font-medium">
+                            {job.deal.code ?? job.deal.title}
+                          </span>
                         )}
                       </dd>
                     </div>
@@ -696,7 +709,10 @@ function JobDetailContent() {
                   )}
                 </div>
                 <div className={commentsPanelBodyClass}>
-                  <CommentsPanel parentType={commentThread.parentType} parentId={commentThread.parentId} />
+                  <CommentsPanel
+                    parentType={commentThread.parentType}
+                    parentId={commentThread.parentId}
+                  />
                 </div>
               </div>
             </aside>
@@ -744,13 +760,12 @@ function JobDetailContent() {
             />
           </div>
         </TabsContent>
-        <TabsContent value="attachments" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
+        <TabsContent
+          value="attachments"
+          className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto"
+        >
           <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-            <AttachmentsPanel
-              parentType="job"
-              parentId={job.id}
-              hideKinds={SERVICE_AREA_KINDS}
-            />
+            <AttachmentsPanel parentType="job" parentId={job.id} hideKinds={SERVICE_AREA_KINDS} />
           </div>
         </TabsContent>
         <TabsContent value="emails" className="mt-3 outline-none lg:min-h-0 lg:overflow-y-auto">
@@ -786,7 +801,8 @@ function JobDetailContent() {
             setConfirmDelete(false);
             navigate(-1);
           } catch (e) {
-            alert((e as Error).message);
+            const msg = (e as Error).message;
+            alert(msg.includes('deal_was_paid_in_full') ? t('delete.not_allowed_paid') : msg);
           }
         }}
       />
