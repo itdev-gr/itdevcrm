@@ -87,3 +87,25 @@ task «1η Κλήση».
   αδρανή — κανένα lead δεν κάθεται πια σε κλασικά στάδια.
 - `scheduled_confirm` gate: παραμένει OFF στην prod μέχρι να το ανάψει ο owner.
 - Το κλασικό board μένει στο sidebar ως αρχείο· απόσυρση όποτε πει ο owner.
+
+
+## Audit fixes (2026-08-31)
+
+Πλήρες bug audit μετά το migration· όλα διορθωμένα (migration
+`20260831190000_ud_audit_fixes.sql` + frontend):
+
+- Scheduled: το drag ζητά ημερομηνία/ώρα· μελλοντικό ραντεβού δεν δείχνει
+  «Χρειάζεται απόφαση» (badge «📅»), περασμένο δείχνει «Πέρασε το ραντεβού».
+  Το Parking εξαιρείται από το needs-decision.
+- /sales/leads: stages board-aware (labels, φίλτρο, inline & bulk edit, CSV) —
+  δεν «τηλεμεταφέρει» πια leads στο κλασικό board.
+- lead_cold_ids / lead_dead_end_ids: αναγνωρίζουν τα UD cold στάδια
+  (intake re-engage δουλεύει ξανά, όχι διπλότυπα).
+- won_next_steps: στέλνεται και σε ud_won conversions· scheduled
+  reminder/no-show/ειδοποίηση πιάνουν και ud_scheduled (πίσω από τα gates).
+- Default stage νέων inserts: ud_new_lead. Chain παρκαρισμένο λόγω έλλειψης
+  owner ξαναζωντανεύει με την ανάθεση (trg_ud_leads_revive_on_owner).
+- Deals παίρνουν πάντα sales/won stage (όχι ud_won) + backfill.
+- Κλίμακα: useCadenceOverview paged (όριο 1000), realtime invalidation
+  debounced, «Επόμενο στη στήλη» δεν σαρώνει το Parking, ud_process_due_runs
+  cap 200/πέρασμα.
