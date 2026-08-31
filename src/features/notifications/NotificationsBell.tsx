@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { useNotifications } from './hooks/useNotifications';
 import { useMarkNotificationRead } from './hooks/useMarkNotificationRead';
 import { useNotificationsRealtime } from './hooks/useNotificationsRealtime';
@@ -16,6 +17,9 @@ import {
 
 export function NotificationsBell() {
   const { t } = useTranslation('sales');
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const viewer = { groupCodes, isAdmin };
   const { data: all = [] } = useNotifications();
   const mark = useMarkNotificationRead();
   useNotificationsRealtime();
@@ -54,7 +58,7 @@ export function NotificationsBell() {
             <ul className="space-y-1">
               {list.map((n) => {
                 const payload = (n.payload ?? null) as NotifPayload;
-                const path = readPath(payload);
+                const path = readPath(payload, viewer);
                 const parentLabel = readString(payload, 'parent_label');
                 const body = (
                   <CompactNotificationRow

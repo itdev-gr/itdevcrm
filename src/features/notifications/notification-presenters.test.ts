@@ -193,3 +193,43 @@ describe('readPath — deal comment channels', () => {
     expect(readPath({ parent_type: 'deal_social', parent_id: 'd1' })).toBe('/deals/d1');
   });
 });
+
+describe('readPath — channel mentions route by viewer (deal RLS fix 2026-08-31)', () => {
+  const channelPayload = {
+    parent_type: 'deal_dev',
+    parent_id: 'deal-1',
+    target_job_id: 'job-1',
+  };
+
+  it('technical-only viewer goes to the service job page', () => {
+    expect(readPath(channelPayload, { groupCodes: ['web_dev'], isAdmin: false })).toBe('/jobs/job-1');
+    expect(
+      readPath(
+        { ...channelPayload, parent_type: 'deal_seo' },
+        { groupCodes: ['web_seo', 'local_seo'], isAdmin: false },
+      ),
+    ).toBe('/jobs/job-1');
+    expect(
+      readPath({ ...channelPayload, parent_type: 'deal_ads' }, { groupCodes: ['ads'], isAdmin: false }),
+    ).toBe('/jobs/job-1');
+    expect(
+      readPath(
+        { ...channelPayload, parent_type: 'deal_social' },
+        { groupCodes: ['social_media'], isAdmin: false },
+      ),
+    ).toBe('/jobs/job-1');
+  });
+
+  it('admins, accounting and sales keep the full deal page', () => {
+    expect(readPath(channelPayload, { groupCodes: ['web_dev'], isAdmin: true })).toBe('/deals/deal-1');
+    expect(readPath(channelPayload, { groupCodes: ['accounting'], isAdmin: false })).toBe('/deals/deal-1');
+    expect(readPath(channelPayload, { groupCodes: ['sales'], isAdmin: false })).toBe('/deals/deal-1');
+  });
+
+  it('no target_job_id or no viewer info falls back to the deal (legacy behavior)', () => {
+    expect(readPath({ parent_type: 'deal_dev', parent_id: 'deal-1' }, { groupCodes: ['web_dev'], isAdmin: false })).toBe(
+      '/deals/deal-1',
+    );
+    expect(readPath(channelPayload)).toBe('/deals/deal-1');
+  });
+});

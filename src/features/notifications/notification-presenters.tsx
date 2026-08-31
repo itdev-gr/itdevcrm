@@ -4,12 +4,27 @@ import { cn } from '@/lib/utils';
 
 export type NotifPayload = Record<string, unknown> | null;
 
+/** Who is looking at the bell — decides deal-vs-job routing for channel
+ *  mentions. Optional so existing call sites/tests keep the old behavior. */
+export type ReadPathViewer = { groupCodes?: string[]; isAdmin?: boolean };
+
+// Groups whose members can open deal pages (deals RLS: admin, accounting
+// views, or a sales owner). Everyone else gets routed to the service job,
+// where the SAME channel thread renders and jobs RLS admits them.
+const DEAL_CAPABLE_GROUPS = new Set(['accounting', 'sales']);
+
+export function canOpenDeals(viewer?: ReadPathViewer): boolean {
+  if (!viewer) return true; // no viewer info → legacy behavior (deal route)
+  if (viewer.isAdmin) return true;
+  return (viewer.groupCodes ?? []).some((g) => DEAL_CAPABLE_GROUPS.has(g));
+}
+
 // Route a notification to where the recipient can actually open it. Task
 // payloads with a target_job_id deep-link into /jobs/<id>?tab=tasks&open=…
 // so dept users (who lack RLS on the parent deal) can open the task on
 // their service job; otherwise fall back to /tasks?open=… which is
 // RLS-safe for the assignee.
-export function readPath(payload: NotifPayload): string | null {
+export function readPath(payload: NotifPayload, viewer?: ReadPathViewer): string | null {
   if (!payload) return null;
 
   // Nightly billing-integrity audit notifications carry no parent row; route
@@ -44,9 +59,17 @@ export function readPath(payload: NotifPayload): string | null {
     case 'deal_dev':
     case 'deal_seo':
     case 'deal_ads':
-    case 'deal_social':
-      // Deal comment channels live on the deal page's Comments panel.
+    case 'deal_social': {
+      // The channel thread renders in two places: the deal page's Comments
+      // panel AND the matching service job's page. Technical users lack deal
+      // RLS (they used to land on «You don't have access to this deal»), so
+      // when the payload carries the channel's job, route them there instead.
+      const channelJobId = payload['target_job_id'];
+      if (typeof channelJobId === 'string' && !canOpenDeals(viewer)) {
+        return `/jobs/${channelJobId}`;
+      }
       return `/deals/${parentId}`;
+    }
     case 'job':
       return `/jobs/${parentId}`;
     case 'user_task':

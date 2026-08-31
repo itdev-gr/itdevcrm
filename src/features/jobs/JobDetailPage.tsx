@@ -84,6 +84,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
 import type { ScheduleRow } from '@/features/deals/customSchedule';
 import type { ServiceType } from './hooks/useJobs';
+import { canOpenDeals } from '@/features/notifications/notification-presenters';
 
 const JOB_STATUS_STYLES: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
@@ -108,6 +109,9 @@ function JobDetailContent() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canBlockJob = isAdmin || groupCodes.includes('accounting');
+  // Deal pages are RLS-gated to admin/accounting/sales owners — don't show
+  // technical users a link that lands on «You don't have access to this deal».
+  const canSeeDeal = canOpenDeals({ groupCodes, isAdmin });
   const canEditBilling = isAdmin || groupCodes.includes('accounting');
   const canViewPricing = canViewJobPricing(isAdmin, groupCodes);
   const navigate = useNavigate();
@@ -623,12 +627,16 @@ function JobDetailContent() {
                     <div>
                       <dt className="text-[11px] text-muted-foreground">Deal</dt>
                       <dd className="mt-0.5">
-                        <Link
-                          to={`/deals/${job.deal.id}`}
-                          className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-                        >
-                          {job.deal.code ?? job.deal.title}
-                        </Link>
+                        {canSeeDeal ? (
+                          <Link
+                            to={`/deals/${job.deal.id}`}
+                            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                          >
+                            {job.deal.code ?? job.deal.title}
+                          </Link>
+                        ) : (
+                          <span className="text-sm font-medium">{job.deal.code ?? job.deal.title}</span>
+                        )}
                       </dd>
                     </div>
                   )}
