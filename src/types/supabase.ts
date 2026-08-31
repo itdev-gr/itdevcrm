@@ -2107,6 +2107,7 @@ export type Database = {
           currency: string
           description: string | null
           expected_close_date: string | null
+          first_paid_in_full_at: string | null
           id: string
           invoiced_date: string | null
           lead_source: string | null
@@ -2145,6 +2146,7 @@ export type Database = {
           currency?: string
           description?: string | null
           expected_close_date?: string | null
+          first_paid_in_full_at?: string | null
           id?: string
           invoiced_date?: string | null
           lead_source?: string | null
@@ -2183,6 +2185,7 @@ export type Database = {
           currency?: string
           description?: string | null
           expected_close_date?: string | null
+          first_paid_in_full_at?: string | null
           id?: string
           invoiced_date?: string | null
           lead_source?: string | null
