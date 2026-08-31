@@ -246,7 +246,6 @@ export function renderOfferHtml(args: Args): string {
         <!-- Idea Section -->
         <section class="mb-10">
           <div class="relative overflow-hidden rounded-2xl bg-[#0b2f41] text-white shadow-lg">
-            <div class="absolute inset-y-0 left-[48%] w-[140px] rotate-12 bg-[#3f8f8a]"></div>
             <div class="relative p-8 md:p-10">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                 <div>

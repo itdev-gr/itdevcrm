@@ -23,7 +23,7 @@ import { useUpcomingMeetings, type MeetingLead } from './hooks/useUpcomingMeetin
 type Group = 'meetings' | 'decision' | 'overdue' | 'today' | 'upcoming';
 const GROUP_ORDER: Group[] = ['meetings', 'decision', 'overdue', 'today', 'upcoming'];
 
-function groupOf(dueIso: string): Exclude<Group, 'decision'> {
+function groupOf(dueIso: string): Exclude<Group, 'decision' | 'meetings'> {
   const due = new Date(dueIso);
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
