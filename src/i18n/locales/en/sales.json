@@ -64,6 +64,21 @@
         "plus2": "In 2 days, 10:00",
         "plus7": "In a week, 10:00",
         "apply": "Set"
+      },
+      "errors": {
+        "already_completed": "This task was already completed.",
+        "invalid_due": "The snooze date must be in the future.",
+        "invalid_outcome": "Invalid outcome.",
+        "not_a_cadence_task": "This is not an automation task.",
+        "no_live_run": "The lead has no live automation chain.",
+        "permission_denied": "You don't have permission for this action.",
+        "pause_failed": "Pause/resume failed.",
+        "snooze_failed": "Snooze failed.",
+        "cadence_complete_failed": "Completing the task failed.",
+        "lead_not_found": "Lead not found.",
+        "not_current_task": "This is not the chain's current task anymore — refresh the page.",
+        "run_paused": "This chain is paused — resume it first.",
+        "save_failed": "Save failed: {{msg}}"
       }
     },
     "admin": {
@@ -76,6 +91,7 @@
       "ends_suggesting": "ends suggesting",
       "enabled": "Enabled",
       "days_after_previous": "days after the previous step",
+      "hours_after_previous": "hours",
       "edit_copy": "Edit email copy"
     },
     "schedule_dialog": {

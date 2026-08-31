@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
+import { udErrorMessage } from '../udErrors';
 
 export type CadenceStepRow = Database['public']['Tables']['ud_cadence_steps']['Row'];
 export type CadenceRunRow = Database['public']['Tables']['ud_cadence_runs']['Row'];
@@ -118,6 +120,7 @@ export function useSnoozeCadenceTask() {
 /** Pause / resume a lead's live automation chain (owner or admin). */
 export function useSetRunPaused() {
   const qc = useQueryClient();
+  const { t } = useTranslation('sales');
   return useMutation<void, Error, { leadId: string; paused: boolean }>({
     mutationFn: async ({ leadId, paused }) => {
       const { data, error } = await supabase.rpc('ud_set_run_paused' as never, {
@@ -129,5 +132,6 @@ export function useSetRunPaused() {
       if (!res.ok) throw new Error(res.error ?? 'pause_failed');
     },
     onSuccess: () => invalidateCadenceQueries(qc),
+    onError: (e) => alert(udErrorMessage(t, e.message)),
   });
 }

@@ -22,22 +22,25 @@ function DaysInput({
   value,
   onSave,
   disabled,
+  max,
 }: {
   value: number;
   onSave: (v: number) => void;
   disabled?: boolean;
+  max?: number;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const commit = () => {
     if (draft == null) return;
     const n = Number(draft);
-    if (Number.isInteger(n) && n >= 0 && n !== value) onSave(n);
+    if (Number.isInteger(n) && n >= 0 && (max == null || n <= max) && n !== value) onSave(n);
     setDraft(null);
   };
   return (
     <Input
       type="number"
       min={0}
+      max={max}
       value={draft ?? String(value)}
       disabled={disabled}
       onChange={(e) => setDraft(e.target.value)}
@@ -117,9 +120,10 @@ export function SalesAutomationsPage() {
           <DaysInput
             value={step.delay_hours ?? 0}
             disabled={updateStep.isPending}
+            max={23}
             onSave={(v) => updateStep.mutate({ id: step.id, patch: { delay_hours: v } })}
           />
-          {t('ud.admin.hours_after_previous', { defaultValue: 'ώρες' })}
+          {t('ud.admin.hours_after_previous')}
         </span>
         <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Checkbox

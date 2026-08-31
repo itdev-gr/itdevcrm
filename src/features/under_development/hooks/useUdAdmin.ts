@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
 import type { CadenceRow, CadenceStepRow } from './useLeadCadence';
@@ -51,17 +52,20 @@ export function useUdTemplates() {
 
 export function useUpdateUdCadence() {
   const qc = useQueryClient();
+  const { t } = useTranslation('sales');
   return useMutation<void, Error, { id: string; enabled: boolean }>({
     mutationFn: async ({ id, enabled }) => {
       const { error } = await supabase.from('ud_cadences').update({ enabled }).eq('id', id);
       if (error) throw new Error(error.message);
     },
     onSuccess: () => invalidate(qc),
+    onError: (e) => alert(t('ud.cadence.errors.save_failed', { msg: e.message })),
   });
 }
 
 export function useUpdateUdStep() {
   const qc = useQueryClient();
+  const { t } = useTranslation('sales');
   return useMutation<
     void,
     Error,
@@ -75,6 +79,7 @@ export function useUpdateUdStep() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => invalidate(qc),
+    onError: (e) => alert(t('ud.cadence.errors.save_failed', { msg: e.message })),
   });
 }
 
@@ -94,6 +99,7 @@ export function useUdSettings() {
 
 export function useUpdateUdSettings() {
   const qc = useQueryClient();
+  const { t } = useTranslation('sales');
   return useMutation<
     void,
     Error,
@@ -107,5 +113,6 @@ export function useUpdateUdSettings() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => invalidate(qc),
+    onError: (e) => alert(t('ud.cadence.errors.save_failed', { msg: e.message })),
   });
 }

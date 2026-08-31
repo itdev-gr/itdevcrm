@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveLeadStage } from '@/features/leads/hooks/useMoveLeadStage';
 import { useCompleteCadenceTask } from './hooks/useLeadCadence';
+import { udErrorMessage } from './udErrors';
 
 /** The «move to Not Found / Not Interested?» confirmation a finished chain
  *  offers. Hosted by whoever stays MOUNTED after the task closes — the outcome
@@ -143,7 +144,7 @@ export function CadenceOutcomeButtons({
     } catch (e) {
       reset();
       const msg = (e as Error).message;
-      alert(msg === 'run_paused' ? t('ud.cadence.paused_error') : msg);
+      alert(udErrorMessage(t, msg));
     }
   }
 

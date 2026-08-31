@@ -64,6 +64,21 @@
         "plus2": "Σε 2 μέρες, 10:00",
         "plus7": "Σε μία εβδομάδα, 10:00",
         "apply": "ΟΚ"
+      },
+      "errors": {
+        "already_completed": "Αυτό το task έχει ήδη ολοκληρωθεί.",
+        "invalid_due": "Η ημερομηνία αναβολής πρέπει να είναι μελλοντική.",
+        "invalid_outcome": "Μη έγκυρο αποτέλεσμα.",
+        "not_a_cadence_task": "Αυτό δεν είναι task αυτοματισμού.",
+        "no_live_run": "Ο lead δεν έχει ενεργή αλυσίδα.",
+        "permission_denied": "Δεν έχεις δικαίωμα για αυτή την ενέργεια.",
+        "pause_failed": "Η παύση/συνέχιση απέτυχε.",
+        "snooze_failed": "Η αναβολή απέτυχε.",
+        "cadence_complete_failed": "Η ολοκλήρωση του task απέτυχε.",
+        "lead_not_found": "Ο lead δεν βρέθηκε.",
+        "not_current_task": "Αυτό δεν είναι πλέον το τρέχον task της αλυσίδας — κάνε ανανέωση.",
+        "run_paused": "Η αλυσίδα είναι σε παύση — πάτησε πρώτα Συνέχιση.",
+        "save_failed": "Η αποθήκευση απέτυχε: {{msg}}"
       }
     },
     "admin": {
@@ -76,6 +91,7 @@
       "ends_suggesting": "καταλήγει προτείνοντας",
       "enabled": "Ενεργό",
       "days_after_previous": "μέρες μετά το προηγούμενο βήμα",
+      "hours_after_previous": "ώρες",
       "edit_copy": "Επεξεργασία κειμένου email"
     },
     "schedule_dialog": {

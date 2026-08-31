@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSnoozeCadenceTask } from './hooks/useLeadCadence';
+import { udErrorMessage } from './udErrors';
 
 /** «Πάρε με Πέμπτη»: push an open chain task's due date without burning a
  *  step. Presets land at 10:00 local; the date field covers everything else. */
@@ -27,7 +28,7 @@ export function CadenceSnoozeButton({ taskId }: { taskId: string }) {
       setOpen(false);
       setCustom('');
     } catch (e) {
-      alert((e as Error).message);
+      alert(udErrorMessage(t, (e as Error).message));
     }
   }
 
@@ -68,6 +69,7 @@ export function CadenceSnoozeButton({ taskId }: { taskId: string }) {
             type="datetime-local"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
+            min={new Date().toISOString().slice(0, 16)}
             className="h-8 text-xs"
           />
           <Button
