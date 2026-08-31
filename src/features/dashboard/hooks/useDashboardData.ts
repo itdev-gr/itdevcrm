@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { fetchAllPages } from '@/lib/fetchAllPages';
+import { localDayBounds } from '../dateRange';
 
 export type DashboardLead = {
   id: string;
@@ -19,6 +20,10 @@ export function useDashboardLeads(range: { from: string; to: string }) {
     queryFn: async (): Promise<DashboardLead[]> => {
       // Paged drain: the cohort is already >3k leads on the default preset —
       // an unranged select silently truncates at PostgREST's 1000-row page.
+      // Boundaries are LOCAL (Greece) midnights converted to UTC instants —
+      // see dateRange.ts; the old `T00:00:00Z` bounds misfiled every lead
+      // created 00:00–03:00 local into the previous day.
+      const { fromIso, toIsoExclusive } = localDayBounds(range);
       const rows = await fetchAllPages(() =>
         supabase
           .from('leads')
@@ -26,8 +31,8 @@ export function useDashboardLeads(range: { from: string; to: string }) {
             'id, created_at, owner_user_id, source, estimated_one_time_value, estimated_monthly_value, stage:pipeline_stages(terminal_outcome)',
           )
           .eq('archived', false)
-          .gte('created_at', `${range.from}T00:00:00Z`)
-          .lte('created_at', `${range.to}T23:59:59Z`)
+          .gte('created_at', fromIso)
+          .lt('created_at', toIsoExclusive)
           .order('created_at', { ascending: true })
           .order('id', { ascending: true }),
       );

@@ -35,6 +35,7 @@ import {
   useRecurringCollected,
   type DashboardDeal,
 } from './hooks/useDashboardData';
+import { rangeFor } from './dateRange';
 
 type Preset =
   | 'this_month'
@@ -53,27 +54,6 @@ const CHART = {
   lost: '#dc2626',
   open: '#94a3b8',
 } as const;
-
-function isoDay(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function rangeFor(preset: Exclude<Preset, 'custom'>): { from: string; to: string } {
-  const now = new Date();
-  const to = isoDay(now);
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
-  if (preset === 'this_month') return { from: isoDay(new Date(Date.UTC(y, m, 1))), to };
-  if (preset === 'last_month')
-    return {
-      from: isoDay(new Date(Date.UTC(y, m - 1, 1))),
-      to: isoDay(new Date(Date.UTC(y, m, 0))),
-    };
-  if (preset === 'this_year') return { from: `${y}-01-01`, to };
-  const months = preset === 'last_6_months' ? 5 : 11;
-  const from = new Date(Date.UTC(y, m - months, 1));
-  return { from: isoDay(from), to };
-}
 
 function formatRangeLabel(from: string, to: string, locale: string): string {
   const fmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' });
