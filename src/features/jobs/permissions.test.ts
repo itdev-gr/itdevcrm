@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canViewJobPricing } from './permissions';
+import { canViewJobPricing, canDeleteJob } from './permissions';
 
 describe('canViewJobPricing', () => {
   it('allows admins', () => {
@@ -15,5 +15,21 @@ describe('canViewJobPricing', () => {
     expect(canViewJobPricing(false, ['web_dev'])).toBe(false);
     expect(canViewJobPricing(false, ['sales'])).toBe(false);
     expect(canViewJobPricing(false, [])).toBe(false);
+  });
+});
+
+describe('canDeleteJob', () => {
+  it('admins can always delete', () => {
+    expect(canDeleteJob(true, [], '2026-08-01T00:00:00Z')).toBe(true);
+    expect(canDeleteJob(true, [], null)).toBe(true);
+  });
+  it('accounting can delete only while the deal was never Paid In Full', () => {
+    expect(canDeleteJob(false, ['accounting'], null)).toBe(true);
+    expect(canDeleteJob(false, ['accounting'], undefined)).toBe(true);
+    expect(canDeleteJob(false, ['accounting'], '2026-08-01T00:00:00Z')).toBe(false);
+  });
+  it('everyone else never deletes', () => {
+    expect(canDeleteJob(false, ['local_seo'], null)).toBe(false);
+    expect(canDeleteJob(false, [], null)).toBe(false);
   });
 });
