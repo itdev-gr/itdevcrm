@@ -17,7 +17,8 @@
       "open_lead": "Open lead",
       "needs_decision_badge": "Needs a decision",
       "all_clear": "All clear — nothing needs you right now.",
-      "last_call_hint": "Last call today (from the phone system)"
+      "last_call_hint": "Last call today (from the phone system)",
+      "missed_meeting_badge": "Meeting passed — pick the next step"
     },
     "cadence": {
       "title": "Automation chain",
@@ -73,6 +74,11 @@
       "enabled": "Enabled",
       "days_after_previous": "days after the previous step",
       "edit_copy": "Edit email copy"
+    },
+    "schedule_dialog": {
+      "title": "Meeting",
+      "desc": "Moving to Scheduled needs a meeting date and time.",
+      "confirm": "Set meeting"
     }
   },
   "kanban": {

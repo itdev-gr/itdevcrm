@@ -43,18 +43,31 @@ export function LeadsListPage() {
   const distribution = useLeadDistribution();
   const distribute = useDistributeUnassigned();
 
-  const salesStages = useMemo(
-    () => stages.filter((s) => s.board === 'sales' && !s.archived).sort((a, b) => a.position - b.position),
+  // Leads live on more than one board now (the UD migration moved them all off
+  // 'sales'); labels resolve across every board, and the stage pickers below
+  // are scoped to the boards the shown/selected leads actually sit on — a
+  // hardcoded 'sales' list rendered blank labels and teleported edited leads
+  // onto the abandoned classic board.
+  const activeStages = useMemo(
+    () =>
+      stages
+        .filter((s) => !s.archived)
+        .sort((a, b) => (a.board === b.board ? a.position - b.position : a.board.localeCompare(b.board))),
     [stages],
   );
+  const stageById = useMemo(() => new Map(stages.map((s) => [s.id, s])), [stages]);
   const ownerLabel = useMemo(() => {
     const m = new Map(owners.map((o) => [o.user_id, o.full_name || o.email]));
     return (id: string | null) => (id ? (m.get(id) ?? '') : '');
   }, [owners]);
   const statusLabel = useMemo(() => {
-    const m = new Map(salesStages.map((s) => [s.id, s.display_names[lang] ?? s.code]));
+    const m = new Map(stages.map((s) => [s.id, s.display_names[lang] ?? s.code]));
     return (id: string | null) => (id ? (m.get(id) ?? '') : '');
-  }, [salesStages, lang]);
+  }, [stages, lang]);
+  const filterStages = useMemo(() => {
+    const used = new Set(leads.map((l) => l.stage_id));
+    return activeStages.filter((s) => used.has(s.id));
+  }, [activeStages, leads]);
 
   const [params] = useSearchParams();
   const [search, setSearch] = useState('');
@@ -65,6 +78,19 @@ export function LeadsListPage() {
   const [page, setPage] = useState(0);
   const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
   const [confirmDistribute, setConfirmDistribute] = useState(false);
+
+  // Bulk set-status offers only stages from the boards the SELECTED leads are
+  // on, so a bulk edit can never drag leads onto a foreign board.
+  const bulkStages = useMemo(() => {
+    const boards = new Set<string>();
+    for (const l of leads) {
+      if (!selected.has(l.id)) continue;
+      const board = l.stage_id ? stageById.get(l.stage_id)?.board : undefined;
+      if (board) boards.add(board);
+    }
+    if (boards.size === 0) boards.add('under_development');
+    return activeStages.filter((s) => boards.has(s.board));
+  }, [activeStages, stageById, leads, selected]);
 
   const rows = useMemo(
     () =>
@@ -209,7 +235,7 @@ export function LeadsListPage() {
         />
         <FilterSelect value={statusId} onChange={(e) => setStatusId(e.target.value)}>
           <option value={ALL}>{t('table.status_all')}</option>
-          {salesStages.map((s) => (
+          {filterStages.map((s) => (
             <option key={s.id} value={s.id}>
               {s.display_names[lang] ?? s.code}
             </option>
@@ -271,7 +297,7 @@ export function LeadsListPage() {
             }}
           >
             <option value="">{t('bulk.set_status')}</option>
-            {salesStages.map((s) => (
+            {bulkStages.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.display_names[lang] ?? s.code}
               </option>
@@ -337,7 +363,7 @@ export function LeadsListPage() {
                     key={lead.id}
                     lead={lead}
                     owners={owners}
-                    stages={salesStages}
+                    stages={activeStages}
                     currentUserId={userId}
                     lang={lang}
                     selected={selected.has(lead.id)}

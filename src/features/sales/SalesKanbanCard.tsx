@@ -28,7 +28,7 @@ export function SalesKanbanCard({
   const { t, i18n } = useTranslation('leads');
   const { t: tDeals } = useTranslation('deals');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
-  const isWon = lead.stage?.code === 'won';
+  const isWon = lead.stage?.code === 'won' || lead.stage?.code === 'ud_won';
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: { lead, leadId: lead.id, currentStage: lead.stage_id },
@@ -127,7 +127,10 @@ export function SalesKanbanCard({
               title={new Date(lead.scheduled_for).toLocaleString()}
             >
               <Calendar className="size-3 shrink-0" />
-              {lead.stage?.code === 'offer_sent' ? 'Follow-up' : 'Scheduled'}:{' '}
+              {lead.stage?.code === 'offer_sent' || lead.stage?.code === 'ud_offer_sent'
+                ? t('card.followup_label', { defaultValue: 'Follow-up' })
+                : t('card.scheduled_label', { defaultValue: 'Scheduled' })}
+              :{' '}
               {formatDate(lead.scheduled_for)}{' '}
               {new Intl.DateTimeFormat(lang === 'el' ? 'el-GR' : 'en-US', {
                 hour: '2-digit',

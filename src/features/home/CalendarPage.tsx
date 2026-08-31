@@ -53,7 +53,7 @@ function leadName(l: ScheduledLead): string {
 }
 
 function leadHeadline(l: ScheduledLead): string {
-  if (l.stage?.code === 'offer_sent') {
+  if (l.stage?.code === 'offer_sent' || l.stage?.code === 'ud_offer_sent') {
     return `Offer sent follow up · ${leadName(l)}`;
   }
   return leadName(l);

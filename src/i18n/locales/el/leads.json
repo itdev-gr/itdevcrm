@@ -213,7 +213,9 @@
   },
   "card": {
     "monthly": "/μήνα",
-    "no_company": "(χωρίς εταιρεία)"
+    "no_company": "(χωρίς εταιρεία)",
+    "followup_label": "Follow-up",
+    "scheduled_label": "Ραντεβού"
   },
   "pager": {
     "prev": "Προηγούμενη",

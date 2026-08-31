@@ -11,7 +11,16 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useMoveLeadStage } from '@/features/leads/hooks/useMoveLeadStage';
+import { useUpdateLead } from '@/features/leads/hooks/useUpdateLead';
 import { useConvertLead } from '@/features/leads/hooks/useConvertLead';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
@@ -62,6 +71,7 @@ export function UnderDevKanbanPage() {
 
   const { data: stages = [], isLoading } = usePipelineStages();
   const moveStage = useMoveLeadStage();
+  const updateLead = useUpdateLead();
   const convert = useConvertLead();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -70,6 +80,30 @@ export function UnderDevKanbanPage() {
     .sort((a, b) => a.position - b.position);
   const wonStage = boardStages.find((s) => s.code === 'ud_won');
   const newLeadStage = boardStages.find((s) => s.code === 'ud_new_lead');
+  const scheduledStage = boardStages.find((s) => s.code === 'ud_scheduled');
+
+  // Dragging into Scheduled must produce an actual meeting: the drop is held
+  // until a date/time is picked (same input the cadence outcome dialog uses).
+  const [schedulePending, setSchedulePending] = useState<{ leadId: string; stageId: string } | null>(
+    null,
+  );
+  const [scheduleAt, setScheduleAt] = useState('');
+
+  async function confirmSchedule() {
+    if (!schedulePending || !scheduleAt) return;
+    try {
+      // Stage first (works from any column, terminal ones included), then the
+      // date — the board-aware scheduled_for sync no-ops once already there.
+      await moveStage.mutateAsync({ leadId: schedulePending.leadId, stageId: schedulePending.stageId });
+      await updateLead.mutateAsync({
+        id: schedulePending.leadId,
+        patch: { scheduled_for: new Date(scheduleAt).toISOString() },
+      });
+    } catch (err) {
+      alert((err as Error).message);
+    }
+    setSchedulePending(null);
+  }
 
   const columnFilter = {
     ...(typeof filter.ownerId === 'string' ? { ownerId: filter.ownerId } : {}),
@@ -134,11 +168,19 @@ export function UnderDevKanbanPage() {
         </p>
       );
     }
-    if (overview.decisionByLead.has(leadId)) {
+    const decision = overview.decisionByLead.get(leadId);
+    if (decision) {
+      // On Scheduled, a surviving decision means the meeting date passed (a
+      // future one suppresses the flag entirely) — say that instead of the
+      // generic nag.
+      const decisionStage = decision.lead.stage_id
+        ? boardStages.find((s) => s.id === decision.lead.stage_id)
+        : undefined;
+      const missedMeeting = decisionStage?.code === 'ud_scheduled' && !!decision.lead.scheduled_for;
       return (
         <p className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
           <AlertTriangle className="size-3 shrink-0" />
-          {t('ud.tasks.needs_decision_badge')}
+          {missedMeeting ? t('ud.tasks.missed_meeting_badge') : t('ud.tasks.needs_decision_badge')}
         </p>
       );
     }
@@ -168,6 +210,9 @@ export function UnderDevKanbanPage() {
         const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
         alert(errors.map((er) => tLeads(`convert.errors.${er}`, { defaultValue: er })).join('\n'));
       }
+    } else if (scheduledStage && stageId === scheduledStage.id) {
+      setScheduleAt('');
+      setSchedulePending({ leadId, stageId });
     } else {
       await moveStage.mutateAsync({ leadId, stageId });
     }
@@ -279,6 +324,38 @@ export function UnderDevKanbanPage() {
         </DragOverlay>
       </DndContext>
       <CreateLeadDialog open={createOpen} onOpenChange={setCreateOpen} stageId={newLeadStage?.id} />
+
+      <Dialog
+        open={!!schedulePending}
+        onOpenChange={(open) => {
+          if (!open) setSchedulePending(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('ud.schedule_dialog.title')}</DialogTitle>
+            <DialogDescription>{t('ud.schedule_dialog.desc')}</DialogDescription>
+          </DialogHeader>
+          <Input
+            type="datetime-local"
+            aria-label={t('ud.schedule_dialog.title')}
+            value={scheduleAt}
+            onChange={(e) => setScheduleAt(e.target.value)}
+          />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSchedulePending(null)}>
+              {t('ud.cadence.cancel')}
+            </Button>
+            <Button
+              type="button"
+              disabled={!scheduleAt || moveStage.isPending || updateLead.isPending}
+              onClick={() => void confirmSchedule()}
+            >
+              {t('ud.schedule_dialog.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

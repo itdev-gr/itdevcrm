@@ -17,4 +17,12 @@ describe('isLeadDeletable', () => {
   it('refuses a won lead', () => {
     expect(isLeadDeletable({ converted_at: null, stage: { code: 'won' } })).toBe(false);
   });
+
+  it('refuses a UD-board won lead even when not converted (partial conversion)', () => {
+    expect(isLeadDeletable({ converted_at: null, stage: { code: 'ud_won' } })).toBe(false);
+  });
+
+  it('allows a UD-board working lead', () => {
+    expect(isLeadDeletable({ converted_at: null, stage: { code: 'ud_new_lead' } })).toBe(true);
+  });
 });

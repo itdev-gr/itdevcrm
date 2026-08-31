@@ -5,6 +5,6 @@ export function isLeadDeletable(lead: {
   stage?: { code?: string | null } | null;
 }): boolean {
   if (lead.converted_at) return false;
-  if (lead.stage?.code === 'won') return false;
+  if (lead.stage?.code === 'won' || lead.stage?.code === 'ud_won') return false;
   return true;
 }

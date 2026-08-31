@@ -69,6 +69,10 @@ function LeadDetailContent() {
   // current stage keeps Next from ever landing on a won lead.
   const isWonStage =
     !!lead?.stage_id && stages.some((s) => s.id === lead.stage_id && s.terminal_outcome === 'won');
+  // Parking holds thousands of shelved leads — draining the whole column just
+  // to enable Next is pages of wasted round-trips; reps don't walk Parking.
+  const isParkingStage =
+    !!lead?.stage_id && stages.some((s) => s.id === lead.stage_id && s.code === 'ud_parking');
 
   // Fetch the whole ordered column, not just the first 1000 rows: PostgREST caps
   // each response at 1000, and busy stages (e.g. not_interested) exceed that, so
@@ -114,7 +118,7 @@ function LeadDetailContent() {
       }
       return ids;
     },
-    enabled: !!lead?.stage_id && !isWonStage,
+    enabled: !!lead?.stage_id && !isWonStage && !isParkingStage,
     staleTime: 30_000,
   });
   const nextInStageId = useMemo(

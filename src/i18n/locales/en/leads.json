@@ -213,7 +213,9 @@
   },
   "card": {
     "monthly": "/mo",
-    "no_company": "(no company yet)"
+    "no_company": "(no company yet)",
+    "followup_label": "Follow-up",
+    "scheduled_label": "Scheduled"
   },
   "pager": {
     "prev": "Prev",

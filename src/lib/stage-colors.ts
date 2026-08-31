@@ -65,6 +65,11 @@ const BY_CODE: Record<string, StageAccent> = {
     columnBorder: 'border-t-stone-400',
     dot: 'bg-stone-400',
   },
+  parking: {
+    badge: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    columnBorder: 'border-t-slate-400',
+    dot: 'bg-slate-400',
+  },
   // Accounting onboarding
   new: {
     badge: 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200',
@@ -243,7 +248,9 @@ const FALLBACKS: StageAccent[] = [
 ];
 
 export function stageAccent(code: string | null | undefined, index = 0): StageAccent {
-  if (code && BY_CODE[code]) return BY_CODE[code];
+  // The Under Development board reuses the classic palette via its ud_ prefix.
+  const bare = code?.replace(/^ud_/, '');
+  if (bare && BY_CODE[bare]) return BY_CODE[bare];
   return FALLBACKS[index % FALLBACKS.length]!;
 }
 

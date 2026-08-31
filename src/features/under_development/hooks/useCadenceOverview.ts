@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 import { queryKeys } from '@/lib/queryKeys';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import type { CadenceRow, CadenceStepRow } from './useLeadCadence';
@@ -14,10 +15,11 @@ export type CadenceLeadLite = {
   owner_user_id: string | null;
   archived: boolean;
   converted_at: string | null;
+  scheduled_for: string | null;
 };
 
 const LEAD_EMBED =
-  'lead:leads(id, title, code, company_name, phone, stage_id, owner_user_id, archived, converted_at)';
+  'lead:leads(id, title, code, company_name, phone, stage_id, owner_user_id, archived, converted_at, scheduled_for)';
 
 export type CadenceOpenTask = {
   id: string;
@@ -79,41 +81,54 @@ export function useCadenceOverview() {
     queryFn: async () => {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
-      const [tasksRes, liveRes, endedRes, cadRes, callsRes] = await Promise.all([
-        supabase
-          .from('user_tasks')
-          .select(`id, title, due_at, user_id, cadence_run_id, cadence_step_id, ${LEAD_EMBED}`)
-          .not('cadence_run_id', 'is', null)
-          .is('completed_at', null)
-          .order('due_at', { ascending: true }),
-        supabase
-          .from('ud_cadence_runs')
-          .select('id, lead_id, status, next_event_at')
-          .in('status', ['active', 'paused']),
-        supabase
-          .from('ud_cadence_runs')
-          .select(`id, lead_id, status, exhausted_at, started_at, cadence:ud_cadences(final_move_stage_code), ${LEAD_EMBED}`)
-          .in('status', ['completed', 'stopped_reached'])
-          .order('started_at', { ascending: false }),
+      // Every list here can outgrow PostgREST's silent 1000-row cap once the
+      // board holds thousands of leads — drain them fully or badges/tasks
+      // silently vanish for whatever falls past the first page.
+      const [tasks, live, ended, cadRes, calls] = await Promise.all([
+        fetchAllPages(() =>
+          supabase
+            .from('user_tasks')
+            .select(`id, title, due_at, user_id, cadence_run_id, cadence_step_id, ${LEAD_EMBED}`)
+            .not('cadence_run_id', 'is', null)
+            .is('completed_at', null)
+            .order('due_at', { ascending: true })
+            .order('id', { ascending: true }),
+        ),
+        fetchAllPages(() =>
+          supabase
+            .from('ud_cadence_runs')
+            .select('id, lead_id, status, next_event_at')
+            .in('status', ['active', 'paused'])
+            .order('id', { ascending: true }),
+        ),
+        fetchAllPages(() =>
+          supabase
+            .from('ud_cadence_runs')
+            .select(`id, lead_id, status, exhausted_at, started_at, cadence:ud_cadences(final_move_stage_code), ${LEAD_EMBED}`)
+            .in('status', ['completed', 'stopped_reached'])
+            .order('started_at', { ascending: false })
+            .order('id', { ascending: true }),
+        ),
         supabase.from('ud_cadences').select('*, steps:ud_cadence_steps(*)'),
         // Today's PBX call auto-comments — proof of attempted contact per lead.
-        supabase
-          .from('comments')
-          .select('parent_id, created_at')
-          .eq('parent_type', 'lead')
-          .like('task_key', 'call:%')
-          .gte('created_at', startOfToday.toISOString())
-          .order('created_at', { ascending: true }),
+        fetchAllPages(() =>
+          supabase
+            .from('comments')
+            .select('parent_id, created_at')
+            .eq('parent_type', 'lead')
+            .like('task_key', 'call:%')
+            .gte('created_at', startOfToday.toISOString())
+            .order('created_at', { ascending: true })
+            .order('id', { ascending: true }),
+        ),
       ]);
-      for (const r of [tasksRes, liveRes, endedRes, cadRes, callsRes]) {
-        if (r.error) throw new Error(r.error.message);
-      }
+      if (cadRes.error) throw new Error(cadRes.error.message);
       return {
-        tasks: (tasksRes.data ?? []) as unknown as CadenceOpenTask[],
-        live: (liveRes.data ?? []) as unknown as LiveRunRow[],
-        ended: (endedRes.data ?? []) as unknown as EndedRunRow[],
+        tasks: tasks as unknown as CadenceOpenTask[],
+        live: live as unknown as LiveRunRow[],
+        ended: ended as unknown as EndedRunRow[],
         cadences: (cadRes.data ?? []) as unknown as (CadenceRow & { steps: CadenceStepRow[] })[],
-        calls: (callsRes.data ?? []) as { parent_id: string; created_at: string }[],
+        calls: calls as { parent_id: string; created_at: string }[],
       };
     },
   });
@@ -170,6 +185,16 @@ export function useCadenceOverview() {
     if (liveLeadIds.has(lead.id) || taskByLead.has(lead.id)) continue;
     const stage = lead.stage_id ? stageById.get(lead.stage_id) : undefined;
     if (!stage || stage.board !== 'under_development' || stage.is_terminal) continue;
+    // Parking is a deliberate shelf — a parked lead is not an open question.
+    if (stage.code === 'ud_parking') continue;
+    // A future meeting IS the pending action; nag only once the date passes
+    // (or was never set) with nothing else live on the lead.
+    if (
+      stage.code === 'ud_scheduled' &&
+      lead.scheduled_for &&
+      new Date(lead.scheduled_for) > new Date()
+    )
+      continue;
     if (r.status === 'completed' && !r.exhausted_at) continue;
     const finalStage = r.cadence?.final_move_stage_code
       ? udStageByCode.get(r.cadence.final_move_stage_code)

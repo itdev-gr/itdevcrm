@@ -63,6 +63,9 @@ export function LeadRowEditor({
 
   const currentStage = stages.find((s) => s.id === lead.stage_id);
   const statusAccent = stageAccent(currentStage?.code);
+  // Only same-board stages are offered — a cross-board option here would
+  // silently teleport the lead off its kanban.
+  const boardStages = stages.filter((s) => s.board === (currentStage?.board ?? 'under_development'));
 
   async function commit(patch: Record<string, unknown>) {
     try {
@@ -229,7 +232,7 @@ export function LeadRowEditor({
             onChange={(e) => commit({ stage_id: e.target.value })}
             className={cn(tableSelectClass, 'min-w-[140px]')}
           >
-            {stages.map((s) => (
+            {boardStages.map((s) => (
               <option key={s.id} value={s.id} disabled={isStageMoveBlocked(s, currentUserId)}>
                 {s.display_names[lang] ?? s.code}
               </option>
