@@ -42,6 +42,12 @@ pipeline ΔΕΝ αγγίχτηκε — templates/χρονισμοί του μέ�
 `/sales-automations`: μέρες ΚΑΙ ώρες ανά βήμα, enable/disable, thresholds.
 Κείμενα: `/admin/email-automations` (DB rows are authoritative).
 
+- **Company schedule:** cadence call tasks only open Mon–Fri **09:00–17:30**
+  (Europe/Athens). A step whose delay lands past 17:30, before 09:00, or on a
+  weekend opens the **next business day at 09:00** (`ud_business_due`). Email
+  steps are NOT clamped — they fire on their exact delays. Snooze presets
+  (tomorrow/+2/+7) skip weekends and land Monday 10:00.
+
 ## Κύκλος ζωής — κανένα task δεν επιζεί του lead του (2026-08-30)
 
 - **Stage move** (και στα terminal Not Interested / Not Found / Dead End): το
