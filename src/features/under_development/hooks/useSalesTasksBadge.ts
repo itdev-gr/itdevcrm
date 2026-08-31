@@ -10,7 +10,11 @@ function endOfTodayIso(): string {
   return d.toISOString();
 }
 
-/** Sidebar badge: MY open cadence tasks that are due today or overdue. */
+/**
+ * Sidebar badge: MY open cadence tasks due today or overdue, plus MY meetings
+ * happening today (or already passed while the lead still sits in Scheduled —
+ * those need an outcome too).
+ */
 export function useSalesTasksBadge(): number {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const { data } = useQuery({
@@ -18,15 +22,27 @@ export function useSalesTasksBadge(): number {
     enabled: !!userId,
     refetchInterval: 120_000,
     queryFn: async (): Promise<number> => {
-      const { count, error } = await supabase
-        .from('user_tasks')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId!)
-        .not('cadence_run_id', 'is', null)
-        .is('completed_at', null)
-        .lt('due_at', endOfTodayIso());
-      if (error) throw new Error(error.message);
-      return count ?? 0;
+      const [tasksRes, meetingsRes] = await Promise.all([
+        supabase
+          .from('user_tasks')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId!)
+          .not('cadence_run_id', 'is', null)
+          .is('completed_at', null)
+          .lt('due_at', endOfTodayIso()),
+        supabase
+          .from('leads')
+          .select('id, stage:pipeline_stages!inner(code)', { count: 'exact', head: true })
+          .eq('owner_user_id', userId!)
+          .eq('archived', false)
+          .is('converted_at', null)
+          .eq('stage.code', 'ud_scheduled')
+          .not('scheduled_for', 'is', null)
+          .lt('scheduled_for', endOfTodayIso()),
+      ]);
+      if (tasksRes.error) throw new Error(tasksRes.error.message);
+      if (meetingsRes.error) throw new Error(meetingsRes.error.message);
+      return (tasksRes.count ?? 0) + (meetingsRes.count ?? 0);
     },
   });
   return data ?? 0;

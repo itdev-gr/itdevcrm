@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Pause, Phone, PhoneIncoming, Play } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Pause, Phone, PhoneIncoming, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CallLink } from '@/components/CallLink';
 import { FilterSelect, PageHeader } from '@/components/layout/page-shell';
@@ -18,9 +18,10 @@ import {
   type CadenceDecision,
   type CadenceOpenTask,
 } from './hooks/useCadenceOverview';
+import { useUpcomingMeetings, type MeetingLead } from './hooks/useUpcomingMeetings';
 
-type Group = 'decision' | 'overdue' | 'today' | 'upcoming';
-const GROUP_ORDER: Group[] = ['decision', 'overdue', 'today', 'upcoming'];
+type Group = 'meetings' | 'decision' | 'overdue' | 'today' | 'upcoming';
+const GROUP_ORDER: Group[] = ['meetings', 'decision', 'overdue', 'today', 'upcoming'];
 
 function groupOf(dueIso: string): Exclude<Group, 'decision'> {
   const due = new Date(dueIso);
@@ -34,6 +35,10 @@ function groupOf(dueIso: string): Exclude<Group, 'decision'> {
 }
 
 const GROUP_TONE: Record<Group, { chip: string; header: string }> = {
+  meetings: {
+    chip: 'border-blue-500/50 text-blue-700 dark:text-blue-300',
+    header: 'text-blue-600 dark:text-blue-400',
+  },
   decision: {
     chip: 'border-amber-500/50 text-amber-700 dark:text-amber-300',
     header: 'text-amber-600 dark:text-amber-400',
@@ -65,6 +70,7 @@ export function SalesTasksPage() {
   const meId = useAuthStore((s) => s.user?.id ?? null);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const { overview, isLoading } = useCadenceOverview();
+  const { data: meetingLeads = [] } = useUpcomingMeetings();
   const { data: owners = [] } = useAssignableOwners();
   const { data: stages = [] } = usePipelineStages();
   const [ownerFilter, setOwnerFilter] = useState<string | 'all'>(isAdmin ? 'all' : meId ?? 'all');
@@ -90,13 +96,15 @@ export function SalesTasksPage() {
   const matchesOwner = (userId: string | null) => ownerFilter === 'all' || userId === ownerFilter;
   const tasks = overview.openTasks.filter((task) => matchesOwner(task.user_id));
   const decisions = overview.needsDecision.filter((d) => matchesOwner(d.lead.owner_user_id));
-  const grouped: Record<Exclude<Group, 'decision'>, CadenceOpenTask[]> = {
+  const meetings = meetingLeads.filter((m) => matchesOwner(m.owner_user_id));
+  const grouped: Record<Exclude<Group, 'decision' | 'meetings'>, CadenceOpenTask[]> = {
     overdue: [],
     today: [],
     upcoming: [],
   };
   for (const task of tasks) grouped[groupOf(task.due_at)].push(task);
   const countOf: Record<Group, number> = {
+    meetings: meetings.length,
     decision: decisions.length,
     overdue: grouped.overdue.length,
     today: grouped.today.length,
@@ -283,6 +291,65 @@ export function SalesTasksPage() {
     </li>
   );
 
+  const fmtMeeting = (iso: string) => {
+    const d = new Date(iso);
+    const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(d);
+    const isToday = d >= startOfToday && d.getDate() === now.getDate() && d.getMonth() === now.getMonth();
+    return isToday
+      ? time
+      : `${new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(d)} ${time}`;
+  };
+
+  const meetingRow = (m: MeetingLead) => {
+    const passed = new Date(m.scheduled_for) < now;
+    return (
+      <li
+        key={m.id}
+        onClick={() => openLead(m.id)}
+        className={cn(rowGrid, 'cursor-pointer px-3 py-2 transition-colors hover:bg-muted/50')}
+      >
+        <span
+          className={cn(
+            'text-xs tabular-nums font-semibold',
+            passed ? 'text-red-600 dark:text-red-400' : 'text-blue-700 dark:text-blue-300',
+          )}
+        >
+          {fmtMeeting(m.scheduled_for)}
+        </span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <CalendarClock
+            className={cn('size-4 shrink-0', passed ? 'text-red-500' : 'text-blue-500')}
+          />
+          <span className="truncate text-sm font-semibold">
+            {passed ? t('ud.tasks.meeting_passed') : t('ud.tasks.meeting_label')}
+          </span>
+        </span>
+        {leadCell(m)}
+        <span className="flex items-center gap-1 text-xs" onClick={stop}>
+          {m.phone ? (
+            <>
+              <Phone className="size-3 shrink-0 text-[#1a9696]" />
+              <CallLink phone={m.phone} />
+            </>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </span>
+        <span className="hidden lg:flex">{stageChip(m.stage_id)}</span>
+        {showOwnerCol && (
+          <span className="hidden truncate text-xs text-muted-foreground lg:inline">
+            {nameFor(m.owner_user_id).split(' ')[0]}
+          </span>
+        )}
+        <span className="col-span-full mt-1.5 flex justify-end lg:col-span-1 lg:mt-0" onClick={stop}>
+          <Button asChild size="sm" variant="outline" onClick={stop}>
+            <Link to={`/leads/${m.id}`}>{t('ud.tasks.open_lead')}</Link>
+          </Button>
+        </span>
+      </li>
+    );
+  };
+
   const visibleGroups = GROUP_ORDER.filter(
     (g) => (groupFilter ? g === groupFilter : true) && countOf[g] > 0,
   );
@@ -343,9 +410,11 @@ export function SalesTasksPage() {
                 {t(`ud.tasks.group_${g}`)} ({countOf[g]})
               </h2>
               <ul className="divide-y divide-border/40 border-b border-border/60 last:border-b-0">
-                {g === 'decision'
-                  ? decisions.map(decisionRow)
-                  : grouped[g].map((task) => taskRow(task, g))}
+                {g === 'meetings'
+                  ? meetings.map(meetingRow)
+                  : g === 'decision'
+                    ? decisions.map(decisionRow)
+                    : grouped[g].map((task) => taskRow(task, g))}
               </ul>
             </section>
           ))}
