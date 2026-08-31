@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSnoozeCadenceTask } from './hooks/useLeadCadence';
 import { udErrorMessage } from './udErrors';
+import { nextBusinessAt10 } from './businessSnooze';
 
 /** «Πάρε με Πέμπτη»: push an open chain task's due date without burning a
  *  step. Presets land at 10:00 local; the date field covers everything else. */
@@ -14,13 +15,6 @@ export function CadenceSnoozeButton({ taskId }: { taskId: string }) {
   const snooze = useSnoozeCadenceTask();
   const [open, setOpen] = useState(false);
   const [custom, setCustom] = useState('');
-
-  function at10(daysFromNow: number): string {
-    const d = new Date();
-    d.setDate(d.getDate() + daysFromNow);
-    d.setHours(10, 0, 0, 0);
-    return d.toISOString();
-  }
 
   async function apply(dueAt: string) {
     try {
@@ -58,7 +52,7 @@ export function CadenceSnoozeButton({ taskId }: { taskId: string }) {
             key={key}
             type="button"
             disabled={snooze.isPending}
-            onClick={() => void apply(at10(days))}
+            onClick={() => void apply(nextBusinessAt10(days))}
             className="block w-full rounded-md px-2 py-1.5 text-left text-xs hover:bg-muted"
           >
             {t(`ud.cadence.snooze.${key}`)}
