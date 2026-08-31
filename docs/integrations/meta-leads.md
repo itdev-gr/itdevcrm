@@ -11,7 +11,12 @@ The secret may instead be sent as header `X-Meta-Secret`. With GET, the lead fie
 - Keep the existing ClickUp action — both run from the same Zap.
 
 ## Behaviour
-- Creates a lead: `source='meta'`, raw fields in `source_data`, `form_name`→title, lands in **New Lead**, fires the welcome email (if enabled). `website` is stored and carried to the client on conversion.
+- Creates a lead: `source='meta'`, raw fields in `source_data`, lands in **New Lead**, fires the welcome email (if enabled). `website` is stored and carried to the client on conversion.
+- **Title:** «Contact name (Form name)» — e.g. `Μαργαρίτα Γραβέζα (Local SEO)`.
+  Franchise leads always use the literal `Franchise` label. If the form gave no
+  contact name, the title is the form name alone; if neither exists, `Meta lead`.
+  (Owner request 2026-08-31; helper `api/_lead-title.ts`, backfill migration
+  `20260831250000`.)
 - Retries are safe: a repeat `leadgen_id` returns `{ deduped: true }` and creates nothing.
 - Wrong/missing secret → 401; non-GET/POST → 405.
 

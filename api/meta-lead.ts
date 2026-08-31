@@ -1,6 +1,6 @@
 import { withSentry } from './_sentry.js';
 import { secretMatches } from './_secret.js';
-import { leadTitle } from './_lead-title';
+import { leadTitle } from './_lead-title.js';
 // api/meta-lead.ts
 // Public Meta lead-ad ingestion. Zapier sends each lead here (GET with query
 // params, or POST with a JSON body — both supported).
