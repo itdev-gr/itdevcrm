@@ -46,6 +46,7 @@ import { supabase } from '@/lib/supabase';
 import { LeadTasksTab } from './LeadTasksTab';
 import { OfferEmailDialog } from '@/features/offers/OfferEmailDialog';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
+import { formatConvertErrors } from '@/features/leads/convertErrors';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -223,7 +224,7 @@ function LeadDetailContent() {
         alert(`Converted. Client ${result.clientId} / Deal ${result.dealId}`);
       } catch (err) {
         const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-        alert(errors.map((er) => t(`convert.errors.${er}`, { defaultValue: er })).join('\n'));
+        alert(formatConvertErrors(errors, t));
       }
     } else {
       try {

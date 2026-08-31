@@ -208,7 +208,8 @@
       "phone_or_address_required": "Απαιτείται τηλέφωνο ή διεύθυνση.",
       "company_name_required": "Απαιτείται επωνυμία εταιρείας.",
       "payment_method_required": "Απαιτείται τρόπος πληρωμής πριν τη μετατροπή σε πελάτη.",
-      "contract_attachment_required": "Απαιτείται υπογεγραμμένη σύμβαση ως συνημμένο."
+      "contract_attachment_required": "Απαιτείται υπογεγραμμένη σύμβαση ως συνημμένο.",
+      "service_amount_required": "Η υπηρεσία «{{service}}» δεν έχει ποσό. Συμπληρώστε ποσό ή αφαιρέστε την πριν τη μετατροπή."
     }
   },
   "card": {

@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { useCadenceOverview } from './hooks/useCadenceOverview';
 import type { SortBy } from '@/features/sales/salesKanbanColumns';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
+import { formatConvertErrors } from '@/features/leads/convertErrors';
 
 const BOARD = 'under_development';
 
@@ -208,7 +209,7 @@ export function UnderDevKanbanPage() {
         await convert.mutateAsync(leadId);
       } catch (err) {
         const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-        alert(errors.map((er) => tLeads(`convert.errors.${er}`, { defaultValue: er })).join('\n'));
+        alert(formatConvertErrors(errors, tLeads));
       }
     } else if (scheduledStage && stageId === scheduledStage.id) {
       setScheduleAt('');

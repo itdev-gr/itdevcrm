@@ -31,6 +31,7 @@ import { useSalesBoardSortStore } from './salesBoardSortStore';
 import { useSalesBoardFilterStore } from './salesBoardFilterStore';
 import type { SortBy } from './salesKanbanColumns';
 import type { LeadRow } from '@/features/leads/hooks/useLeads';
+import { formatConvertErrors } from '@/features/leads/convertErrors';
 
 const SHUFFLABLE_CODES = [
   'new_lead',
@@ -142,7 +143,7 @@ export function SalesKanbanPage() {
         await convert.mutateAsync(leadId);
       } catch (err) {
         const errors = (err as Error & { errors?: string[] }).errors ?? [(err as Error).message];
-        alert(errors.map((er) => tLeads(`convert.errors.${er}`, { defaultValue: er })).join('\n'));
+        alert(formatConvertErrors(errors, tLeads));
       }
     } else {
       await moveStage.mutateAsync({ leadId, stageId });
