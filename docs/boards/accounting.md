@@ -112,6 +112,11 @@ accounting releases it. The flow, end to end:
 - Accounting never edits a job's *work* directly on a tech board — but accounting
   **does own each job's billing** (price, VAT, cadence) from the deal page, and
   can block/unblock jobs.
+- **Deleting a job (mistake fixing):** accounting can permanently delete a job
+  from the job page, but only while its deal has **never once** been Paid In
+  Full (`deals.first_paid_in_full_at` is empty — stamped automatically the
+  first time the deal ever enters Paid In Full and never cleared). After a
+  deal has been paid even once, job deletion is admin-only again.
 
 ---
 
