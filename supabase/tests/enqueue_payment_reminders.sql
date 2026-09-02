@@ -9,7 +9,9 @@
 --   payment_final_notice -> on_hold,          >=7 days past due
 -- Guards under test:
 --   * client.status='done'                 -> never email closed clients
---   * deal_payments.created_at::date >= due -> back-dated rows suppressed
+--   * deal_payments.created_at::date >= due -> suppressed for 3 days after
+--     entry (grace, 20260902110000: SL19 fires after grace, SL9 still quiet
+--     same-day); totals always include in-grace siblings (SL20)
 --   * wrong column                          -> no email
 --   * no PAID row on the deal              -> no email (first-payment rule, SL18)
 -- Chain: run_daily_payment_reminders() moves (reconcile) THEN sends (enqueue).
@@ -471,4 +473,60 @@ begin
     raise exception 'RESULT :: FAIL SL18 :: never-paid deal must get NO reminder, got %', v_any;
   end if;
   raise exception 'RESULT :: PASS SL18 :: never-paid deal -> no reminder (first-payment rule)';
+end $$;
+
+-- ---- SL19 (GRACE 2026-09-02): late-entered row (created 4d ago, due 10d ago)
+-- on_hold -> DOES email now (payment_final_notice); grace expired.
+do $$
+declare v_client uuid; v_deal uuid; v_final int; v_other int;
+begin
+  insert into public.clients (name, email, country) values ('sl19_'||gen_random_uuid()::text,'sl19@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL19','sl19','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
+  -- created_at (today-4) >= start_date (today-10): back-dated, but the 3-day
+  -- grace (20260902110000) has expired -> eligible.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 10, now() - interval '4 days', 'overdue');
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_final from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key='payment_final_notice';
+  select count(*) into v_other from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key<>'payment_final_notice';
+  if v_final <> 1 or v_other <> 0 then
+    raise exception 'RESULT :: FAIL SL19 :: late row past grace must email 1 final_notice, got final=% other=%', v_final, v_other;
+  end if;
+  raise exception 'RESULT :: PASS SL19 :: late-entered row past 3d grace -> 1 payment_final_notice';
+end $$;
+
+-- ---- SL20 (TRUTHFUL TOTALS 2026-09-02): eligible sibling triggers, the
+-- fresh late row of the SAME due date is still counted in amount+breakdown.
+do $$
+declare v_client uuid; v_deal uuid; v_cnt int; v_amt numeric; v_svc text;
+begin
+  insert into public.clients (name, email, country) values ('sl20_'||gen_random_uuid()::text,'sl20@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL20','sl20','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='on_hold'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_seo',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
+  -- Eligible trigger row: forward-dated, 8d overdue (final window). 100 net -> 124 gross.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, created_at, status)
+    values (v_deal,'web_seo',0,'recurring_monthly',100,24, current_date - 8, now() - interval '20 days', 'overdue');
+  -- Late sibling, SAME due date, entered today (inside grace -> NOT eligible,
+  -- but must still be summed). 200 net -> 248 gross.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'social_media',1,'recurring_monthly',200,24, current_date - 8, 'overdue');
+  perform public.enqueue_payment_reminders();
+  select count(*), max((data->>'amount_gross')::numeric), max(data->>'service_type')
+    into v_cnt, v_amt, v_svc
+    from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_cnt <> 1 or v_amt <> 372 or v_svc <> 'social_media + web_seo' then
+    raise exception 'RESULT :: FAIL SL20 :: expected 1 email / 372 / social_media + web_seo, got cnt=% amt=% svc=%', v_cnt, v_amt, v_svc;
+  end if;
+  raise exception 'RESULT :: PASS SL20 :: totals include in-grace sibling (372 = 124 + 248, both services)';
 end $$;
