@@ -23,6 +23,22 @@ describe('leadTitle', () => {
     expect(leadTitle(null, null, false)).toBe('Meta lead');
     expect(leadTitle('', '', false)).toBe('Meta lead');
   });
+  it('normalizes known service keywords inside noisy form names', () => {
+    expect(leadTitle('Diamantoula Peraki', '📍 LOCAL SEO LEAD FORM — ITDEV', false)).toBe(
+      'Diamantoula Peraki (Local SEO)',
+    );
+    expect(leadTitle('ΑΓΓΕΛΙΚΗ ΣΕΧΗ', '🌐 WEBSITE LEAD FORM — ITDEV-copy', false)).toBe(
+      'ΑΓΓΕΛΙΚΗ ΣΕΧΗ (Website)',
+    );
+    expect(leadTitle('Α Β', 'WEB SEO CAMPAIGN v2', false)).toBe('Α Β (Web SEO)');
+    expect(leadTitle('Α Β', 'ai seo φόρμα 2026', false)).toBe('Α Β (AI SEO)');
+  });
+
+  it('unknown form names stay raw; SEO forms win over the website keyword', () => {
+    expect(leadTitle('Α Β', 'Καμπάνια Σεπτεμβρίου', false)).toBe('Α Β (Καμπάνια Σεπτεμβρίου)');
+    expect(leadTitle('Α Β', 'WEBSITE + LOCAL SEO combo', false)).toBe('Α Β (Local SEO)');
+  });
+
   it('caps at 200 chars after composing', () => {
     const long = 'Α'.repeat(190);
     const out = leadTitle(long, 'Local SEO', false);
