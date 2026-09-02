@@ -30,8 +30,12 @@ export function useJobsForDeal(dealId: string) {
 
   useEffect(() => {
     if (!dealId) return;
+    // Unique topic per mount: the page and the CloseDealDialog can both mount
+    // this hook for the same deal, and supabase-js returns the SAME channel
+    // for an identical topic — the second `.on()` after `subscribe()` throws
+    // and crashes the route (same pattern as useExpensesRealtime).
     const channel = supabase
-      .channel(`jobs-for-deal-${dealId}`)
+      .channel(`jobs-for-deal-${dealId}-${crypto.randomUUID()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'jobs', filter: `deal_id=eq.${dealId}` },

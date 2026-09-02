@@ -25,6 +25,11 @@ export function RouteError() {
           ? 'A new version of the app is available. Reloading…'
           : 'The team has been notified. Try reloading the page.'}
       </p>
+      {!chunk && (
+        <pre className="mt-4 max-w-xl overflow-auto rounded bg-muted p-3 text-left text-xs text-muted-foreground">
+          {error instanceof Error ? error.message : String(error)}
+        </pre>
+      )}
       <button
         type="button"
         onClick={() => window.location.reload()}
