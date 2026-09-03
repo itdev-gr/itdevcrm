@@ -310,8 +310,26 @@ export async function getGmailAttachment(
   );
   if (!r.ok) throw new Error(`attachment_failed: ${await r.text()}`);
   const j = await r.json();
-  const bin = atob(String(j.data ?? '').replace(/-/g, '+').replace(/_/g, '/'));
-  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  const b64 = String(j.data ?? '').replace(/-/g, '+').replace(/_/g, '/');
+  // Decode in 4-char-aligned chunks. A single atob() over a multi-megabyte
+  // attachment materialises a second full-size binary string on top of the
+  // response body, and that peak is what killed the sweep: every invocation
+  // from 2026-09-03 10:46 UTC onward returned 546 WORKER_LIMIT once the
+  // backfill reached a ~3 MB pasted screenshot. Only the last chunk can be
+  // unpadded, which forgiving-base64 accepts.
+  const CHUNK = 65536 * 4;
+  const parts: Uint8Array[] = [];
+  let total = 0;
+  for (let i = 0; i < b64.length; i += CHUNK) {
+    const bin = atob(b64.slice(i, i + CHUNK));
+    const part = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    parts.push(part);
+    total += part.length;
+  }
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const part of parts) { out.set(part, at); at += part.length; }
+  return out;
 }
 
 export async function listGmailMessageIds(

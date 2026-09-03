@@ -42,8 +42,15 @@ type CapturedRow = {
 };
 
 const ATT_BUCKET = 'email-attachments';
-const MAX_ATT_BYTES = 20 * 1024 * 1024;  // bucket cap is 25 MB
+// 10 MB, not the bucket's 25: the bytes land in memory (Gmail returns base64
+// JSON, there is no streaming endpoint) and the worker has far less headroom
+// than the bucket does. Anything bigger stays in Gmail.
+const MAX_ATT_BYTES = 10 * 1024 * 1024;
 const MAX_ATT_PER_MESSAGE = 20;
+// Ceiling for ONE invocation, across every message it touches. Without it a run
+// that happens to hit a run of big attachments trips WORKER_LIMIT (546) and
+// takes the whole sweep down with it.
+const MAX_ATT_BYTES_PER_RUN = 24 * 1024 * 1024;
 // Inline parts below this are the furniture of a signature — logos, social
 // icons, spacer gifs, tracking pixels. The body's [cid:…] token for them is
 // stripped at render time either way, so skipping keeps the tab clean.
@@ -58,11 +65,14 @@ function safeName(n: string): string {
  *  Per-part try/catch: one oversized or revoked part must not cost the rest. */
 async function storeAttachments(
   access: string, gmailId: string, messagePk: string, parts: GmailAttachment[],
+  budget?: { bytesLeft: number },
 ): Promise<number> {
   let stored = 0;
   for (const p of parts.slice(0, MAX_ATT_PER_MESSAGE)) {
     if (p.size > MAX_ATT_BYTES) continue;
     if (p.is_inline && p.size < MIN_INLINE_BYTES) continue;
+    if (budget && budget.bytesLeft - p.size < 0) break;
+    if (budget) budget.bytesLeft -= p.size;
     try {
       const bytes = await getGmailAttachment(access, gmailId, p.attachment_id);
       const path = `${messagePk}/${crypto.randomUUID()}-${safeName(p.file_name)}`;
@@ -99,7 +109,8 @@ async function attachAfterStore(
   const { data: mrow } = await admin.from('email_messages')
     .select('id, attachments_scanned_at').eq('message_id', m.message_id).maybeSingle();
   if (!mrow || mrow.attachments_scanned_at) return;
-  await storeAttachments(access, m.gmail_id, mrow.id as string, m.attachments);
+  await storeAttachments(access, m.gmail_id, mrow.id as string, m.attachments,
+    { bytesLeft: MAX_ATT_BYTES_PER_RUN });
   await admin.from('email_messages')
     .update({ attachments_scanned_at: new Date().toISOString() }).eq('id', mrow.id);
 }
@@ -217,21 +228,29 @@ async function backfillAttachments(
   }
 
   const tokens = new Map<string, string | null>();
+  const budget = { bytesLeft: MAX_ATT_BYTES_PER_RUN };
   for (const msg of msgs) {
-    if (Date.now() > deadline) break;
+    if (Date.now() > deadline || budget.bytesLeft <= 0) break;
     const access = await accessFor(msg.captured_from_user_id, tokens);
     if (!access) continue;  // mailbox unreachable: leave it for a later run
+    // Stamp BEFORE fetching, not after. The window is deterministic
+    // (newest-first), so a message the worker cannot survive — one big enough
+    // to trip WORKER_LIMIT — would otherwise sit at the head of the queue and
+    // kill every subsequent sweep, which is exactly what happened on
+    // 2026-09-03 between 10:46 and 11:35 UTC. Losing one message's files is
+    // recoverable (null its attachments_scanned_at to retry); a wedged queue
+    // silently stops the whole backlog.
+    await admin.from('email_messages')
+      .update({ attachments_scanned_at: new Date().toISOString() }).eq('id', msg.id);
     try {
       const m = await getGmailMessageFull(access, msg.gmail_id);
       if (m.attachments.length > 0) {
-        out.stored += await storeAttachments(access, msg.gmail_id, msg.id, m.attachments);
+        out.stored += await storeAttachments(access, msg.gmail_id, msg.id, m.attachments, budget);
       }
       out.scanned++;
     } catch (_e) {
       out.errors++;
     }
-    await admin.from('email_messages')
-      .update({ attachments_scanned_at: new Date().toISOString() }).eq('id', msg.id);
   }
   return out;
 }
@@ -416,7 +435,7 @@ Deno.serve(async (req) => {
     // Whatever wall time the mailbox loop left over goes to the attachment
     // backlog (10.8k pre-feature messages), newest first.
     const att = Date.now() - started < BUDGET_MS
-      ? await backfillAttachments(60, started + BUDGET_MS + 30_000)
+      ? await backfillAttachments(25, started + BUDGET_MS + 30_000)
       : { scanned: 0, stored: 0, errors: 0 };
     return json({ mode: 'sweep', ...agg, attachments: att });
   }
