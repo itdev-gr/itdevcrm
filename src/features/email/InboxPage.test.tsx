@@ -152,15 +152,22 @@ const items: InboxItem[] = [
   },
 ];
 
-vi.mock('./hooks/useEmailInbox', () => ({
-  useEmailInbox: () => ({
-    items,
-    unreadCount: items.filter((i) => i.unread).length,
-    refetch,
-  }),
-  useMarkEmailRead: () => ({ markRead, markAllRead }),
-  useEmailInboxRealtime: () => {},
-}));
+vi.mock('./hooks/useEmailInbox', async (importOriginal) => {
+  // Keep the real `isInboxItemVisible` — InboxPage imports it directly, and
+  // it must stay the same predicate the (also mocked) hook would use, or
+  // this test can't catch the two drifting apart.
+  const actual = await importOriginal<typeof import('./hooks/useEmailInbox')>();
+  return {
+    ...actual,
+    useEmailInbox: () => ({
+      items,
+      unreadCount: items.filter((i) => i.unread).length,
+      refetch,
+    }),
+    useMarkEmailRead: () => ({ markRead, markAllRead }),
+    useEmailInboxRealtime: () => {},
+  };
+});
 
 import { InboxPage } from './InboxPage';
 

@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/layout/page-shell';
 import { relativeFromNow } from '@/lib/datetime';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { htmlToText } from './htmlToText';
-import { useEmailInbox, useMarkEmailRead, useEmailInboxRealtime, type InboxItem } from './hooks/useEmailInbox';
+import { useEmailInbox, useMarkEmailRead, useEmailInboxRealtime, isInboxItemVisible, type InboxItem } from './hooks/useEmailInbox';
 import { FileEmailDialog } from './FileEmailDialog';
 
 type Tab = 'all' | 'unread' | 'mine' | 'unfiled';
@@ -26,9 +26,11 @@ export function InboxPage() {
   const [filing, setFiling] = useState<InboxItem | null>(null);
 
   // Non-admins never see mail captured by mailboxes we couldn't classify —
-  // exclude it from every view, count, and the unread badge.
+  // exclude it from every view, count, and the unread badge. Shared with the
+  // topbar badge's unreadCount (useEmailInbox.ts) via isInboxItemVisible so
+  // the two can never disagree.
   const visibleItems = useMemo(
-    () => (isAdmin ? items : items.filter((i) => i.category !== 'other')),
+    () => items.filter((i) => isInboxItemVisible(i, isAdmin)),
     [items, isAdmin],
   );
   const catItems = useMemo(

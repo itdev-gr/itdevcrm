@@ -104,10 +104,11 @@ const { from } = vi.hoisted(() => {
   return { from };
 });
 
+const authState = vi.hoisted(() => ({ isAdmin: true }));
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
 vi.mock('@/lib/stores/authStore', () => ({
-  useAuthStore: (selector: (s: { user: { id: string; email: string } | null }) => unknown) =>
-    selector({ user: { id: 'u1', email: 'me@itdev.gr' } }),
+  useAuthStore: (selector: (s: { user: { id: string; email: string } | null; isAdmin: boolean }) => unknown) =>
+    selector({ user: { id: 'u1', email: 'me@itdev.gr' }, isAdmin: authState.isAdmin }),
 }));
 
 import { useEmailInbox } from './useEmailInbox';
@@ -118,7 +119,10 @@ function wrap(c: ReactNode) {
 }
 
 describe('useEmailInbox', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authState.isAdmin = true;
+  });
 
   it('returns rows with per-user unread, unfiled, and mine flags', async () => {
     const { result } = renderHook(() => useEmailInbox(), {
@@ -154,5 +158,22 @@ describe('useEmailInbox', () => {
 
     const personal = result.current.items.find((i) => i.id === 'm3');
     expect(personal?.category).toBe('personal');
+  });
+
+  it('excludes other-category mail from unreadCount for non-admins, includes it for admins', async () => {
+    authState.isAdmin = false;
+    const { result: nonAdmin } = renderHook(() => useEmailInbox(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+    await waitFor(() => expect(nonAdmin.current.items.length).toBe(3));
+    // m1 (sales, unread) counts; m2 (other, unread) is gated off for a non-admin.
+    expect(nonAdmin.current.unreadCount).toBe(1);
+
+    authState.isAdmin = true;
+    const { result: admin } = renderHook(() => useEmailInbox(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+    await waitFor(() => expect(admin.current.items.length).toBe(3));
+    expect(admin.current.unreadCount).toBe(2);
   });
 });

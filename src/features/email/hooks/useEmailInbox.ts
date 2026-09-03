@@ -32,8 +32,17 @@ function categorize(capturedFrom: string | null, mailboxByUser: Map<string, stri
   return CATEGORY_BY_MAILBOX[mailbox] ?? 'other';
 }
 
+// Single shared visibility rule: non-admins never see mail from a mailbox we
+// couldn't classify (category 'other'). Every admin-aware view — the inbox
+// page's item list/counts and the topbar badge/unreadCount below — must
+// filter through this one predicate so they can never disagree.
+export function isInboxItemVisible(item: Pick<InboxItem, 'category'>, isAdmin: boolean): boolean {
+  return isAdmin || item.category !== 'other';
+}
+
 export function useEmailInbox() {
   const myEmail = (useAuthStore((s) => s.user?.email) ?? '').toLowerCase();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const query = useQuery({
     queryKey: queryKeys.emailInbox(),
     queryFn: async () => {
@@ -74,7 +83,8 @@ export function useEmailInbox() {
     mine: myEmail !== '' && r.to_email.toLowerCase().includes(myEmail),
     category: categorize(r.captured_from_user_id, mailboxByUser),
   }));
-  return { ...query, items, unreadCount: items.filter((i) => i.unread).length };
+  const unreadCount = items.filter((i) => i.unread && isInboxItemVisible(i, isAdmin)).length;
+  return { ...query, items, unreadCount };
 }
 
 export function useMarkEmailRead() {
