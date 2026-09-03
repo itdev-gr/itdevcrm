@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { APP_VERSION } from '@/lib/appVersion';
 import { signOut } from '@/lib/auth';
 import { NotificationsBell } from '@/features/notifications/NotificationsBell';
 import { GlobalSearch } from '@/features/search/GlobalSearch';
@@ -36,7 +37,12 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
             <img src="/favicon.png" alt="" className="size-8 shrink-0 rounded-lg" />
             <div className="hidden min-w-0 sm:block">
-              <p className="truncate text-sm font-semibold leading-none">{t('app_title')}</p>
+              <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-none">
+                <span className="truncate">{t('app_title')}</span>
+                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
+                  v{APP_VERSION}
+                </span>
+              </p>
               <p className="truncate text-[11px] text-muted-foreground">{t('app_subtitle')}</p>
             </div>
           </Link>
