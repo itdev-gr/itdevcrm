@@ -14,7 +14,7 @@
 - DB changes via migration files applied with the Management-API token flow (`sbp.token` script, user runs via `!` if the classifier blocks); function md5 pre/post printed when replacing an existing function/policy body.
 - `email_messages_select` is ALSO owned by the parallel session «multi-role-offer-and-email» (their 20260903140000 is the live body) — message that session before applying Task 1 and base any rewrite on the body quoted in Task 1 (verify live md5 first).
 - gmail-sync deploy = Management API multipart, bundle: `gmail-sync/index.ts` + `_shared/{google,timing,emailDedup,recipients,signature}.ts`, `verify_jwt:false` preserved.
-- Unfiled capture only for **shared mailboxes** (sales@/info@/accounting@/support@) and only `direction=inbound` from non-staff senders; senders matching `/no-?reply|newsletter|mailer[-_]?daemon|postmaster/i` are still dropped (noise).
+- Unfiled capture for **ALL synced mailboxes** (personal + shared), only `direction=inbound` from non-staff senders; senders matching `/no-?reply|newsletter|mailer[-_]?daemon|postmaster/i` are still dropped (noise). **Visibility is recipient-based** (owner decision 2026-09-03): a personal mailbox's unfiled mail is visible only to that user (+admins); a shared mailbox's to its department (+admins) — the Task 1 policy branch implements exactly this via `captured_from_user_id`.
 - Every task: vitest green + eslint clean on touched files before commit; commits carry the standard Co-Authored-By trailer.
 
 ## File Structure
@@ -202,10 +202,9 @@ to:
 ```ts
       const f = Array.isArray(fil) ? fil[0] : null;
       if (!f) {
-        // Inbox (2026-09-03): on SHARED mailboxes, unknown-party inbound is
-        // stored unfiled (all card ids null) so staff can file it manually.
+        // Inbox (2026-09-03): unknown-party inbound on ANY synced mailbox is
+        // stored unfiled (all card ids null) so the RECIPIENT can file it.
         // Staff↔staff and noise senders stay dropped, as before.
-        if (!shared) continue;
         const fromLower = m.from_email.toLowerCase();
         if (/no-?reply|newsletter|mailer[-_]?daemon|postmaster/i.test(fromLower)) continue;
         const { data: staffFrom } = await admin
