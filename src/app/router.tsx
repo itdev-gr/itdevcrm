@@ -344,6 +344,10 @@ export const router = createBrowserRouter([
           { path: 'jobs/:jobId', element: <JobDetailPage /> },
           { path: 'leads/:leadId', element: <LeadDetailPage /> },
           { path: 'leads/:leadId/offers/new', element: <OfferBuilderPage /> },
+          // Deal/client entry points: accounting has no access to leads, so
+          // without these the offer builder is unreachable for them.
+          { path: 'deals/:dealId/offers/new', element: <OfferBuilderPage /> },
+          { path: 'clients/:clientId/offers/new', element: <OfferBuilderPage /> },
           { path: 'offers/:offerId', element: <OfferDetailPage /> },
           { path: 'leads/:leadId/proformas/new', element: <ProFormaBuilderPage /> },
           { path: 'proformas/:proFormaId', element: <ProFormaDetailPage /> },

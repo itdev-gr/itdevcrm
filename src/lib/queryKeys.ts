@@ -90,6 +90,7 @@ export const queryKeys = {
   offer: (id: string) => ['offer', id] as const,
   offersForLead: (leadId: string) => ['offers', 'lead', leadId] as const,
   offersForDeal: (dealId: string) => ['offers', 'deal', dealId] as const,
+  offersForClient: (clientId: string) => ['offers', 'client', clientId] as const,
   proForma: (id: string) => ['pro-forma', id] as const,
   proFormasForLead: (leadId: string) => ['pro-formas', 'lead', leadId] as const,
   proFormasForDeal: (dealId: string) => ['pro-formas', 'deal', dealId] as const,

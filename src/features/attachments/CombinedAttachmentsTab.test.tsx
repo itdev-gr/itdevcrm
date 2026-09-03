@@ -55,11 +55,13 @@ describe('CombinedAttachmentsTab', () => {
     expect(screen.queryByTestId('contracts-panel')).not.toBeInTheDocument();
   });
 
-  it('client: shows files and contracts — no offers or pro formas', () => {
+  it('client: shows files, contracts and offers — but no pro formas', () => {
+    // Offers can be filed straight on a client (accounting/upsell flow); pro
+    // formas are still only drafted from a lead or a deal.
     render(<CombinedAttachmentsTab parentType="client" parentId="c1" clientId="c1" />);
     expect(screen.getByTestId('files-panel')).toBeInTheDocument();
     expect(screen.getByTestId('contracts-panel')).toBeInTheDocument();
-    expect(screen.queryByTestId('offers-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('offers-panel')).toBeInTheDocument();
     expect(screen.queryByTestId('proformas-panel')).not.toBeInTheDocument();
   });
 

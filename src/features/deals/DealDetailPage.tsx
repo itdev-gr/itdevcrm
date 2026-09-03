@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
-import { Calendar, Lock, Mail } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { Calendar, FileText, Lock, Mail } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -27,6 +27,7 @@ import { ClientActivityPanel } from '@/features/activity/ClientActivityPanel';
 import { formatDate, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { canCreateOffer } from '@/features/offers/canCreateOffer';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
 import { JobsTab } from '@/features/jobs/JobsTab';
@@ -64,10 +65,15 @@ function DealDetailContent() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canManageBilling = isAdmin || groupCodes.includes('accounting');
+  const mayCreateOffer = canCreateOffer({ isAdmin, groupCodes });
   const wonBy = deal?.won_by_user_id
     ? owners.find((o) => o.user_id === deal.won_by_user_id)
     : null;
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  // Fresh key per dialog-open: sendPersonal permanently skips any dedupe_key
+  // that ever sent, so a stable `won:<id>` silently no-opped every resend
+  // while the dialog still reported success.
+  const [welcomeKey, setWelcomeKey] = useState('');
   const [closeOpen, setCloseOpen] = useState(false);
 
   useDocumentTitle(
@@ -266,8 +272,19 @@ function DealDetailContent() {
             )}
           </div>
           <div className={detailHeaderActionsClass}>
+            {mayCreateOffer && (
+              <Button asChild variant="outline" size="sm" className="h-7 px-2.5 text-xs">
+                <Link to={`/deals/${dealId}/offers/new`}>
+                  <FileText className="size-3" />
+                  {t('offers.new', { ns: 'common' })}
+                </Link>
+              </Button>
+            )}
             {deal.won_by_user_id && (
-              <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => setWelcomeOpen(true)}>
+              <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => {
+                  setWelcomeKey(`won:${deal.id}:${crypto.randomUUID()}`);
+                  setWelcomeOpen(true);
+                }}>
                 <Mail className="size-3" />
                 {t('welcome_email.send')}
               </Button>
@@ -296,7 +313,7 @@ function DealDetailContent() {
         to={deal.client?.email ?? ''}
         subject={wonWelcomeDraft.subject}
         body={wonWelcomeDraft.body}
-        dedupeKey={`won:${deal.id}`}
+        dedupeKey={welcomeKey}
         onClose={() => setWelcomeOpen(false)}
       />
 

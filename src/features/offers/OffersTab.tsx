@@ -4,16 +4,24 @@ import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/offers/calculate';
 import { openPdfInNewTab } from '@/lib/openPdfInNewTab';
 import { useDownloadOfferPdf } from './hooks/useDownloadOfferPdf';
-import { useOffersForLead, useOffersForDeal } from './hooks/useOffersForLeadOrDeal';
+import {
+  useOffersForLead,
+  useOffersForDeal,
+  useOffersForClient,
+} from './hooks/useOffersForLeadOrDeal';
 
-type Props = { leadId?: string; dealId?: string };
+type Props = { leadId?: string; dealId?: string; clientId?: string };
 
-export function OffersTab({ leadId, dealId }: Props) {
+/** Most specific parent wins: a lead's own offers, else the deal's, else every
+ *  offer filed on the client (the accounting view, where there is no lead). */
+export function OffersTab({ leadId, dealId, clientId }: Props) {
   const lead = useOffersForLead(leadId ?? '');
-  const deal = useOffersForDeal(dealId ?? '');
+  const deal = useOffersForDeal(!leadId && dealId ? dealId : '');
+  const client = useOffersForClient(!leadId && !dealId && clientId ? clientId : '');
   const download = useDownloadOfferPdf();
-  const offers = (leadId ? lead.data : deal.data) ?? [];
-  const isLoading = leadId ? lead.isLoading : deal.isLoading;
+  const active = leadId ? lead : dealId ? deal : client;
+  const offers = active.data ?? [];
+  const isLoading = active.isLoading;
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
   if (offers.length === 0) return <p className="text-sm text-muted-foreground">No offers yet.</p>;
   return (

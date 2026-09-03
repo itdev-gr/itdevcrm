@@ -397,7 +397,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                     variant="outline"
                     onClick={() => navigate(`/leads/${lead.id}/offers/new`)}
                   >
-                    Create offer
+                    {t('offers.new', { ns: 'common' })}
                   </Button>
                   <Button
                     type="button"
@@ -405,7 +405,7 @@ export function LeadForm({ lead }: { lead: LeadRow }) {
                     variant="outline"
                     onClick={() => navigate(`/leads/${lead.id}/proformas/new`)}
                   >
-                    Create pro forma
+                    {t('proformas.new', { ns: 'common' })}
                   </Button>
                 </div>
               )}

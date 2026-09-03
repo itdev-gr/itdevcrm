@@ -20,7 +20,10 @@ const headerClass = 'mb-3 text-xs font-semibold uppercase tracking-wide text-mut
 
 export function CombinedAttachmentsTab({ parentType, parentId, leadId, dealId, clientId }: Props) {
   const { t } = useTranslation('sales');
-  const showOffers = Boolean(leadId ?? dealId);
+  // Offers can be filed straight on a client (accounting/upsell), so the
+  // client page gets the section too. Pro formas are still lead/deal-only.
+  const showOffers = Boolean(leadId ?? dealId ?? clientId);
+  const showProFormas = Boolean(leadId ?? dealId);
   const { data: commentFiles = [] } = useEntityCommentFiles(parentType, parentId);
   return (
     <div className="space-y-4">
@@ -38,10 +41,14 @@ export function CombinedAttachmentsTab({ parentType, parentId, leadId, dealId, c
       {showOffers && (
         <section className={sectionClass}>
           <h2 className={headerClass}>{t('attachments.sections.offers')}</h2>
-          <OffersTab {...(leadId ? { leadId } : {})} {...(dealId ? { dealId } : {})} />
+          <OffersTab
+            {...(leadId ? { leadId } : {})}
+            {...(dealId ? { dealId } : {})}
+            {...(clientId ? { clientId } : {})}
+          />
         </section>
       )}
-      {showOffers && (
+      {showProFormas && (
         <section className={sectionClass}>
           <h2 className={headerClass}>{t('attachments.sections.proformas')}</h2>
           <ProFormasTab {...(leadId ? { leadId } : {})} {...(dealId ? { dealId } : {})} />

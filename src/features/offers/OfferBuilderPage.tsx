@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/select';
 
 import { useLead } from '@/features/leads/hooks/useLead';
+import { useDeal } from '@/features/deals/hooks/useDeal';
+import { useClient } from '@/features/clients/hooks/useClient';
 import { useOfferCatalog, type CatalogPackage, type CatalogSubpackage } from './hooks/useOfferCatalog';
 import { useCreateOffer } from './hooks/useCreateOffer';
 import { OfferSummaryPanel } from './OfferSummaryPanel';
@@ -44,10 +46,25 @@ function getUnitPrice(pkg: CatalogPackage, customPrice: number): number {
 }
 
 export function OfferBuilderPage() {
-  const { leadId } = useParams<{ leadId: string }>();
+  // An offer hangs off a lead (sales), a deal, or a client (accounting/upsell).
+  // Exactly one of these params is present — the route decides which.
+  const { leadId, dealId, clientId } = useParams<{
+    leadId?: string;
+    dealId?: string;
+    clientId?: string;
+  }>();
   const navigate = useNavigate();
 
   const { data: lead, isLoading: leadLoading } = useLead(leadId ?? '');
+  const { data: deal, isLoading: dealLoading } = useDeal(dealId ?? '');
+  const { data: client, isLoading: clientLoading } = useClient(clientId ?? '');
+  const parentLoading =
+    (!!leadId && leadLoading) || (!!dealId && dealLoading) || (!!clientId && clientLoading);
+  // The parent row that supplies the prefill. A deal carries the same VAT and
+  // services_planned shape as a lead; a bare client carries neither, so its
+  // offer starts from an empty cart at the country's default VAT.
+  const prefill = lead ?? deal ?? null;
+  const country = client?.country ?? deal?.client?.country ?? lead?.country ?? null;
   const { data: catalog = [], isLoading: catalogLoading } = useOfferCatalog();
   const create = useCreateOffer();
 
@@ -91,13 +108,17 @@ export function OfferBuilderPage() {
   const vatSeededRef = useRef(false);
 
   useEffect(() => {
-    if (!lead) return;
+    if (!prefill && !client) return;
     if (!vatSeededRef.current) {
-      const rate = effectiveVatRate(lead.payment_method, lead.country, lead.cash_charge_vat ?? false);
+      const rate = effectiveVatRate(
+        prefill?.payment_method,
+        country,
+        prefill?.cash_charge_vat ?? false,
+      );
       setVatPercent(Math.round(rate * 100));
       vatSeededRef.current = true;
     }
-  }, [lead]);
+  }, [prefill, client, country]);
 
   // Pre-select catalog items based on what the lead's Services field already
   // has. Sales picked these on the lead form; the offer builder should open
@@ -107,9 +128,9 @@ export function OfferBuilderPage() {
    
   useEffect(() => {
     if (seededRef.current) return;
-    if (!lead || catalog.length === 0) return;
-    const planned = Array.isArray(lead.services_planned)
-      ? (lead.services_planned as unknown as Array<{
+    if (!prefill || catalog.length === 0) return;
+    const planned = Array.isArray(prefill.services_planned)
+      ? (prefill.services_planned as unknown as Array<{
           service_type?: string;
           billing_type?: string;
           package_id?: string | null;
@@ -178,7 +199,7 @@ export function OfferBuilderPage() {
       if (firstCategory) setSelectedCategory(firstCategory);
     }
     seededRef.current = true;
-  }, [lead, catalog]);
+  }, [prefill, catalog]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -307,8 +328,8 @@ export function OfferBuilderPage() {
     try {
       const id = await create.mutateAsync({
         lead_id: leadId ?? null,
-        client_id: lead?.converted_client_id ?? null,
-        deal_id: lead?.converted_deal_id ?? null,
+        client_id: clientId ?? deal?.client_id ?? lead?.converted_client_id ?? null,
+        deal_id: dealId ?? lead?.converted_deal_id ?? null,
         currency,
         discount_amount: discountAmount,
         vat_percent: vatPercent,
@@ -330,9 +351,20 @@ export function OfferBuilderPage() {
   const items = [...selectedItems.values()];
   const currentPkgs = selectedCategory ? (grouped[selectedCategory] ?? []) : [];
 
-  const leadSubtitle = lead
+  const parentSubtitle = lead
     ? `${lead.code} — ${[lead.contact_first_name, lead.contact_last_name].filter(Boolean).join(' ') || lead.company_name || ''}`
-    : leadId ?? '';
+    : deal
+      ? `${deal.code ?? ''} — ${deal.client?.name ?? deal.title ?? ''}`.replace(/^ — /, '')
+      : client
+        ? `${client.code ?? ''} — ${client.name}`.replace(/^ — /, '')
+        : (leadId ?? dealId ?? clientId ?? '');
+
+  // Cancel returns to wherever the builder was opened from.
+  const backTo = leadId
+    ? `/leads/${leadId}`
+    : dealId
+      ? `/deals/${dealId}`
+      : `/clients/${clientId}`;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
@@ -340,17 +372,17 @@ export function OfferBuilderPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Create offer</h1>
-          {leadSubtitle && (
-            <p className="mt-0.5 text-sm text-muted-foreground">{leadSubtitle}</p>
+          {parentSubtitle && (
+            <p className="mt-0.5 text-sm text-muted-foreground">{parentSubtitle}</p>
           )}
         </div>
-        <Button variant="outline" onClick={() => navigate(`/leads/${leadId}`)}>
+        <Button variant="outline" onClick={() => navigate(backTo)}>
           Cancel
         </Button>
       </div>
 
       {/* Category + Item picker */}
-      {catalogLoading || leadLoading ? (
+      {catalogLoading || parentLoading ? (
         <p className="text-sm text-muted-foreground">Loading catalog…</p>
       ) : (
         <div className="grid grid-cols-12 gap-6">
