@@ -15,6 +15,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: stableT }),
 }));
 
+const authState = vi.hoisted(() => ({ isAdmin: false }));
+vi.mock('@/lib/stores/authStore', () => ({
+  useAuthStore: (selector: (s: { isAdmin: boolean }) => unknown) => selector(authState),
+}));
+
 const markRead = vi.fn().mockResolvedValue(undefined);
 const markAllRead = vi.fn().mockResolvedValue(undefined);
 const refetch = vi.fn();
@@ -43,7 +48,7 @@ const items: InboxItem[] = [
     unread: false,
     unfiled: true,
     mine: false,
-    category: 'other',
+    category: 'sales',
   },
   {
     id: 'm-mine-unread',
@@ -68,7 +73,7 @@ const items: InboxItem[] = [
     unread: true,
     unfiled: true,
     mine: true,
-    category: 'other',
+    category: 'sales',
   },
   {
     id: 'm-read-lead',
@@ -93,7 +98,7 @@ const items: InboxItem[] = [
     unread: false,
     unfiled: false,
     mine: false,
-    category: 'other',
+    category: 'accounting',
   },
   {
     id: 'm-read-job',
@@ -117,6 +122,31 @@ const items: InboxItem[] = [
     deal_id: null,
     unread: false,
     unfiled: false,
+    mine: false,
+    category: 'support',
+  },
+  {
+    id: 'm-other-admin',
+    message_id: 'mid-5',
+    thread_id: null,
+    direction: 'inbound',
+    from_email: 'general@example.com',
+    from_name: 'General Person',
+    to_email: 'info@itdev.gr',
+    subject: 'General inbox item',
+    body_text: 'Body 5',
+    body_html: null,
+    snippet: 'Body 5',
+    sent_at: '2026-09-01T14:00:00Z',
+    department: null,
+    job_id: null,
+    lead_id: null,
+    cc_emails: null,
+    captured_from_user_id: null,
+    client_id: null,
+    deal_id: null,
+    unread: true,
+    unfiled: true,
     mine: false,
     category: 'other',
   },
@@ -144,7 +174,10 @@ function wrap(node: React.ReactNode) {
 }
 
 describe('InboxPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authState.isAdmin = false;
+  });
 
   it('shows all rows on the "all" tab', () => {
     render(wrap(<InboxPage />));
@@ -188,5 +221,54 @@ describe('InboxPage', () => {
     expect(row).not.toBeNull();
     await user.click(within(row as HTMLElement).getByRole('button'));
     expect(markRead).toHaveBeenCalledWith('m-mine-unread');
+  });
+
+  it('hides the Άλλο chip for non-admins and excludes other-category items from Όλα', () => {
+    authState.isAdmin = false;
+    render(wrap(<InboxPage />));
+    expect(screen.queryByText('inbox.cats.other')).not.toBeInTheDocument();
+    expect(screen.queryByText('General inbox item')).not.toBeInTheDocument();
+    expect(screen.getByText('Unfiled subject')).toBeInTheDocument();
+    expect(screen.getByText('Mine unread')).toBeInTheDocument();
+    expect(screen.getByText('Read with lead')).toBeInTheDocument();
+    expect(screen.getByText('Read with job')).toBeInTheDocument();
+  });
+
+  it('excludes other-category items from the unread count non-admins see', () => {
+    authState.isAdmin = false;
+    render(wrap(<InboxPage />));
+    const unreadChip = screen.getByText('inbox.tabs.unread').closest('button');
+    expect(unreadChip).not.toBeNull();
+    // Only "Mine unread" is visible to a non-admin — the other-category
+    // unread item must not inflate the count.
+    expect(within(unreadChip as HTMLElement).getByText('(1)')).toBeInTheDocument();
+  });
+
+  it('non-admin mark-all-read only marks the mail the admin never gated off', async () => {
+    authState.isAdmin = false;
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    await user.click(screen.getByText('inbox.mark_all_read'));
+    expect(markAllRead).toHaveBeenCalledWith(['m-mine-unread']);
+  });
+
+  it('shows the Άλλο chip for admins and filters to other-category items when selected', async () => {
+    authState.isAdmin = true;
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    expect(screen.getByText('inbox.cats.other')).toBeInTheDocument();
+    expect(screen.getByText('General inbox item')).toBeInTheDocument();
+
+    await user.click(screen.getByText('inbox.cats.other'));
+    expect(screen.getByText('General inbox item')).toBeInTheDocument();
+    expect(screen.queryByText('Unfiled subject')).not.toBeInTheDocument();
+  });
+
+  it('admin mark-all-read includes the other-category mail', async () => {
+    authState.isAdmin = true;
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    await user.click(screen.getByText('inbox.mark_all_read'));
+    expect(markAllRead).toHaveBeenCalledWith(expect.arrayContaining(['m-mine-unread', 'm-other-admin']));
   });
 });

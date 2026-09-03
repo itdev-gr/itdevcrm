@@ -6,33 +6,63 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/page-shell';
 import { relativeFromNow } from '@/lib/datetime';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { htmlToText } from './htmlToText';
 import { useEmailInbox, useMarkEmailRead, useEmailInboxRealtime, type InboxItem } from './hooks/useEmailInbox';
 import { FileEmailDialog } from './FileEmailDialog';
 
 type Tab = 'all' | 'unread' | 'mine' | 'unfiled';
+type Cat = 'all' | 'sales' | 'accounting' | 'support' | 'other';
 
 export function InboxPage() {
   const { t } = useTranslation('sales');
-  const { items, unreadCount, refetch } = useEmailInbox();
+  const { items, refetch } = useEmailInbox();
   useEmailInboxRealtime();
   const { markRead, markAllRead } = useMarkEmailRead();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const [cat, setCat] = useState<Cat>('all');
   const [tab, setTab] = useState<Tab>('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [filing, setFiling] = useState<InboxItem | null>(null);
 
+  // Non-admins never see mail captured by mailboxes we couldn't classify —
+  // exclude it from every view, count, and the unread badge.
+  const visibleItems = useMemo(
+    () => (isAdmin ? items : items.filter((i) => i.category !== 'other')),
+    [items, isAdmin],
+  );
+  const catItems = useMemo(
+    () => (cat === 'all' ? visibleItems : visibleItems.filter((i) => i.category === cat)),
+    [visibleItems, cat],
+  );
+  const visibleUnreadCount = useMemo(() => visibleItems.filter((i) => i.unread).length, [visibleItems]);
+
   const shown = useMemo(() => {
-    if (tab === 'unread') return items.filter((i) => i.unread);
-    if (tab === 'mine') return items.filter((i) => i.mine);
-    if (tab === 'unfiled') return items.filter((i) => i.unfiled);
-    return items;
-  }, [items, tab]);
+    if (tab === 'unread') return catItems.filter((i) => i.unread);
+    if (tab === 'mine') return catItems.filter((i) => i.mine);
+    if (tab === 'unfiled') return catItems.filter((i) => i.unfiled);
+    return catItems;
+  }, [catItems, tab]);
+
+  const cats: { id: Cat; label: string; n: number }[] = [
+    { id: 'all', label: t('inbox.cats.all'), n: visibleItems.length },
+    { id: 'sales', label: t('inbox.cats.sales'), n: visibleItems.filter((i) => i.category === 'sales').length },
+    {
+      id: 'accounting',
+      label: t('inbox.cats.accounting'),
+      n: visibleItems.filter((i) => i.category === 'accounting').length,
+    },
+    { id: 'support', label: t('inbox.cats.support'), n: visibleItems.filter((i) => i.category === 'support').length },
+    ...(isAdmin
+      ? [{ id: 'other' as Cat, label: t('inbox.cats.other'), n: visibleItems.filter((i) => i.category === 'other').length }]
+      : []),
+  ];
 
   const tabs: { id: Tab; label: string; n: number }[] = [
-    { id: 'all', label: t('inbox.tabs.all'), n: items.length },
-    { id: 'unread', label: t('inbox.tabs.unread'), n: unreadCount },
-    { id: 'mine', label: t('inbox.tabs.mine'), n: items.filter((i) => i.mine).length },
-    { id: 'unfiled', label: t('inbox.tabs.unfiled'), n: items.filter((i) => i.unfiled).length },
+    { id: 'all', label: t('inbox.tabs.all'), n: catItems.length },
+    { id: 'unread', label: t('inbox.tabs.unread'), n: catItems.filter((i) => i.unread).length },
+    { id: 'mine', label: t('inbox.tabs.mine'), n: catItems.filter((i) => i.mine).length },
+    { id: 'unfiled', label: t('inbox.tabs.unfiled'), n: catItems.filter((i) => i.unfiled).length },
   ];
 
   function cardLink(i: InboxItem): { to: string; label: string } | null {
@@ -49,12 +79,28 @@ export function InboxPage() {
         <Button
           variant="outline"
           size="sm"
-          disabled={unreadCount === 0}
-          onClick={() => void markAllRead(items.filter((i) => i.unread).map((i) => i.id))}
+          disabled={visibleUnreadCount === 0}
+          onClick={() => void markAllRead(visibleItems.filter((i) => i.unread).map((i) => i.id))}
         >
           {t('inbox.mark_all_read')}
         </Button>
       </PageHeader>
+
+      <div className="flex flex-wrap gap-1.5">
+        {cats.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            onClick={() => setCat(x.id)}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+              cat === x.id ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:bg-muted',
+            )}
+          >
+            {x.label} <span className="text-muted-foreground">({x.n})</span>
+          </button>
+        ))}
+      </div>
 
       <div className="flex flex-wrap gap-1.5">
         {tabs.map((x) => (
