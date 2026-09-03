@@ -1,0 +1,154 @@
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import type { InboxItem } from './hooks/useEmailInbox';
+
+// `t` must be a STABLE reference across renders — FileEmailDialog's search
+// effect depends on [q, t], so a fresh function every call reruns the effect
+// every render, which always calls setResults([]) with a brand-new array
+// reference (state change even though the *value* is unchanged) → infinite
+// render loop. Real react-i18next keeps `t` stable; mirror that here.
+const stableT = (k: string) => k;
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: stableT }),
+}));
+
+const markRead = vi.fn().mockResolvedValue(undefined);
+const markAllRead = vi.fn().mockResolvedValue(undefined);
+const refetch = vi.fn();
+
+const items: InboxItem[] = [
+  {
+    id: 'm-unfiled',
+    message_id: 'mid-1',
+    thread_id: null,
+    direction: 'inbound',
+    from_email: 'lead@example.com',
+    from_name: 'Lead Person',
+    to_email: 'someone@itdev.gr',
+    subject: 'Unfiled subject',
+    body_text: 'Hello there',
+    body_html: null,
+    snippet: 'Hello there',
+    sent_at: '2026-09-01T10:00:00Z',
+    department: 'sales',
+    job_id: null,
+    lead_id: null,
+    cc_emails: null,
+    captured_from_user_id: null,
+    client_id: null,
+    deal_id: null,
+    unread: false,
+    unfiled: true,
+    mine: false,
+  },
+  {
+    id: 'm-mine-unread',
+    message_id: 'mid-2',
+    thread_id: null,
+    direction: 'inbound',
+    from_email: 'other@example.com',
+    from_name: 'Other Person',
+    to_email: 'me@itdev.gr',
+    subject: 'Mine unread',
+    body_text: 'Body 2',
+    body_html: null,
+    snippet: 'Body 2',
+    sent_at: '2026-09-01T11:00:00Z',
+    department: 'sales',
+    job_id: null,
+    lead_id: null,
+    cc_emails: null,
+    captured_from_user_id: null,
+    client_id: null,
+    deal_id: null,
+    unread: true,
+    unfiled: true,
+    mine: true,
+  },
+  {
+    id: 'm-read-lead',
+    message_id: 'mid-3',
+    thread_id: null,
+    direction: 'inbound',
+    from_email: 'third@example.com',
+    from_name: 'Third Person',
+    to_email: 'someone@itdev.gr',
+    subject: 'Read with lead',
+    body_text: 'Body 3',
+    body_html: null,
+    snippet: 'Body 3',
+    sent_at: '2026-09-01T12:00:00Z',
+    department: 'sales',
+    job_id: null,
+    lead_id: 'lead-1',
+    cc_emails: null,
+    captured_from_user_id: null,
+    client_id: null,
+    deal_id: null,
+    unread: false,
+    unfiled: false,
+    mine: false,
+  },
+];
+
+vi.mock('./hooks/useEmailInbox', () => ({
+  useEmailInbox: () => ({
+    items,
+    unreadCount: items.filter((i) => i.unread).length,
+    refetch,
+  }),
+  useMarkEmailRead: () => ({ markRead, markAllRead }),
+  useEmailInboxRealtime: () => {},
+}));
+
+import { InboxPage } from './InboxPage';
+
+function wrap(node: React.ReactNode) {
+  const qc = new QueryClient();
+  return (
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{node}</MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
+describe('InboxPage', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows 3 rows on the "all" tab', () => {
+    render(wrap(<InboxPage />));
+    expect(screen.getByText('Unfiled subject')).toBeInTheDocument();
+    expect(screen.getByText('Mine unread')).toBeInTheDocument();
+    expect(screen.getByText('Read with lead')).toBeInTheDocument();
+  });
+
+  it('switching to the unfiled tab leaves only the unfiled rows', async () => {
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    await user.click(screen.getByText('inbox.tabs.unfiled'));
+    expect(screen.getByText('Unfiled subject')).toBeInTheDocument();
+    expect(screen.getByText('Mine unread')).toBeInTheDocument();
+    expect(screen.queryByText('Read with lead')).not.toBeInTheDocument();
+  });
+
+  it('shows a filing button on the unfiled row once opened', async () => {
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    const row = screen.getByText('Unfiled subject').closest('article');
+    expect(row).not.toBeNull();
+    await user.click(within(row as HTMLElement).getByRole('button'));
+    expect(within(row as HTMLElement).getByText('inbox.file_action')).toBeInTheDocument();
+  });
+
+  it('clicking a row calls markRead with its id', async () => {
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    const row = screen.getByText('Mine unread').closest('article');
+    expect(row).not.toBeNull();
+    await user.click(within(row as HTMLElement).getByRole('button'));
+    expect(markRead).toHaveBeenCalledWith('m-mine-unread');
+  });
+});
