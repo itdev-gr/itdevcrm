@@ -23,3 +23,11 @@ export function formatDate(isoOrDate: string | Date, locale: string = 'en'): str
     year: 'numeric',
   });
 }
+
+/** True when `isoOrDate` is in the past. `now` is injectable so callers can
+ *  unit-test the boundary; components call it like relativeFromNow. */
+export function isPast(isoOrDate: string | Date | null | undefined, now: Date = new Date()): boolean {
+  if (!isoOrDate) return false;
+  const t = new Date(isoOrDate).getTime();
+  return Number.isFinite(t) && t < now.getTime();
+}

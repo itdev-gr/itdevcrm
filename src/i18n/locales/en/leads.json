@@ -241,5 +241,21 @@
     "label": "Auto emails",
     "opted_out": "Unsubscribed",
     "opted_out_hint": "The lead unsubscribed from automated emails."
+  },
+  "noshow": {
+    "button": "No answer",
+    "hint": "Sends the missed-appointment email to the client, from your own Gmail.",
+    "already_sent": "The email has already been sent for this appointment.",
+    "result": {
+      "already_sent": "The email has already been sent for this appointment.",
+      "forbidden": "You are not allowed to send email for this lead.",
+      "not_found": "Lead not found.",
+      "archived": "This lead is archived.",
+      "not_scheduled": "This lead has no scheduled appointment.",
+      "not_due": "The appointment has not passed yet.",
+      "no_email": "This lead has no email address.",
+      "opted_out": "The client has opted out of emails.",
+      "automations_off": "Email automations are switched off for this lead."
+    }
   }
 }

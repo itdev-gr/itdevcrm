@@ -37,8 +37,10 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CommentsPanel } from '@/features/comments/CommentsPanel';
 import { AttachmentsPanel } from '@/features/attachments/AttachmentsPanel';
 import { CombinedAttachmentsTab } from '@/features/attachments/CombinedAttachmentsTab';
+import { useSendNoShowEmail } from './hooks/useSendNoShowEmail';
+import { useLeadEmails } from './hooks/useLeadEmails';
 import { ActivityPanel } from '@/features/activity/ActivityPanel';
-import { formatDate, relativeFromNow } from '@/lib/datetime';
+import { formatDate, isPast, relativeFromNow } from '@/lib/datetime';
 import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
@@ -53,6 +55,10 @@ const UNASSIGNED = '__unassigned__';
 function LeadDetailContent() {
   const { leadId = '' } = useParams<{ leadId: string }>();
   const { t } = useTranslation('leads');
+  // «Δεν απάντησε»: the no-show email is sent by hand — the cron cannot tell a
+  // genuinely missed appointment from a rescheduled or merely late one.
+  const noShow = useSendNoShowEmail(leadId);
+  const leadEmails = useLeadEmails(leadId);
   const { t: tSales } = useTranslation('sales');
   const { data: lead, isLoading, error } = useLead(leadId);
   const { i18n } = useTranslation();
@@ -199,6 +205,11 @@ function LeadDetailContent() {
   // ud_* codes normalize to their classic twins for code-keyed UI behavior
   // (offer button, deletability).
   const currentStageCode = currentStage?.code.replace(/^ud_/, '');
+  const noShowAlreadySent = (leadEmails.data ?? []).some(
+    (e) => e.template_key === 'scheduled_noshow',
+  );
+  const canSendNoShow =
+    currentStageCode === 'scheduled' && isPast(lead?.scheduled_for) && !lead?.converted_at;
   const stageName =
     (currentStage?.display_names as { en?: string; el?: string } | undefined)?.[lang] ??
     currentStage?.code ??
@@ -354,6 +365,25 @@ function LeadDetailContent() {
             )}
           </div>
           <div className={detailHeaderActionsClass}>
+            {canSendNoShow && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                disabled={noShow.isPending || noShowAlreadySent}
+                title={noShowAlreadySent ? t('noshow.already_sent') : t('noshow.hint')}
+                onClick={() => {
+                  noShow.mutate(undefined, {
+                    onSuccess: (r) => {
+                      if (r !== 'sent') window.alert(t(`noshow.result.${r}`));
+                    },
+                    onError: (e) => window.alert(e.message),
+                  });
+                }}
+              >
+                {noShowAlreadySent ? `✓ ${t('noshow.button')}` : t('noshow.button')}
+              </Button>
+            )}
             {currentStageCode === 'offer_sent' && (
               <Button
                 variant="outline"
