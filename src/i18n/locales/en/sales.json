@@ -175,5 +175,20 @@
     "mark_all_read": "Mark all read",
     "clear_all": "Clear all",
     "clear": "Clear"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "tabs": { "all": "All", "unread": "Unread", "mine": "Mine", "unfiled": "No card" },
+    "empty": "No emails here.",
+    "mark_all_read": "Mark all read",
+    "unfiled_badge": "No card",
+    "file_action": "File to a card",
+    "file_title": "File email",
+    "file_description": "Pick the card (lead or client) for the email from {{email}} — the whole conversation will be filed.",
+    "file_search_placeholder": "Search by name, code or email…",
+    "file_cancel": "Cancel",
+    "file_confirm": "File",
+    "card": { "lead": "Lead", "client": "Client", "deal": "Deal", "job": "Job" },
+    "footnote": "Shows the inbound client emails your department's visibility rules allow."
   }
 }
