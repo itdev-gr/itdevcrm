@@ -36,6 +36,7 @@ export function InboxPage() {
   ];
 
   function cardLink(i: InboxItem): { to: string; label: string } | null {
+    if (i.job_id) return { to: `/jobs/${i.job_id}`, label: t('inbox.card.job') };
     if (i.lead_id) return { to: `/leads/${i.lead_id}`, label: t('inbox.card.lead') };
     if (i.deal_id) return { to: `/deals/${i.deal_id}`, label: t('inbox.card.deal') };
     if (i.client_id) return { to: `/clients/${i.client_id}`, label: t('inbox.card.client') };

@@ -92,6 +92,30 @@ const items: InboxItem[] = [
     unfiled: false,
     mine: false,
   },
+  {
+    id: 'm-read-job',
+    message_id: 'mid-4',
+    thread_id: null,
+    direction: 'inbound',
+    from_email: 'fourth@example.com',
+    from_name: 'Fourth Person',
+    to_email: 'someone@itdev.gr',
+    subject: 'Read with job',
+    body_text: 'Body 4',
+    body_html: null,
+    snippet: 'Body 4',
+    sent_at: '2026-09-01T13:00:00Z',
+    department: 'sales',
+    job_id: 'job-1',
+    lead_id: null,
+    cc_emails: null,
+    captured_from_user_id: null,
+    client_id: null,
+    deal_id: null,
+    unread: false,
+    unfiled: false,
+    mine: false,
+  },
 ];
 
 vi.mock('./hooks/useEmailInbox', () => ({
@@ -118,11 +142,21 @@ function wrap(node: React.ReactNode) {
 describe('InboxPage', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('shows 3 rows on the "all" tab', () => {
+  it('shows all rows on the "all" tab', () => {
     render(wrap(<InboxPage />));
     expect(screen.getByText('Unfiled subject')).toBeInTheDocument();
     expect(screen.getByText('Mine unread')).toBeInTheDocument();
     expect(screen.getByText('Read with lead')).toBeInTheDocument();
+    expect(screen.getByText('Read with job')).toBeInTheDocument();
+  });
+
+  it('links a job-filed email to its job card, not the unfiled badge', () => {
+    render(wrap(<InboxPage />));
+    const row = screen.getByText('Read with job').closest('article');
+    expect(row).not.toBeNull();
+    const link = within(row as HTMLElement).getByRole('link', { name: 'inbox.card.job' });
+    expect(link).toHaveAttribute('href', '/jobs/job-1');
+    expect(within(row as HTMLElement).queryByText('inbox.unfiled_badge')).not.toBeInTheDocument();
   });
 
   it('switching to the unfiled tab leaves only the unfiled rows', async () => {
