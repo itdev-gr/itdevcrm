@@ -189,6 +189,7 @@
     "file_cancel": "Cancel",
     "file_confirm": "File",
     "card": { "lead": "Lead", "client": "Client", "deal": "Deal", "job": "Job" },
-    "footnote": "Shows the inbound client emails your department's visibility rules allow."
+    "footnote": "Shows the inbound client emails your department's visibility rules allow.",
+    "cats": { "all": "All", "sales": "Sales", "accounting": "Accounting", "support": "Support", "other": "Other" }
   }
 }
