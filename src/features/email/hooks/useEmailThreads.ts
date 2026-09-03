@@ -39,6 +39,7 @@ export type EmailThread = {
 
 const COLS =
   'id, message_id, thread_id, direction, from_email, from_name, to_email, subject, body_text, body_html, snippet, sent_at, department, job_id, lead_id, cc_emails';
+export const EMAIL_COLS = COLS;
 
 /** Grouping key: real thread when known; otherwise fold Re:/Fwd: chains of the
  *  same subject together (queries are single-scoped so this is safe); blank
