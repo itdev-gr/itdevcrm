@@ -5,6 +5,8 @@ import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { EMAIL_COLS, type EmailMessageRow } from './useEmailThreads';
 
+export type InboxCategory = 'sales' | 'accounting' | 'support' | 'other' | 'personal';
+
 export type InboxItem = EmailMessageRow & {
   captured_from_user_id: string | null;
   client_id: string | null;
@@ -12,16 +14,30 @@ export type InboxItem = EmailMessageRow & {
   unread: boolean;
   unfiled: boolean;
   mine: boolean;
+  category: InboxCategory;
 };
 
 const INBOX_COLS = `${EMAIL_COLS}, client_id, deal_id, captured_from_user_id`;
+
+const CATEGORY_BY_MAILBOX: Record<string, InboxCategory> = {
+  'sales@itdev.gr': 'sales',
+  'accounting@itdev.gr': 'accounting',
+  'support@itdev.gr': 'support',
+};
+
+function categorize(capturedFrom: string | null, mailboxByUser: Map<string, string>): InboxCategory {
+  if (!capturedFrom) return 'other';
+  const mailbox = mailboxByUser.get(capturedFrom);
+  if (!mailbox) return 'personal';
+  return CATEGORY_BY_MAILBOX[mailbox] ?? 'other';
+}
 
 export function useEmailInbox() {
   const myEmail = (useAuthStore((s) => s.user?.email) ?? '').toLowerCase();
   const query = useQuery({
     queryKey: queryKeys.emailInbox(),
     queryFn: async () => {
-      const [msgs, reads] = await Promise.all([
+      const [msgs, reads, mailboxes] = await Promise.all([
         supabase
           .from('email_messages')
           .select(INBOX_COLS)
@@ -30,11 +46,19 @@ export function useEmailInbox() {
           .limit(300),
         // Bridge: email_message_reads is not yet in generated supabase.ts; drop `as never` after next `npm run types:gen`.
         supabase.from('email_message_reads' as never).select('message_pk'),
+        supabase.from('shared_mailboxes' as never).select('user_id, email'),
       ]);
       if (msgs.error) throw new Error(msgs.error.message);
       if (reads.error) throw new Error(reads.error.message);
+      if (mailboxes.error) throw new Error(mailboxes.error.message);
       const readRows = (reads.data ?? []) as unknown as { message_pk: string }[];
-      return { rows: msgs.data ?? [], readPks: new Set(readRows.map((r) => r.message_pk)) };
+      const mailboxRows = (mailboxes.data ?? []) as unknown as { user_id: string; email: string }[];
+      const mailboxByUser = new Map(mailboxRows.map((r) => [r.user_id, r.email.toLowerCase()]));
+      return {
+        rows: msgs.data ?? [],
+        readPks: new Set(readRows.map((r) => r.message_pk)),
+        mailboxByUser,
+      };
     },
     refetchInterval: 60_000,
   });
@@ -42,11 +66,13 @@ export function useEmailInbox() {
     client_id: string | null; deal_id: string | null; captured_from_user_id: string | null;
   })[];
   const readPks = query.data?.readPks ?? new Set<string>();
+  const mailboxByUser = query.data?.mailboxByUser ?? new Map<string, string>();
   const items: InboxItem[] = rows.map((r) => ({
     ...r,
     unread: !readPks.has(r.id),
     unfiled: !r.client_id && !r.lead_id && !r.job_id && !r.deal_id,
     mine: myEmail !== '' && r.to_email.toLowerCase().includes(myEmail),
+    category: categorize(r.captured_from_user_id, mailboxByUser),
   }));
   return { ...query, items, unreadCount: items.filter((i) => i.unread).length };
 }

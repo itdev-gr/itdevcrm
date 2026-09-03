@@ -24,7 +24,7 @@ const { from } = vi.hoisted(() => {
       cc_emails: null,
       client_id: null,
       deal_id: null,
-      captured_from_user_id: null,
+      captured_from_user_id: 'mb-sales',
     },
     {
       id: 'm2',
@@ -45,7 +45,7 @@ const { from } = vi.hoisted(() => {
       cc_emails: null,
       client_id: 'c1',
       deal_id: null,
-      captured_from_user_id: null,
+      captured_from_user_id: 'mb-info',
     },
     {
       id: 'm3',
@@ -66,10 +66,16 @@ const { from } = vi.hoisted(() => {
       cc_emails: null,
       client_id: 'c2',
       deal_id: null,
-      captured_from_user_id: null,
+      captured_from_user_id: 'u1',
     },
   ];
   const readRows = [{ message_pk: 'm3' }];
+  const mailboxRows = [
+    { user_id: 'mb-sales', email: 'sales@itdev.gr' },
+    { user_id: 'mb-acc', email: 'accounting@itdev.gr' },
+    { user_id: 'mb-sup', email: 'support@itdev.gr' },
+    { user_id: 'mb-info', email: 'info@itdev.gr' },
+  ];
 
   const from = vi.fn((table: string) => {
     if (table === 'email_messages') {
@@ -86,6 +92,11 @@ const { from } = vi.hoisted(() => {
     if (table === 'email_message_reads') {
       return {
         select: vi.fn().mockResolvedValue({ data: readRows, error: null }),
+      };
+    }
+    if (table === 'shared_mailboxes') {
+      return {
+        select: vi.fn().mockResolvedValue({ data: mailboxRows, error: null }),
       };
     }
     throw new Error(`unexpected table: ${table}`);
@@ -126,5 +137,22 @@ describe('useEmailInbox', () => {
 
     const read = result.current.items.find((i) => i.id === 'm3');
     expect(read?.unread).toBe(false);
+  });
+
+  it('classifies items by capturing mailbox', async () => {
+    const { result } = renderHook(() => useEmailInbox(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+
+    await waitFor(() => expect(result.current.items.length).toBe(3));
+
+    const sales = result.current.items.find((i) => i.id === 'm1');
+    expect(sales?.category).toBe('sales');
+
+    const other = result.current.items.find((i) => i.id === 'm2');
+    expect(other?.category).toBe('other');
+
+    const personal = result.current.items.find((i) => i.id === 'm3');
+    expect(personal?.category).toBe('personal');
   });
 });

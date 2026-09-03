@@ -43,6 +43,7 @@ const items: InboxItem[] = [
     unread: false,
     unfiled: true,
     mine: false,
+    category: 'other',
   },
   {
     id: 'm-mine-unread',
@@ -67,6 +68,7 @@ const items: InboxItem[] = [
     unread: true,
     unfiled: true,
     mine: true,
+    category: 'other',
   },
   {
     id: 'm-read-lead',
@@ -91,6 +93,7 @@ const items: InboxItem[] = [
     unread: false,
     unfiled: false,
     mine: false,
+    category: 'other',
   },
   {
     id: 'm-read-job',
@@ -115,6 +118,7 @@ const items: InboxItem[] = [
     unread: false,
     unfiled: false,
     mine: false,
+    category: 'other',
   },
 ];
 
