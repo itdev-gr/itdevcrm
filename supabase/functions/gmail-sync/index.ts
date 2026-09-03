@@ -87,6 +87,23 @@ async function storeAttachments(
   return stored;
 }
 
+/** Post-store: pull a message's attachment parts now that its row exists.
+ *  Used by BOTH capture paths — filed mail and the unfiled inbox — because a
+ *  screenshot-only reply from an unknown sender is exactly the case the inbox
+ *  is for, and waiting for the backfill pass would show it as an empty card. */
+async function attachAfterStore(
+  access: string,
+  m: { message_id: string; gmail_id: string; attachments: GmailAttachment[] },
+): Promise<void> {
+  if (m.attachments.length === 0) return;
+  const { data: mrow } = await admin.from('email_messages')
+    .select('id, attachments_scanned_at').eq('message_id', m.message_id).maybeSingle();
+  if (!mrow || mrow.attachments_scanned_at) return;
+  await storeAttachments(access, m.gmail_id, mrow.id as string, m.attachments);
+  await admin.from('email_messages')
+    .update({ attachments_scanned_at: new Date().toISOString() }).eq('id', mrow.id);
+}
+
 // Store a captured message, folding it into its send-time mirror row when one
 // exists (spec 2026-07-29-email-mirror-dedup-design.md): send-email writes a
 // mirror row per Resend send, and the dept-CC copy of the same email arrives
@@ -281,8 +298,10 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
           sent_at: m.internal_date ? new Date(m.internal_date).toISOString() : null,
           client_id: null, deal_id: null, job_id: null, lead_id: null,
           department: null, staff_user_id: null, captured_from_user_id: uid,
+          attachments_scanned_at: m.attachments.length === 0 ? new Date().toISOString() : null,
         });
         if (ok) stored++; else errors++;
+        if (ok) await attachAfterStore(access, m);
         continue;
       }
       matched++;
@@ -297,16 +316,12 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         attachments_scanned_at: m.attachments.length === 0 ? new Date().toISOString() : null,
       });
       if (ok) stored++; else errors++;
-      if (ok && (m.bcc_emails || m.attachments.length > 0)) {
+      if (ok) await attachAfterStore(access, m);
+      if (ok && m.bcc_emails) {
         const { data: mrow } = await admin
-          .from('email_messages').select('id, attachments_scanned_at')
+          .from('email_messages').select('id')
           .eq('message_id', m.message_id).maybeSingle();
-        if (mrow && m.attachments.length > 0 && !mrow.attachments_scanned_at) {
-          await storeAttachments(access, m.gmail_id, mrow.id as string, m.attachments);
-          await admin.from('email_messages')
-            .update({ attachments_scanned_at: new Date().toISOString() }).eq('id', mrow.id);
-        }
-        if (mrow && m.bcc_emails) {
+        if (mrow) {
           // Union-merge, never overwrite: every Gmail copy carries a PARTIAL
           // Bcc view (a bcc recipient's delivered copy lists only themselves),
           // so the last-swept mailbox would otherwise clobber the sender's
