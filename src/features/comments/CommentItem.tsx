@@ -130,9 +130,6 @@ export function CommentItem({ comment, replies = [], nested = false }: Props) {
                   </span>
                 )}
               </div>
-              {authorName && (
-                <p className="break-all text-xs text-muted-foreground">{authorEmail}</p>
-              )}
             </div>
 
             {(canEdit || canDelete) && !editing && (
