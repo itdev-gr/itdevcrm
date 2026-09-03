@@ -85,6 +85,29 @@ describe('cleanEmailBody', () => {
     expect(hasHidden).toBe(false);
   });
 
+  it('drops Outlook [cid:…] inline-image placeholders', () => {
+    const raw = 'Δείτε παρακάτω:\n[cid:c6d66a74-5814-479f-a240-2043dc480389]\nΕυχαριστώ.';
+    const { visible } = cleanEmailBody(raw);
+    expect(visible).not.toContain('cid:');
+    expect(visible).toContain('Δείτε παρακάτω:');
+    expect(visible).toContain('Ευχαριστώ.');
+  });
+
+  it('returns an empty body when the message is only a pasted image', () => {
+    // Real shape (arebas, 2026-09-02): one inline screenshot, then the
+    // signature. The picture itself renders from email_attachments.
+    const raw = [
+      '[cid:c6d66a74-5814-479f-a240-2043dc480389]',
+      '',
+      'Με εκτίμηση',
+      '',
+      'Apostolis Chatzigeorgiou',
+    ].join('\n');
+    const { visible, hasHidden } = cleanEmailBody(raw);
+    expect(visible).toBe('');
+    expect(hasHidden).toBe(true);
+  });
+
   it('handles empty / whitespace input safely', () => {
     expect(cleanEmailBody('')).toEqual({ visible: '', hasHidden: false });
     expect(cleanEmailBody('   \n\n ')).toEqual({ visible: '', hasHidden: false });

@@ -4,8 +4,12 @@ import type { EmailThread } from './hooks/useEmailThreads';
 
 const ref: { data: EmailThread[]; isLoading: boolean } = { data: [], isLoading: false };
 let dialogProps: Record<string, unknown> | null = null;
-vi.mock('./hooks/useEmailThreads', () => ({ useEmailThreads: () => ref }));
+vi.mock('./hooks/useEmailThreads', () => ({
+  useEmailThreads: () => ref,
+  useRefreshEmailThreads: () => () => {},
+}));
 vi.mock('./hooks/useBccEmails', () => ({ useBccEmails: () => new Map() }));
+vi.mock('./hooks/useEmailAttachments', () => ({ useEmailAttachments: () => new Map() }));
 vi.mock('./SendEmailDialog', () => ({
   SendEmailDialog: (props: Record<string, unknown>) => {
     dialogProps = props;

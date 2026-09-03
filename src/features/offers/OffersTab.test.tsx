@@ -19,6 +19,7 @@ const offers = [
 vi.mock('./hooks/useOffersForLeadOrDeal', () => ({
   useOffersForLead: () => ({ data: [], isLoading: false }),
   useOffersForDeal: () => ({ data: offers, isLoading: false }),
+  useOffersForClient: () => ({ data: [], isLoading: false }),
 }));
 
 import { OffersTab } from './OffersTab';

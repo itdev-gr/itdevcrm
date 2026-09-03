@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 export type EmailMessageRow = {
@@ -118,4 +118,15 @@ export function useEmailThreads(scope: EmailScope): UseQueryResult<EmailThread[]
       return groupThreads((data ?? []) as unknown as EmailMessageRow[]);
     },
   });
+}
+
+/** Refetch the thread list for a scope. A manual personal send writes its own
+ *  mirror row server-side, so the message is already there — without this the
+ *  user waits for the next gmail-sync sweep and assumes the mail was lost. */
+export function useRefreshEmailThreads(scope: EmailScope): () => void {
+  const qc = useQueryClient();
+  const [column, value] = scopeFilter(scope);
+  return () => {
+    void qc.invalidateQueries({ queryKey: ['email-threads', column, value] });
+  };
 }

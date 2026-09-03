@@ -69,14 +69,27 @@ export function cleanEmailBody(raw: string): CleanedBody {
   const si = firstBoundary(cut, [SIGNOFF_BOUNDARY]);
   if (si >= 0) cut = cut.slice(0, si);
 
-  // 3. Cosmetic: drop inline image placeholders and collapse blank runs
-  const visible = cut
-    .replace(/\[image:[^\]]*\]/gi, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  // 3. Cosmetic: drop inline image placeholders and collapse blank runs.
+  //    Gmail writes `[image: name.png]`; Outlook writes the raw Content-ID as
+  //    `[cid:c6d66a74-…]`. Neither means anything to a reader — the picture
+  //    itself is rendered from email_attachments, keyed on that same cid.
+  const strip = (s: string) =>
+    s
+      .replace(/\[image:[^\]]*\]/gi, '')
+      .replace(/\[cid:[^\]]*\]/gi, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  const visible = strip(cut);
 
-  // Fallback: never return an empty body.
-  if (!visible) return { visible: original.trim(), hasHidden: false };
+  if (!visible) {
+    // A message whose whole content was a pasted picture (seen in prod: a
+    // client's reply is one screenshot plus their signature). Empty is correct
+    // here — the image itself renders below the text.
+    if (cut.trim() !== '') return { visible: '', hasHidden: true };
+    // Otherwise cleaning ate everything (a body that is nothing but a quote):
+    // never leave the card blank.
+    return { visible: original.trim(), hasHidden: false };
+  }
 
   return { visible, hasHidden: visible !== original.trim() };
 }

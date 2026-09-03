@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { CombinedAttachmentsTab } from '@/features/attachments/CombinedAttachmen
 import { ClientActivityPanel } from '@/features/activity/ClientActivityPanel';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { ClientTasksTab } from './ClientTasksTab';
+import { canCreateOffer } from '@/features/offers/canCreateOffer';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { useClientBlock } from '@/features/client_blocks/hooks/useClientBlock';
 import { useUnblockClient } from '@/features/client_blocks/hooks/useUnblockClient';
 import { BlockBadge } from '@/features/client_blocks/BlockBadge';
@@ -27,6 +29,10 @@ function ClientDetailContent() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const { t } = useTranslation('clients');
   const { t: tAcc } = useTranslation('accounting');
+  const { t: tCommon } = useTranslation('common');
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
+  const mayCreateOffer = canCreateOffer({ isAdmin, groupCodes });
   const { data: client, isLoading, error } = useClient(clientId);
   const { data: deals = [], isLoading: dealsLoading } = useDeals({ clientId });
   const { data: jobs = [] } = useJobsForClient(clientId);
@@ -70,6 +76,11 @@ function ClientDetailContent() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {mayCreateOffer && (
+            <Button asChild variant="outline">
+              <Link to={`/clients/${clientId}/offers/new`}>{tCommon('offers.new')}</Link>
+            </Button>
+          )}
           <div className="flex items-center gap-2">
             <Label htmlFor="client-status" className="text-sm">
               {t('status.label')}:

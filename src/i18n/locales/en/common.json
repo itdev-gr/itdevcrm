@@ -232,5 +232,11 @@
       "from": "From",
       "to": "To"
     }
+  },
+  "offers": {
+    "new": "New offer"
+  },
+  "proformas": {
+    "new": "New pro forma"
   }
 }

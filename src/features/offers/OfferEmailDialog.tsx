@@ -4,10 +4,12 @@ import { SendEmailDialog } from '@/features/email/SendEmailDialog';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUser } from '@/features/users/hooks/useUser';
 import { useLead } from '@/features/leads/hooks/useLead';
+import { useClient } from '@/features/clients/hooks/useClient';
+import { resolveOfferRecipient } from '../../../api/_recipient.ts';
 import { useOffer } from './hooks/useOffer';
 import { useUpdateOfferStatus } from './hooks/useUpdateOfferStatus';
 import { PUBLIC_OFFER_BASE } from './publicOfferLink';
-import { useEnsureOfferPdf, type OfferPdfInfo } from './hooks/useEnsureOfferPdf';
+import { useEnsureOfferPdf } from './hooks/useEnsureOfferPdf';
 import { useOfferEmailTemplates } from './hooks/useOfferEmailTemplates';
 import { buildOfferEmail, type OfferEmailVars, type OfferTemplate } from './offerEmailBody';
 
@@ -25,28 +27,27 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
   const { t } = useTranslation('email');
   const { data: offer } = useOffer(open ? offerId : '');
   const { data: lead } = useLead(offer?.lead_id ?? '');
+  // An offer can hang off a client or a deal with no lead at all (the
+  // accounting flow). Same precedence the PDF header uses: client, then lead.
+  const { data: client } = useClient(offer?.client_id ?? '');
   const templates = useOfferEmailTemplates();
   const uid = useAuthStore((s) => s.user?.id ?? '');
   const { data: me } = useUser(uid);
   const updateStatus = useUpdateOfferStatus(offerId);
-  const { mutateAsync: generatePdf, isPending: pdfPending } = useEnsureOfferPdf();
+  const { mutateAsync: generatePdf } = useEnsureOfferPdf();
 
   const [dedupeKey, setDedupeKey] = useState('');
-  const [pdfInfo, setPdfInfo] = useState<OfferPdfInfo | null>(null);
-  const [pdfError, setPdfError] = useState<string | null>(null);
-  const [skipPdf, setSkipPdf] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     // Fresh key per dialog-open: sendPersonal skips any dedupe_key that ever
     // sent, so a stable key would block legitimate resends of the same offer.
     setDedupeKey(`offer:${offerId}:${crypto.randomUUID()}`);
-    setPdfInfo(null);
-    setPdfError(null);
-    setSkipPdf(false);
-    generatePdf(offerId)
-      .then(setPdfInfo)
-      .catch((e: Error) => setPdfError(e.message));
+    // Warm the PDF, but never block the composer on it: the email carries only
+    // the public link, and api/offer-view regenerates a missing or stale PDF on
+    // the client's first open (isPdfStale). Since the attachment was dropped
+    // for the link, a slow or failed render must not stop the send.
+    void generatePdf(offerId).catch(() => undefined);
   }, [open, offerId, generatePdf]);
 
   const byKey = useMemo(() => {
@@ -55,14 +56,33 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     return m;
   }, [templates.data]);
 
+  const recipient = useMemo(() => resolveOfferRecipient(
+    client
+      ? {
+          name: client.name,
+          email: client.email,
+          contact_first_name: client.contact_first_name,
+          contact_last_name: client.contact_last_name,
+        }
+      : null,
+    lead
+      ? {
+          company_name: lead.company_name,
+          email: lead.email,
+          contact_first_name: lead.contact_first_name,
+          contact_last_name: lead.contact_last_name,
+        }
+      : null,
+  ), [client, lead]);
+
   const vars: OfferEmailVars = useMemo(() => ({
-    name: lead?.contact_first_name || lead?.company_name || '',
-    code: lead?.code ?? '',
+    name: recipient.clientName === 'Client' ? '' : recipient.clientName,
+    code: lead?.code ?? client?.code ?? '',
     owner_name: me?.full_name ?? '',
     offer_number: offer?.offer_number ?? '',
     validity_days: offer?.validity_days ?? 14,
     offer_url: offer ? `${PUBLIC_OFFER_BASE}${offer.public_token}` : '',
-  }), [lead, me, offer]);
+  }), [recipient, lead, client, me, offer]);
 
   // UD leads get the Under-Development copy (ΡΟΗ_ΝΕΟΥ_LEAD flow); everyone
   // else keeps the classic intro/outro. Falls back to the classic rows if the
@@ -86,44 +106,9 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
   const waiting =
     !offer ||
     (!!offer.lead_id && !lead) ||
+    (!!offer.client_id && !client) ||
     templates.isLoading ||
-    !draft ||
-    (!pdfInfo && !skipPdf && !pdfError);
-
-  // PDF failed and the user hasn't chosen yet: offer retry / continue without.
-  if (pdfError && !skipPdf) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">{t('offer_composer.pdf_failed')}</p>
-          <p className="mt-1 break-all text-xs text-muted-foreground">{pdfError}</p>
-          <div className="mt-4 flex justify-end gap-2">
-            <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={onClose}>
-              {t('dialog.cancel')}
-            </button>
-            <button
-              type="button"
-              className="rounded border px-3 py-1.5 text-sm"
-              onClick={() => setSkipPdf(true)}
-            >
-              {t('offer_composer.continue_anyway')}
-            </button>
-            <button
-              type="button"
-              className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
-              disabled={pdfPending}
-              onClick={() => {
-                setPdfError(null);
-                generatePdf(offerId).then(setPdfInfo).catch((e: Error) => setPdfError(e.message));
-              }}
-            >
-              {t('offer_composer.retry')}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    !draft;
 
   if (waiting) {
     return (
@@ -139,7 +124,7 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
     <SendEmailDialog
       open
       identity="personal"
-      to={lead?.email ?? ''}
+      to={recipient.email ?? ''}
       subject={draft.subject}
       body={draft.html}
       dedupeKey={dedupeKey}

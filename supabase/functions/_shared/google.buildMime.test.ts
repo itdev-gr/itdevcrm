@@ -144,3 +144,74 @@ describe('buildMime — with attachments (multipart/mixed)', () => {
     expect(mime).not.toContain('Content-Type: ; name=');
   });
 });
+
+describe('buildMime — threading headers and the text/plain alternative', () => {
+  it('emits Message-ID, In-Reply-To and References when given', () => {
+    const mime = decodeMime(
+      buildMime({
+        from: 'a@itdev.gr',
+        to: 'c@x.gr',
+        subject: 'Re: 000280-WEBDEV - hi',
+        html: '<p>hi</p>',
+        messageId: '<crm-1@itdev.gr>',
+        inReplyTo: '<orig-9@mail.gmail.com>',
+        references: '<orig-9@mail.gmail.com>',
+      }),
+    );
+    expect(mime).toContain('Message-ID: <crm-1@itdev.gr>');
+    expect(mime).toContain('In-Reply-To: <orig-9@mail.gmail.com>');
+    expect(mime).toContain('References: <orig-9@mail.gmail.com>');
+  });
+
+  it('strips CR/LF out of a header value rather than splicing a new header', () => {
+    const mime = decodeMime(
+      buildMime({
+        from: 'a@itdev.gr',
+        to: 'c@x.gr',
+        subject: 'Hi',
+        html: '<p>hi</p>',
+        inReplyTo: '<x@y>\r\nX-Injected: evil',
+      }),
+    );
+    // The CR/LF is stripped, so the payload stays folded into the same header
+    // line — what must never happen is a NEW header line appearing.
+    expect(mime).not.toContain('\r\nX-Injected');
+    expect(mime).toContain('In-Reply-To: <x@y>X-Injected: evil');
+  });
+
+  it('pairs text/plain with text/html in a multipart/alternative', () => {
+    const mime = decodeMime(
+      buildMime({ from: 'a@itdev.gr', to: 'c@x.gr', subject: 'Hi', html: '<p>σώμα</p>', text: 'σώμα' }),
+    );
+    expect(mime).toContain('multipart/alternative');
+    expect(mime).toContain('Content-Type: text/plain; charset=UTF-8');
+    expect(mime).toContain('Content-Type: text/html; charset=UTF-8');
+    expect(mime).not.toContain('multipart/mixed');
+  });
+
+  it('nests the alternative inside multipart/mixed when there are attachments', () => {
+    const mime = decodeMime(
+      buildMime({
+        from: 'a@itdev.gr',
+        to: 'c@x.gr',
+        subject: 'Hi',
+        html: '<p>hi</p>',
+        text: 'hi',
+        attachments: [{ filename: 'a.pdf', mimeType: 'application/pdf', base64: btoa('x') }],
+      }),
+    );
+    expect(mime).toContain('multipart/mixed');
+    expect(mime).toContain('multipart/alternative');
+    expect(mime).toContain('Content-Disposition: attachment; filename="a.pdf"');
+  });
+
+  it('stays single-part when text is absent or blank (unchanged legacy output)', () => {
+    for (const text of [undefined, '', '   ']) {
+      const mime = decodeMime(
+        buildMime({ from: 'a@itdev.gr', to: 'c@x.gr', subject: 'Hi', html: '<p>hi</p>', ...(text === undefined ? {} : { text }) }),
+      );
+      expect(mime).not.toContain('multipart/alternative');
+      expect(mime).toContain('Content-Type: text/html; charset=UTF-8');
+    }
+  });
+});

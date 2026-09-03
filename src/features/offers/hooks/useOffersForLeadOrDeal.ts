@@ -33,3 +33,21 @@ export function useOffersForDeal(dealId: string) {
     enabled: !!dealId,
   });
 }
+
+/** Every offer filed on a client — the accounting/upsell view, where there may
+ *  be no lead and no single deal to hang it off. */
+export function useOffersForClient(clientId: string) {
+  return useQuery({
+    queryKey: queryKeys.offersForClient(clientId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+    enabled: !!clientId,
+  });
+}
