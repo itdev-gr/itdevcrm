@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { signOut } from '@/lib/auth';
 import { NotificationsBell } from '@/features/notifications/NotificationsBell';
+import { EmailInboxButton } from '@/features/email/EmailInboxButton';
 import { GlobalSearch } from '@/features/search/GlobalSearch';
 import { CallStatsWidget } from '@/features/callstats/CallStatsWidget';
 import { BreakButton } from '@/features/break/BreakButton';
@@ -59,6 +60,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                   {userInitial(userEmail)}
                 </span>
               </Link>
+              <EmailInboxButton />
               <NotificationsBell />
             </>
           )}
