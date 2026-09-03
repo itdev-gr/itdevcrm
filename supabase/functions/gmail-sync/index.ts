@@ -2,10 +2,14 @@
 // Modes:
 //   { user_id } .............. sync one user (backfill on first run, else incremental)
 //   { mode: 'sweep' } ........ sync every read-scoped user (called by pg_cron every 5 min)
+//   { mode: 'attachments_backfill', limit } .. pull attachments for already-captured mail
 // Auth: Bearer GMAIL_SYNC_SECRET (manual) OR the service-role key (the cron).
 // verify_jwt=false (config.toml) so the cron's header-only call reaches it.
 import { createClient } from 'jsr:@supabase/supabase-js@^2.45';
-import { decryptToken, refreshAccessToken, listGmailMessageIds, getGmailMessageFull } from '../_shared/google.ts';
+import {
+  decryptToken, refreshAccessToken, listGmailMessageIds, getGmailMessageFull,
+  getGmailAttachment, type GmailAttachment,
+} from '../_shared/google.ts';
 import { timingSafeEqual } from '../_shared/timing.ts';
 import { ADOPTION_WINDOW_MS, nearestBySentAt } from '../_shared/emailDedup.ts';
 
@@ -31,7 +35,57 @@ type CapturedRow = {
   cc_emails: string | null; sent_at: string | null;
   client_id: string | null; deal_id: string | null; job_id: string | null; lead_id: string | null;
   department: string | null; staff_user_id: string | null; captured_from_user_id: string;
+  // Backfill cursor: stamped here only when the message HAS no attachment parts
+  // (nothing to fetch). Messages with parts stay null until the bytes land, so a
+  // failed download is retried by the sweep's backfill pass instead of lost.
+  attachments_scanned_at: string | null;
 };
+
+const ATT_BUCKET = 'email-attachments';
+const MAX_ATT_BYTES = 20 * 1024 * 1024;  // bucket cap is 25 MB
+const MAX_ATT_PER_MESSAGE = 20;
+// Inline parts below this are the furniture of a signature — logos, social
+// icons, spacer gifs, tracking pixels. The body's [cid:…] token for them is
+// stripped at render time either way, so skipping keeps the tab clean.
+const MIN_INLINE_BYTES = 2500;
+
+function safeName(n: string): string {
+  const s = n.normalize('NFKD').replace(/[^\w.\-]+/g, '_').replace(/_{2,}/g, '_').slice(0, 120);
+  return s.replace(/^[._]+/, '') || 'file';
+}
+
+/** Download a message's attachment parts into the bucket + email_attachments.
+ *  Per-part try/catch: one oversized or revoked part must not cost the rest. */
+async function storeAttachments(
+  access: string, gmailId: string, messagePk: string, parts: GmailAttachment[],
+): Promise<number> {
+  let stored = 0;
+  for (const p of parts.slice(0, MAX_ATT_PER_MESSAGE)) {
+    if (p.size > MAX_ATT_BYTES) continue;
+    if (p.is_inline && p.size < MIN_INLINE_BYTES) continue;
+    try {
+      const bytes = await getGmailAttachment(access, gmailId, p.attachment_id);
+      const path = `${messagePk}/${crypto.randomUUID()}-${safeName(p.file_name)}`;
+      const up = await admin.storage.from(ATT_BUCKET)
+        .upload(path, bytes, { contentType: p.mime_type, upsert: false });
+      if (up.error) continue;
+      const { error } = await admin.from('email_attachments').insert({
+        message_pk: messagePk,
+        gmail_attachment_id: p.attachment_id,
+        content_id: p.content_id,
+        file_name: p.file_name,
+        mime_type: p.mime_type,
+        file_size: bytes.length,
+        is_inline: p.is_inline,
+        storage_path: path,
+      });
+      // Orphaned object otherwise: the read policy keys off the table row.
+      if (error) { await admin.storage.from(ATT_BUCKET).remove([path]); continue; }
+      stored++;
+    } catch (_e) { /* next part */ }
+  }
+  return stored;
+}
 
 // Store a captured message, folding it into its send-time mirror row when one
 // exists (spec 2026-07-29-email-mirror-dedup-design.md): send-email writes a
@@ -52,6 +106,7 @@ async function storeCaptured(row: CapturedRow): Promise<boolean> {
       gmail_id: row.gmail_id, thread_id: row.thread_id,
       body_text: row.body_text, body_html: row.body_html, snippet: row.snippet,
       captured_from_user_id: row.captured_from_user_id,
+      attachments_scanned_at: row.attachments_scanned_at,
     }).eq('id', existing.id);
     return !error;
   }
@@ -83,6 +138,7 @@ async function storeCaptured(row: CapturedRow): Promise<boolean> {
           body_text: row.body_text, body_html: row.body_html, snippet: row.snippet,
           sent_at: row.sent_at, captured_from_user_id: row.captured_from_user_id,
           cc_emails: row.cc_emails ?? mirror.cc_emails,
+          attachments_scanned_at: row.attachments_scanned_at,
         })
         .eq('id', mirror.id).eq('message_id', mirror.message_id)
         .select('id');
@@ -93,6 +149,74 @@ async function storeCaptured(row: CapturedRow): Promise<boolean> {
   const { error } = await admin.from('email_messages')
     .upsert(row, { onConflict: 'message_id', ignoreDuplicates: true });
   return !error;
+}
+
+/** Cached per-user access token for the backfill pass (one refresh per mailbox
+ *  per invocation). `null` marks a mailbox we already failed to open. */
+async function accessFor(uid: string, cache: Map<string, string | null>): Promise<string | null> {
+  if (cache.has(uid)) return cache.get(uid)!;
+  let access: string | null = null;
+  try {
+    const { data: acct } = await admin.from('user_google_accounts')
+      .select('refresh_token_enc, revoked_at, scopes').eq('user_id', uid).maybeSingle();
+    if (acct && !acct.revoked_at && String(acct.scopes ?? '').includes('gmail.readonly')) {
+      const refresh = await decryptToken(acct.refresh_token_enc, TOKEN_KEY);
+      access = await refreshAccessToken(refresh, CLIENT_ID, CLIENT_SECRET);
+    }
+  } catch (_e) { access = null; }
+  cache.set(uid, access);
+  return access;
+}
+
+// Walk already-captured messages that predate attachment support (or whose
+// download failed) newest-first and pull their parts. The stamp is written even
+// when the fetch fails — a message deleted from the mailbox 404s forever, and an
+// un-stamped row would starve the queue behind it. Re-run one by nulling its
+// attachments_scanned_at.
+async function backfillAttachments(
+  limit: number, deadline: number,
+): Promise<{ scanned: number; stored: number; errors: number }> {
+  const out = { scanned: 0, stored: 0, errors: 0 };
+  type Msg = { id: string; gmail_id: string; captured_from_user_id: string };
+  const unscanned = () => admin.from('email_messages')
+    .select('id, gmail_id, captured_from_user_id')
+    .is('attachments_scanned_at', null)
+    .not('gmail_id', 'is', null)
+    .not('captured_from_user_id', 'is', null);
+
+  // Messages whose body still shows a raw [cid:…] token go first: those are the
+  // ones a user is looking at right now with a placeholder where a picture
+  // should be. The rest of the backlog follows, newest first.
+  const { data: cidFirst } = await unscanned()
+    .like('body_text', '%[cid:%').order('sent_at', { ascending: false }).limit(limit);
+  const msgs: Msg[] = [...((cidFirst ?? []) as Msg[])];
+  if (msgs.length < limit) {
+    const { data: rest } = await unscanned()
+      .order('sent_at', { ascending: false }).limit(limit - msgs.length + 5);
+    const seen = new Set(msgs.map((m) => m.id));
+    for (const r of (rest ?? []) as Msg[]) {
+      if (!seen.has(r.id) && msgs.length < limit) msgs.push(r);
+    }
+  }
+
+  const tokens = new Map<string, string | null>();
+  for (const msg of msgs) {
+    if (Date.now() > deadline) break;
+    const access = await accessFor(msg.captured_from_user_id, tokens);
+    if (!access) continue;  // mailbox unreachable: leave it for a later run
+    try {
+      const m = await getGmailMessageFull(access, msg.gmail_id);
+      if (m.attachments.length > 0) {
+        out.stored += await storeAttachments(access, msg.gmail_id, msg.id, m.attachments);
+      }
+      out.scanned++;
+    } catch (_e) {
+      out.errors++;
+    }
+    await admin.from('email_messages')
+      .update({ attachments_scanned_at: new Date().toISOString() }).eq('id', msg.id);
+  }
+  return out;
 }
 
 async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> {
@@ -150,12 +274,19 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         sent_at: m.internal_date ? new Date(m.internal_date).toISOString() : null,
         client_id: f.client_id, deal_id: f.deal_id, job_id: f.job_id, lead_id: f.lead_id, department: f.department,
         staff_user_id: f.staff_user_id, captured_from_user_id: uid,
+        attachments_scanned_at: m.attachments.length === 0 ? new Date().toISOString() : null,
       });
       if (ok) stored++; else errors++;
-      if (ok && m.bcc_emails) {
+      if (ok && (m.bcc_emails || m.attachments.length > 0)) {
         const { data: mrow } = await admin
-          .from('email_messages').select('id').eq('message_id', m.message_id).maybeSingle();
-        if (mrow) {
+          .from('email_messages').select('id, attachments_scanned_at')
+          .eq('message_id', m.message_id).maybeSingle();
+        if (mrow && m.attachments.length > 0 && !mrow.attachments_scanned_at) {
+          await storeAttachments(access, m.gmail_id, mrow.id as string, m.attachments);
+          await admin.from('email_messages')
+            .update({ attachments_scanned_at: new Date().toISOString() }).eq('id', mrow.id);
+        }
+        if (mrow && m.bcc_emails) {
           // Union-merge, never overwrite: every Gmail copy carries a PARTIAL
           // Bcc view (a bcc recipient's delivered copy lists only themselves),
           // so the last-swept mailbox would otherwise clobber the sender's
@@ -215,7 +346,7 @@ Deno.serve(async (req) => {
                  (SERVICE_KEY !== '' && timingSafeEqual(token, SERVICE_KEY));
   if (!authed) return json({ error: 'forbidden' }, 403);
 
-  const body = (await req.json().catch(() => ({}))) as { user_id?: string; mode?: string };
+  const body = (await req.json().catch(() => ({}))) as { user_id?: string; mode?: string; limit?: number };
 
   if (body.mode === 'sweep') {
     const { data: users } = await admin.from('user_google_accounts')
@@ -247,7 +378,18 @@ Deno.serve(async (req) => {
         agg.errors++;
       }
     }
-    return json({ mode: 'sweep', ...agg });
+    // Whatever wall time the mailbox loop left over goes to the attachment
+    // backlog (10.8k pre-feature messages), newest first.
+    const att = Date.now() - started < BUDGET_MS
+      ? await backfillAttachments(60, started + BUDGET_MS + 30_000)
+      : { scanned: 0, stored: 0, errors: 0 };
+    return json({ mode: 'sweep', ...agg, attachments: att });
+  }
+
+  if (body.mode === 'attachments_backfill') {
+    const limit = Math.min(Math.max(Number(body.limit ?? 50), 1), 500);
+    const r = await backfillAttachments(limit, Date.now() + 110_000);
+    return json({ mode: 'attachments_backfill', ...r });
   }
 
   if (!body.user_id) return json({ error: 'user_id required' }, 400);

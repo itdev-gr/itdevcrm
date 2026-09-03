@@ -9,6 +9,7 @@ vi.mock('./hooks/useEmailThreads', () => ({
   useRefreshEmailThreads: () => () => {},
 }));
 vi.mock('./hooks/useBccEmails', () => ({ useBccEmails: () => new Map() }));
+vi.mock('./hooks/useEmailAttachments', () => ({ useEmailAttachments: () => new Map() }));
 vi.mock('./SendEmailDialog', () => ({
   SendEmailDialog: (props: Record<string, unknown>) => {
     dialogProps = props;

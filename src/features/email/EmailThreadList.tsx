@@ -17,6 +17,8 @@ import {
 } from './hooks/useEmailThreads';
 import { SendEmailDialog } from './SendEmailDialog';
 import { useBccEmails } from './hooks/useBccEmails';
+import { useEmailAttachments, type EmailAttachmentRow } from './hooks/useEmailAttachments';
+import { AttachmentGallery } from '@/features/attachments/AttachmentGallery';
 import { cleanEmailBody } from './cleanEmailBody';
 import { htmlToText } from './htmlToText';
 
@@ -48,6 +50,7 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
   const refreshThreads = useRefreshEmailThreads(scope);
   const allIds = threads.flatMap((th) => th.messages.map((m) => m.id));
   const bccMap = useBccEmails(allIds);
+  const attachmentMap = useEmailAttachments(allIds);
   const [draft, setDraft] = useState<Draft | null>(null);
   // Explicit user toggles; untouched sections default to open-when-non-empty.
   const [toggled, setToggled] = useState<Partial<Record<EmailCategory, boolean>>>({});
@@ -191,7 +194,14 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
                       {threadOpen && (
                         <div className="mt-3 space-y-3">
                           {thread.messages.map((m) => (
-                            <EmailMessage key={m.id} message={m} locale={locale} t={t} bccMap={bccMap} />
+                            <EmailMessage
+                              key={m.id}
+                              message={m}
+                              locale={locale}
+                              t={t}
+                              bccMap={bccMap}
+                              attachments={attachmentMap.get(m.id) ?? []}
+                            />
                           ))}
                         </div>
                       )}
@@ -228,11 +238,13 @@ function EmailMessage({
   locale,
   t,
   bccMap,
+  attachments,
 }: {
   message: EmailMessageRow;
   locale: string;
   t: ReturnType<typeof useTranslation>['t'];
   bccMap: Map<string, string>;
+  attachments: EmailAttachmentRow[];
 }) {
   const inbound = message.direction === 'inbound';
   const time = message.sent_at ? formatCommentTime(message.sent_at, locale) : null;
@@ -314,9 +326,16 @@ function EmailMessage({
               )}
             </div>
           )}
-          <div className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
-            {displayBody}
-          </div>
+          {displayBody !== '' && (
+            <div className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+              {displayBody}
+            </div>
+          )}
+          {attachments.length > 0 && (
+            <div className="mt-2">
+              <AttachmentGallery files={attachments} bucket="email-attachments" />
+            </div>
+          )}
           {cleaned.hasHidden && (
             <button
               type="button"

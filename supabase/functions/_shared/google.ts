@@ -224,6 +224,19 @@ export function extractJobCode(subject: string): string | null {
   return m ? m[1] : null;
 }
 
+/** One attachment part of a Gmail message. `content_id` is the Content-ID a
+ *  multipart/related body references as <img src="cid:…">; Outlook also writes
+ *  the same token into the text/plain alternative as `[cid:…]`, which is what
+ *  the Emails tab used to render raw. */
+export type GmailAttachment = {
+  attachment_id: string;
+  file_name: string;
+  mime_type: string;
+  size: number;
+  content_id: string | null;
+  is_inline: boolean;
+};
+
 export type GmailMessage = {
   message_id: string; gmail_id: string; thread_id: string;
   from_email: string; from_name: string; to_email: string;
@@ -232,6 +245,7 @@ export type GmailMessage = {
   cc_emails: string | null;
   bcc_emails: string | null;
   label_ids: string[];
+  attachments: GmailAttachment[];
 };
 
 function b64urlDecodeUtf8(s: string): string {
@@ -239,13 +253,65 @@ function b64urlDecodeUtf8(s: string): string {
   return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
 }
 
+const EXT_BY_MIME: Record<string, string> = {
+  'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/gif': 'gif',
+  'image/webp': 'webp', 'image/bmp': 'bmp', 'image/svg+xml': 'svg', 'application/pdf': 'pdf',
+};
+
+/** A body part is a leaf we render (text/plain, text/html) only when it has no
+ *  filename; Outlook sends .htm attachments as text/html too. */
 // deno-lint-ignore no-explicit-any
-function collectBody(payload: any, acc: { text: string[]; html: string[] }): void {
+function partHeader(payload: any, name: string): string {
+  const hs = (payload?.headers ?? []) as { name: string; value: string }[];
+  return hs.find((h) => h.name?.toLowerCase() === name)?.value ?? '';
+}
+
+// deno-lint-ignore no-explicit-any
+function collectBody(
+  payload: any,
+  acc: { text: string[]; html: string[]; att: GmailAttachment[] },
+): void {
   if (!payload) return;
   const mime = payload.mimeType ?? '';
-  if (mime === 'text/plain' && payload.body?.data) acc.text.push(b64urlDecodeUtf8(payload.body.data));
-  else if (mime === 'text/html' && payload.body?.data) acc.html.push(b64urlDecodeUtf8(payload.body.data));
+  const filename = (payload.filename ?? '') as string;
+  const attachmentId = payload.body?.attachmentId as string | undefined;
+
+  if (attachmentId) {
+    // Everything Gmail hands back by reference is a file: real attachments
+    // (filename set) and inline images pasted into the body (Content-ID set,
+    // filename sometimes empty).
+    const cidRaw = partHeader(payload, 'content-id');
+    const contentId = cidRaw ? cidRaw.replace(/^</, '').replace(/>$/, '').trim() : null;
+    const disposition = partHeader(payload, 'content-disposition').toLowerCase();
+    const ext = EXT_BY_MIME[mime] ?? mime.split('/')[1]?.replace(/[^a-z0-9]/gi, '') ?? 'bin';
+    acc.att.push({
+      attachment_id: attachmentId,
+      file_name: filename || `inline-${(contentId ?? crypto.randomUUID()).slice(0, 8)}.${ext}`,
+      mime_type: mime || 'application/octet-stream',
+      size: Number(payload.body?.size ?? 0),
+      content_id: contentId,
+      is_inline: !!contentId || disposition.startsWith('inline'),
+    });
+  } else if (mime === 'text/plain' && payload.body?.data && !filename) {
+    acc.text.push(b64urlDecodeUtf8(payload.body.data));
+  } else if (mime === 'text/html' && payload.body?.data && !filename) {
+    acc.html.push(b64urlDecodeUtf8(payload.body.data));
+  }
   for (const p of payload.parts ?? []) collectBody(p, acc);
+}
+
+/** Download one attachment's bytes. Gmail returns base64url, sized in bytes. */
+export async function getGmailAttachment(
+  accessToken: string, messageId: string, attachmentId: string,
+): Promise<Uint8Array> {
+  const r = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attachmentId}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (!r.ok) throw new Error(`attachment_failed: ${await r.text()}`);
+  const j = await r.json();
+  const bin = atob(String(j.data ?? '').replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }
 
 export async function listGmailMessageIds(
@@ -276,7 +342,7 @@ export async function getGmailMessageFull(accessToken: string, id: string): Prom
   const to = parseAddress(h('To'));
   const ccList = parseAddressList(h('Cc'));
   const bccList = parseAddressList(h('Bcc'));
-  const acc = { text: [] as string[], html: [] as string[] };
+  const acc = { text: [] as string[], html: [] as string[], att: [] as GmailAttachment[] };
   collectBody(j.payload, acc);
   return {
     message_id: h('Message-ID') || h('Message-Id') || j.id,
@@ -286,5 +352,6 @@ export async function getGmailMessageFull(accessToken: string, id: string): Prom
     body_text: acc.text.join('\n'), body_html: acc.html.join('\n'), snippet: j.snippet ?? '',
     cc_emails: ccList.join(',') || null, bcc_emails: bccList.join(',') || null,
     label_ids: (j.labelIds ?? []) as string[],
+    attachments: acc.att,
   };
 }
