@@ -58,9 +58,6 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <span className="flex size-8 items-center justify-center rounded-full bg-[#1a9696]/15 text-xs font-semibold text-[#157777] dark:text-[#7ad4d4]">
                   {userInitial(userEmail)}
                 </span>
-                <span className="max-w-[160px] truncate text-sm text-muted-foreground">
-                  {userEmail}
-                </span>
               </Link>
               <NotificationsBell />
             </>
