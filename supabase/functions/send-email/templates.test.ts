@@ -156,3 +156,24 @@ describe('email templates', () => {
     expect(r.text).toBe('Γεια Μαρία');
   });
 });
+
+describe('chatgpt_ads_campaign', () => {
+  it('prefixes the subject with the lead code', () => {
+    const r = renderTemplate('chatgpt_ads_campaign', { code: '000123' });
+    expect(r.subject).toBe('000123 - Νέα Υπηρεσία ChatGPT Ads από την ITDEV');
+  });
+
+  it('drops the orphan dash when code is missing', () => {
+    const r = renderTemplate('chatgpt_ads_campaign', {});
+    expect(r.subject).toBe('Νέα Υπηρεσία ChatGPT Ads από την ITDEV');
+  });
+
+  it('renders the hero image on top and the campaign copy', () => {
+    const r = renderTemplate('chatgpt_ads_campaign', { code: '000123' });
+    expect(r.html).toContain('/email-assets/chatgpt-ads-2026.jpg');
+    expect(r.html.indexOf('chatgpt-ads-2026.jpg')).toBeLessThan(r.html.indexOf('ChatGPT Ads Starter'));
+    expect(r.html).toContain('150€/μήνα + ΦΠΑ');
+    expect(r.html).toContain('sales@itdev.gr');
+    expect(r.text).toContain('ChatGPT Ads Starter');
+  });
+});

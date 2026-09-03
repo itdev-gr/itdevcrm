@@ -21,7 +21,8 @@
       "missed_meeting_badge": "Meeting passed — pick the next step",
       "group_meetings": "Meetings",
       "meeting_label": "Meeting",
-      "meeting_passed": "Meeting passed"
+      "meeting_passed": "Meeting passed",
+      "replied_badge": "Replied!"
     },
     "cadence": {
       "title": "Automation chain",

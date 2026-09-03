@@ -21,7 +21,8 @@
       "missed_meeting_badge": "Πέρασε το ραντεβού — διάλεξε επόμενο βήμα",
       "group_meetings": "Ραντεβού",
       "meeting_label": "Ραντεβού",
-      "meeting_passed": "Πέρασε το ραντεβού"
+      "meeting_passed": "Πέρασε το ραντεβού",
+      "replied_badge": "Απάντησε!"
     },
     "cadence": {
       "title": "Αλυσίδα αυτοματισμού",

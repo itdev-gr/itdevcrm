@@ -54,6 +54,8 @@ export type CadenceOverview = {
   pausedLeads: Set<string>;
   /** leadId → ISO of today's most recent PBX call auto-comment. */
   lastCallByLead: Map<string, string>;
+  /** Leads with an UNREAD lead_email_reply notification for the viewer. */
+  repliedLeads: Set<string>;
 };
 
 type LiveRunRow = { id: string; lead_id: string; status: string; next_event_at: string | null };
@@ -84,7 +86,7 @@ export function useCadenceOverview() {
       // Every list here can outgrow PostgREST's silent 1000-row cap once the
       // board holds thousands of leads — drain them fully or badges/tasks
       // silently vanish for whatever falls past the first page.
-      const [tasks, live, ended, cadRes, calls] = await Promise.all([
+      const [tasks, live, ended, cadRes, replies, calls] = await Promise.all([
         fetchAllPages(() =>
           supabase
             .from('user_tasks')
@@ -110,6 +112,16 @@ export function useCadenceOverview() {
             .order('id', { ascending: true }),
         ),
         supabase.from('ud_cadences').select('*, steps:ud_cadence_steps(*)'),
+        // Unread reply notifications → the «Replied!» card badge; RLS limits
+        // rows to the viewer's own, so each rep sees only their own leads lit.
+        fetchAllPages(() =>
+          supabase
+            .from('notifications')
+            .select('id, payload')
+            .eq('type', 'lead_email_reply')
+            .is('read_at', null)
+            .order('id', { ascending: true }),
+        ),
         // Today's PBX call auto-comments — proof of attempted contact per lead.
         fetchAllPages(() =>
           supabase
@@ -129,6 +141,7 @@ export function useCadenceOverview() {
         ended: ended as unknown as EndedRunRow[],
         cadences: (cadRes.data ?? []) as unknown as (CadenceRow & { steps: CadenceStepRow[] })[],
         calls: calls as { parent_id: string; created_at: string }[],
+        replies: replies as { id: string; payload: { parent_id?: string } | null }[],
       };
     },
     // Multi-rep call sheet: without realtime, a 60s poll keeps "open task"
@@ -145,12 +158,13 @@ export function useCadenceOverview() {
     stepLabelById: new Map(),
     pausedLeads: new Set(),
     lastCallByLead: new Map(),
+    repliedLeads: new Set(),
   };
   if (!query.data || stages.length === 0) {
     return { ...query, overview: empty };
   }
 
-  const { tasks, live, ended, cadences, calls } = query.data;
+  const { tasks, live, ended, cadences, calls, replies } = query.data;
   const stageById = new Map(stages.map((s) => [s.id, s]));
   const udStageByCode = new Map(
     stages.filter((s) => s.board === 'under_development').map((s) => [s.code, s]),
@@ -175,6 +189,8 @@ export function useCadenceOverview() {
   }
   const lastCallByLead = new Map<string, string>();
   for (const call of calls) lastCallByLead.set(call.parent_id, call.created_at);
+  const repliedLeads = new Set<string>();
+  for (const n of replies) if (n.payload?.parent_id) repliedLeads.add(n.payload.parent_id);
 
   // Newest ended run per lead, only for leads still parked on a non-terminal
   // UD stage with nothing live and no open task — those need a human decision.
@@ -223,6 +239,7 @@ export function useCadenceOverview() {
     stepLabelById,
     pausedLeads,
     lastCallByLead,
+    repliedLeads,
   };
   return { ...query, overview };
 }

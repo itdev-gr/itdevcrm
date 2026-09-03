@@ -1,4 +1,4 @@
-import { AlertTriangle, AtSign, Bell, Briefcase, CheckCircle2, Clock, MessageSquare, PlayCircle } from 'lucide-react';
+import { AlertTriangle, AtSign, Bell, Briefcase, CheckCircle2, Clock, Mail, MessageSquare, PlayCircle } from 'lucide-react';
 import { relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
@@ -113,6 +113,8 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
       return <CheckCircle2 className={cn(iconClass, 'text-[#1a9696]')} />;
     case 'cadence_auto_paused':
       return <Clock className={cn(iconClass, 'text-amber-600 dark:text-amber-400')} />;
+    case 'lead_email_reply':
+      return <Mail className={cn(iconClass, 'text-emerald-600 dark:text-emerald-400')} />;
     default:
       return <Bell className={cn(iconClass, 'text-muted-foreground')} />;
   }
@@ -392,6 +394,30 @@ export function CompactNotificationContent({
         </p>
         <p className="mt-0.5 truncate text-muted-foreground">
           {reason === 'call' ? 'The lead called in — take over.' : 'The lead replied by email — take over.'}
+        </p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'lead_email_reply') {
+    const lead = readString(payload, 'lead_title');
+    const from = readString(payload, 'from_email');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+            Replied by email
+          </span>
+          {lead && (
+            <>
+              {' '}
+              <span className="text-muted-foreground">·</span> <span className="truncate">{lead}</span>
+            </>
+          )}
+        </p>
+        <p className="mt-0.5 truncate text-muted-foreground">
+          {from ? `Reply received from ${from} — follow up.` : 'A reply came in — follow up.'}
         </p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>

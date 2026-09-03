@@ -6,6 +6,7 @@ const TOASTABLE_TYPES: ReadonlySet<string> = new Set([
   'task_comment',
   'job_created',
   'task_confirm_pending',
+  'lead_email_reply',
 ]);
 
 // Pure predicate — true only for the toastable set above. Every other

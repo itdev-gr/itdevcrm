@@ -138,6 +138,14 @@ export function UnderDevKanbanPage() {
       month: '2-digit',
     }).format(new Date(iso));
   const cadenceBadgeFor = (leadId: string) => {
+    if (overview.repliedLeads.has(leadId)) {
+      return (
+        <p className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+          <Mail className="size-3 shrink-0" />
+          📩 {t('ud.tasks.replied_badge')}
+        </p>
+      );
+    }
     if (overview.pausedLeads.has(leadId)) {
       return (
         <p className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">

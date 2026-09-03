@@ -23,6 +23,66 @@ const SERVICE_LABELS_EL: Record<string, string> = {
   ads: 'Διαφημίσεις',
 };
 
+const CHATGPT_ADS_HERO = `${APP_BASE}/email-assets/chatgpt-ads-2026.jpg`;
+const CHATGPT_ADS_TEXT = `Καλησπέρα σας,
+
+Η ITDEV ξεκίνησε να παρέχει τη νέα υπηρεσία ChatGPT Ads, βοηθώντας τις επιχειρήσεις να αξιοποιήσουν ένα νέο και δυναμικό διαφημιστικό κανάλι.
+
+Με την προβολή της επιχείρησής σας στο ChatGPT μπορείτε:
+
+• Να ενισχύσετε την αναγνωρισιμότητα της εταιρείας σας
+• Να προσεγγίσετε δυνητικούς πελάτες τη στιγμή που αναζητούν πληροφορίες και λύσεις
+• Να αποκτήσετε ανταγωνιστικό πλεονέκτημα σε ένα αναπτυσσόμενο κανάλι
+• Να δημιουργήσετε νέες ευκαιρίες επικοινωνίας, πωλήσεων και συνεργασιών
+
+ChatGPT Ads Starter
+150€/μήνα + ΦΠΑ
+
+Το πακέτο περιλαμβάνει:
+
+• Δημιουργία και διαχείριση διαφημιστικής καμπάνιας
+• Σύνταξη διαφημιστικών κειμένων
+• Μηνιαία παρακολούθηση και βελτιστοποίηση
+• Αναφορά αποτελεσμάτων
+
+Η τιμή δεν περιλαμβάνει ΦΠΑ 24% και το διαφημιστικό budget.
+
+Για περισσότερες πληροφορίες και για να συζητήσουμε πώς μπορεί να ωφελήσει την επιχείρησή σας, επικοινωνήστε μαζί μας:
+
+Τηλέφωνο: +30 210 260 3414
+Email: sales@itdev.gr
+
+Απαντήστε σε αυτό το email ή καλέστε μας για μια σύντομη ενημέρωση, χωρίς καμία δέσμευση.
+
+Με εκτίμηση,
+
+Η ομάδα της ITDEV`;
+
+// Email-safe centered announcement card (tables + inline styles, no shell()):
+// optional hero row on top, escaped plain-text body, company signature, grey
+// footer line outside the card. Shared by company_announcement + campaigns.
+function announcementCard(heroRowHtml: string, raw: string): string {
+  const paras = raw
+    .split(/\n{2,}/)
+    .map((p) => `<p style="margin:0 0 16px">${linkify(escapeHtml(p.trim())).replace(/\n/g, '<br/>')}</p>`)
+    .join('');
+  return `<div style="margin:0;padding:24px 12px;background:#f1f5f9">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width:600px;width:100%;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0">
+${heroRowHtml}
+<tr><td style="padding:32px 36px 8px;font-family:Arial,sans-serif;font-size:15px;color:#0f172a;line-height:1.7">
+${paras}
+</td></tr>
+<tr><td style="padding:8px 36px 28px;font-family:Arial,sans-serif">
+<hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 4px"/>
+${COMPANY_SIG_HTML}
+</td></tr>
+</table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width:600px;width:100%;margin:0 auto">
+<tr><td style="padding:16px 8px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-align:center">IT DEV · Digital Marketing Agency · <a href="https://www.itdev.gr" style="color:#64748b">www.itdev.gr</a></td></tr>
+</table>
+</div>`;
+}
+
 function shell(bodyHtml: string, sig = ''): string {
   const footer = sig !== '' ? sig : `<p style="font-size:12px;color:#64748b">ITDEV · itdev.gr</p>`;
   return `<div style="font-family:Arial,sans-serif;font-size:14px;color:#0f172a;line-height:1.6">
@@ -61,29 +121,26 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
     const hero = imgUrl
       ? `<tr><td><img src="${escapeHtml(imgUrl)}" alt="IT DEV" width="600" style="width:100%;max-width:600px;height:auto;display:block"/></td></tr>`
       : '';
-    const paras = raw
-      .split(/\n{2,}/)
-      .map((p) => `<p style="margin:0 0 16px">${linkify(escapeHtml(p.trim())).replace(/\n/g, '<br/>')}</p>`)
-      .join('');
-    const html = `<div style="margin:0;padding:24px 12px;background:#f1f5f9">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width:600px;width:100%;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0">
-${hero}
-<tr><td style="padding:32px 36px 8px;font-family:Arial,sans-serif;font-size:15px;color:#0f172a;line-height:1.7">
-${paras}
-</td></tr>
-<tr><td style="padding:8px 36px 28px;font-family:Arial,sans-serif">
-<hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 4px"/>
-${COMPANY_SIG_HTML}
-</td></tr>
-</table>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width:600px;width:100%;margin:0 auto">
-<tr><td style="padding:16px 8px;font-family:Arial,sans-serif;font-size:12px;color:#64748b;text-align:center">IT DEV · Digital Marketing Agency · <a href="https://www.itdev.gr" style="color:#64748b">www.itdev.gr</a></td></tr>
-</table>
-</div>`;
     return {
       subject,
-      html,
+      html: announcementCard(hero, raw),
       text: raw + '\n\n' + COMPANY_SIG_TEXT,
+    };
+  },
+
+  // ChatGPT Ads campaign (2026-09): fixed marketing copy + hero asset; the
+  // subject carries the lead code like every client-facing sales email.
+  // Data: { code } (from lead_email_payload; the rest is ignored).
+  // NOTE: never create an email_templates DB row with this key — a DB row
+  // shadows the built-in (renderDbTemplate) and the hero would be dropped.
+  chatgpt_ads_campaign: (d) => {
+    const code = String(d.code ?? '').trim();
+    const subject = cleanSubject(`${code} - Νέα Υπηρεσία ChatGPT Ads από την ITDEV`);
+    const hero = `<tr><td><img src="${escapeHtml(CHATGPT_ADS_HERO)}" alt="ChatGPT Ads" width="600" style="width:100%;max-width:600px;height:auto;display:block"/></td></tr>`;
+    return {
+      subject,
+      html: announcementCard(hero, CHATGPT_ADS_TEXT),
+      text: CHATGPT_ADS_TEXT + '\n\n' + COMPANY_SIG_TEXT,
     };
   },
 
