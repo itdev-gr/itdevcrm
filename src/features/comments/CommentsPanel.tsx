@@ -42,15 +42,35 @@ export function CommentsPanel({ parentType, parentId }: Props) {
     };
   }, [comments.length]);
 
+  // Replies flatten to their thread's ROOT: a reply to a reply used to be
+  // grouped under the mid-thread comment id, which is never rendered — the
+  // row saved but silently disappeared (deal 000121, 2026-09-03).
+  const byId = new Map(comments.map((c) => [c.id, c]));
+  const rootOf = (c: CommentRow): string | null => {
+    let cur = c;
+    const seen = new Set<string>([c.id]);
+    while (cur.reply_to_id) {
+      const parent = byId.get(cur.reply_to_id);
+      if (!parent || seen.has(parent.id)) return null; // deleted parent / cycle
+      seen.add(parent.id);
+      cur = parent;
+    }
+    return cur.id;
+  };
   const repliesByParent = new Map<string, CommentRow[]>();
   const tops: CommentRow[] = [];
   for (const c of comments) {
-    if (c.reply_to_id) {
-      const list = repliesByParent.get(c.reply_to_id) ?? [];
-      list.push(c);
-      repliesByParent.set(c.reply_to_id, list);
-    } else {
+    if (!c.reply_to_id) {
       tops.push(c);
+      continue;
+    }
+    const root = rootOf(c);
+    if (root) {
+      const list = repliesByParent.get(root) ?? [];
+      list.push(c);
+      repliesByParent.set(root, list);
+    } else {
+      tops.push(c); // orphan reply: show it rather than hide it
     }
   }
 
