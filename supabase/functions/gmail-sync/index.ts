@@ -140,7 +140,27 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         p_from: m.from_email, p_to: m.to_email, p_subject: m.subject,
       });
       const f = Array.isArray(fil) ? fil[0] : null;
-      if (!f) continue;
+      if (!f) {
+        // Inbox (2026-09-03): unknown-party inbound on ANY synced mailbox is
+        // stored unfiled (all card ids null) so the RECIPIENT can file it.
+        // Staff↔staff and noise senders stay dropped, as before.
+        const fromLower = m.from_email.toLowerCase();
+        if (/no-?reply|newsletter|mailer[-_]?daemon|postmaster/i.test(fromLower)) continue;
+        const { data: staffFrom } = await admin
+          .from('profiles').select('user_id').eq('email', fromLower).maybeSingle();
+        if (staffFrom) continue; // our own copy / internal mail
+        const ok = await storeCaptured({
+          message_id: m.message_id, gmail_id: m.gmail_id, thread_id: m.thread_id,
+          direction: 'inbound', from_email: m.from_email, from_name: m.from_name,
+          to_email: m.to_email, subject: m.subject, body_text: m.body_text,
+          body_html: m.body_html, snippet: m.snippet, cc_emails: m.cc_emails,
+          sent_at: m.internal_date ? new Date(m.internal_date).toISOString() : null,
+          client_id: null, deal_id: null, job_id: null, lead_id: null,
+          department: null, staff_user_id: null, captured_from_user_id: uid,
+        });
+        if (ok) stored++; else errors++;
+        continue;
+      }
       matched++;
       const ok = await storeCaptured({
         message_id: m.message_id, gmail_id: m.gmail_id, thread_id: m.thread_id,
