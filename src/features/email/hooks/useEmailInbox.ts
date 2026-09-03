@@ -28,11 +28,13 @@ export function useEmailInbox() {
           .eq('direction', 'inbound')
           .order('sent_at', { ascending: false, nullsFirst: false })
           .limit(300),
-        supabase.from('email_message_reads').select('message_pk'),
+        // Bridge: email_message_reads is not yet in generated supabase.ts; drop `as never` after next `npm run types:gen`.
+        supabase.from('email_message_reads' as never).select('message_pk'),
       ]);
       if (msgs.error) throw new Error(msgs.error.message);
       if (reads.error) throw new Error(reads.error.message);
-      return { rows: msgs.data ?? [], readPks: new Set((reads.data ?? []).map((r) => r.message_pk as string)) };
+      const readRows = (reads.data ?? []) as unknown as { message_pk: string }[];
+      return { rows: msgs.data ?? [], readPks: new Set(readRows.map((r) => r.message_pk)) };
     },
     refetchInterval: 60_000,
   });
@@ -55,8 +57,12 @@ export function useMarkEmailRead() {
   async function insert(pks: string[]) {
     if (!userId || pks.length === 0) return;
     const { error } = await supabase
-      .from('email_message_reads')
-      .upsert(pks.map((message_pk) => ({ message_pk, user_id: userId })), { onConflict: 'message_pk,user_id', ignoreDuplicates: true });
+      // Bridge: email_message_reads is not yet in generated supabase.ts; drop `as never` after next `npm run types:gen`.
+      .from('email_message_reads' as never)
+      .upsert(
+        pks.map((message_pk) => ({ message_pk, user_id: userId })) as never,
+        { onConflict: 'message_pk,user_id', ignoreDuplicates: true },
+      );
     if (error) throw new Error(error.message);
     void qc.invalidateQueries({ queryKey: queryKeys.emailInbox() });
   }
