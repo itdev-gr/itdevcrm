@@ -147,7 +147,7 @@ async function syncOneUser(uid: string): Promise<SyncResult | { skip: string }> 
         const fromLower = m.from_email.toLowerCase();
         if (/no-?reply|newsletter|mailer[-_]?daemon|postmaster/i.test(fromLower)) continue;
         const { data: staffFrom } = await admin
-          .from('profiles').select('user_id').eq('email', fromLower).maybeSingle();
+          .from('profiles').select('user_id').ilike('email', fromLower).maybeSingle();
         if (staffFrom) continue; // our own copy / internal mail
         const ok = await storeCaptured({
           message_id: m.message_id, gmail_id: m.gmail_id, thread_id: m.thread_id,
