@@ -43,6 +43,9 @@ type SendInput = {
    *  owner's personal Gmail (CC sales@), falling back to Resend when the
    *  owner has no usable Google connection. */
   sendAsUserId?: string | null;
+  /** Personal sends only: the captured message this is a reply to, so Gmail
+   *  files it in the same conversation and the recipient's client threads it. */
+  replyTo?: { messageId?: string | null; threadId?: string | null };
 };
 
 /** Templates that switch to the owner-Gmail transport (owner decision
@@ -342,7 +345,11 @@ async function drain(): Promise<{ processed: number; sent: number; failed: numbe
   return { processed: (rows ?? []).length, sent, failed };
 }
 
-async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null, cc: string[] = [], bcc: string[] = [], attachmentRefs: AttachmentRef[] = []): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
+/** Threading hints carried from the Reply button: the captured message the user
+ *  replied to. `threadId` is the Gmail thread in the sender's own mailbox. */
+type ReplyTo = { messageId?: string | null; threadId?: string | null };
+
+async function sendPersonal(uid: string, to: string, data: Record<string, unknown>, dedupeKey: string | null, cc: string[] = [], bcc: string[] = [], attachmentRefs: AttachmentRef[] = [], replyTo: ReplyTo = {}): Promise<{ status: 'sent' | 'failed' | 'skipped' | 'not_connected'; id?: string; error?: string }> {
   // Reject header injection / malformed recipients before building the MIME message.
   if (/[\r\n]/.test(to) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
     return { status: 'failed', error: 'invalid_recipient' };
@@ -420,20 +427,81 @@ async function sendPersonal(uid: string, to: string, data: Record<string, unknow
       return { status: 'failed', error: (e as Error).message };
     }
   }
-  let res: { ok: boolean; id?: string; error?: string };
+  // One RFC822 Message-ID for both the wire email and the mirror row below, so
+  // the delivered copy gmail-sync captures minutes later lands on the same
+  // unique key instead of showing twice (spec 2026-07-29-email-mirror-dedup).
+  const rfcMessageId = newCrmMessageId();
+  // Display name on From: a bare address is what the recipient's client shows
+  // otherwise; the automated owner-Gmail path has always sent a proper one.
+  const fromName = (prof?.full_name ?? '').trim();
+  const fromHeader = fromName
+    ? `=?UTF-8?B?${btoa(unescape(encodeURIComponent(fromName)))}?= <${acct.google_email}>`
+    : acct.google_email;
+  let res: { ok: boolean; id?: string; threadId?: string; error?: string };
   try {
     const raw = buildMime({
-      from: acct.google_email, to, subject, html, cc, bcc: mergedBcc,
+      from: fromHeader, to, subject, html, text: String(data.text ?? ''),
+      cc, bcc: mergedBcc,
+      messageId: rfcMessageId,
+      ...(replyTo.messageId ? { inReplyTo: replyTo.messageId, references: replyTo.messageId } : {}),
       attachments: mimeAtts.map((a) => ({ filename: a.filename, mimeType: a.mimeType, base64: a.base64 })),
     });
-    res = await sendGmail(access, raw);
+    res = await sendGmail(access, raw, replyTo.threadId ?? undefined);
   } catch (e) {
     await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: 'failed', dedupe_key: dedupeKey, error: String((e as Error).message) });
     return { status: 'failed', error: 'mime_build_failed' };
   }
   // Keep the raw Gmail error in email_log for debugging; return a generic code to the client.
   await admin.from('email_log').insert({ identity: 'personal', to_email: to, template_key: 'custom', status: res.ok ? 'sent' : 'failed', resend_id: res.id ?? null, dedupe_key: dedupeKey, error: res.ok ? null : res.error });
+  if (res.ok) {
+    await mirrorPersonalSend(rfcMessageId, acct.google_email, fromName || null, to, subject, data, cc, mergedBcc, uid, res.threadId ?? replyTo.threadId ?? null);
+  }
   return res.ok ? { status: 'sent', id: res.id } : { status: 'failed', error: 'send_failed' };
+}
+
+/** Write the sent message into `email_messages` immediately, the same way the
+ *  Resend path does — otherwise a personally-composed email is invisible in the
+ *  CRM until the next gmail-sync sweep (up to 2 min) and the user thinks it was
+ *  lost. Filing decides ownership; unknown parties are skipped; errors never
+ *  affect the send result. */
+async function mirrorPersonalSend(
+  messageId: string, fromEmail: string, fromName: string | null, to: string, subject: string,
+  data: Record<string, unknown>, cc: string[], bcc: string[], uid: string,
+  threadId: string | null,
+): Promise<void> {
+  try {
+    const { data: fil } = await admin.rpc('resolve_email_filing', {
+      p_from: fromEmail, p_to: to, p_subject: subject,
+    });
+    const f = Array.isArray(fil) ? fil[0] : null;
+    if (!f) return;
+    await admin.from('email_messages').upsert({
+      message_id: messageId,
+      gmail_id: null,
+      thread_id: threadId,
+      direction: 'outbound',
+      from_email: fromEmail.toLowerCase(),
+      from_name: fromName,
+      to_email: to,
+      subject,
+      body_text: String(data.text ?? '') || null,
+      body_html: String(data.html ?? '') || null,
+      sent_at: new Date().toISOString(),
+      client_id: f.client_id, deal_id: f.deal_id, job_id: f.job_id, lead_id: f.lead_id,
+      department: f.department, staff_user_id: f.staff_user_id, captured_from_user_id: uid,
+      cc_emails: cc.join(',') || null,
+    }, { onConflict: 'message_id', ignoreDuplicates: true });
+    if (bcc.length > 0) {
+      const { data: mrow } = await admin
+        .from('email_messages').select('id').eq('message_id', messageId).maybeSingle();
+      if (mrow) {
+        await admin.from('email_message_bcc').upsert(
+          { message_pk: mrow.id, bcc_emails: bcc.join(',') },
+          { onConflict: 'message_pk' },
+        );
+      }
+    }
+  } catch (_e) { /* mirroring must never fail a send */ }
 }
 
 Deno.serve(async (req) => {
@@ -476,8 +544,17 @@ Deno.serve(async (req) => {
     } catch (e) {
       return json({ error: (e as Error).message }, 400);
     }
-    const r = await sendPersonal(u.user.id, body.to, body.data ?? {}, body.dedupeKey ?? null, cc, bcc, attachmentRefs);
-    if (r.status === 'not_connected') return json({ status: 'not_connected' }, 409);
+    const replyTo = (body.replyTo ?? {}) as { messageId?: string | null; threadId?: string | null };
+    const r = await sendPersonal(u.user.id, body.to, body.data ?? {}, body.dedupeKey ?? null, cc, bcc, attachmentRefs, {
+      messageId: typeof replyTo.messageId === 'string' ? replyTo.messageId : null,
+      threadId: typeof replyTo.threadId === 'string' ? replyTo.threadId : null,
+    });
+    // `error` must be present: the client reads it out of the non-2xx body to
+    // pick a translated message; without it the user saw the raw
+    // "Edge Function returned a non-2xx status code".
+    if (r.status === 'not_connected') {
+      return json({ status: 'not_connected', error: 'not_connected' }, 409);
+    }
     return json({ status: r.status, id: r.id, error: r.error }, r.status === 'failed' ? 502 : 200);
   }
 

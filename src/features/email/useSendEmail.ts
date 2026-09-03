@@ -12,6 +12,9 @@ export type SendEmailVars = {
   bcc?: string[] | undefined;
   dedupeKey?: string | undefined;
   attachments?: { bucket: string; path: string; filename: string; mimeType?: string }[] | undefined;
+  /** Personal replies: the captured message being answered, so the send joins
+   *  the same Gmail conversation instead of starting a new one. */
+  replyTo?: { messageId?: string | null; threadId?: string | null } | undefined;
 };
 
 export function useSendEmail() {
@@ -29,6 +32,7 @@ export function useSendEmail() {
           ...(vars.cc && vars.cc.length > 0 ? { cc: vars.cc } : {}),
           ...(vars.bcc && vars.bcc.length > 0 ? { bcc: vars.bcc } : {}),
           ...(vars.attachments && vars.attachments.length ? { attachments: vars.attachments } : {}),
+          ...(vars.replyTo ? { replyTo: vars.replyTo } : {}),
         },
       });
       if (error) {

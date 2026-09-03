@@ -9,6 +9,7 @@ import {
 } from '@/features/comments/comment-utils';
 import {
   useEmailThreads,
+  useRefreshEmailThreads,
   type EmailCategory,
   type EmailMessageRow,
   type EmailScope,
@@ -32,12 +33,19 @@ type Props = {
   newEmailSubject?: string;
 };
 
-type Draft = { to: string; subject: string };
+type Draft = {
+  to: string;
+  subject: string;
+  /** Set for a reply: threads the send in Gmail instead of starting a new
+   *  conversation (In-Reply-To/References + the sender's own thread id). */
+  replyTo?: { messageId?: string | null; threadId?: string | null };
+};
 
 export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Props) {
   const { t, i18n } = useTranslation('email');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-GB';
   const { data: threads = [], isLoading } = useEmailThreads(scope);
+  const refreshThreads = useRefreshEmailThreads(scope);
   const allIds = threads.flatMap((th) => th.messages.map((m) => m.id));
   const bccMap = useBccEmails(allIds);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -73,6 +81,9 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
     setDraft({
       to: counterparty || clientEmail,
       subject,
+      ...(newest
+        ? { replyTo: { messageId: newest.message_id, threadId: newest.thread_id } }
+        : {}),
     });
   }
 
@@ -200,7 +211,12 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
           to={draft.to}
           subject={draft.subject}
           body=""
+          {...(draft.replyTo ? { replyTo: draft.replyTo } : {})}
           onClose={() => setDraft(null)}
+          // The send writes its own mirror row server-side, so the message is
+          // already there — just refetch instead of making the user wait for
+          // the next gmail-sync sweep and assume it was lost.
+          onSent={refreshThreads}
         />
       )}
     </div>

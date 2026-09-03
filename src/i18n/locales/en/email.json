@@ -68,12 +68,14 @@
     "invalid_recipient": "The recipient address is not valid.",
     "token_refresh_failed": "Google connection expired — reconnect and try again.",
     "mime_build_failed": "The email could not be assembled (attachment problem).",
-    "send_failed": "Gmail rejected the send. Try again."
+    "send_failed": "Gmail rejected the send. Try again.",
+    "not_connected": "Google is not connected for your account — connect it and try again.",
+    "bcc_admin_only": "Only admins can add a Bcc.",
+    "identity_not_allowed": "You are not allowed to send with that sender identity.",
+    "subject_required": "Add a subject before sending.",
+    "body_required": "The message body is empty."
   },
   "offer_composer": {
-    "preparing": "Preparing offer email…",
-    "pdf_failed": "The offer PDF could not be generated.",
-    "retry": "Retry",
-    "continue_anyway": "Continue anyway"
+    "preparing": "Preparing offer email…"
   }
 }

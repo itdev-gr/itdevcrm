@@ -54,4 +54,27 @@ describe('SendEmailDialog', () => {
     expect(scrollArea!.contains(sendButton)).toBe(false);
     expect(panel!.contains(sendButton)).toBe(true);
   });
+
+  // The deal welcome mail and the pro forma mail keep the dialog mounted and
+  // only flip `open`. Without the reset the second open kept the previous
+  // session's state — most visibly the green "sent" screen — and ignored the
+  // new to/subject/body props.
+  it('reloads its props and clears edits when reopened', () => {
+    const { rerender } = render(
+      wrap(<SendEmailDialog open identity="sales" to="first@x.gr" subject="first" body="B" onClose={() => {}} />),
+    );
+    const to = () => screen.getByLabelText(/^(To|Προς)$/);
+    fireEvent.change(to(), { target: { value: 'typed@x.gr' } });
+    expect(to()).toHaveValue('typed@x.gr');
+
+    rerender(
+      wrap(<SendEmailDialog open={false} identity="sales" to="first@x.gr" subject="first" body="B" onClose={() => {}} />),
+    );
+    rerender(
+      wrap(<SendEmailDialog open identity="sales" to="second@x.gr" subject="second" body="B" onClose={() => {}} />),
+    );
+
+    expect(to()).toHaveValue('second@x.gr');
+    expect(screen.getByLabelText(/^(Subject|Θέμα)$/)).toHaveValue('second');
+  });
 });

@@ -114,26 +114,57 @@ export function emailFromIdToken(idToken: string): string | null {
 // When `attachments` is present the message is emitted as multipart/mixed (a
 // text/html part + one base64 attachment part each); absent, the output is the
 // unchanged single-part text/html message (backward compatible byte-for-byte).
+// `messageId`/`inReplyTo`/`references` are emitted verbatim too — they are
+// server-generated (newCrmMessageId) or come from a captured header, never from
+// user input. `text` adds a text/plain alternative alongside the html.
 export function buildMime(m: {
-  from: string; to: string; subject: string; html: string;
+  from: string; to: string; subject: string; html: string; text?: string;
   cc?: string[]; bcc?: string[];
+  messageId?: string; inReplyTo?: string; references?: string;
   attachments?: { filename: string; mimeType: string; base64: string }[];
 }): string {
   const subj = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(m.subject)))}?=`;
+  const hdr = (v: string | undefined) => (v ?? '').replace(/[\r\n]/g, '');
   const headers = [
     `From: ${m.from}`,
     `To: ${m.to}`,
     ...(m.cc && m.cc.length > 0 ? [`Cc: ${m.cc.join(', ')}`] : []),
     ...(m.bcc && m.bcc.length > 0 ? [`Bcc: ${m.bcc.join(', ')}`] : []),
     `Subject: ${subj}`,
+    ...(m.messageId ? [`Message-ID: ${hdr(m.messageId)}`] : []),
+    ...(m.inReplyTo ? [`In-Reply-To: ${hdr(m.inReplyTo)}`] : []),
+    ...(m.references ? [`References: ${hdr(m.references)}`] : []),
     'MIME-Version: 1.0',
   ];
   const htmlB64 = btoa(unescape(encodeURIComponent(m.html)));
+  const hasText = typeof m.text === 'string' && m.text.trim() !== '';
+
+  // The body block: a bare text/html part, or a multipart/alternative pairing
+  // text/plain with it. Mail clients and spam filters both prefer the latter.
+  const altBoundary = `itdev_alt_${crypto.randomUUID().replace(/-/g, '')}`;
+  const bodyContentType = hasText
+    ? `Content-Type: multipart/alternative; boundary="${altBoundary}"`
+    : 'Content-Type: text/html; charset=UTF-8';
+  const bodyLines: string[] = hasText
+    ? [
+        '',
+        `--${altBoundary}`,
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: base64',
+        '',
+        btoa(unescape(encodeURIComponent(m.text!))),
+        `--${altBoundary}`,
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: base64',
+        '',
+        htmlB64,
+        `--${altBoundary}--`,
+      ]
+    : ['Content-Transfer-Encoding: base64', '', htmlB64];
 
   if (!m.attachments || m.attachments.length === 0) {
-    // Unchanged single-part output (backward compatible).
-    const lines = [...headers, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', htmlB64];
-    return b64url(enc.encode(lines.join('\r\n')));
+    // With no text alternative this is the unchanged single-part output.
+    return b64url(enc.encode([...headers, bodyContentType, ...bodyLines].join('\r\n')));
   }
 
   const boundary = `itdev_${crypto.randomUUID().replace(/-/g, '')}`;
@@ -142,10 +173,8 @@ export function buildMime(m: {
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     '',
     `--${boundary}`,
-    'Content-Type: text/html; charset=UTF-8',
-    'Content-Transfer-Encoding: base64',
-    '',
-    htmlB64,
+    bodyContentType,
+    ...bodyLines,
   ];
   for (const a of m.attachments) {
     // Sanitize against header injection: strip quotes/backslashes/CR/LF from the
@@ -167,14 +196,21 @@ export function buildMime(m: {
   return b64url(enc.encode(parts.join('\r\n')));
 }
 
-export async function sendGmail(accessToken: string, rawBase64Url: string): Promise<{ ok: boolean; id?: string; error?: string }> {
+// `threadId` makes Gmail file the send inside an existing conversation — it
+// must be the thread of a message in the SAME mailbox, and the References /
+// In-Reply-To headers still have to be set for the recipient's client to thread.
+export async function sendGmail(
+  accessToken: string,
+  rawBase64Url: string,
+  threadId?: string,
+): Promise<{ ok: boolean; id?: string; threadId?: string; error?: string }> {
   const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ raw: rawBase64Url }),
+    body: JSON.stringify({ raw: rawBase64Url, ...(threadId ? { threadId } : {}) }),
   });
   if (!r.ok) return { ok: false, error: await r.text() };
   const j = await r.json();
-  return { ok: true, id: j.id };
+  return { ok: true, id: j.id, threadId: j.threadId };
 }
 
 export function parseAddress(v: string): { email: string; name: string } {

@@ -31,6 +31,9 @@ export function ProFormaDetailPage() {
   const updateStatus = useUpdateProFormaStatus(proFormaId);
   const download = useDownloadProFormaPdf();
   const [emailOpen, setEmailOpen] = useState(false);
+  // Fresh key per dialog-open — a stable `proforma:<id>` made every resend a
+  // silent no-op that still rendered as "sent".
+  const [emailKey, setEmailKey] = useState('');
 
   useDocumentTitle(
     formatPageTitle(proForma?.client?.name, t('record_type.proforma'), proForma?.pro_forma_number),
@@ -105,7 +108,10 @@ export function ProFormaDetailPage() {
               ))}
             </select>
           </div>
-          <Button type="button" variant="outline" onClick={() => setEmailOpen(true)}>
+          <Button type="button" variant="outline" onClick={() => {
+              setEmailKey(`proforma:${proForma.id}:${crypto.randomUUID()}`);
+              setEmailOpen(true);
+            }}>
             Send by email
           </Button>
           <Button
@@ -240,7 +246,7 @@ export function ProFormaDetailPage() {
         to={recipientEmail}
         subject={draft.subject}
         body={draft.body}
-        dedupeKey={`proforma:${proForma.id}`}
+        dedupeKey={emailKey}
         onClose={() => setEmailOpen(false)}
       />
     </div>

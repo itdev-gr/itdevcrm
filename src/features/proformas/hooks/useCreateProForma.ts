@@ -23,8 +23,8 @@ export function useCreateProForma() {
   const qc = useQueryClient();
   return useMutation<string, DefaultError, Input>({
     mutationFn: captureMutation('pro_formas', 'create', async (input: Input): Promise<string> => {
-      // Unlike offers (which never set created_by — a known gap), stamp the
-      // creator so future per-user behavior has a real value to key off.
+      // Stamp the creator so per-user behavior has a real value to key off
+      // (offers do the same since the accounting-access rollout).
       const { data: { session } } = await supabase.auth.getSession();
       const payload = {
         lead_id: input.lead_id ?? null,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSendEmail, type SendEmailVars } from './useSendEmail';
 import { useDeptCc } from './useDeptCc';
@@ -10,6 +10,7 @@ import { CommentAttachButton } from '../comments/CommentAttachButton';
 import { useFileDropPaste } from '../comments/hooks/useFileDropPaste';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { parseRecipientList } from '../../../supabase/functions/_shared/recipients.ts';
+import { htmlToText } from './htmlToText';
 
 /** A lightweight File carrying the staged ref's name + byte size, purely so
  *  CommentAttachButton can render the chip label + size (it never re-reads bytes). */
@@ -26,6 +27,9 @@ export type SendEmailDialogProps = {
   subject: string;
   body: string;
   dedupeKey?: string;
+  /** Personal replies: the captured message being answered, forwarded to the
+   *  edge function so Gmail threads the send. */
+  replyTo?: { messageId?: string | null; threadId?: string | null };
   onClose: () => void;
   /** Pre-staged attachments (durable objects, e.g. a generated PDF) shown as
    *  removable chips; never deleted from storage by the dialog. */
@@ -33,7 +37,7 @@ export type SendEmailDialogProps = {
   onSent?: () => void;
 };
 
-export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, onClose, initialAttachments, onSent }: SendEmailDialogProps) {
+export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, replyTo, onClose, initialAttachments, onSent }: SendEmailDialogProps) {
   const { t } = useTranslation('email');
   const send = useSendEmail();
   const att = useEmailAttachmentStaging(initialAttachments ?? []);
@@ -60,18 +64,45 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
+  // Callers that keep the dialog permanently mounted and only toggle `open`
+  // (the deal welcome mail, the pro forma mail) would otherwise reopen on the
+  // previous session's state — most visibly stuck on the green "Sent" screen,
+  // and always ignoring changed to/subject/body props.
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      setToEmail(to);
+      setCcText('');
+      setCcTouched(false);
+      setBccText('');
+      setSubj(subject);
+      setText(body);
+      setError(null);
+      setDone(false);
+    }
+    wasOpen.current = open;
+  }, [open, to, subject, body]);
+
   if (!open) return null;
 
   async function submit() {
     setError(null);
     if (!toEmail.trim()) return setError(t('dialog.to_required'));
+    // Catch a malformed address here instead of round-tripping to Gmail for an
+    // `invalid_recipient` rejection. parseRecipientList is the same validator
+    // the edge function runs on cc/bcc.
+    if (parseRecipientList(toEmail)?.length !== 1) {
+      return setError(t('errors.invalid_recipient'));
+    }
     const cc = parseRecipientList(ccText);
     const bcc = parseRecipientList(bccText);
     if (cc === null || bcc === null) {
       return setError(t('dialog.invalid_recipients', { defaultValue: 'Invalid Cc/Bcc address (comma-separated, max 10).' }));
     }
+    if (!subj.trim()) return setError(t('errors.subject_required'));
+    if (!htmlToText(text).trim()) return setError(t('errors.body_required'));
     try {
-      await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, cc, bcc, dedupeKey, attachments: att.refs });
+      await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, cc, bcc, dedupeKey, attachments: att.refs, replyTo });
       setDone(true);
       void att.cleanup();
       onSent?.();
@@ -86,11 +117,10 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
     onClose();
   }
 
-  const attError = att.error
-    ? (att.error === 'file_too_large' || att.error === 'attachments_too_large'
-        ? t(`errors.${att.error}`)
-        : att.error)
-    : null;
+  // Any code the staging hook raises has an `errors.*` entry; fall back to the
+  // raw string only for something genuinely unknown (previously `upload_failed`
+  // was rendered untranslated).
+  const attError = att.error ? t(`errors.${att.error}`, { defaultValue: att.error }) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -168,7 +198,7 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
             </button>
           ) : (
             <button type="button" className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
-              onClick={submit} disabled={send.isPending || att.busy}>{t('dialog.send')}</button>
+              onClick={submit} disabled={send.isPending || att.busy || google.isLoading}>{t('dialog.send')}</button>
           ))}
         </div>
       </div>
