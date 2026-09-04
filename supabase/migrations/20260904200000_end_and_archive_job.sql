@@ -162,13 +162,33 @@ revoke execute on function public.end_and_archive_job(uuid) from public, anon;
 grant execute on function public.end_and_archive_job(uuid) to authenticated;
 
 -- --- 3. Επαναφορά (μόνο admin) -----------------------------------------------
--- Το job γυρίζει από τα Αρχειοθετημένα στο Closed lane όπου το άφησε το End.
--- Η χρέωση ΔΕΝ ξαναρχίζει αυτόματα — billing_active μένει false, αλλά το job
--- μπαίνει ΑΚΡΙΒΩΣ στην ίδια κατάσταση που αφήνει το job_pause_billing
--- (is_blocked/blocked_reason='billing_paused'/blocked_at/blocked_by), ώστε το
--- ήδη υπάρχον Resume billing κουμπί (JobBillingPauseCard / JobsBillingPanel
--- showResume) να εμφανιστεί και να δουλέψει· διαφορετικά το restored job
--- φαίνεται ζωντανό στο board αλλά καμία χρέωση δεν μπορεί ποτέ να ξαναρχίσει.
+-- Το job γυρίζει από τα Αρχειοθετημένα στο lane όπου το άφησε το End — Closed
+-- αν η χρέωσή του είχε ήδη σταματήσει πριν αρχειοθετηθεί, αλλιώς Blocked (βλ.
+-- παρακάτω). Η χρέωση ΔΕΝ ξαναρχίζει αυτόματα — billing_active μένει false.
+--
+-- Final-fix re-review NEW-1/NEW-2 (2026-09-04): το parent update ΠΡΙΝ έμπαινε
+-- ΑΝΕΞΑΡΤΗΤΑ στην κατάσταση pause (is_blocked/blocked_reason='billing_paused'
+-- /blocked_at/blocked_by) ώστε το ήδη υπάρχον Resume billing κουμπί
+-- (JobBillingPauseCard / JobsBillingPanel showResume) να δουλέψει. Αυτό όμως
+-- σπάει τις 6 legacy γραμμές που αρχειοθετήθηκαν από το παλιό stub Archive
+-- κουμπί (archived_reason='accounting_archive'), το οποίο ΔΕΝ άγγιζε ποτέ το
+-- billing_active — η επαναφορά μιας τέτοιας γραμμής θα την έβγαζε με
+-- billing_active=true (άρα ο recurring generator συνεχίζει κανονικά να τη
+-- χρεώνει) ενώ κάθε UI λέει "Billing paused" (κόκκινο Blocked column,
+-- κλειδωμένο monthly-tasks checklist, κρυμμένα End/Pause). Fix: η στήλη
+-- pause γράφεται ΜΟΝΟ όταν η χρέωση είχε πράγματι σταματήσει πριν την
+-- επαναφορά — στο SET ενός UPDATE η δεξιά πλευρά βλέπει την ΠΑΛΙΑ τιμή, οπότε
+-- `case when not billing_active then … else …` είναι ακριβώς αυτό. Μια
+-- legacy γραμμή που ακόμα χρέωνε γυρίζει ΑΚΡΙΒΩΣ όπως ήταν, χωρίς stamp.
+--
+-- Τα cascade παιδιά (AI SEO work cards) ΔΕΝ παίρνουν καθόλου το pause stamp
+-- πια: το job_resume_billing ξεμπλοκάρει μόνο με βάση deal_id+service_type
+-- του ΓΟΝΙΟΥ, και το παιδί έχει service_type='ai_seo' ενώ ο γονιός
+-- 'local_seo'/'web_seo' — άρα δεν θα ξεμπλοκαριζόταν ΠΟΤΕ, και κανένα UI δεν
+-- προσφέρει Resume σε job με parent_job_id not null. Θα έμενε μόνιμα στο
+-- Blocked column με κλειδωμένο checklist — χειρότερα από πριν, όπου το παιδί
+-- γύριζε δουλέψιμο. Τα παιδιά απλώς ξαναγίνονται μη-αρχειοθετημένα, όπως πριν
+-- αυτό το fix round.
 create or replace function public.unarchive_job(p_job_id uuid)
 returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -185,10 +205,11 @@ begin
     archived_at = null,
     archived_by = null,
     archived_reason = null,
-    is_blocked = true,
-    blocked_reason = 'billing_paused',
-    blocked_at = now(),
-    blocked_by = v_actor,
+    -- Pause-stamp ΜΟΝΟ αν η χρέωση όντως είχε σταματήσει (RHS = παλιά τιμή).
+    is_blocked = case when not billing_active then true else is_blocked end,
+    blocked_reason = case when not billing_active then 'billing_paused' else blocked_reason end,
+    blocked_at = case when not billing_active then now() else blocked_at end,
+    blocked_by = case when not billing_active then v_actor else blocked_by end,
     updated_at = now()
    where id = p_job_id and archived;
   get diagnostics v_found = row_count;
@@ -196,13 +217,11 @@ begin
     return jsonb_build_object('ok', false, 'errors', array['job_not_found']);
   end if;
 
+  -- Παιδιά: ΜΟΝΟ επαναφορά από το archive, ποτέ pause-stamp (NEW-2 — δεν
+  -- υπάρχει τρόπος να ξεμπλοκαριστούν μετά, βλ. σχόλιο πάνω από τη function).
   update public.jobs c set
     archived = false, archived_at = null, archived_by = null,
     archived_reason = null,
-    is_blocked = true,
-    blocked_reason = 'billing_paused',
-    blocked_at = now(),
-    blocked_by = v_actor,
     updated_at = now()
    where c.parent_job_id = p_job_id
      and c.archived
