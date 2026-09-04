@@ -82,6 +82,7 @@ export const queryKeys = {
   servicePackages: () => ['service-packages'] as const,
   serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
+  archivedJobsByService: (serviceType: string) => ['jobs', 'service', serviceType, 'archived'] as const,
   jobsForDeal: (dealId: string) => ['jobs', 'deal', dealId] as const,
   emailInbox: () => ['email-inbox'] as const,
   emailInboxBadge: () => ['email-inbox-badge'] as const,

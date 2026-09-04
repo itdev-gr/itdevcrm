@@ -530,3 +530,100 @@ begin
   end if;
   raise exception 'RESULT :: PASS SL20 :: totals include in-grace sibling (372 = 124 + 248, both services)';
 end $$;
+
+-- ---- SL21 (I7 ARCHIVED, final-review 2026-09-04): the pair's only
+-- non-cancelled job is archived -> reminder suppressed even though the
+-- payment row itself is untouched.
+do $$
+declare v_client uuid; v_deal uuid; v_job uuid; v_any int;
+begin
+  insert into public.clients (name, email, country) values ('sl21_'||gen_random_uuid()::text,'sl21@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL21','sl21','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  -- First-payment rule (2026-08-31): reminders require >=1 PAID row on the deal.
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_dev',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_dev',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  -- The one job End→archived for this (deal, service_type) pair.
+  insert into public.jobs (deal_id, client_id, service_type, billing_type, amount_net, vat_rate,
+                           status, archived, billing_active)
+    values (v_deal, v_client, 'web_dev', 'recurring_monthly', 100, 24, 'completed', true, false)
+    returning id into v_job;
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_any <> 0 then
+    raise exception 'RESULT :: FAIL SL21 :: sole job for the pair archived must get NO reminder, got %', v_any;
+  end if;
+  raise exception 'RESULT :: PASS SL21 :: sole job archived -> no reminder (I7)';
+end $$;
+
+-- ---- SL22 (I7 SIBLING LIVE, final-review 2026-09-04): a deal with TWO jobs
+-- of the SAME service_type (e.g. two web_dev sites) — one archived, one
+-- still live. "Some job archived" must NOT silence the reminder; only
+-- "every non-cancelled job archived" does.
+do $$
+declare v_client uuid; v_deal uuid; v_job_a uuid; v_job_b uuid; v_soon int;
+begin
+  insert into public.clients (name, email, country) values ('sl22_'||gen_random_uuid()::text,'sl22@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL22','sl22','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_dev',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_dev',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  -- Site A: ended and archived.
+  insert into public.jobs (deal_id, client_id, service_type, billing_type, amount_net, vat_rate,
+                           status, archived, billing_active)
+    values (v_deal, v_client, 'web_dev', 'recurring_monthly', 100, 24, 'completed', true, false)
+    returning id into v_job_a;
+  -- Site B: still live — must keep the reminder alive for the pair.
+  insert into public.jobs (deal_id, client_id, service_type, billing_type, amount_net, vat_rate,
+                           status, archived, billing_active)
+    values (v_deal, v_client, 'web_dev', 'recurring_monthly', 100, 24, 'active', false, true)
+    returning id into v_job_b;
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_soon from public.email_outbox where (data->>'deal_id')::uuid=v_deal and template_key='payment_due_soon';
+  if v_soon <> 1 then
+    raise exception 'RESULT :: FAIL SL22 :: live sibling job must keep the reminder alive, got soon=%', v_soon;
+  end if;
+  raise exception 'RESULT :: PASS SL22 :: one sibling archived + one sibling live -> reminder still fires (I7 two-job case)';
+end $$;
+
+-- ---- SL23 (I7 BOTH SIBLINGS ARCHIVED, final-review 2026-09-04): same
+-- two-web_dev-sites deal as SL22, but BOTH jobs are now archived -> every
+-- non-cancelled job for the pair is archived, reminder suppressed.
+do $$
+declare v_client uuid; v_deal uuid; v_job_a uuid; v_job_b uuid; v_any int;
+begin
+  insert into public.clients (name, email, country) values ('sl23_'||gen_random_uuid()::text,'sl23@example.com','Greece') returning id into v_client;
+  insert into public.deals (client_id, code, title, payment_method, stage_id, accounting_stage_id)
+    values (v_client,'SL23','sl23','cash',
+            (select id from public.pipeline_stages where board='sales' and code='won'),
+            (select id from public.pipeline_stages where board='accounting_onboarding' and code='awaiting_payment'))
+    returning id into v_deal;
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, end_date, status, paid_at)
+    values (v_deal,'web_dev',9,'one_time',10,24, current_date - 90, current_date - 90, 'paid', now() - interval '90 days');
+  insert into public.deal_payments (deal_id, service_type, service_index, billing_type, amount_net, vat_rate, start_date, status)
+    values (v_deal,'web_dev',0,'recurring_monthly',100,24, current_date + 3, 'pending');
+  insert into public.jobs (deal_id, client_id, service_type, billing_type, amount_net, vat_rate,
+                           status, archived, billing_active)
+    values (v_deal, v_client, 'web_dev', 'recurring_monthly', 100, 24, 'completed', true, false)
+    returning id into v_job_a;
+  insert into public.jobs (deal_id, client_id, service_type, billing_type, amount_net, vat_rate,
+                           status, archived, billing_active)
+    values (v_deal, v_client, 'web_dev', 'recurring_monthly', 100, 24, 'completed', true, false)
+    returning id into v_job_b;
+  perform public.enqueue_payment_reminders();
+  select count(*) into v_any from public.email_outbox where (data->>'deal_id')::uuid=v_deal;
+  if v_any <> 0 then
+    raise exception 'RESULT :: FAIL SL23 :: both siblings archived must get NO reminder, got %', v_any;
+  end if;
+  raise exception 'RESULT :: PASS SL23 :: both siblings archived -> no reminder (I7 two-job case, fully archived)';
+end $$;

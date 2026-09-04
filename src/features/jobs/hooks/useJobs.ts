@@ -41,7 +41,7 @@ export type JobRow = JobBase & {
 // Web SEO and Local SEO kanbans also surface ai_seo jobs (AI SEO has no
 // dedicated board — see migration 20260509000005). Other service types
 // only see their own jobs.
-function serviceTypesForBoard(serviceType: ServiceType): ServiceType[] {
+export function serviceTypesForBoard(serviceType: ServiceType): ServiceType[] {
   if (serviceType === 'web_seo' || serviceType === 'local_seo') {
     return [serviceType, 'ai_seo'];
   }

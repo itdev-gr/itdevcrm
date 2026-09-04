@@ -1,4 +1,4 @@
-import { AlertTriangle, AtSign, Bell, Briefcase, CheckCircle2, Clock, Mail, MessageSquare, PlayCircle } from 'lucide-react';
+import { AlertTriangle, Archive, AtSign, Bell, Briefcase, CheckCircle2, Clock, Mail, MessageSquare, PlayCircle } from 'lucide-react';
 import { relativeFromNow } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
@@ -105,6 +105,8 @@ function NotifIcon({ type, className }: { type: string; className?: string }) {
       return <PlayCircle className={cn(iconClass, 'text-cyan-600 dark:text-cyan-400')} />;
     case 'job_created':
       return <Briefcase className={cn(iconClass, 'text-indigo-600 dark:text-indigo-400')} />;
+    case 'job_archived':
+      return <Archive className={cn(iconClass, 'text-muted-foreground')} />;
     case 'payment_integrity_alert':
     case 'payment_overdue':
     case 'cadence_task_overdue':
@@ -296,6 +298,26 @@ export function CompactNotificationContent({
           )}
         </p>
         {service && <p className="mt-0.5 truncate text-muted-foreground">{service}</p>}
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
+      </>
+    );
+  }
+
+  if (type === 'job_archived') {
+    const client = readString(payload, 'client_name');
+    const title = readString(payload, 'job_title');
+    return (
+      <>
+        <p className={cn('min-w-0', titleClass)}>
+          Service completed
+          {client && (
+            <>
+              {' '}
+              for <span className="font-semibold">{client}</span>
+            </>
+          )}
+        </p>
+        {title && <p className="mt-0.5 truncate text-muted-foreground">{title}</p>}
         <p className="mt-0.5 text-[10px] text-muted-foreground">{when}</p>
       </>
     );

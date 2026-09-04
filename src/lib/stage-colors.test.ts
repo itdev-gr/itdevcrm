@@ -18,4 +18,9 @@ describe('stageAccent', () => {
   it('falls back per column index for unknown codes', () => {
     expect(stageAccent('nonexistent_code', 3)).toBeDefined();
   });
+
+  it('archived is a neutral grey, distinct from the red blocked accent', () => {
+    expect(stageAccent('archived').dot).toBe('bg-zinc-400');
+    expect(stageAccent('archived')).not.toEqual(stageAccent('blocked'));
+  });
 });

@@ -14,6 +14,8 @@ import {
 import { useJobs, type ServiceType } from './hooks/useJobs';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { useJobsRealtime } from './hooks/useJobsRealtime';
+import { useArchivedJobs } from './hooks/useArchivedJobs';
+import { showArchivedColumn } from './archivedColumn';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { cn } from '@/lib/utils';
@@ -80,6 +82,9 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const userId = useAuthStore((s) => s.user?.id ?? '');
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  // Μόνο οι admin φορτώνουν αρχειοθετημένα — για τους υπόλοιπους το query
+  // δεν τρέχει καν.
+  const { jobs: archivedJobs } = useArchivedJobs(serviceType, isAdmin);
   const sortByRaw = useJobsBoardSortStore((s) =>
     userId ? (s.byUserBoard[`${userId}:${serviceType}`] ?? 'newest') : 'newest',
   );
@@ -239,6 +244,16 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
               stageIndex={boardStages.length}
               stageLabel={lang === 'el' ? 'Μπλοκαρισμένο' : 'Blocked'}
               jobs={blockedJobs}
+              interactive={false}
+            />
+          )}
+          {showArchivedColumn(isAdmin, archivedJobs) && (
+            <JobsKanbanColumn
+              stageId="__archived__"
+              stageCode="archived"
+              stageIndex={boardStages.length + 1}
+              stageLabel={lang === 'el' ? 'Αρχειοθετημένα' : 'Archived'}
+              jobs={archivedJobs}
               interactive={false}
             />
           )}

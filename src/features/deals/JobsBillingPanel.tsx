@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,7 +18,9 @@ import {
   type JobBillingRow,
   type PaymentWithLines,
 } from './hooks/useJobsBilling';
-import { useEndJob, useUpdateJobBilling } from './hooks/useCustomJobMutations';
+import { useUpdateJobBilling } from './hooks/useCustomJobMutations';
+import { useEndArchiveJob, useJobUnpaidTotal } from './hooks/useEndArchiveJob';
+import { endConfirmBody } from './endArchiveCopy';
 import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
@@ -105,7 +108,6 @@ function JobRow({
 }) {
   const { t, i18n } = useTranslation('deals');
   const update = useUpdateJobBilling(dealId);
-  const end = useEndJob(dealId);
   const pause = useJobPauseBilling(job.id, dealId);
   const resume = useJobResumeBilling(job.id, dealId);
 
@@ -127,14 +129,23 @@ function JobRow({
     job.amount_net != null ? Number(job.amount_net).toFixed(2) : '',
   );
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const endArchive = useEndArchiveJob(dealId);
+  // Το υπόλοιπο το ζητάμε μόνο όταν ανοίξει το παράθυρο — όχι σε κάθε γραμμή.
+  const { unpaid } = useJobUnpaidTotal(job.id, confirmEnd);
   const [confirmPause, setConfirmPause] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleRow[] | null>(null);
   const [convertOpen, setConvertOpen] = useState(false);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
+
+  // Αρχειοθετημένο = τελείωσε οριστικά: μόνο ανάγνωση, καμία δράση, καμία
+  // αλλαγή τιμής ή κύκλου χρέωσης.
+  const isArchived = job.archived === true;
+  const rowReadOnly = readOnly || isArchived;
+
   const canConvertJob =
-    !readOnly &&
+    !rowReadOnly &&
     (isAdmin || groupCodes.includes('accounting')) &&
     canConvert({
       service_type: job.department,
@@ -145,8 +156,8 @@ function JobRow({
   const ended = job.status === 'ended' || job.billing_active === false;
   const isRecurring = job.billing_type === 'recurring_monthly' || job.billing_type === 'recurring_yearly';
   const isPaused = job.blocked_reason === 'billing_paused';
-  const showPause = !readOnly && isRecurring && job.parent_job_id == null && !isPaused && !ended;
-  const showResume = !readOnly && isRecurring && job.parent_job_id == null && isPaused;
+  const showPause = !rowReadOnly && isRecurring && job.parent_job_id == null && !isPaused && !ended;
+  const showResume = !rowReadOnly && isRecurring && job.parent_job_id == null && isPaused;
   const department = job.billing_only
     ? t('jobs_billing.billing_only')
     : t(`services.types.${job.department}`, { defaultValue: job.department });
@@ -238,7 +249,7 @@ function JobRow({
 
   return (
     <>
-    <tr className="border-t">
+    <tr className={cn('border-t', isArchived && 'opacity-60')}>
       <td className="px-1.5 py-1.5 text-[11px] text-foreground">
         {job.title || '—'}
         {job.is_custom && (
@@ -246,10 +257,15 @@ function JobRow({
             custom
           </span>
         )}
+        {isArchived && (
+          <span className="ml-1 rounded bg-muted px-1 text-[9px] font-medium uppercase text-muted-foreground">
+            {t('jobs_billing.archived_badge')}
+          </span>
+        )}
       </td>
       <td className="px-1.5 py-1.5 text-[11px] text-muted-foreground">{department}</td>
       <td className="px-1.5 py-1.5">
-        {readOnly ? (
+        {rowReadOnly ? (
           <span className="text-[11px] text-foreground">
             €{Number(job.amount_net ?? 0).toFixed(2)}
             <span className="text-[10px] text-muted-foreground">{cadenceSuffix(t, job.billing_type)}</span>
@@ -306,7 +322,7 @@ function JobRow({
         )}
       </td>
       <td className="px-1.5 py-1.5">
-        {readOnly ? (
+        {rowReadOnly ? (
           <span className="text-[11px] text-muted-foreground">
             {job.billing_group_id && groupLabels.has(job.billing_group_id)
               ? groupLabels.get(job.billing_group_id)
@@ -459,30 +475,30 @@ function JobRow({
               {t('jobs_billing.pause.resume')}
             </Button>
           )}
-          {!readOnly && !ended && (
+          {!rowReadOnly && !ended && (
             <Button
               type="button"
               size="sm"
               variant="outline"
               className="h-7 px-2 text-[11px]"
               onClick={() => setConfirmEnd(true)}
-              disabled={end.isPending}
+              disabled={endArchive.isPending}
             >
               {t('jobs_billing.end')}
             </Button>
           )}
         </div>
-        {!readOnly && (
+        {!rowReadOnly && (
           <ConfirmDialog
             open={confirmEnd}
             onOpenChange={setConfirmEnd}
             title={t('jobs_billing.end_confirm_title')}
-            description={t('jobs_billing.end_confirm_body')}
+            description={endConfirmBody(t, unpaid)}
             confirmLabel={t('jobs_billing.end')}
-            pending={end.isPending}
+            pending={endArchive.isPending}
             onConfirm={async () => {
               try {
-                await end.mutateAsync(job.id);
+                await endArchive.mutateAsync(job.id);
                 setConfirmEnd(false);
               } catch (err) {
                 reportError(t, err);
@@ -746,9 +762,10 @@ type SummaryBucket = { net: number; vat: number; gross: number };
 /**
  * Pricing summary computed from the deal's JOBS (mirrors the
  * sync_deal_pricing_from_jobs DB trigger). Only active, non-archived,
- * billing-active jobs contribute. Setup fees are one-time charges so they
- * fold into the one-time bucket. VAT is computed per job (so mixed VAT rates
- * sum correctly) and then aggregated.
+ * billing-active jobs contribute — archived services stay in the table
+ * (read-only, for accounting history) but never count toward the totals.
+ * Setup fees are one-time charges so they fold into the one-time bucket. VAT
+ * is computed per job (so mixed VAT rates sum correctly) and then aggregated.
  */
 function PricingSummary({ jobs }: { jobs: JobBillingRow[] }) {
   const { t } = useTranslation('deals');
@@ -765,9 +782,13 @@ function PricingSummary({ jobs }: { jobs: JobBillingRow[] }) {
     };
 
     for (const j of jobs) {
-      // Mirror the trigger: only active, billing-active jobs count. (The hook
-      // already filters out archived jobs.)
-      const active = j.status !== 'ended' && j.billing_active !== false;
+      // Mirror the trigger: only active, billing-active, non-archived jobs
+      // count. The hook now returns archived rows too (they stay visible in
+      // the table for accounting history), so they must be excluded here
+      // explicitly — end_and_archive_job also sets billing_active = false,
+      // which already excludes them, but the archived check is kept as the
+      // authoritative, self-documenting guard.
+      const active = j.status !== 'ended' && j.billing_active !== false && !j.archived;
       if (!active) continue;
 
       const vatRate = j.vat_rate ?? 0;
@@ -841,6 +862,11 @@ export function JobsBillingPanel({
 
   const jobs = useMemo(() => data?.jobs ?? [], [data]);
   const payments = useMemo(() => data?.payments ?? [], [data]);
+  // Archived rows stay in `jobs` (Task 3: they render read-only in the table
+  // for accounting history) but must never be offered as a pairing target or
+  // counted into the group numbering below — both of those pre-date archived
+  // rows entering this array and were never meant to see them.
+  const activeJobs = useMemo(() => jobs.filter((j) => !j.archived), [jobs]);
 
   // Same month grouping as the PaymentsPanel table: open months up top, fully
   // paid months that have passed folded away under Past payments.
@@ -868,17 +894,20 @@ export function JobsBillingPanel({
   }
 
   // Stable "Group 1 / 2 / …" labels for every billing group currently in use.
+  // Derived from activeJobs (not the full, archived-including `jobs`) so
+  // archiving a grouped service can't renumber the groups everyone else is
+  // still looking at.
   const groupLabels = useMemo(() => {
     const map = new Map<string, string>();
     let n = 1;
-    for (const j of jobs) {
+    for (const j of activeJobs) {
       if (j.billing_group_id && !map.has(j.billing_group_id)) {
         map.set(j.billing_group_id, t('jobs_billing.group.label', { n }));
         n += 1;
       }
     }
     return map;
-  }, [jobs, t]);
+  }, [activeJobs, t]);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
 
@@ -954,7 +983,7 @@ export function JobsBillingPanel({
                     key={j.id}
                     job={j}
                     dealId={dealId}
-                    jobs={jobs}
+                    jobs={activeJobs}
                     groupLabels={groupLabels}
                     readOnly={readOnly}
                   />

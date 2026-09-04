@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/datetime';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useJobs, type JobRow, type ServiceType } from '@/features/jobs/hooks/useJobs';
+import { useArchivedJobs } from '@/features/jobs/hooks/useArchivedJobs';
 import { useMoveJobStage } from '@/features/jobs/hooks/useMoveJobStage';
 import { useUnblockJob } from '@/features/jobs/hooks/useBlockJob';
 import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
@@ -116,12 +117,18 @@ export function JobsListPage({
   doneStageCodes,
   showBlocked,
 }: JobsListPageProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('jobs');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('active');
+  // Default OFF: an admin who never touches this toggle sees exactly today's
+  // list, unchanged.
+  const [showArchived, setShowArchived] = useState(false);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const { data: jobs = [], isLoading } = useJobs(serviceType);
+  // Non-admins never run this query — `enabled` stays false for them even if
+  // showArchived were somehow true (the toggle itself is admin-only UI).
+  const { jobs: archivedJobs } = useArchivedJobs(serviceType, isAdmin && showArchived);
   const { data: stages = [] } = usePipelineStages();
   const move = useMoveJobStage(serviceType);
 
@@ -135,7 +142,9 @@ export function JobsListPage({
     blockedAware: showBlocked,
   };
 
-  const rows = filterAndSortJobsList(jobs, { status, search: query }, statusOpts);
+  // Archived view bypasses the active/done/search filters entirely, same as
+  // the kanban boards' Archived column — it's a separate, read-only list.
+  const rows = showArchived ? archivedJobs : filterAndSortJobsList(jobs, { status, search: query }, statusOpts);
 
   function setJobStatus(jobId: string, next: 'active' | 'done') {
     const stageId = next === 'done' ? closedStageId : activeStageId;
@@ -152,37 +161,57 @@ export function JobsListPage({
       <PageHeader title={title} description={description} />
 
       <FilterBar>
-        <div className="relative min-w-[220px] flex-1 sm:max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter by client, domain, code…"
-            className="h-9 rounded-full border-border/70 bg-background pl-9 shadow-sm"
-          />
-        </div>
-        <div className="flex items-center gap-1.5">
-          {FILTERS.map((f) => (
+        {!showArchived && (
+          <>
+            <div className="relative min-w-[220px] flex-1 sm:max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filter by client, domain, code…"
+                className="h-9 rounded-full border-border/70 bg-background pl-9 shadow-sm"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  aria-pressed={status === f.key}
+                  onClick={() => setStatus(f.key)}
+                  className={cn(
+                    'rounded-full border px-3 py-1 text-xs font-medium shadow-sm transition-colors',
+                    status === f.key
+                      ? 'border-transparent bg-primary text-primary-foreground'
+                      : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/40',
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          {isAdmin && (
             <button
-              key={f.key}
               type="button"
-              aria-pressed={status === f.key}
-              onClick={() => setStatus(f.key)}
+              onClick={() => setShowArchived((v) => !v)}
               className={cn(
-                'rounded-full border px-3 py-1 text-xs font-medium shadow-sm transition-colors',
-                status === f.key
-                  ? 'border-transparent bg-primary text-primary-foreground'
-                  : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/40',
+                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                showArchived
+                  ? 'border-primary/40 bg-primary/10 text-foreground'
+                  : 'border-border text-muted-foreground hover:bg-muted',
               )}
             >
-              {f.label}
+              {t('archive.toggle')}
             </button>
-          ))}
+          )}
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {rows.length} / {showArchived ? archivedJobs.length : jobs.length}
+          </span>
         </div>
-        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-          {rows.length} / {jobs.length}
-        </span>
       </FilterBar>
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
@@ -204,7 +233,7 @@ export function JobsListPage({
               <tbody>
                 {rows.map((j) => {
                   const domain = jobListDomain(j);
-                  const st = jobListStatus(j, statusOpts);
+                  const st = !showArchived ? jobListStatus(j, statusOpts) : null;
                   return (
                     <tr
                       key={j.id}
@@ -241,12 +270,18 @@ export function JobsListPage({
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <StatusCell
-                          job={j}
-                          status={st}
-                          canOverrideBlocked={isAdmin}
-                          onSetStatus={setJobStatus}
-                        />
+                        {st ? (
+                          <StatusCell
+                            job={j}
+                            status={st}
+                            canOverrideBlocked={isAdmin}
+                            onSetStatus={setJobStatus}
+                          />
+                        ) : (
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                            {t('archive.badge')}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

@@ -151,6 +151,26 @@ describe('task_auto_closed presenter', () => {
   });
 });
 
+describe('job_archived presenter', () => {
+  it('shows the client name and job title', () => {
+    const markup = renderToStaticMarkup(
+      CompactNotificationContent({
+        type: 'job_archived',
+        payload: { client_name: 'ACME', job_title: 'Local Seo', parent_type: 'job', parent_id: 'j1' },
+        parentLabel: null,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      }),
+    );
+    expect(markup).toContain('ACME');
+    expect(markup).toContain('Local Seo');
+  });
+
+  it('routes to the job card', () => {
+    expect(readPath({ parent_type: 'job', parent_id: 'j1' })).toBe('/jobs/j1');
+  });
+});
+
 describe('mention presenter — attachment fallback', () => {
   it('renders "📎 attachment" when the preview is empty (photo-only comment)', () => {
     const markup = renderToStaticMarkup(

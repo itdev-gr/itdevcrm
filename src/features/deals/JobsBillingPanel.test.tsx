@@ -8,11 +8,16 @@ import { i18n } from '@/lib/i18n';
 import type { JobBillingRow, JobsBilling } from './hooks/useJobsBilling';
 
 const updateMutate = vi.fn().mockResolvedValue('job-1');
-const endMutate = vi.fn().mockResolvedValue('job-1');
+const endArchiveMutate = vi.fn().mockResolvedValue({ ok: true, job_id: 'job-1', unpaid_total: 0, notified: 1 });
 
 vi.mock('./hooks/useCustomJobMutations', () => ({
   useUpdateJobBilling: () => ({ mutateAsync: updateMutate, isPending: false }),
-  useEndJob: () => ({ mutateAsync: endMutate, isPending: false }),
+}));
+
+const unpaidTotal: { current: number | null } = { current: null };
+vi.mock('./hooks/useEndArchiveJob', () => ({
+  useEndArchiveJob: () => ({ mutateAsync: endArchiveMutate, isPending: false }),
+  useJobUnpaidTotal: () => ({ unpaid: unpaidTotal.current }),
 }));
 
 vi.mock('./hooks/useDealPayments', () => ({
@@ -58,6 +63,7 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     parent_job_id: null,
     blocked_reason: null,
     period_due_date: null,
+    archived: false,
     ...over,
   };
 }
@@ -606,5 +612,159 @@ describe('JobsBillingPanel due date', () => {
     render(wrap(<JobsBillingPanel dealId="d1" />));
     const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
     expect(within(row).getByText('—')).toBeTruthy();
+  });
+});
+
+describe('JobsBillingPanel end + archive', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    unpaidTotal.current = null;
+  });
+
+  it('opens the confirm dialog without the unpaid warning when the balance is zero', async () => {
+    unpaidTotal.current = 0;
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /^end$/i }));
+
+    expect(await screen.findByText('End and archive?')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Billing stops, the service is marked completed and the card moves to Archived. The assignee will be notified.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/unpaid balance/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the unpaid-balance warning in the confirm dialog when the service has an unpaid balance', async () => {
+    unpaidTotal.current = 240.5;
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /^end$/i }));
+
+    expect(
+      await screen.findByText(/WARNING: there is an unpaid balance of 240,50 €/i),
+    ).toBeInTheDocument();
+  });
+
+  it('calls end_and_archive_job on confirm and does not block on an unpaid balance', async () => {
+    unpaidTotal.current = 240.5;
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /^end$/i }));
+    await user.click(await screen.findByRole('button', { name: /^end$/i }));
+
+    await waitFor(() => expect(endArchiveMutate).toHaveBeenCalledTimes(1));
+    expect(endArchiveMutate).toHaveBeenCalledWith('a');
+  });
+});
+
+describe('JobsBillingPanel archived services', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows an archived service read-only with the archived badge and no action buttons', () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'j-archived', title: 'Local Seo', archived: true, billing_active: false })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Local Seo').closest('tr') as HTMLElement;
+    expect(within(row).getByText('Archived')).toBeInTheDocument();
+    expect(row.className).toContain('opacity-60');
+    expect(within(row).queryByRole('button', { name: /^end$/i })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /pause billing/i })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /convert/i })).not.toBeInTheDocument();
+    // Read-only: no price input, no billing-group combobox.
+    expect(within(row).queryByRole('spinbutton')).not.toBeInTheDocument();
+    expect(within(row).queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  it('does not offer an archived same-cadence service as a pairing target', async () => {
+    // Final-review I4: an active job's "Bill separately" dropdown must not
+    // offer "Pair with <archived service>" — update_job_billing has no
+    // archived guard, so picking it would write a billing group onto a
+    // read-only, ended service. A legitimate active target ("Maintenance")
+    // is included too, so the dropdown genuinely opens with real options
+    // instead of just being disabled-empty.
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'a', title: 'Hosting', billing_type: 'recurring_monthly' }),
+        makeJob({ id: 'c', title: 'Maintenance', billing_type: 'recurring_monthly' }),
+        makeJob({
+          id: 'b',
+          title: 'Old Ads',
+          billing_type: 'recurring_monthly',
+          archived: true,
+          billing_active: false,
+        }),
+      ],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    await user.click(billingSelect('Hosting'));
+    expect(await screen.findByRole('option', { name: /group with: maintenance/i })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /group with: old ads/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps group numbering stable when a grouped service is archived', () => {
+    // Final-review I4: groupLabels must be derived from non-archived jobs only,
+    // so archiving one member of "Group 1" doesn't renumber the group everyone
+    // else on the deal still sees.
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'a', title: 'Hosting', billing_group_id: 'grp-1' }),
+        makeJob({
+          id: 'b',
+          title: 'Old Domains',
+          billing_group_id: 'grp-0',
+          archived: true,
+          billing_active: false,
+        }),
+        makeJob({ id: 'c', title: 'Maintenance', billing_group_id: 'grp-1' }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" readOnly />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    // Only grp-1 (both non-archived members) is numbered; it must read
+    // "Group 1", not "Group 2" (which it would be if the archived grp-0 were
+    // counted first).
+    expect(within(row).getByText('Group 1')).toBeInTheDocument();
+  });
+
+  it('excludes archived services from the pricing summary totals', () => {
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'j1', title: 'Active job', amount_net: 100, vat_rate: 0, billing_type: 'one_time' }),
+        makeJob({
+          id: 'j2',
+          title: 'Archived job',
+          amount_net: 999,
+          vat_rate: 0,
+          billing_type: 'one_time',
+          archived: true,
+          billing_active: false,
+        }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    // The one-time bucket must total the active job only (100), not 1099.
+    expect(screen.queryByText(/1[.,]099/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('€100.00').length).toBeGreaterThan(0);
   });
 });

@@ -268,11 +268,10 @@ export async function updateJobBilling(input: UpdateJobBillingInput): Promise<Jo
   return data as JobBillingResult;
 }
 
-export async function endJob(jobId: string): Promise<JobBillingResult> {
-  const { data, error } = await rpcCall('end_job', { p_job_id: jobId });
-  if (error) return { ok: false, errors: [error.message] };
-  return data as JobBillingResult;
-}
+// end_job the RPC stays server-side (documented rollback path for
+// end_and_archive_job — see 20260904200000_end_and_archive_job.sql's ROLLBACK
+// note); its frontend wrapper (endJob) and useEndJob were removed 2026-09-04
+// after a repo-wide grep confirmed zero production callers post-Task-2.
 
 // --- Deal close ---------------------------------------------------------------
 export type CloseDealJob = { job_id: string; target_stage_id: string };

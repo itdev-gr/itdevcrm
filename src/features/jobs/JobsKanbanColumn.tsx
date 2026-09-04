@@ -1,4 +1,4 @@
-import { Lock } from 'lucide-react';
+import { Archive, Lock } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { JobsKanbanCard } from './JobsKanbanCard';
 import { stageAccent } from '@/lib/stage-colors';
@@ -24,7 +24,13 @@ export function JobsKanbanColumn({
   interactive = true,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: stageId, disabled: !interactive });
-  const accent = stageAccent(interactive ? stageCode : 'blocked', stageIndex);
+  // Both "blocked" and "archived" are non-interactive display-only columns,
+  // but they mean opposite things to the owner: blocked is a problem (red +
+  // lock), archived is finished-and-filed-away work (neutral grey + archive
+  // icon). Drive the accent and icon off the column's own stageCode instead
+  // of collapsing every non-interactive column onto the "blocked" look.
+  const isArchived = !interactive && stageCode === 'archived';
+  const accent = stageAccent(interactive ? stageCode : isArchived ? 'archived' : 'blocked', stageIndex);
 
   return (
     <div
@@ -34,12 +40,16 @@ export function JobsKanbanColumn({
         accent.columnBorder,
         'border-t-[3px]',
         isOver && interactive && 'bg-[#1a9696]/5 ring-[#1a9696]/30',
-        !interactive && 'bg-red-50/30 dark:bg-red-950/10',
+        !interactive && (isArchived ? 'bg-muted/30' : 'bg-red-50/30 dark:bg-red-950/10'),
       )}
     >
       <header className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
         {!interactive ? (
-          <Lock className="size-3.5 shrink-0 text-red-500" aria-hidden />
+          isArchived ? (
+            <Archive className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          ) : (
+            <Lock className="size-3.5 shrink-0 text-red-500" aria-hidden />
+          )
         ) : (
           <span className={cn('size-2 shrink-0 rounded-full', accent.dot)} />
         )}

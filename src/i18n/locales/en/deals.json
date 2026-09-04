@@ -238,8 +238,10 @@
     },
     "convert": "Convert",
     "end": "End",
-    "end_confirm_title": "End this job?",
-    "end_confirm_body": "Billing stops and the job is marked ended. This can't be undone here.",
+    "end_confirm_title": "End and archive?",
+    "end_confirm_body": "Billing stops, the service is marked completed and the card moves to Archived. The assignee will be notified.",
+    "end_confirm_unpaid": "WARNING: there is an unpaid balance of {{amount}} — it stays owed by the client.",
+    "archived_badge": "Archived",
     "pause": {
       "pause": "Pause billing",
       "resume": "Resume billing",
@@ -293,7 +295,10 @@
       "website_required": "Website URL is required.",
       "schedule_required": "Add at least one payment.",
       "schedule_amount_positive": "Each payment must be greater than €0.",
-      "schedule_total_mismatch": "Payments must add up to the job price."
+      "schedule_total_mismatch": "Payments must add up to the job price.",
+      "permission_denied": "You do not have permission to end this service.",
+      "job_not_found": "Service not found — someone may have already ended it. Refresh the page.",
+      "end_archive_failed": "Ending the service did not complete. Please try again."
     },
     "schedule": {
       "label": "Payments",
