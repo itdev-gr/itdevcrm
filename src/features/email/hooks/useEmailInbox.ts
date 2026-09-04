@@ -13,6 +13,8 @@ export type InboxItem = EmailMessageRow & {
   deal_id: string | null;
   unread: boolean;
   unfiled: boolean;
+  /** Cleared from the queue — for the whole team (shared mailbox) or just for me. */
+  dismissed: boolean;
   mine: boolean;
   category: InboxCategory;
 };
@@ -42,11 +44,12 @@ export function isInboxItemVisible(item: Pick<InboxItem, 'category'>, isAdmin: b
 
 export function useEmailInbox() {
   const myEmail = (useAuthStore((s) => s.user?.email) ?? '').toLowerCase();
+  const myId = useAuthStore((s) => s.user?.id) ?? '';
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const query = useQuery({
     queryKey: queryKeys.emailInbox(),
     queryFn: async () => {
-      const [msgs, reads, mailboxes] = await Promise.all([
+      const [msgs, reads, mailboxes, dismissals] = await Promise.all([
         supabase
           .from('email_messages')
           .select(INBOX_COLS)
@@ -56,17 +59,34 @@ export function useEmailInbox() {
         // Bridge: email_message_reads is not yet in generated supabase.ts; drop `as never` after next `npm run types:gen`.
         supabase.from('email_message_reads' as never).select('message_pk'),
         supabase.from('shared_mailboxes' as never).select('user_id, email'),
+        // Bridge: email_message_dismissals is not yet in generated supabase.ts; drop `as never` after next `npm run types:gen`.
+        supabase.from('email_message_dismissals' as never).select('message_pk, user_id, dismissed_at'),
       ]);
       if (msgs.error) throw new Error(msgs.error.message);
       if (reads.error) throw new Error(reads.error.message);
       if (mailboxes.error) throw new Error(mailboxes.error.message);
+      // Tolerate ONLY "table isn't there yet": the frontend and the migration
+      // ship separately (and three sessions deploy this repo), so a push that
+      // lands before the migration must not take the whole inbox down with it.
+      // Any other error still throws.
+      const dismissTableMissing =
+        !!dismissals.error &&
+        (dismissals.error.code === 'PGRST205' ||
+          dismissals.error.code === '42P01' ||
+          /does not exist|schema cache/i.test(dismissals.error.message));
+      if (dismissals.error && !dismissTableMissing) throw new Error(dismissals.error.message);
       const readRows = (reads.data ?? []) as unknown as { message_pk: string }[];
       const mailboxRows = (mailboxes.data ?? []) as unknown as { user_id: string; email: string }[];
       const mailboxByUser = new Map(mailboxRows.map((r) => [r.user_id, r.email.toLowerCase()]));
+      // RLS already limits these rows to messages the caller can see; a row
+      // with user_id null is a team-wide clear, otherwise it is somebody's
+      // personal one and only counts for them.
+      const dismissRows = (dismissTableMissing ? [] : (dismissals.data ?? [])) as unknown as { message_pk: string; user_id: string | null; dismissed_at: string }[];
       return {
         rows: msgs.data ?? [],
         readPks: new Set(readRows.map((r) => r.message_pk)),
         mailboxByUser,
+        dismissRows,
       };
     },
     refetchInterval: 60_000,
@@ -76,15 +96,26 @@ export function useEmailInbox() {
   })[];
   const readPks = query.data?.readPks ?? new Set<string>();
   const mailboxByUser = query.data?.mailboxByUser ?? new Map<string, string>();
-  const items: InboxItem[] = rows.map((r) => ({
+  const dismissedPks = new Set(
+    (query.data?.dismissRows ?? [])
+      .filter((d) => d.user_id === null || d.user_id === myId)
+      .map((d) => d.message_pk),
+  );
+  const all: InboxItem[] = rows.map((r) => ({
     ...r,
     unread: !readPks.has(r.id),
     unfiled: !r.client_id && !r.lead_id && !r.job_id && !r.deal_id,
     mine: myEmail !== '' && r.to_email.toLowerCase().includes(myEmail),
     category: categorize(r.captured_from_user_id, mailboxByUser),
+    dismissed: dismissedPks.has(r.id),
   }));
+  // `items` is the queue: cleared mail is out of it, and therefore out of every
+  // count and out of the topbar badge, with no second rule to keep in sync.
+  // `clearedItems` backs the Cleared tab, which is the only place they surface.
+  const items = all.filter((i) => !i.dismissed);
+  const clearedItems = all.filter((i) => i.dismissed);
   const unreadCount = items.filter((i) => i.unread && isInboxItemVisible(i, isAdmin)).length;
-  return { ...query, items, unreadCount };
+  return { ...query, items, clearedItems, unreadCount };
 }
 
 export function useMarkEmailRead() {
@@ -105,6 +136,44 @@ export function useMarkEmailRead() {
   return {
     markRead: (pk: string) => insert([pk]),
     markAllRead: (pks: string[]) => insert(pks),
+  };
+}
+
+/** Mail captured by a shared mailbox is cleared for the whole team; personal
+ *  mail only for the person clearing it. The server enforces this too (see
+ *  20260904090000) — this just sends the right shape. */
+export function dismissScopeFor(category: InboxCategory): 'shared' | 'own' {
+  return category === 'personal' ? 'own' : 'shared';
+}
+
+export function useDismissEmail() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  return {
+    dismiss: async (item: Pick<InboxItem, 'id' | 'category'>) => {
+      if (!userId) return;
+      const { error } = await supabase
+        // Bridge: email_message_dismissals is not yet in generated supabase.ts; drop `as never` after next `npm run types:gen`.
+        .from('email_message_dismissals' as never)
+        .insert({
+          message_pk: item.id,
+          user_id: dismissScopeFor(item.category) === 'own' ? userId : null,
+          dismissed_by: userId,
+        } as never);
+      if (error) throw new Error(error.message);
+      void qc.invalidateQueries({ queryKey: queryKeys.emailInbox() });
+    },
+    restore: async (item: Pick<InboxItem, 'id' | 'category'>) => {
+      if (!userId) return;
+      let q = supabase
+        .from('email_message_dismissals' as never)
+        .delete()
+        .eq('message_pk', item.id);
+      q = dismissScopeFor(item.category) === 'own' ? q.eq('user_id', userId) : q.is('user_id', null);
+      const { error } = await q;
+      if (error) throw new Error(error.message);
+      void qc.invalidateQueries({ queryKey: queryKeys.emailInbox() });
+    },
   };
 }
 

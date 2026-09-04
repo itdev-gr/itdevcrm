@@ -178,7 +178,7 @@
   },
   "inbox": {
     "title": "Εισερχόμενα",
-    "tabs": { "all": "Όλα", "unread": "Αδιάβαστα", "mine": "Δικά μου", "unfiled": "Χωρίς καρτέλα" },
+    "tabs": { "all": "Όλα", "unread": "Αδιάβαστα", "mine": "Δικά μου", "unfiled": "Χωρίς καρτέλα", "cleared": "Καθαρισμένα" },
     "empty": "Δεν υπάρχουν emails εδώ.",
     "mark_all_read": "Όλα ως διαβασμένα",
     "unfiled_badge": "Χωρίς καρτέλα",
@@ -190,6 +190,10 @@
     "file_confirm": "Καταχώρηση",
     "card": { "lead": "Lead", "client": "Πελάτης", "deal": "Deal", "job": "Job" },
     "footnote": "Εμφανίζονται τα εισερχόμενα πελατών που επιτρέπουν οι κανόνες ορατότητας του τμήματός σου.",
-    "cats": { "all": "Όλα", "sales": "Sales", "accounting": "Accounting", "support": "Support", "other": "Άλλο" }
+    "cats": { "all": "Όλα", "sales": "Sales", "accounting": "Accounting", "support": "Support", "other": "Άλλο" },
+    "clear_action": "Καθάρισμα",
+    "clear_hint_shared": "Καθάρισμα — φεύγει από τη λίστα όλης της ομάδας",
+    "clear_hint_own": "Καθάρισμα — φεύγει μόνο από τη δική σου λίστα",
+    "restore_action": "Επαναφορά στη λίστα"
   }
 }

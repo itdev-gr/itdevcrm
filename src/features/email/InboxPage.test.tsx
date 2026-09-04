@@ -20,6 +20,8 @@ vi.mock('@/lib/stores/authStore', () => ({
   useAuthStore: (selector: (s: { isAdmin: boolean }) => unknown) => selector(authState),
 }));
 
+const dismiss = vi.fn().mockResolvedValue(undefined);
+const restore = vi.fn().mockResolvedValue(undefined);
 const markRead = vi.fn().mockResolvedValue(undefined);
 const markAllRead = vi.fn().mockResolvedValue(undefined);
 const refetch = vi.fn();
@@ -47,6 +49,7 @@ const items: InboxItem[] = [
     deal_id: null,
     unread: false,
     unfiled: true,
+    dismissed: false,
     mine: false,
     category: 'sales',
   },
@@ -72,6 +75,7 @@ const items: InboxItem[] = [
     deal_id: null,
     unread: true,
     unfiled: true,
+    dismissed: false,
     mine: true,
     category: 'sales',
   },
@@ -97,6 +101,7 @@ const items: InboxItem[] = [
     deal_id: null,
     unread: false,
     unfiled: false,
+    dismissed: false,
     mine: false,
     category: 'accounting',
   },
@@ -122,6 +127,7 @@ const items: InboxItem[] = [
     deal_id: null,
     unread: false,
     unfiled: false,
+    dismissed: false,
     mine: false,
     category: 'support',
   },
@@ -147,8 +153,21 @@ const items: InboxItem[] = [
     deal_id: null,
     unread: true,
     unfiled: true,
+    dismissed: false,
     mine: false,
     category: 'other',
+  },
+];
+
+// Cleared mail never appears in `items` — the hook filters it out — so the page
+// can only reach it through the Cleared tab.
+const clearedItems: InboxItem[] = [
+  {
+    ...items[0]!,
+    id: 'm-cleared',
+    message_id: 'mid-6',
+    subject: 'Cleared subject',
+    dismissed: true,
   },
 ];
 
@@ -161,10 +180,12 @@ vi.mock('./hooks/useEmailInbox', async (importOriginal) => {
     ...actual,
     useEmailInbox: () => ({
       items,
+      clearedItems,
       unreadCount: items.filter((i) => i.unread).length,
       refetch,
     }),
     useMarkEmailRead: () => ({ markRead, markAllRead }),
+    useDismissEmail: () => ({ dismiss, restore }),
     useEmailInboxRealtime: () => {},
   };
 });
@@ -217,7 +238,7 @@ describe('InboxPage', () => {
     render(wrap(<InboxPage />));
     const row = screen.getByText('Unfiled subject').closest('article');
     expect(row).not.toBeNull();
-    await user.click(within(row as HTMLElement).getByRole('button'));
+    await user.click(within(row as HTMLElement).getByText('Unfiled subject'));
     expect(within(row as HTMLElement).getByText('inbox.file_action')).toBeInTheDocument();
   });
 
@@ -226,7 +247,7 @@ describe('InboxPage', () => {
     render(wrap(<InboxPage />));
     const row = screen.getByText('Mine unread').closest('article');
     expect(row).not.toBeNull();
-    await user.click(within(row as HTMLElement).getByRole('button'));
+    await user.click(within(row as HTMLElement).getByText('Mine unread'));
     expect(markRead).toHaveBeenCalledWith('m-mine-unread');
   });
 
@@ -277,5 +298,33 @@ describe('InboxPage', () => {
     render(wrap(<InboxPage />));
     await user.click(screen.getByText('inbox.mark_all_read'));
     expect(markAllRead).toHaveBeenCalledWith(expect.arrayContaining(['m-mine-unread', 'm-other-admin']));
+  });
+
+  it('the clear button dismisses without opening the email', async () => {
+    authState.isAdmin = false;
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    const row = screen.getByText('Unfiled subject').closest('article')!;
+    await user.click(within(row).getByRole('button', { name: 'inbox.clear_action' }));
+    expect(dismiss).toHaveBeenCalledWith(expect.objectContaining({ id: 'm-unfiled' }));
+    // The row's own click handler must not have fired: the body stays closed
+    // and unread mail would otherwise have been marked read.
+    expect(within(row).queryByRole('button', { name: 'inbox.file_action' })).not.toBeInTheDocument();
+    expect(markRead).not.toHaveBeenCalled();
+  });
+
+  it('cleared mail lives only in the Cleared tab, and can be restored', async () => {
+    authState.isAdmin = false;
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    expect(screen.queryByText('Cleared subject')).not.toBeInTheDocument();
+
+    await user.click(screen.getByText('inbox.tabs.cleared'));
+    expect(screen.getByText('Cleared subject')).toBeInTheDocument();
+    expect(screen.queryByText('Unfiled subject')).not.toBeInTheDocument();
+
+    const row = screen.getByText('Cleared subject').closest('article')!;
+    await user.click(within(row).getByRole('button', { name: 'inbox.restore_action' }));
+    expect(restore).toHaveBeenCalledWith(expect.objectContaining({ id: 'm-cleared' }));
   });
 });

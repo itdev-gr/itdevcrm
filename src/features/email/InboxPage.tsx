@@ -1,24 +1,33 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Mail, FolderInput } from 'lucide-react';
+import { Mail, FolderInput, X, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/page-shell';
 import { relativeFromNow } from '@/lib/datetime';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { htmlToText } from './htmlToText';
-import { useEmailInbox, useMarkEmailRead, useEmailInboxRealtime, isInboxItemVisible, type InboxItem } from './hooks/useEmailInbox';
+import {
+  useEmailInbox,
+  useMarkEmailRead,
+  useEmailInboxRealtime,
+  useDismissEmail,
+  dismissScopeFor,
+  isInboxItemVisible,
+  type InboxItem,
+} from './hooks/useEmailInbox';
 import { FileEmailDialog } from './FileEmailDialog';
 
-type Tab = 'all' | 'unread' | 'mine' | 'unfiled';
+type Tab = 'all' | 'unread' | 'mine' | 'unfiled' | 'cleared';
 type Cat = 'all' | 'sales' | 'accounting' | 'support' | 'other';
 
 export function InboxPage() {
   const { t } = useTranslation('sales');
-  const { items, refetch } = useEmailInbox();
+  const { items, clearedItems, refetch } = useEmailInbox();
   useEmailInboxRealtime();
   const { markRead, markAllRead } = useMarkEmailRead();
+  const { dismiss, restore } = useDismissEmail();
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const [cat, setCat] = useState<Cat>('all');
   const [tab, setTab] = useState<Tab>('all');
@@ -38,13 +47,18 @@ export function InboxPage() {
     [visibleItems, cat],
   );
   const visibleUnreadCount = useMemo(() => visibleItems.filter((i) => i.unread).length, [visibleItems]);
+  const clearedShown = useMemo(() => {
+    const visible = clearedItems.filter((i) => isInboxItemVisible(i, isAdmin));
+    return cat === 'all' ? visible : visible.filter((i) => i.category === cat);
+  }, [clearedItems, isAdmin, cat]);
 
   const shown = useMemo(() => {
+    if (tab === 'cleared') return clearedShown;
     if (tab === 'unread') return catItems.filter((i) => i.unread);
     if (tab === 'mine') return catItems.filter((i) => i.mine);
     if (tab === 'unfiled') return catItems.filter((i) => i.unfiled);
     return catItems;
-  }, [catItems, tab]);
+  }, [catItems, clearedShown, tab]);
 
   const cats: { id: Cat; label: string; n: number }[] = [
     { id: 'all', label: t('inbox.cats.all'), n: visibleItems.length },
@@ -65,6 +79,7 @@ export function InboxPage() {
     { id: 'unread', label: t('inbox.tabs.unread'), n: catItems.filter((i) => i.unread).length },
     { id: 'mine', label: t('inbox.tabs.mine'), n: catItems.filter((i) => i.mine).length },
     { id: 'unfiled', label: t('inbox.tabs.unfiled'), n: catItems.filter((i) => i.unfiled).length },
+    { id: 'cleared', label: t('inbox.tabs.cleared'), n: clearedShown.length },
   ];
 
   function cardLink(i: InboxItem): { to: string; label: string } | null {
@@ -136,9 +151,10 @@ export function InboxPage() {
                   i.unread ? 'border-primary/25 bg-primary/5' : 'border-border/60 bg-card',
                 )}
               >
+                <div className="flex items-start gap-2">
                 <button
                   type="button"
-                  className="flex w-full items-start justify-between gap-3 text-left"
+                  className="flex min-w-0 flex-1 items-start justify-between gap-3 text-left"
                   onClick={() => {
                     setOpenId(open ? null : i.id);
                     if (i.unread) void markRead(i.id);
@@ -165,6 +181,22 @@ export function InboxPage() {
                     )}
                   </span>
                 </button>
+                <button
+                  type="button"
+                  aria-label={i.dismissed ? t('inbox.restore_action') : t('inbox.clear_action')}
+                  title={
+                    i.dismissed
+                      ? t('inbox.restore_action')
+                      : dismissScopeFor(i.category) === 'shared'
+                        ? t('inbox.clear_hint_shared')
+                        : t('inbox.clear_hint_own')
+                  }
+                  className="mt-0.5 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  onClick={() => void (i.dismissed ? restore(i) : dismiss(i))}
+                >
+                  {i.dismissed ? <Undo2 className="size-4" /> : <X className="size-4" />}
+                </button>
+                </div>
                 {open && (
                   <div className="mt-3 border-t border-border/60 pt-3">
                     <pre className="max-h-[40vh] overflow-y-auto whitespace-pre-wrap break-words font-sans text-sm text-foreground/90">{body || '—'}</pre>

@@ -77,6 +77,11 @@ const { from } = vi.hoisted(() => {
     { user_id: 'mb-info', email: 'info@itdev.gr' },
   ];
 
+  // A team-wide clear (user_id null) and somebody else's personal clear, which
+  // must NOT hide the row for me.
+  const dismissRows: { message_pk: string; user_id: string | null; dismissed_at: string }[] = [];
+  (globalThis as unknown as { __dismissRows: typeof dismissRows }).__dismissRows = dismissRows;
+
   const from = vi.fn((table: string) => {
     if (table === 'email_messages') {
       return {
@@ -97,6 +102,11 @@ const { from } = vi.hoisted(() => {
     if (table === 'shared_mailboxes') {
       return {
         select: vi.fn().mockResolvedValue({ data: mailboxRows, error: null }),
+      };
+    }
+    if (table === 'email_message_dismissals') {
+      return {
+        select: vi.fn().mockResolvedValue({ data: dismissRows, error: null }),
       };
     }
     throw new Error(`unexpected table: ${table}`);
@@ -141,6 +151,33 @@ describe('useEmailInbox', () => {
 
     const read = result.current.items.find((i) => i.id === 'm3');
     expect(read?.unread).toBe(false);
+  });
+
+  it('drops cleared mail from the queue: team-wide always, personal only mine', async () => {
+    const rows = (globalThis as unknown as {
+      __dismissRows: { message_pk: string; user_id: string | null; dismissed_at: string }[];
+    }).__dismissRows;
+    rows.length = 0;
+    rows.push(
+      // cleared for the whole team
+      { message_pk: 'm1', user_id: null, dismissed_at: '2026-09-04T08:00:00Z' },
+      // cleared by ME
+      { message_pk: 'm2', user_id: 'u1', dismissed_at: '2026-09-04T08:00:00Z' },
+      // cleared by a COLLEAGUE — must still be in my queue
+      { message_pk: 'm3', user_id: 'u2', dismissed_at: '2026-09-04T08:00:00Z' },
+    );
+
+    const { result } = renderHook(() => useEmailInbox(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+
+    await waitFor(() => expect(result.current.items.length).toBe(1));
+    expect(result.current.items[0]!.id).toBe('m3');
+    expect(result.current.clearedItems.map((i) => i.id).sort()).toEqual(['m1', 'm2']);
+    // A cleared unread message must not keep inflating the badge.
+    expect(result.current.unreadCount).toBe(0);
+
+    rows.length = 0;
   });
 
   it('classifies items by capturing mailbox', async () => {
