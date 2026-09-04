@@ -1100,21 +1100,21 @@ git commit -m "feat(jobs): admin-only Archived filter on the hosting, domains an
 **Interfaces:**
 - Consumes: την τρέχουσα select policy του `jobs`.
 
-**⚠️ ΣΥΝΤΟΝΙΣΜΟΣ ΠΡΙΝ ΤΗΝ ΕΚΤΕΛΕΣΗ:** ένα παράλληλο session βελτιστοποιεί αυτή τη στιγμή ακριβώς αυτή την policy (`20260904110000_rls_initplan_hot_tables.sql`, `20260904130000_rls_board_array_no_per_row_calls.sql`). Ο controller **πρέπει** να στείλει μήνυμα και να πάρει απάντηση πριν ξεκινήσει αυτό το task, και να χτίσει πάνω στο **τελευταίο** σώμα της policy, όχι σε αυτό που βλέπει στο git.
+**ΣΥΝΤΟΝΙΣΜΟΣ: ΕΓΙΝΕ.** Το παράλληλο session ολοκλήρωσε και εφάρμοσε τη βελτιστοποίηση της policy (`20260904110000`, `20260904130000` — applied, pushed) και παρέδωσε την policy. Το όνομα είναι `jobs_select` (SELECT, to authenticated). Το σώμα παρακάτω είναι το **ζωντανό** σώμα με τη ρήτρα μας ενσωματωμένη, όπως το έδωσε εκείνο το session.
 
-- [ ] **Step 1: Πάρε το τρέχον σώμα της policy**
+**ΚΑΝΟΝΑΣ ΑΠΟΔΟΣΗΣ — ΜΗΝ ΤΟΝ ΠΑΡΑΒΕΙΣ:** κάθε κλήση helper με σταθερά ορίσματα πρέπει να μένει τυλιγμένη σε `(select ...)`, **συμπεριλαμβανομένων των δύο στη νέα ρήτρα**. Σκέτο `current_user_is_admin()` αποτιμάται **μία φορά ανά γραμμή**· το scalar subquery το κάνει InitPlan, μία φορά ανά statement. Αυτή η διαφορά είναι που κατέβασε το inbox από 12,7s σε 0,6s σήμερα το πρωί. Το `service_type = any(...)` είναι ο μόνος όρος που εξαρτάται από τη γραμμή και μένει τελευταίος.
 
-Ο controller εκτελεί (με το token του ιδιοκτήτη):
+- [ ] **Step 1: Επαλήθευσε ότι το σώμα ταιριάζει με την παραγωγή**
+
+Ο controller εκτελεί (με το token του ιδιοκτήτη) **πριν** γράψει οτιδήποτε:
 
 ```sql
 select pg_get_expr(polqual, polrelid) from pg_policy where polname = 'jobs_select';
 ```
 
-(Αν το όνομα δεν είναι `jobs_select`, βρες το με `select polname from pg_policy where polrelid = 'public.jobs'::regclass;`.)
+Σύγκρινε το αποτέλεσμα με το «τρέχον σώμα» του Step 2 **αφαιρώντας νοερά τη νέα πρώτη ρήτρα**. Αν διαφέρουν, **σταμάτα** και ξαναρώτησε το peer session — δεν γράφουμε policy από μνήμη τρίτου χωρίς επιβεβαίωση από τη βάση.
 
 - [ ] **Step 2: Γράψε το migration**
-
-Το migration ξαναγράφει την policy **αυτούσια**, τυλίγοντάς την σε μια πρόσθετη συνθήκη:
 
 ```sql
 -- =============================================================================
@@ -1123,20 +1123,29 @@ select pg_get_expr(polqual, polrelid) from pg_policy where polname = 'jobs_selec
 -- 2026-09-04: «θα είναι hidden από όλους εκτός τους admin») — τα κόβουμε και
 -- στη βάση. Το accounting τα κρατάει γιατί τα βλέπει στο JOBS & BILLING του
 -- deal (ίδια απόφαση).
--- ΠΡΟΣΟΧΗ: το <ΤΡΕΧΟΝ ΣΩΜΑ> αντιγράφεται ΑΥΤΟΥΣΙΟ από το Step 1.
+--
+-- Το σώμα κάτω από τη νέα ρήτρα είναι ΑΥΤΟΥΣΙΟ το βελτιστοποιημένο σώμα των
+-- 20260904110000 / 20260904130000. Κάθε helper με σταθερά ορίσματα μένει σε
+-- (select ...) ώστε να αποτιμάται μία φορά ανά statement (InitPlan) και όχι
+-- μία φορά ανά γραμμή. Το `archived` είναι `boolean not null default false`,
+-- άρα το σκέτο `not archived` είναι ασφαλές — δεν υπάρχει null branch.
 -- =============================================================================
 drop policy if exists jobs_select on public.jobs;
-create policy jobs_select on public.jobs for select using (
-  (
-    -- <ΤΡΕΧΟΝ ΣΩΜΑ ΤΗΣ POLICY — αυτούσιο>
-  )
+create policy jobs_select on public.jobs for select to authenticated
+using (
+  (not archived
+   or (select public.current_user_is_admin())
+   or (select public.current_user_in_group('accounting')))
   and (
-    not archived
-    or public.current_user_is_admin()
-    or public.current_user_in_group('accounting')
+    (select public.current_user_is_admin())
+    or (select public.current_user_can('accounting_recurring', 'view'))
+    or (select public.current_user_can('accounting_onboarding', 'view'))
+    or service_type = any (coalesce((select public.current_user_boards('view')), '{}'::text[]))
   )
 );
 ```
+
+**Χωρίς index.** Ο πίνακας `jobs` έχει 725 γραμμές (6 αρχειοθετημένες)· ο planner θα κάνει seq scan ούτως ή άλλως και ένα index μόνο κόστος εγγραφής θα πρόσθετε.
 
 - [ ] **Step 3: Commit**
 
