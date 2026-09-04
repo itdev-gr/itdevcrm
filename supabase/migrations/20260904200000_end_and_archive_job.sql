@@ -42,6 +42,7 @@ declare
   v_actor uuid := auth.uid();
   v_client_name text;
   v_notified int := 0;
+  v_found int;
   m record;
 begin
   if not (public.current_user_is_admin() or public.current_user_can('accounting_onboarding', 'edit')) then
@@ -77,7 +78,11 @@ begin
     archived_by = v_actor,
     archived_reason = 'ended_by_accounting',
     updated_at = now()
-   where id = p_job_id;
+   where id = p_job_id and not archived;
+  get diagnostics v_found = row_count;
+  if v_found = 0 then
+    return jsonb_build_object('ok', true, 'job_id', p_job_id, 'unpaid_total', v_unpaid, 'notified', 0, 'noop', true);
+  end if;
 
   -- Cascade στα AI SEO work-card παιδιά (καθένα στο δικό του closed lane).
   update public.jobs c set
@@ -106,8 +111,7 @@ begin
       'Η υπηρεσία έληξε και αρχειοθετήθηκε.'
     end,
     'job_archived:' || p_job_id::text
-  )
-  on conflict do nothing;
+  );
 
   -- Ειδοποίηση στον υπεύθυνο· αν δεν υπάρχει, στα μέλη του τμήματος του job.
   -- Ο ίδιος ο δράστης δεν ειδοποιεί τον εαυτό του.
