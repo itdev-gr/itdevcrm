@@ -70,9 +70,15 @@ dragging:
 
 - **Set a "Scheduled for" date** → the lead jumps to **Scheduled** (unless it's
   already at a terminal stage) and the appointment appears on the home calendar.
-- **Create an offer** → the lead moves to **Offer Sent**, and a follow-up date
-  can be set automatically based on the owner's "offer follow-up days" setting.
+- **Create an offer** → the lead moves to **Offer Sent**.
   (Leads already at Scheduled/Won/Not Interested/Dead End are left where they are.)
+  Follow-up is then handled by the Under Development cadence `ud_offer_followup`,
+  which schedules real follow-up tasks at T+4 / T+6 / T+8 within business hours
+  plus the chase emails — see `docs/tech/sales/under-development.md`. The old
+  per-user "offer follow-up days" profile setting was removed on 2026-09-04: it
+  wrote its reminder into `leads.scheduled_for`, the field that means "an
+  appointment is booked with the client", which sent four clients a confirmation
+  for a meeting nobody had booked.
 
 ## Offers
 
