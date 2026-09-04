@@ -254,6 +254,8 @@
     "form": {
       "title": "Title",
       "title_placeholder": "e.g. Extra landing page",
+      "ads_type": "Type",
+      "ads_type_placeholder": "Pick a type…",
       "department": "Department",
       "price_net": "Price (net €)",
       "vat_rate": "VAT %",

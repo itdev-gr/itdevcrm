@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCreateCustomJob } from './hooks/useCustomJobMutations';
+import { useOfferCatalog } from '@/features/offers/hooks/useOfferCatalog';
 import { splitInstallments, type InstallmentPlan } from './installmentSplit';
 import { CustomScheduleEditor } from './CustomScheduleEditor';
 import { validateCustomSchedule, type ScheduleRow } from './customSchedule';
@@ -45,10 +46,17 @@ type Props = {
 };
 
 export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props) {
-  const { t } = useTranslation('deals');
+  const { t, i18n } = useTranslation('deals');
   const create = useCreateCustomJob(dealId);
+  // Which KIND of ads, straight from the service catalogue — add a package in
+  // /admin and it shows up here, no deploy. Until 2026-09-04 the kind lived
+  // only in the free-text title, which is why the data holds 'google ads',
+  // 'GOOGLE ADS', 'gbp google ads' and six jobs saying just 'Ads'.
+  const { data: catalog = [] } = useOfferCatalog();
+  const adsPackages = catalog.filter((p) => p.service_type === 'ads');
 
   const [title, setTitle] = useState('');
+  const [adsPackageId, setAdsPackageId] = useState('');
   const [department, setDepartment] = useState<JobDepartment | typeof BILLING_ONLY>('web_dev');
   const [priceNet, setPriceNet] = useState('');
   const [vatRate, setVatRate] = useState(String(defaultVatRate));
@@ -109,9 +117,22 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
   }
 
   function resetForm() {
-    setTitle(''); setPriceNet(''); setVatRate(String(defaultVatRate));
+    setTitle(''); setAdsPackageId(''); setPriceNet(''); setVatRate(String(defaultVatRate));
     setCadence('one_time'); setPlan('none'); setDescription(''); setSetupFee('');
     setSchedule([{ amount_net: 0, due_date: null }]);
+  }
+
+  function onAdsTypeChange(packageId: string) {
+    setAdsPackageId(packageId);
+    const pkg = adsPackages.find((p) => p.id === packageId);
+    if (!pkg) return;
+    setTitle(pkg.display_names[i18n.language.startsWith('el') ? 'el' : 'en'] ?? pkg.code);
+    // Suggest the catalogue price for the cadence in play. Ads carry only
+    // monthly prices today, so a one-time ads job would otherwise have its
+    // typed amount wiped by a 0 — leave the field alone in that case.
+    const suggested =
+      cadence === 'one_time' ? pkg.default_one_time_amount : pkg.default_monthly_amount;
+    if (suggested > 0) setPriceNet(String(suggested));
   }
 
   return (
@@ -128,6 +149,26 @@ export function AddCustomJobForm({ dealId, defaultVatRate = 24, onDone }: Props)
           className="mt-1 h-8 text-xs"
         />
       </div>
+      {department === 'ads' && (
+        <div className="col-span-2 sm:col-span-1">
+          <Label className="text-xs">{t('jobs_billing.form.ads_type')}</Label>
+          <Select value={adsPackageId} onValueChange={onAdsTypeChange}>
+            <SelectTrigger
+              className="mt-1 h-8 w-full text-xs"
+              aria-label={t('jobs_billing.form.ads_type')}
+            >
+              <SelectValue placeholder={t('jobs_billing.form.ads_type_placeholder')} />
+            </SelectTrigger>
+            <SelectContent>
+              {adsPackages.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.display_names[i18n.language.startsWith('el') ? 'el' : 'en'] ?? p.code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="col-span-2 sm:col-span-3">
         <Label htmlFor="cj-notes" className="text-xs">
           {t('jobs_billing.form.notes_label')}

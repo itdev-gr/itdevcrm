@@ -11,6 +11,24 @@ vi.mock('./hooks/useCustomJobMutations', () => ({
   useCreateCustomJob: () => ({ mutateAsync, isPending: false }),
 }));
 
+// Ads types come from the service catalogue, so the form can gain a type the
+// day someone adds a package in /admin — no deploy, and no list to keep in sync.
+vi.mock('@/features/offers/hooks/useOfferCatalog', () => ({
+  useOfferCatalog: () => ({
+    data: [
+      { id: 'p-meta', service_type: 'ads', code: 'ads-meta-ads',
+        display_names: { en: 'Meta Ads', el: 'Meta Ads' },
+        default_one_time_amount: 0, default_monthly_amount: 220 },
+      { id: 'p-google', service_type: 'ads', code: 'ads-google-ads',
+        display_names: { en: 'Services google ads', el: 'Services google ads' },
+        default_one_time_amount: 0, default_monthly_amount: 200 },
+      { id: 'p-seo', service_type: 'web_seo', code: 'seo-basic',
+        display_names: { en: 'SEO Basic', el: 'SEO Basic' },
+        default_one_time_amount: 0, default_monthly_amount: 300 },
+    ],
+  }),
+}));
+
 import { AddCustomJobForm } from './AddCustomJobForm';
 
 function wrap(children: ReactNode) {
@@ -132,5 +150,56 @@ describe('AddCustomJobForm', () => {
     expect(mutateAsync.mock.calls[0]![0]).toMatchObject({
       description: 'Line 1\nLine 2',
     });
+  });
+
+  it('offers the ads type only for the Ads department, and only ads packages', async () => {
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+
+    // Department starts at Web Dev — no type picker.
+    expect(screen.queryByLabelText(/^type$/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByLabelText(/department/i));
+    await user.click(await screen.findByRole('option', { name: /^ads$/i }));
+
+    const typePicker = await screen.findByLabelText(/^type$/i);
+    await user.click(typePicker);
+    expect(await screen.findByRole('option', { name: 'Meta Ads' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Services google ads' })).toBeInTheDocument();
+    // A package from another service must not leak into the ads list.
+    expect(screen.queryByRole('option', { name: 'SEO Basic' })).not.toBeInTheDocument();
+  });
+
+  it('naming the ads type fills the title and suggests the catalogue price', async () => {
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+
+    await user.click(screen.getByLabelText(/department/i));
+    await user.click(await screen.findByRole('option', { name: /^ads$/i }));
+    await user.click(screen.getByLabelText(/cadence/i));
+    await user.click(await screen.findByRole('option', { name: /monthly/i }));
+
+    await user.click(await screen.findByLabelText(/^type$/i));
+    await user.click(await screen.findByRole('option', { name: 'Meta Ads' }));
+
+    expect(screen.getByLabelText(/^title$/i)).toHaveValue('Meta Ads');
+    expect(screen.getByLabelText(/price \(net/i)).toHaveValue(220);
+  });
+
+  it('does not wipe a typed price when the catalogue has none for that cadence', async () => {
+    // Ads packages carry monthly prices only. A one-time ads job must keep the
+    // amount the user typed rather than being reset to 0.
+    const user = userEvent.setup();
+    render(wrap(<AddCustomJobForm dealId="d1" />));
+
+    await user.click(screen.getByLabelText(/department/i));
+    await user.click(await screen.findByRole('option', { name: /^ads$/i }));
+    await user.type(screen.getByLabelText(/price \(net/i), '140');
+
+    await user.click(await screen.findByLabelText(/^type$/i));
+    await user.click(await screen.findByRole('option', { name: 'Meta Ads' }));
+
+    expect(screen.getByLabelText(/price \(net/i)).toHaveValue(140);
+    expect(screen.getByLabelText(/^title$/i)).toHaveValue('Meta Ads');
   });
 });

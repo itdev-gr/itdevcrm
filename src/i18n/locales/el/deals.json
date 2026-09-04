@@ -254,6 +254,8 @@
     "form": {
       "title": "Τίτλος",
       "title_placeholder": "π.χ. Επιπλέον landing page",
+      "ads_type": "Τύπος",
+      "ads_type_placeholder": "Διάλεξε τύπο…",
       "department": "Τμήμα",
       "price_net": "Τιμή (καθαρή €)",
       "vat_rate": "ΦΠΑ %",
