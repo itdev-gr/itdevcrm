@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -137,8 +138,14 @@ function JobRow({
   const [convertOpen, setConvertOpen] = useState(false);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
+
+  // Αρχειοθετημένο = τελείωσε οριστικά: μόνο ανάγνωση, καμία δράση, καμία
+  // αλλαγή τιμής ή κύκλου χρέωσης.
+  const isArchived = job.archived === true;
+  const rowReadOnly = readOnly || isArchived;
+
   const canConvertJob =
-    !readOnly &&
+    !rowReadOnly &&
     (isAdmin || groupCodes.includes('accounting')) &&
     canConvert({
       service_type: job.department,
@@ -149,8 +156,8 @@ function JobRow({
   const ended = job.status === 'ended' || job.billing_active === false;
   const isRecurring = job.billing_type === 'recurring_monthly' || job.billing_type === 'recurring_yearly';
   const isPaused = job.blocked_reason === 'billing_paused';
-  const showPause = !readOnly && isRecurring && job.parent_job_id == null && !isPaused && !ended;
-  const showResume = !readOnly && isRecurring && job.parent_job_id == null && isPaused;
+  const showPause = !rowReadOnly && isRecurring && job.parent_job_id == null && !isPaused && !ended;
+  const showResume = !rowReadOnly && isRecurring && job.parent_job_id == null && isPaused;
   const department = job.billing_only
     ? t('jobs_billing.billing_only')
     : t(`services.types.${job.department}`, { defaultValue: job.department });
@@ -242,7 +249,7 @@ function JobRow({
 
   return (
     <>
-    <tr className="border-t">
+    <tr className={cn('border-t', isArchived && 'opacity-60')}>
       <td className="px-1.5 py-1.5 text-[11px] text-foreground">
         {job.title || '—'}
         {job.is_custom && (
@@ -250,10 +257,15 @@ function JobRow({
             custom
           </span>
         )}
+        {isArchived && (
+          <span className="ml-1 rounded bg-muted px-1 text-[9px] font-medium uppercase text-muted-foreground">
+            {t('jobs_billing.archived_badge')}
+          </span>
+        )}
       </td>
       <td className="px-1.5 py-1.5 text-[11px] text-muted-foreground">{department}</td>
       <td className="px-1.5 py-1.5">
-        {readOnly ? (
+        {rowReadOnly ? (
           <span className="text-[11px] text-foreground">
             €{Number(job.amount_net ?? 0).toFixed(2)}
             <span className="text-[10px] text-muted-foreground">{cadenceSuffix(t, job.billing_type)}</span>
@@ -310,7 +322,7 @@ function JobRow({
         )}
       </td>
       <td className="px-1.5 py-1.5">
-        {readOnly ? (
+        {rowReadOnly ? (
           <span className="text-[11px] text-muted-foreground">
             {job.billing_group_id && groupLabels.has(job.billing_group_id)
               ? groupLabels.get(job.billing_group_id)
@@ -463,7 +475,7 @@ function JobRow({
               {t('jobs_billing.pause.resume')}
             </Button>
           )}
-          {!readOnly && !ended && (
+          {!rowReadOnly && !ended && (
             <Button
               type="button"
               size="sm"
@@ -476,7 +488,7 @@ function JobRow({
             </Button>
           )}
         </div>
-        {!readOnly && (
+        {!rowReadOnly && (
           <ConfirmDialog
             open={confirmEnd}
             onOpenChange={setConfirmEnd}
@@ -750,9 +762,10 @@ type SummaryBucket = { net: number; vat: number; gross: number };
 /**
  * Pricing summary computed from the deal's JOBS (mirrors the
  * sync_deal_pricing_from_jobs DB trigger). Only active, non-archived,
- * billing-active jobs contribute. Setup fees are one-time charges so they
- * fold into the one-time bucket. VAT is computed per job (so mixed VAT rates
- * sum correctly) and then aggregated.
+ * billing-active jobs contribute — archived services stay in the table
+ * (read-only, for accounting history) but never count toward the totals.
+ * Setup fees are one-time charges so they fold into the one-time bucket. VAT
+ * is computed per job (so mixed VAT rates sum correctly) and then aggregated.
  */
 function PricingSummary({ jobs }: { jobs: JobBillingRow[] }) {
   const { t } = useTranslation('deals');
@@ -769,9 +782,13 @@ function PricingSummary({ jobs }: { jobs: JobBillingRow[] }) {
     };
 
     for (const j of jobs) {
-      // Mirror the trigger: only active, billing-active jobs count. (The hook
-      // already filters out archived jobs.)
-      const active = j.status !== 'ended' && j.billing_active !== false;
+      // Mirror the trigger: only active, billing-active, non-archived jobs
+      // count. The hook now returns archived rows too (they stay visible in
+      // the table for accounting history), so they must be excluded here
+      // explicitly — end_and_archive_job also sets billing_active = false,
+      // which already excludes them, but the archived check is kept as the
+      // authoritative, self-documenting guard.
+      const active = j.status !== 'ended' && j.billing_active !== false && !j.archived;
       if (!active) continue;
 
       const vatRate = j.vat_rate ?? 0;

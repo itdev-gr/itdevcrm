@@ -63,6 +63,7 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     parent_job_id: null,
     blocked_reason: null,
     period_due_date: null,
+    archived: false,
     ...over,
   };
 }
@@ -664,5 +665,50 @@ describe('JobsBillingPanel end + archive', () => {
 
     await waitFor(() => expect(endArchiveMutate).toHaveBeenCalledTimes(1));
     expect(endArchiveMutate).toHaveBeenCalledWith('a');
+  });
+});
+
+describe('JobsBillingPanel archived services', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows an archived service read-only with the archived badge and no action buttons', () => {
+    billing.current = {
+      jobs: [makeJob({ id: 'j-archived', title: 'Local Seo', archived: true, billing_active: false })],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Local Seo').closest('tr') as HTMLElement;
+    expect(within(row).getByText('Archived')).toBeInTheDocument();
+    expect(row.className).toContain('opacity-60');
+    expect(within(row).queryByRole('button', { name: /^end$/i })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /pause billing/i })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /convert/i })).not.toBeInTheDocument();
+    // Read-only: no price input, no billing-group combobox.
+    expect(within(row).queryByRole('spinbutton')).not.toBeInTheDocument();
+    expect(within(row).queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  it('excludes archived services from the pricing summary totals', () => {
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'j1', title: 'Active job', amount_net: 100, vat_rate: 0, billing_type: 'one_time' }),
+        makeJob({
+          id: 'j2',
+          title: 'Archived job',
+          amount_net: 999,
+          vat_rate: 0,
+          billing_type: 'one_time',
+          archived: true,
+          billing_active: false,
+        }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    // The one-time bucket must total the active job only (100), not 1099.
+    expect(screen.queryByText(/1[.,]099/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('€100.00').length).toBeGreaterThan(0);
   });
 });

@@ -4,7 +4,7 @@ import type { BillingType, JobDepartment } from '@/lib/rpc';
 import type { ScheduleRow } from '../customSchedule';
 import { filterBillingJobs } from './filterBillingJobs';
 
-/** A non-archived job of the deal with its billing fields. */
+/** A job of the deal with its billing fields (includes archived jobs — see `archived`). */
 export type JobBillingRow = {
   id: string;
   title: string | null;
@@ -24,6 +24,9 @@ export type JobBillingRow = {
   status: string;
   is_custom: boolean | null;
   description: string | null;
+  /** True once the service was ended via end_and_archive_job (owner decision
+   *  2026-09-04): the row stays visible, read-only, for accounting history. */
+  archived: boolean;
   /** Set on €0 AI SEO work-card children; top-level billing rows are null. */
   parent_job_id: string | null;
   blocked_reason: string | null;
@@ -102,14 +105,17 @@ export function useJobsBilling(dealId: string) {
   return useQuery({
     queryKey: jobsBillingKey(dealId),
     queryFn: async (): Promise<JobsBilling> => {
-      // 1. Non-archived jobs of the deal with their billing fields.
+      // 1. Jobs of the deal with their billing fields.
+      // Archived jobs STAY here (owner decision 2026-09-04): accounting needs
+      // the financial history of a service on the deal. JobsBillingPanel
+      // renders them read-only with an "Archived" badge instead of hiding
+      // them (unlike the boards / useJobsForDeal, which still filter them).
       const jobsRes = await supabase
         .from('jobs')
         .select(
-          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason, period_due_date',
+          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason, period_due_date, archived',
         )
         .eq('deal_id', dealId)
-        .eq('archived', false)
         .order('created_at', { ascending: true });
       if (jobsRes.error) throw new Error(jobsRes.error.message);
 
@@ -136,6 +142,7 @@ export function useJobsBilling(dealId: string) {
         parent_job_id: (j.parent_job_id as string | null) ?? null,
         blocked_reason: (j.blocked_reason as string | null) ?? null,
         period_due_date: (j.period_due_date as string | null) ?? null,
+        archived: (j.archived as boolean | null) ?? false,
       }));
 
       // 2. Payment headers (with totals) for the deal.
