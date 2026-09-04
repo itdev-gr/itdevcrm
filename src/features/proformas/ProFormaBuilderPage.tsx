@@ -16,6 +16,7 @@ import {
 
 import { useLead } from '@/features/leads/hooks/useLead';
 import { useOfferCatalog, type CatalogPackage } from '@/features/offers/hooks/useOfferCatalog';
+import { unitPriceFor } from '@/lib/offers/unitPrice';
 import { useOffer } from '@/features/offers/hooks/useOffer';
 import { useCreateProForma } from './hooks/useCreateProForma';
 import { OfferSummaryPanel } from '@/features/offers/OfferSummaryPanel';
@@ -35,11 +36,6 @@ function getLabel(pkg: CatalogPackage): string {
   return pkg.display_names[lang] ?? pkg.display_names['en'] ?? pkg.code;
 }
 
-function getUnitPrice(pkg: CatalogPackage, customPrice: number): number {
-  if (pkg.default_one_time_amount > 0) return pkg.default_one_time_amount;
-  if (pkg.default_monthly_amount > 0) return pkg.default_monthly_amount;
-  return customPrice;
-}
 
 export function ProFormaBuilderPage() {
   const { leadId } = useParams<{ leadId: string }>();
@@ -160,6 +156,7 @@ export function ProFormaBuilderPage() {
 
     const nextItems = new Map<string, OfferItem>();
     const nextSubpackages = new Map<string, Set<string>>();
+    const nextPrices: Record<string, number> = {};
     for (const ps of planned) {
       // Match the lead's services_planned entry to a catalog row. Prefer the
       // explicit package_id; otherwise fall back to (service_type) only when
@@ -177,7 +174,7 @@ export function ProFormaBuilderPage() {
           ? Number(ps.one_time_amount ?? 0)
           : Number(ps.monthly_amount ?? 0);
       const unitPrice =
-        userPrice > 0 ? userPrice : getUnitPrice(pkg, 0);
+        userPrice > 0 ? userPrice : unitPriceFor(pkg, undefined);
       // Inline the same key shape used by itemKey() further below — declared
       // after this effect, so we can't call it here without re-ordering.
       const key = `${pkg.service_type}-${pkg.code}`;
@@ -196,6 +193,10 @@ export function ProFormaBuilderPage() {
         qty: 1,
         lineTotal: unitPrice + subTotal,
       });
+      // The price field reads customPriceByItem, so a prefilled amount has to
+      // land there too — otherwise the row displays the catalogue price while
+      // charging the planned one.
+      nextPrices[key] = unitPrice;
       if (subCodes.length > 0) {
         nextSubpackages.set(key, new Set(subCodes));
       }
@@ -203,6 +204,7 @@ export function ProFormaBuilderPage() {
 
     if (nextItems.size > 0) {
       setSelectedItems(nextItems);
+      setCustomPriceByItem(nextPrices);
       if (nextSubpackages.size > 0) {
         setSelectedSubpackages(nextSubpackages);
       }
@@ -263,7 +265,7 @@ export function ProFormaBuilderPage() {
           return ns;
         });
       } else {
-        const unitPrice = getUnitPrice(pkg, customPriceByItem[key] ?? 0);
+        const unitPrice = unitPriceFor(pkg, customPriceByItem[key]);
         const subSet = selectedSubpackages.get(key) ?? new Set<string>();
         const item = recomputeLineTotal(key, pkg, unitPrice, subSet);
         if (item) next.set(key, item);
@@ -285,7 +287,7 @@ export function ProFormaBuilderPage() {
       setSelectedItems((si) => {
         if (!si.has(key)) return si;
         const siNext = new Map(si);
-        const unitPrice = getUnitPrice(pkg, customPriceByItem[key] ?? 0);
+        const unitPrice = unitPriceFor(pkg, customPriceByItem[key]);
         const item = recomputeLineTotal(key, pkg, unitPrice, curSet);
         if (item) siNext.set(key, item);
         return siNext;
@@ -422,13 +424,10 @@ export function ProFormaBuilderPage() {
                 const isSelected = selectedItems.has(key);
                 const isExpanded = expandedItems.has(key);
                 const hasSubpkgs = pkg.subpackages.length > 0;
-                const isCustomPrice =
-                  pkg.default_one_time_amount === 0 && pkg.default_monthly_amount === 0;
                 const subSet = selectedSubpackages.get(key) ?? new Set<string>();
-
-                const displayUnitPrice = isCustomPrice
-                  ? (customPriceByItem[key] ?? 0)
-                  : getUnitPrice(pkg, 0);
+                // Every line is priceable. The catalogue supplies the default;
+                // whoever writes the pro forma decides what goes out.
+                const displayUnitPrice = unitPriceFor(pkg, customPriceByItem[key]);
                 const subTotal = pkg.subpackages
                   .filter((sp) => subSet.has(sp.code))
                   .reduce((s, sp) => s + sp.price, 0);
@@ -454,30 +453,23 @@ export function ProFormaBuilderPage() {
                           <p className="text-xs text-muted-foreground">{pkg.description}</p>
                         )}
                         <div className="flex flex-wrap items-center gap-2">
-                          {isCustomPrice ? (
-                            <div
-                              className="flex items-center gap-1.5"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <span className="text-xs text-muted-foreground">
-                                Custom price (€):
-                              </span>
-                              <Input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                value={customPriceByItem[key] ?? ''}
-                                onChange={(e) =>
-                                  handleCustomPriceChange(pkg, parseFloat(e.target.value) || 0)
-                                }
-                                className="h-6 w-24 px-2 text-xs"
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-xs font-semibold text-primary">
-                              €{displayUnitPrice.toFixed(2)}
-                            </span>
-                          )}
+                          <div
+                            className="flex items-center gap-1.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span className="text-xs text-muted-foreground">Τιμή (€):</span>
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              aria-label={`${getLabel(pkg)} price`}
+                              value={customPriceByItem[key] ?? displayUnitPrice}
+                              onChange={(e) =>
+                                handleCustomPriceChange(pkg, parseFloat(e.target.value) || 0)
+                              }
+                              className="h-6 w-24 px-2 text-xs"
+                            />
+                          </div>
                           {isSelected && subTotal > 0 && (
                             <>
                               <span className="text-xs text-muted-foreground">

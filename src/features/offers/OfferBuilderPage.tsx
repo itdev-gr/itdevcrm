@@ -18,6 +18,7 @@ import { useLead } from '@/features/leads/hooks/useLead';
 import { useDeal } from '@/features/deals/hooks/useDeal';
 import { useClient } from '@/features/clients/hooks/useClient';
 import { useOfferCatalog, type CatalogPackage, type CatalogSubpackage } from './hooks/useOfferCatalog';
+import { unitPriceFor } from '@/lib/offers/unitPrice';
 import { useCreateOffer } from './hooks/useCreateOffer';
 import { OfferSummaryPanel } from './OfferSummaryPanel';
 import type { OfferItem } from '@/lib/offers/types';
@@ -37,20 +38,6 @@ function getLabel(pkg: CatalogPackage): string {
 
 function getSubLabel(sp: CatalogSubpackage): string {
   return sp.display_names[lang] ?? sp.display_names['en'] ?? sp.code;
-}
-
-/** The price of one package line.
- *
- *  A hand-typed price ALWAYS wins, including 0 — a line given away for free is
- *  a real offer, not a missing value, which is why this takes `undefined`
- *  rather than falling back on a falsy check. The catalogue is the default,
- *  not a ceiling: accounting builds offers on deals that carry no planned
- *  services at all, so without this every line was stuck at its list price. */
-export function getUnitPrice(pkg: CatalogPackage, customPrice: number | undefined): number {
-  if (customPrice !== undefined) return customPrice;
-  if (pkg.default_one_time_amount > 0) return pkg.default_one_time_amount;
-  if (pkg.default_monthly_amount > 0) return pkg.default_monthly_amount;
-  return 0;
 }
 
 export function OfferBuilderPage() {
@@ -175,7 +162,7 @@ export function OfferBuilderPage() {
           ? Number(ps.one_time_amount ?? 0)
           : Number(ps.monthly_amount ?? 0);
       const unitPrice =
-        userPrice > 0 ? userPrice : getUnitPrice(pkg, undefined);
+        userPrice > 0 ? userPrice : unitPriceFor(pkg, undefined);
       // Inline the same key shape used by itemKey() further below — declared
       // after this effect, so we can't call it here without re-ordering.
       const key = `${pkg.service_type}-${pkg.code}`;
@@ -267,7 +254,7 @@ export function OfferBuilderPage() {
           return ns;
         });
       } else {
-        const unitPrice = getUnitPrice(pkg, customPriceByItem[key]);
+        const unitPrice = unitPriceFor(pkg, customPriceByItem[key]);
         const subSet = selectedSubpackages.get(key) ?? new Set<string>();
         const item = recomputeLineTotal(key, pkg, unitPrice, subSet);
         if (item) next.set(key, item);
@@ -289,7 +276,7 @@ export function OfferBuilderPage() {
       setSelectedItems((si) => {
         if (!si.has(key)) return si;
         const siNext = new Map(si);
-        const unitPrice = getUnitPrice(pkg, customPriceByItem[key]);
+        const unitPrice = unitPriceFor(pkg, customPriceByItem[key]);
         const item = recomputeLineTotal(key, pkg, unitPrice, curSet);
         if (item) siNext.set(key, item);
         return siNext;
@@ -441,7 +428,7 @@ export function OfferBuilderPage() {
                 const subSet = selectedSubpackages.get(key) ?? new Set<string>();
                 // Every line is priceable. The catalogue supplies the default;
                 // whoever writes the offer decides the number that goes out.
-                const displayUnitPrice = getUnitPrice(pkg, customPriceByItem[key]);
+                const displayUnitPrice = unitPriceFor(pkg, customPriceByItem[key]);
                 const subTotal = pkg.subpackages
                   .filter((sp) => subSet.has(sp.code))
                   .reduce((s, sp) => s + sp.price, 0);
