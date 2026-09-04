@@ -15,9 +15,9 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: stableT }),
 }));
 
-const authState = vi.hoisted(() => ({ isAdmin: false }));
+const authState = vi.hoisted(() => ({ isAdmin: false, groupCodes: ['sales', 'accounting'] as string[] }));
 vi.mock('@/lib/stores/authStore', () => ({
-  useAuthStore: (selector: (s: { isAdmin: boolean }) => unknown) => selector(authState),
+  useAuthStore: (selector: (s: { isAdmin: boolean; groupCodes: string[] }) => unknown) => selector(authState),
 }));
 
 const dismiss = vi.fn().mockResolvedValue(undefined);
@@ -205,6 +205,8 @@ describe('InboxPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.isAdmin = false;
+    // sales+accounting membership allows every fixture category except 'other'
+    authState.groupCodes = ['sales', 'accounting'];
   });
 
   it('shows all rows on the "all" tab', () => {
@@ -298,6 +300,42 @@ describe('InboxPage', () => {
     render(wrap(<InboxPage />));
     await user.click(screen.getByText('inbox.mark_all_read'));
     expect(markAllRead).toHaveBeenCalledWith(expect.arrayContaining(['m-mine-unread', 'm-other-admin']));
+  });
+
+  it('non-admins get no Όλα chip; chips follow the group matrix (owner example: accounting)', async () => {
+    authState.isAdmin = false;
+    authState.groupCodes = ['accounting'];
+    const user = userEvent.setup();
+    render(wrap(<InboxPage />));
+    // No Όλα, no Sales, no Άλλο — only the accounting matrix: Accounting + Support.
+    expect(screen.queryByText('inbox.cats.all')).not.toBeInTheDocument();
+    expect(screen.queryByText('inbox.cats.sales')).not.toBeInTheDocument();
+    expect(screen.queryByText('inbox.cats.other')).not.toBeInTheDocument();
+    expect(screen.getByText('inbox.cats.accounting')).toBeInTheDocument();
+    expect(screen.getByText('inbox.cats.support')).toBeInTheDocument();
+    // Sales-category mail is gone from the list and the unread count entirely.
+    expect(screen.queryByText('Unfiled subject')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mine unread')).not.toBeInTheDocument();
+    expect(screen.getByText('Read with lead')).toBeInTheDocument();
+    expect(screen.getByText('Read with job')).toBeInTheDocument();
+    // Clicking a chip filters; clicking it again clears back to the role union.
+    await user.click(screen.getByText('inbox.cats.accounting'));
+    expect(screen.queryByText('Read with job')).not.toBeInTheDocument();
+    await user.click(screen.getByText('inbox.cats.accounting'));
+    expect(screen.getByText('Read with job')).toBeInTheDocument();
+  });
+
+  it('a pure sales rep sees only the Sales chip and only sales-category mail', () => {
+    authState.isAdmin = false;
+    authState.groupCodes = ['sales'];
+    render(wrap(<InboxPage />));
+    expect(screen.queryByText('inbox.cats.all')).not.toBeInTheDocument();
+    expect(screen.queryByText('inbox.cats.accounting')).not.toBeInTheDocument();
+    expect(screen.queryByText('inbox.cats.support')).not.toBeInTheDocument();
+    expect(screen.getByText('inbox.cats.sales')).toBeInTheDocument();
+    expect(screen.getByText('Unfiled subject')).toBeInTheDocument();
+    expect(screen.queryByText('Read with lead')).not.toBeInTheDocument();
+    expect(screen.queryByText('Read with job')).not.toBeInTheDocument();
   });
 
   it('the clear button dismisses without opening the email', async () => {

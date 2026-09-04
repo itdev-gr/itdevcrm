@@ -190,7 +190,7 @@
     "file_confirm": "File",
     "card": { "lead": "Lead", "client": "Client", "deal": "Deal", "job": "Job" },
     "footnote": "Shows the inbound client emails your department's visibility rules allow.",
-    "cats": { "all": "All", "sales": "Sales", "accounting": "Accounting", "support": "Support", "other": "Other" },
+    "cats": { "all": "All", "sales": "Sales", "accounting": "Accounting", "support": "Support", "other": "Other", "personal": "Personal" },
     "clear_action": "Clear",
     "clear_hint_shared": "Clear — removes it from the whole team's list",
     "clear_hint_own": "Clear — removes it from your list only",

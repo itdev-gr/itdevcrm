@@ -15,12 +15,14 @@ import {
   useDismissEmail,
   dismissScopeFor,
   isInboxItemVisible,
+  allowedCategoriesFor,
   type InboxItem,
+  type InboxCategory,
 } from './hooks/useEmailInbox';
 import { FileEmailDialog } from './FileEmailDialog';
 
 type Tab = 'all' | 'unread' | 'mine' | 'unfiled' | 'cleared';
-type Cat = 'all' | 'sales' | 'accounting' | 'support' | 'other';
+type Cat = 'all' | InboxCategory;
 
 export function InboxPage() {
   const { t } = useTranslation('sales');
@@ -29,28 +31,40 @@ export function InboxPage() {
   const { markRead, markAllRead } = useMarkEmailRead();
   const { dismiss, restore } = useDismissEmail();
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
   const [cat, setCat] = useState<Cat>('all');
   const [tab, setTab] = useState<Tab>('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [filing, setFiling] = useState<InboxItem | null>(null);
 
-  // Non-admins never see mail captured by mailboxes we couldn't classify —
-  // exclude it from every view, count, and the unread badge. Shared with the
-  // topbar badge's unreadCount (useEmailInbox.ts) via isInboxItemVisible so
-  // the two can never disagree.
+  // Each role sees only its mailbox categories (owner 2026-09-04) — the same
+  // rule the topbar badge counts through (allowedCategoriesFor/isInboxItemVisible
+  // in useEmailInbox.ts), so list, counts and badge can never disagree.
+  const allowed = useMemo(() => allowedCategoriesFor(isAdmin, groupCodes), [isAdmin, groupCodes]);
   const visibleItems = useMemo(
-    () => items.filter((i) => isInboxItemVisible(i, isAdmin)),
-    [items, isAdmin],
+    () => items.filter((i) => isInboxItemVisible(i, allowed)),
+    [items, allowed],
   );
+  // The Όλα chip and the Άλλο chip are admin-only; other roles get one chip per
+  // allowed category (Προσωπικά only when they actually have such mail). For
+  // non-admins 'all' is not a chip but the unfiltered default: no chip active
+  // shows everything their role allows, and clicking the active chip clears it.
+  const catIds = useMemo<Cat[]>(() => {
+    if (isAdmin) return ['all', 'sales', 'accounting', 'support', 'other'];
+    const ids = (['sales', 'accounting', 'support'] as const).filter((c) => allowed.has(c));
+    const hasPersonal = items.some((i) => i.category === 'personal') || clearedItems.some((i) => i.category === 'personal');
+    return hasPersonal ? [...ids, 'personal'] : [...ids];
+  }, [isAdmin, allowed, items, clearedItems]);
+  const effectiveCat: Cat = catIds.includes(cat) || cat === 'all' ? cat : 'all';
   const catItems = useMemo(
-    () => (cat === 'all' ? visibleItems : visibleItems.filter((i) => i.category === cat)),
-    [visibleItems, cat],
+    () => (effectiveCat === 'all' ? visibleItems : visibleItems.filter((i) => i.category === effectiveCat)),
+    [visibleItems, effectiveCat],
   );
   const visibleUnreadCount = useMemo(() => visibleItems.filter((i) => i.unread).length, [visibleItems]);
   const clearedShown = useMemo(() => {
-    const visible = clearedItems.filter((i) => isInboxItemVisible(i, isAdmin));
-    return cat === 'all' ? visible : visible.filter((i) => i.category === cat);
-  }, [clearedItems, isAdmin, cat]);
+    const visible = clearedItems.filter((i) => isInboxItemVisible(i, allowed));
+    return effectiveCat === 'all' ? visible : visible.filter((i) => i.category === effectiveCat);
+  }, [clearedItems, allowed, effectiveCat]);
 
   const shown = useMemo(() => {
     if (tab === 'cleared') return clearedShown;
@@ -60,19 +74,11 @@ export function InboxPage() {
     return catItems;
   }, [catItems, clearedShown, tab]);
 
-  const cats: { id: Cat; label: string; n: number }[] = [
-    { id: 'all', label: t('inbox.cats.all'), n: visibleItems.length },
-    { id: 'sales', label: t('inbox.cats.sales'), n: visibleItems.filter((i) => i.category === 'sales').length },
-    {
-      id: 'accounting',
-      label: t('inbox.cats.accounting'),
-      n: visibleItems.filter((i) => i.category === 'accounting').length,
-    },
-    { id: 'support', label: t('inbox.cats.support'), n: visibleItems.filter((i) => i.category === 'support').length },
-    ...(isAdmin
-      ? [{ id: 'other' as Cat, label: t('inbox.cats.other'), n: visibleItems.filter((i) => i.category === 'other').length }]
-      : []),
-  ];
+  const cats: { id: Cat; label: string; n: number }[] = catIds.map((id) => ({
+    id,
+    label: t(`inbox.cats.${id}`),
+    n: id === 'all' ? visibleItems.length : visibleItems.filter((i) => i.category === id).length,
+  }));
 
   const tabs: { id: Tab; label: string; n: number }[] = [
     { id: 'all', label: t('inbox.tabs.all'), n: catItems.length },
@@ -108,10 +114,10 @@ export function InboxPage() {
           <button
             key={x.id}
             type="button"
-            onClick={() => setCat(x.id)}
+            onClick={() => setCat(!isAdmin && effectiveCat === x.id ? 'all' : x.id)}
             className={cn(
               'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              cat === x.id ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:bg-muted',
+              effectiveCat === x.id ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:bg-muted',
             )}
           >
             {x.label} <span className="text-muted-foreground">({x.n})</span>

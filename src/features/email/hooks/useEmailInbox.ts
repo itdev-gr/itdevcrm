@@ -47,12 +47,29 @@ function categorize(capturedFrom: string | null, mailboxByUser: Map<string, stri
   return CATEGORY_BY_MAILBOX[mailbox] ?? 'other';
 }
 
-// Single shared visibility rule: non-admins never see mail from a mailbox we
-// couldn't classify (category 'other'). Every admin-aware view — the inbox
-// page's item list/counts and the topbar badge/unreadCount below — must
-// filter through this one predicate so they can never disagree.
-export function isInboxItemVisible(item: Pick<InboxItem, 'category'>, isAdmin: boolean): boolean {
-  return isAdmin || item.category !== 'other';
+// Mirror of groups.parent_label='Technical' in the DB — keep in sync with the
+// pipeline_stages/groups seed if a technical group is ever added or removed.
+const TECHNICAL_GROUPS = new Set([
+  'web_seo', 'local_seo', 'web_dev', 'social_media', 'ai_seo',
+  'hosting', 'ads', 'support', 'maintenance', 'franchise', 'domains',
+]);
+
+// Single shared visibility rule (owner 2026-09-04): each role sees ONLY its
+// mailbox categories — sales → sales@; accounting → accounting@ + support@;
+// technical → support@; everyone their own personal captures; admins all.
+// Every admin-aware view — the inbox page's chips/list/counts and the topbar
+// badge below — must filter through this one rule so they can never disagree.
+export function allowedCategoriesFor(isAdmin: boolean, groupCodes: string[]): Set<InboxCategory> {
+  if (isAdmin) return new Set<InboxCategory>(['sales', 'accounting', 'support', 'other', 'personal']);
+  const allowed = new Set<InboxCategory>(['personal']);
+  if (groupCodes.includes('sales')) allowed.add('sales');
+  if (groupCodes.includes('accounting')) { allowed.add('accounting'); allowed.add('support'); }
+  if (groupCodes.some((g) => TECHNICAL_GROUPS.has(g))) allowed.add('support');
+  return allowed;
+}
+
+export function isInboxItemVisible(item: Pick<InboxItem, 'category'>, allowed: Set<InboxCategory>): boolean {
+  return allowed.has(item.category);
 }
 
 /** Rows a viewer may see in the inbox, shared by the page and the badge:
@@ -63,13 +80,13 @@ function unreadVisibleCount(
   readPks: Set<string>,
   dismissedPks: Set<string>,
   mailboxByUser: Map<string, string>,
-  isAdmin: boolean,
+  allowed: Set<InboxCategory>,
 ): number {
   return rows.filter(
     (r) =>
       !readPks.has(r.id) &&
       !dismissedPks.has(r.id) &&
-      isInboxItemVisible({ category: categorize(r.captured_from_user_id, mailboxByUser) }, isAdmin),
+      isInboxItemVisible({ category: categorize(r.captured_from_user_id, mailboxByUser) }, allowed),
   ).length;
 }
 
@@ -91,6 +108,7 @@ export function useEmailInbox() {
   const myEmail = (useAuthStore((s) => s.user?.email) ?? '').toLowerCase();
   const myId = useAuthStore((s) => s.user?.id) ?? '';
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
   const query = useQuery({
     queryKey: queryKeys.emailInbox(),
     queryFn: async () => {
@@ -160,7 +178,8 @@ export function useEmailInbox() {
   // `clearedItems` backs the Cleared tab, which is the only place they surface.
   const items = all.filter((i) => !i.dismissed);
   const clearedItems = all.filter((i) => i.dismissed);
-  const unreadCount = items.filter((i) => i.unread && isInboxItemVisible(i, isAdmin)).length;
+  const allowed = allowedCategoriesFor(isAdmin, groupCodes);
+  const unreadCount = items.filter((i) => i.unread && isInboxItemVisible(i, allowed)).length;
   return { ...query, items, clearedItems, unreadCount };
 }
 
@@ -170,8 +189,11 @@ export function useEmailInbox() {
 export function useEmailInboxBadge(): { unreadCount: number } {
   const myId = useAuthStore((s) => s.user?.id) ?? '';
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const groupCodes = useAuthStore((s) => s.groupCodes);
   const query = useQuery({
-    queryKey: queryKeys.emailInboxBadge(),
+    // Role inputs are part of the key: the count is computed inside queryFn,
+    // so a profile that loads after the first fetch must produce a refetch.
+    queryKey: [...queryKeys.emailInboxBadge(), isAdmin, groupCodes.join(',')],
     queryFn: async () => {
       const [msgs, reads, mailboxes, dismissals] = await Promise.all([
         supabase
@@ -207,7 +229,7 @@ export function useEmailInboxBadge(): { unreadCount: number } {
         readPks,
         dismissedPks,
         new Map(mailboxRows.map((r) => [r.user_id, r.email.toLowerCase()])),
-        isAdmin,
+        allowedCategoriesFor(isAdmin, groupCodes),
       );
     },
     // A badge does not need second-by-second truth. staleTime stops every route

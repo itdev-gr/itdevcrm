@@ -114,11 +114,13 @@ const { from } = vi.hoisted(() => {
   return { from };
 });
 
-const authState = vi.hoisted(() => ({ isAdmin: true }));
+const authState = vi.hoisted(() => ({ isAdmin: true, groupCodes: [] as string[] }));
 vi.mock('@/lib/supabase', () => ({ supabase: { from } }));
 vi.mock('@/lib/stores/authStore', () => ({
-  useAuthStore: (selector: (s: { user: { id: string; email: string } | null; isAdmin: boolean }) => unknown) =>
-    selector({ user: { id: 'u1', email: 'me@itdev.gr' }, isAdmin: authState.isAdmin }),
+  useAuthStore: (
+    selector: (s: { user: { id: string; email: string } | null; isAdmin: boolean; groupCodes: string[] }) => unknown,
+  ) =>
+    selector({ user: { id: 'u1', email: 'me@itdev.gr' }, isAdmin: authState.isAdmin, groupCodes: authState.groupCodes }),
 }));
 
 import { useEmailInbox, useEmailInboxBadge } from './useEmailInbox';
@@ -132,6 +134,7 @@ describe('useEmailInbox', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.isAdmin = true;
+    authState.groupCodes = [];
   });
 
   it('returns rows with per-user unread, unfiled, and mine flags', async () => {
@@ -225,6 +228,7 @@ describe('useEmailInbox', () => {
 
   it('excludes other-category mail from unreadCount for non-admins, includes it for admins', async () => {
     authState.isAdmin = false;
+    authState.groupCodes = ['sales'];
     const { result: nonAdmin } = renderHook(() => useEmailInbox(), {
       wrapper: ({ children }) => wrap(children),
     });
