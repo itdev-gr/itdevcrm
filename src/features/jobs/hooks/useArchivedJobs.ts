@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
-import type { JobRow, ServiceType } from './useJobs';
+import { serviceTypesForBoard, type JobRow, type ServiceType } from './useJobs';
 
 // Ίδιο select με το useJobs, αλλά ΜΟΝΟ τα αρχειοθετημένα. Ξεχωριστό query key
 // ώστε η κανονική λίστα του board να μη μεγαλώνει και να μην ξαναφορτώνεται
@@ -18,7 +18,11 @@ export function useArchivedJobs(serviceType: ServiceType, enabled: boolean): { j
       const { data, error } = await supabase
         .from('jobs')
         .select(ARCHIVED_COLS)
-        .eq('service_type', serviceType)
+        // Same board-scoped set as the live query (useJobs.ts): ai_seo work
+        // cards cascade-archived from a Web/Local SEO parent must land in
+        // that board's Archived column too, not just under their own
+        // (nonexistent) ai_seo board.
+        .in('service_type', serviceTypesForBoard(serviceType))
         .eq('archived', true)
         .order('archived_at', { ascending: false, nullsFirst: false })
         .limit(200);

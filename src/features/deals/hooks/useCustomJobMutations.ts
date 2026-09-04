@@ -2,7 +2,6 @@ import { useMutation, useQueryClient, type DefaultError } from '@tanstack/react-
 import {
   createCustomJob,
   updateJobBilling,
-  endJob,
   addWebDevJob,
   type CreateCustomJobInput,
   type UpdateJobBillingInput,
@@ -65,16 +64,5 @@ export function useAddWebsiteJob(dealId: string) {
       invalidateBilling(qc, dealId);
       void qc.invalidateQueries({ queryKey: queryKeys.dealServiceJobs(dealId, 'web_dev') });
     },
-  });
-}
-
-export function useEndJob(dealId: string) {
-  const qc = useQueryClient();
-  return useMutation<string, DefaultError, string>({
-    mutationFn: captureMutation('jobs', 'end_job', async (jobId) => {
-      const result = await endJob(jobId);
-      return throwOnFailure(result);
-    }),
-    onSuccess: () => invalidateBilling(qc, dealId),
   });
 }

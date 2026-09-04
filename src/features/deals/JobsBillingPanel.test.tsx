@@ -689,6 +689,62 @@ describe('JobsBillingPanel archived services', () => {
     expect(within(row).queryByRole('combobox')).not.toBeInTheDocument();
   });
 
+  it('does not offer an archived same-cadence service as a pairing target', async () => {
+    // Final-review I4: an active job's "Bill separately" dropdown must not
+    // offer "Pair with <archived service>" — update_job_billing has no
+    // archived guard, so picking it would write a billing group onto a
+    // read-only, ended service. A legitimate active target ("Maintenance")
+    // is included too, so the dropdown genuinely opens with real options
+    // instead of just being disabled-empty.
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'a', title: 'Hosting', billing_type: 'recurring_monthly' }),
+        makeJob({ id: 'c', title: 'Maintenance', billing_type: 'recurring_monthly' }),
+        makeJob({
+          id: 'b',
+          title: 'Old Ads',
+          billing_type: 'recurring_monthly',
+          archived: true,
+          billing_active: false,
+        }),
+      ],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    await user.click(billingSelect('Hosting'));
+    expect(await screen.findByRole('option', { name: /group with: maintenance/i })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /group with: old ads/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps group numbering stable when a grouped service is archived', () => {
+    // Final-review I4: groupLabels must be derived from non-archived jobs only,
+    // so archiving one member of "Group 1" doesn't renumber the group everyone
+    // else on the deal still sees.
+    billing.current = {
+      jobs: [
+        makeJob({ id: 'a', title: 'Hosting', billing_group_id: 'grp-1' }),
+        makeJob({
+          id: 'b',
+          title: 'Old Domains',
+          billing_group_id: 'grp-0',
+          archived: true,
+          billing_active: false,
+        }),
+        makeJob({ id: 'c', title: 'Maintenance', billing_group_id: 'grp-1' }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" readOnly />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    // Only grp-1 (both non-archived members) is numbered; it must read
+    // "Group 1", not "Group 2" (which it would be if the archived grp-0 were
+    // counted first).
+    expect(within(row).getByText('Group 1')).toBeInTheDocument();
+  });
+
   it('excludes archived services from the pricing summary totals', () => {
     billing.current = {
       jobs: [

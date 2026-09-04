@@ -205,7 +205,7 @@ export function JobsListPage({
                   : 'border-border text-muted-foreground hover:bg-muted',
               )}
             >
-              {t('archive.toggle')} ({archivedJobs.length})
+              {t('archive.toggle')}
             </button>
           )}
           <span className="text-xs tabular-nums text-muted-foreground">

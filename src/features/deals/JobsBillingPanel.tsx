@@ -862,6 +862,11 @@ export function JobsBillingPanel({
 
   const jobs = useMemo(() => data?.jobs ?? [], [data]);
   const payments = useMemo(() => data?.payments ?? [], [data]);
+  // Archived rows stay in `jobs` (Task 3: they render read-only in the table
+  // for accounting history) but must never be offered as a pairing target or
+  // counted into the group numbering below — both of those pre-date archived
+  // rows entering this array and were never meant to see them.
+  const activeJobs = useMemo(() => jobs.filter((j) => !j.archived), [jobs]);
 
   // Same month grouping as the PaymentsPanel table: open months up top, fully
   // paid months that have passed folded away under Past payments.
@@ -889,17 +894,20 @@ export function JobsBillingPanel({
   }
 
   // Stable "Group 1 / 2 / …" labels for every billing group currently in use.
+  // Derived from activeJobs (not the full, archived-including `jobs`) so
+  // archiving a grouped service can't renumber the groups everyone else is
+  // still looking at.
   const groupLabels = useMemo(() => {
     const map = new Map<string, string>();
     let n = 1;
-    for (const j of jobs) {
+    for (const j of activeJobs) {
       if (j.billing_group_id && !map.has(j.billing_group_id)) {
         map.set(j.billing_group_id, t('jobs_billing.group.label', { n }));
         n += 1;
       }
     }
     return map;
-  }, [jobs, t]);
+  }, [activeJobs, t]);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
 
@@ -975,7 +983,7 @@ export function JobsBillingPanel({
                     key={j.id}
                     job={j}
                     dealId={dealId}
-                    jobs={jobs}
+                    jobs={activeJobs}
                     groupLabels={groupLabels}
                     readOnly={readOnly}
                   />

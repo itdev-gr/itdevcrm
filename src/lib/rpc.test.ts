@@ -22,7 +22,7 @@ vi.mock('@/lib/supabase', () => {
 });
 
 import { supabase } from '@/lib/supabase';
-import { createCustomJob, updateJobBilling, endJob } from './rpc';
+import { createCustomJob, updateJobBilling } from './rpc';
 
 type RestRpc = ReturnType<typeof vi.fn>;
 const restRpc = (supabase as unknown as { rest: { rpc: RestRpc } }).rest.rpc;
@@ -52,11 +52,5 @@ describe('billing RPC wrappers preserve the supabase client binding', () => {
     const result = await updateJobBilling({ jobId: 'job-1', amountNet: 300 });
     expect(result).toEqual({ ok: true, job_id: 'job-1' });
     expect(restRpc).toHaveBeenCalledWith('update_job_billing', expect.any(Object));
-  });
-
-  it('endJob calls supabase.rpc without losing `this`', async () => {
-    const result = await endJob('job-1');
-    expect(result).toEqual({ ok: true, job_id: 'job-1' });
-    expect(restRpc).toHaveBeenCalledWith('end_job', { p_job_id: 'job-1' });
   });
 });

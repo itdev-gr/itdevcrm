@@ -16,6 +16,11 @@
 -- --- 1. Ανεξόφλητο υπόλοιπο της υπηρεσίας -----------------------------------
 -- Ίδια κοκκοποίηση (deal_id, service_type) με το job_pause_billing όταν ακυρώνει
 -- γραμμές. amount_gross = αυτό που χρωστάει ο πελάτης (με ΦΠΑ).
+-- SECURITY DEFINER + granted to authenticated ⇒ χωρίς φραγή θα ήταν money
+-- oracle: οποιοσδήποτε τεχνικός θα μπορούσε να ζητήσει το ανεξόφλητο
+-- οποιουδήποτε πελάτη από την κονσόλα. Ίδιο predicate με το end_and_archive_job
+-- παρακάτω· αποτυχία επιστρέφει 0 (όχι raise) ώστε το dialog απλά να μη δείξει
+-- προειδοποίηση αντί να σκάσει.
 create or replace function public.job_unpaid_total(p_job_id uuid)
 returns numeric
 language sql stable security definer set search_path = public as $$
@@ -25,7 +30,8 @@ language sql stable security definer set search_path = public as $$
       on dp.deal_id = j.deal_id
      and dp.service_type = j.service_type
    where j.id = p_job_id
-     and dp.status in ('pending', 'overdue');
+     and dp.status in ('pending', 'overdue')
+     and (public.current_user_is_admin() or public.current_user_can('accounting_onboarding', 'edit'));
 $$;
 revoke execute on function public.job_unpaid_total(uuid) from public, anon;
 grant execute on function public.job_unpaid_total(uuid) to authenticated;
@@ -157,8 +163,12 @@ grant execute on function public.end_and_archive_job(uuid) to authenticated;
 
 -- --- 3. Επαναφορά (μόνο admin) -----------------------------------------------
 -- Το job γυρίζει από τα Αρχειοθετημένα στο Closed lane όπου το άφησε το End.
--- Η χρέωση ΔΕΝ ξαναρχίζει (billing_active μένει false) — αυτό είναι δουλειά
--- του Resume billing, όχι της επαναφοράς.
+-- Η χρέωση ΔΕΝ ξαναρχίζει αυτόματα — billing_active μένει false, αλλά το job
+-- μπαίνει ΑΚΡΙΒΩΣ στην ίδια κατάσταση που αφήνει το job_pause_billing
+-- (is_blocked/blocked_reason='billing_paused'/blocked_at/blocked_by), ώστε το
+-- ήδη υπάρχον Resume billing κουμπί (JobBillingPauseCard / JobsBillingPanel
+-- showResume) να εμφανιστεί και να δουλέψει· διαφορετικά το restored job
+-- φαίνεται ζωντανό στο board αλλά καμία χρέωση δεν μπορεί ποτέ να ξαναρχίσει.
 create or replace function public.unarchive_job(p_job_id uuid)
 returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -175,6 +185,10 @@ begin
     archived_at = null,
     archived_by = null,
     archived_reason = null,
+    is_blocked = true,
+    blocked_reason = 'billing_paused',
+    blocked_at = now(),
+    blocked_by = v_actor,
     updated_at = now()
    where id = p_job_id and archived;
   get diagnostics v_found = row_count;
@@ -184,7 +198,12 @@ begin
 
   update public.jobs c set
     archived = false, archived_at = null, archived_by = null,
-    archived_reason = null, updated_at = now()
+    archived_reason = null,
+    is_blocked = true,
+    blocked_reason = 'billing_paused',
+    blocked_at = now(),
+    blocked_by = v_actor,
+    updated_at = now()
    where c.parent_job_id = p_job_id
      and c.archived
      and c.archived_reason = 'ended_by_accounting_cascade';

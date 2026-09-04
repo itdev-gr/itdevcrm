@@ -3,13 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 
-const { createCustomJob, updateJobBilling, endJob } = vi.hoisted(() => ({
+const { createCustomJob, updateJobBilling } = vi.hoisted(() => ({
   createCustomJob: vi.fn(),
   updateJobBilling: vi.fn(),
-  endJob: vi.fn(),
 }));
 
-vi.mock('@/lib/rpc', () => ({ createCustomJob, updateJobBilling, endJob }));
+vi.mock('@/lib/rpc', () => ({ createCustomJob, updateJobBilling }));
 vi.mock('@/lib/sentry/captureMutation', () => ({
   captureMutation: (_s: string, _o: string, fn: (...a: unknown[]) => unknown) => fn,
 }));
@@ -17,7 +16,6 @@ vi.mock('@/lib/sentry/captureMutation', () => ({
 import {
   useCreateCustomJob,
   useUpdateJobBilling,
-  useEndJob,
 } from './useCustomJobMutations';
 
 const DEAL = 'deal-1';
@@ -103,21 +101,6 @@ describe('useCustomJobMutations', () => {
     await result.current.mutateAsync({ jobId: 'job-1', amountNet: 300 });
 
     expect(updateJobBilling).toHaveBeenCalledWith({ jobId: 'job-1', amountNet: 300 });
-    await waitFor(() => {
-      const keys = invalidatedKeys(invalidate);
-      for (const k of EXPECTED_INVALIDATIONS) expect(keys).toContainEqual(k);
-    });
-  });
-
-  it('useEndJob calls the RPC with the job id and invalidates', async () => {
-    endJob.mockResolvedValue({ ok: true, job_id: 'job-2' });
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const invalidate = vi.spyOn(qc, 'invalidateQueries');
-
-    const { result } = renderHook(() => useEndJob(DEAL), { wrapper: wrap(qc) });
-    await result.current.mutateAsync('job-2');
-
-    expect(endJob).toHaveBeenCalledWith('job-2');
     await waitFor(() => {
       const keys = invalidatedKeys(invalidate);
       for (const k of EXPECTED_INVALIDATIONS) expect(keys).toContainEqual(k);

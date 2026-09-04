@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
+import { captureMutation } from '@/lib/sentry/captureMutation';
 import { jobsBillingKey } from './useJobsBilling';
 import { dealPaymentsKey } from './useDealPayments';
 
@@ -27,7 +28,7 @@ export function useJobUnpaidTotal(jobId: string, enabled: boolean): { unpaid: nu
 export function useEndArchiveJob(dealId: string) {
   const qc = useQueryClient();
   return useMutation<RpcResult, Error, string>({
-    mutationFn: async (jobId) => {
+    mutationFn: captureMutation('jobs', 'end_and_archive_job', async (jobId: string) => {
       const { data, error } = await supabase.rpc('end_and_archive_job' as never, {
         p_job_id: jobId,
       } as never);
@@ -35,7 +36,7 @@ export function useEndArchiveJob(dealId: string) {
       const result = data as unknown as RpcResult;
       if (!result?.ok) throw new Error(result?.errors?.[0] ?? 'end_archive_failed');
       return result;
-    },
+    }),
     onSuccess: () => {
       // The panel's own job list keys on `jobs-billing` (useJobsBilling), not
       // on queryKeys.jobsForDeal — invalidate both so every deal-page view of
@@ -45,6 +46,11 @@ export function useEndArchiveJob(dealId: string) {
       void qc.invalidateQueries({ queryKey: queryKeys.jobsForDeal(dealId) });
       void qc.invalidateQueries({ queryKey: queryKeys.deal(dealId) });
       void qc.invalidateQueries({ queryKey: queryKeys.notifications() });
+      // useEndJob (the mutation this replaced) went through invalidateBilling,
+      // which also drops the accounting kanban's cached money figures — without
+      // this the deal card on the accounting board still reads the pre-End
+      // MRR until its 30s staleTime lapses.
+      void qc.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
     },
   });
 }
