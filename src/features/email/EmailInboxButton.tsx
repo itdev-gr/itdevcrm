@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useEmailInbox, useEmailInboxRealtime } from './hooks/useEmailInbox';
+import { useEmailInboxBadge, useEmailInboxRealtime } from './hooks/useEmailInbox';
 
 export function EmailInboxButton() {
-  const { unreadCount } = useEmailInbox();
+  const { unreadCount } = useEmailInboxBadge();
   useEmailInboxRealtime();
   return (
     <Button asChild variant="ghost" size="icon" className="relative">

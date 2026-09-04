@@ -121,7 +121,7 @@ vi.mock('@/lib/stores/authStore', () => ({
     selector({ user: { id: 'u1', email: 'me@itdev.gr' }, isAdmin: authState.isAdmin }),
 }));
 
-import { useEmailInbox } from './useEmailInbox';
+import { useEmailInbox, useEmailInboxBadge } from './useEmailInbox';
 
 function wrap(c: ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -176,6 +176,32 @@ describe('useEmailInbox', () => {
     expect(result.current.clearedItems.map((i) => i.id).sort()).toEqual(['m1', 'm2']);
     // A cleared unread message must not keep inflating the badge.
     expect(result.current.unreadCount).toBe(0);
+
+    rows.length = 0;
+  });
+
+  it('badge counts the same mail the page would show, without fetching bodies', async () => {
+    const rows = (globalThis as unknown as {
+      __dismissRows: { message_pk: string; user_id: string | null; dismissed_at: string }[];
+    }).__dismissRows;
+    rows.length = 0;
+    rows.push({ message_pk: 'm1', user_id: null, dismissed_at: '2026-09-04T08:00:00Z' });
+
+    const { result } = renderHook(() => useEmailInboxBadge(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+
+    // m1 is unread but cleared for the team, m3 is read → only m2 is left. It
+    // is 'other' category, and this suite runs as an admin, so it counts.
+    await waitFor(() => expect(result.current.unreadCount).toBe(1));
+
+    // The badge must never pull message bodies: only the id columns.
+    const cols = from.mock.results
+      .map((r) => r.value)
+      .filter((v) => typeof v?.select === 'function')
+      .flatMap((v) => (v.select as { mock?: { calls: unknown[][] } }).mock?.calls ?? [])
+      .map((c) => String(c[0]));
+    expect(cols.some((c) => c.includes('body_text') || c.includes('snippet'))).toBe(false);
 
     rows.length = 0;
   });

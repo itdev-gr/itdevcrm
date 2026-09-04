@@ -21,6 +21,19 @@ export type InboxItem = EmailMessageRow & {
 
 const INBOX_COLS = `${EMAIL_COLS}, client_id, deal_id, captured_from_user_id`;
 
+// The topbar badge only needs to COUNT. It used to run the full inbox query —
+// 300 rows including every subject, snippet and body — on every page in the
+// app, which is how one page view ended up making 21 email_messages requests,
+// the slowest taking 52s, with the page's own queries starving behind them.
+// Two ids per row are enough to apply the same read/dismissed/visibility rules.
+const BADGE_COLS = 'id, captured_from_user_id';
+
+const BADGE_STALE_MS = 60_000;
+// gmail-sync writes continuously (a sweep every 2 minutes, plus backfills), and
+// every INSERT used to invalidate the inbox immediately. That is what produced
+// the request pile-up — so coalesce the storm into at most one refetch per window.
+const REALTIME_COALESCE_MS = 30_000;
+
 const CATEGORY_BY_MAILBOX: Record<string, InboxCategory> = {
   'sales@itdev.gr': 'sales',
   'accounting@itdev.gr': 'accounting',
@@ -40,6 +53,38 @@ function categorize(capturedFrom: string | null, mailboxByUser: Map<string, stri
 // filter through this one predicate so they can never disagree.
 export function isInboxItemVisible(item: Pick<InboxItem, 'category'>, isAdmin: boolean): boolean {
   return isAdmin || item.category !== 'other';
+}
+
+/** Rows a viewer may see in the inbox, shared by the page and the badge:
+ *  mail from an unclassifiable mailbox is admin-only (isInboxItemVisible), and
+ *  anything cleared — for the team or by me — is out of the queue entirely. */
+function unreadVisibleCount(
+  rows: { id: string; captured_from_user_id: string | null }[],
+  readPks: Set<string>,
+  dismissedPks: Set<string>,
+  mailboxByUser: Map<string, string>,
+  isAdmin: boolean,
+): number {
+  return rows.filter(
+    (r) =>
+      !readPks.has(r.id) &&
+      !dismissedPks.has(r.id) &&
+      isInboxItemVisible({ category: categorize(r.captured_from_user_id, mailboxByUser) }, isAdmin),
+  ).length;
+}
+
+/** Read/dismissed sets for the current user, from the two side tables. */
+function sidecarSets(
+  reads: { message_pk: string }[],
+  dismissals: { message_pk: string; user_id: string | null }[],
+  myId: string,
+): { readPks: Set<string>; dismissedPks: Set<string> } {
+  return {
+    readPks: new Set(reads.map((r) => r.message_pk)),
+    dismissedPks: new Set(
+      dismissals.filter((d) => d.user_id === null || d.user_id === myId).map((d) => d.message_pk),
+    ),
+  };
 }
 
 export function useEmailInbox() {
@@ -89,6 +134,7 @@ export function useEmailInbox() {
         dismissRows,
       };
     },
+    staleTime: BADGE_STALE_MS,
     refetchInterval: 60_000,
   });
   const rows = (query.data?.rows ?? []) as unknown as (EmailMessageRow & {
@@ -116,6 +162,60 @@ export function useEmailInbox() {
   const clearedItems = all.filter((i) => i.dismissed);
   const unreadCount = items.filter((i) => i.unread && isInboxItemVisible(i, isAdmin)).length;
   return { ...query, items, clearedItems, unreadCount };
+}
+
+/** Topbar badge: the unread count and nothing else.
+ *  Deliberately a SEPARATE query key from useEmailInbox — the page's query
+ *  carries full message bodies and must not be mounted app-wide. */
+export function useEmailInboxBadge(): { unreadCount: number } {
+  const myId = useAuthStore((s) => s.user?.id) ?? '';
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const query = useQuery({
+    queryKey: queryKeys.emailInboxBadge(),
+    queryFn: async () => {
+      const [msgs, reads, mailboxes, dismissals] = await Promise.all([
+        supabase
+          .from('email_messages')
+          .select(BADGE_COLS)
+          .eq('direction', 'inbound')
+          .order('sent_at', { ascending: false, nullsFirst: false })
+          .limit(300),
+        supabase.from('email_message_reads' as never).select('message_pk'),
+        supabase.from('shared_mailboxes' as never).select('user_id, email'),
+        supabase.from('email_message_dismissals' as never).select('message_pk, user_id'),
+      ]);
+      if (msgs.error) throw new Error(msgs.error.message);
+      if (reads.error) throw new Error(reads.error.message);
+      if (mailboxes.error) throw new Error(mailboxes.error.message);
+      // Same "not migrated yet" tolerance as the page query.
+      const dismissMissing =
+        !!dismissals.error &&
+        (dismissals.error.code === 'PGRST205' ||
+          dismissals.error.code === '42P01' ||
+          /does not exist|schema cache/i.test(dismissals.error.message));
+      if (dismissals.error && !dismissMissing) throw new Error(dismissals.error.message);
+
+      const rows = (msgs.data ?? []) as unknown as { id: string; captured_from_user_id: string | null }[];
+      const mailboxRows = (mailboxes.data ?? []) as unknown as { user_id: string; email: string }[];
+      const { readPks, dismissedPks } = sidecarSets(
+        (reads.data ?? []) as unknown as { message_pk: string }[],
+        (dismissMissing ? [] : (dismissals.data ?? [])) as unknown as { message_pk: string; user_id: string | null }[],
+        myId,
+      );
+      return unreadVisibleCount(
+        rows,
+        readPks,
+        dismissedPks,
+        new Map(mailboxRows.map((r) => [r.user_id, r.email.toLowerCase()])),
+        isAdmin,
+      );
+    },
+    // A badge does not need second-by-second truth. staleTime stops every route
+    // change and window focus from refetching; the interval is the freshness floor.
+    staleTime: BADGE_STALE_MS,
+    refetchInterval: BADGE_STALE_MS,
+  });
+  return { unreadCount: query.data ?? 0 };
 }
 
 export function useMarkEmailRead() {
@@ -182,15 +282,40 @@ export function useEmailInboxRealtime() {
   const userId = useAuthStore((s) => s.user?.id);
   useEffect(() => {
     if (!userId) return;
+    // COALESCED invalidation. One INSERT used to mean one refetch, and
+    // gmail-sync inserts in bursts, so a single page view fired 21 inbox
+    // queries — the slowest 52s — and the page's own queries queued behind
+    // them (measured live on /accounting, 2026-09-04). Now a burst costs one
+    // refetch per window: fire straight away if we are outside the window,
+    // otherwise remember it and fire once when the window closes.
+    let lastRun = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const invalidate = () => {
+      lastRun = Date.now();
+      void qc.invalidateQueries({ queryKey: queryKeys.emailInbox() });
+      void qc.invalidateQueries({ queryKey: queryKeys.emailInboxBadge() });
+    };
+    const onInsert = () => {
+      const since = Date.now() - lastRun;
+      if (since >= REALTIME_COALESCE_MS) {
+        invalidate();
+        return;
+      }
+      if (timer) return; // one already queued for this window
+      timer = setTimeout(() => {
+        timer = null;
+        invalidate();
+      }, REALTIME_COALESCE_MS - since);
+    };
+
     // Unique topic per mount — supabase-js reuses channels per identical topic
     // and a second .on() after subscribe() throws (deal 000121, 2026-09-03).
     const channel = supabase
       .channel(`email-inbox-${userId}-${crypto.randomUUID()}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'email_messages' }, () => {
-        void qc.invalidateQueries({ queryKey: queryKeys.emailInbox() });
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'email_messages' }, onInsert)
       .subscribe();
     return () => {
+      if (timer) clearTimeout(timer);
       void supabase.removeChannel(channel);
     };
   }, [userId, qc]);

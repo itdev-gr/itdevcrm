@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('./hooks/useEmailInbox', () => ({
-  useEmailInbox: () => ({ unreadCount: 3, items: [] }),
+  // The badge deliberately uses its own light query, not the page's.
+  useEmailInboxBadge: () => ({ unreadCount: 3 }),
   useEmailInboxRealtime: () => {},
 }));
 
