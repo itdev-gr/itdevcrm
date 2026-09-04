@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { Archive, Calendar, Lock, RefreshCw, Trash2 } from 'lucide-react';
+import { ArchiveRestore, Calendar, Lock, RefreshCw, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -70,6 +70,7 @@ import { usePipelineStages } from '@/features/stages/hooks/usePipelineStages';
 import { useMoveJobStage } from './hooks/useMoveJobStage';
 import { stageCompletesJob } from './stageCompletion';
 import { useBlockJob, useUnblockJob } from './hooks/useBlockJob';
+import { useUnarchiveJob } from './hooks/useUnarchiveJob';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDeleteJobs } from './hooks/useDeleteJobs';
@@ -111,6 +112,7 @@ function JobDetailContent() {
   const moveStage = useMoveJobStage(serviceType);
   const block = useBlockJob(job?.id ?? '');
   const unblock = useUnblockJob(job?.id ?? '');
+  const unarchive = useUnarchiveJob(job?.id ?? '', serviceType);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const groupCodes = useAuthStore((s) => s.groupCodes);
   const canBlockJob = isAdmin || groupCodes.includes('accounting');
@@ -126,7 +128,7 @@ function JobDetailContent() {
   const updateBilling = useUpdateJobBilling(job?.deal_id ?? '');
   const forceRenewal = useForceJobRenewal();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState(false);
   const [confirmRenewal, setConfirmRenewal] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
   // null = not edited yet → fall back to the loaded job.title.
@@ -240,24 +242,6 @@ function JobDetailContent() {
     }
   }
 
-  async function onArchive() {
-    if (!job) return;
-    const { error: archiveError } = await supabase
-      .from('jobs')
-      .update({
-        archived: true,
-        archived_at: new Date().toISOString(),
-        archived_reason: 'accounting_archive',
-      })
-      .eq('id', job.id);
-    if (archiveError) {
-      alert(archiveError.message);
-      return;
-    }
-    setConfirmArchive(false);
-    navigate(-1);
-  }
-
   const contactName = [job.client?.contact_first_name, job.client?.contact_last_name]
     .filter(Boolean)
     .join(' ');
@@ -295,6 +279,11 @@ function JobDetailContent() {
                 {job.blocked_reason
                   ? ` · ${job.blocked_reason === 'billing_paused' ? 'Billing paused' : job.blocked_reason.replace(/_/g, ' ')}`
                   : ''}
+              </span>
+            )}
+            {job.archived && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                {t('archive.badge')}
               </span>
             )}
             <span
@@ -405,15 +394,16 @@ function JobDetailContent() {
                 {t('renewal.action')}
               </Button>
             )}
-            {canEditBilling && !job.archived && (
+            {isAdmin && job.archived && (
               <Button
                 variant="outline"
                 size="sm"
                 className={detailHeaderActionButtonClass}
-                onClick={() => setConfirmArchive(true)}
+                onClick={() => setConfirmRestore(true)}
+                disabled={unarchive.isPending}
               >
-                <Archive className="size-3" />
-                Archive
+                <ArchiveRestore className="size-3" />
+                {t('archive.restore')}
               </Button>
             )}
             {canDelete && (
@@ -828,12 +818,16 @@ function JobDetailContent() {
         }}
       />
       <ConfirmDialog
-        open={confirmArchive}
-        onOpenChange={setConfirmArchive}
-        title="Archive job"
-        description="Archive this job? It will be removed from boards and billing. You can unarchive later."
-        confirmLabel="Archive"
-        onConfirm={onArchive}
+        open={confirmRestore}
+        onOpenChange={setConfirmRestore}
+        title={t('archive.restore_confirm_title')}
+        description={t('archive.restore_confirm_body')}
+        confirmLabel={t('archive.restore')}
+        pending={unarchive.isPending}
+        onConfirm={async () => {
+          await unarchive.mutateAsync();
+          setConfirmRestore(false);
+        }}
       />
     </div>
   );

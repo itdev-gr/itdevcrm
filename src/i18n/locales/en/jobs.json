@@ -1,6 +1,12 @@
 {
   "part_of_ai_seo": "Part of AI SEO {{code}}",
   "view_billing_record": "View billing record",
+  "archive": {
+    "badge": "Archived",
+    "restore": "Restore",
+    "restore_confirm_title": "Restore from archive?",
+    "restore_confirm_body": "The card returns to the board, in the Closed column. Billing does NOT restart — use Resume billing if needed."
+  },
   "disconnect": {
     "pill_needs": "Disconnect",
     "pill_needs_title": "Client closed — disconnect from the Google Business Profile",
