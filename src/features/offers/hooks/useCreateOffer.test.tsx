@@ -57,4 +57,22 @@ describe('useCreateOffer', () => {
     await result.current.mutateAsync({ ...base, lead_id: 'l-1' });
     expect(insert).toHaveBeenCalledWith(expect.objectContaining({ created_by: null }));
   });
+
+  it('writes to `offers` and NOTHING else — an offer must not reach billing', async () => {
+    // Owner, 2026-09-04: «όταν στέλνουν ένα νέο offer από το accounting δεν
+    // πρέπει να επηρεάζονται οι υπηρεσίες που έχουμε στο billing μέσα, γιατί
+    // είναι offer και δεν έχει μπει στο billing». It is true today; this test
+    // is what makes it stay true.
+    getSession.mockResolvedValue({ data: { session: { user: { id: 'u-1' } } } });
+    const { result } = renderHook(() => useCreateOffer(), {
+      wrapper: ({ children }) => wrap(children),
+    });
+    await result.current.mutateAsync({ ...base, deal_id: 'd-1' });
+
+    const tablesTouched = from.mock.calls.map((c) => c[0]);
+    expect(tablesTouched).toEqual(['offers']);
+    for (const forbidden of ['deals', 'jobs', 'deal_payments', 'deal_payment_lines']) {
+      expect(tablesTouched).not.toContain(forbidden);
+    }
+  });
 });
