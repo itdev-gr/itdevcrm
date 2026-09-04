@@ -3,6 +3,7 @@
   "view_billing_record": "Προβολή χρέωσης",
   "archive": {
     "badge": "Αρχειοθετημένο",
+    "toggle": "Αρχειοθετημένα",
     "restore": "Επαναφορά",
     "restore_confirm_title": "Επαναφορά από τα αρχειοθετημένα;",
     "restore_confirm_body": "Η κάρτα επιστρέφει στο board, στη στήλη Κλειστά. Η χρέωση ΔΕΝ ξαναρχίζει — αν χρειάζεται, χρησιμοποίησε το Resume billing.",
