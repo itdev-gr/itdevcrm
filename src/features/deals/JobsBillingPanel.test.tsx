@@ -620,7 +620,7 @@ describe('JobsBillingPanel end + archive', () => {
     unpaidTotal.current = null;
   });
 
-  it('opens the confirm dialog without the unpaid warning when there is no balance yet known', async () => {
+  it('opens the confirm dialog without the unpaid warning when the balance is zero', async () => {
     unpaidTotal.current = 0;
     billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
     const user = userEvent.setup();

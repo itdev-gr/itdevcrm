@@ -295,7 +295,10 @@
       "website_required": "Website URL is required.",
       "schedule_required": "Add at least one payment.",
       "schedule_amount_positive": "Each payment must be greater than €0.",
-      "schedule_total_mismatch": "Payments must add up to the job price."
+      "schedule_total_mismatch": "Payments must add up to the job price.",
+      "permission_denied": "You do not have permission to end this service.",
+      "job_not_found": "Service not found — someone may have already ended it. Refresh the page.",
+      "end_archive_failed": "Ending the service did not complete. Please try again."
     },
     "schedule": {
       "label": "Payments",
