@@ -37,6 +37,8 @@
     "warning": "The job will move to a new board; owner, monthly tasks and code will be regenerated, and unrelated info fields will be cleared. Amounts/payments stay the same.",
     "warning_ai_up": "An AI SEO trio will be created (billing parent + web + local); the billing moves to the new billing record. Amounts stay the same.",
     "warning_ai_down": "The AI SEO trio will be dismantled; the chosen service stays standalone with the billing, the others are deleted.",
+    "ads_type": "Ads type",
+    "ads_type_placeholder": "Pick a type…",
     "new_price": "New price (optional)",
     "new_price_hint": "Leave empty to keep the same price",
     "none": "This job cannot be converted (AI SEO / web dev / special service).",

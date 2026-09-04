@@ -15,6 +15,7 @@ import {
 import { convertibleTargets } from './serviceConversion';
 import { useConvertJobService } from './hooks/useConvertJobService';
 import { useUpdateJobBilling } from '@/features/deals/hooks/useCustomJobMutations';
+import { useOfferCatalog } from '@/features/offers/hooks/useOfferCatalog';
 
 type ConvertJob = {
   id: string;
@@ -44,10 +45,19 @@ export function ConvertServiceDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { t } = useTranslation('jobs');
+  const { t, i18n } = useTranslation('jobs');
   const targets = convertibleTargets(job);
   const [target, setTarget] = useState(targets[0] ?? '');
   const [newPrice, setNewPrice] = useState('');
+  // Converting INTO ads has to say which ads. Without this the job lands with
+  // the generic 'Ads' title, which is how six of the existing ads jobs ended up
+  // recording nothing about what they are.
+  const [adsPackageId, setAdsPackageId] = useState('');
+  const { data: catalog = [] } = useOfferCatalog();
+  const adsPackages = catalog.filter((p) => p.service_type === 'ads');
+  const adsName = (p: (typeof adsPackages)[number]) =>
+    p.display_names[i18n.language.startsWith('el') ? 'el' : 'en'] ?? p.code;
+  const needsAdsType = target === 'ads';
   const convert = useConvertJobService();
   const updateBilling = useUpdateJobBilling(job.deal_id);
   const busy = convert.isPending || updateBilling.isPending;
@@ -62,11 +72,21 @@ export function ConvertServiceDialog({
 
   async function onConfirm() {
     if (!target) return;
+    if (needsAdsType && !adsPackageId) return;
     try {
       const result = await convert.mutateAsync({ jobId: job.id, target });
       const price = newPrice.trim();
-      if (price !== '' && Number.isFinite(Number(price)) && result?.id) {
-        await updateBilling.mutateAsync({ jobId: result.id, amountNet: Number(price) });
+      const wantsPrice = price !== '' && Number.isFinite(Number(price));
+      // Name the job after the chosen package. Deliberately NOT the catalogue
+      // price: this dialog promises "amounts/payments stay the same", and the
+      // price field above is there for anyone who wants to change it.
+      const pkg = needsAdsType ? adsPackages.find((p) => p.id === adsPackageId) : undefined;
+      if (result?.id && (wantsPrice || pkg)) {
+        await updateBilling.mutateAsync({
+          jobId: result.id,
+          ...(wantsPrice ? { amountNet: Number(price) } : {}),
+          ...(pkg ? { title: adsName(pkg) } : {}),
+        });
       }
       onOpenChange(false);
       window.alert(t('convert.success'));
@@ -104,6 +124,28 @@ export function ConvertServiceDialog({
                 ))}
               </select>
             </div>
+            {needsAdsType && (
+              <div>
+                <Label htmlFor="convert-ads-type" className="text-[11px] text-muted-foreground">
+                  {t('convert.ads_type')}
+                </Label>
+                <select
+                  id="convert-ads-type"
+                  value={adsPackageId}
+                  onChange={(e) => setAdsPackageId(e.target.value)}
+                  disabled={busy}
+                  aria-label={t('convert.ads_type')}
+                  className="mt-0.5 h-8 w-full rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                >
+                  <option value="">{t('convert.ads_type_placeholder')}</option>
+                  {adsPackages.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {adsName(p)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <Label htmlFor="convert-price" className="text-[11px] text-muted-foreground">
                 {t('convert.new_price')}
@@ -131,7 +173,11 @@ export function ConvertServiceDialog({
             </Button>
           </DialogClose>
           {targets.length > 0 && (
-            <Button type="button" onClick={onConfirm} disabled={busy || !target}>
+            <Button
+              type="button"
+              onClick={onConfirm}
+              disabled={busy || !target || (needsAdsType && !adsPackageId)}
+            >
               {t('convert.confirm')}
             </Button>
           )}
