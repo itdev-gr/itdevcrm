@@ -17,7 +17,9 @@ import {
   type JobBillingRow,
   type PaymentWithLines,
 } from './hooks/useJobsBilling';
-import { useEndJob, useUpdateJobBilling } from './hooks/useCustomJobMutations';
+import { useUpdateJobBilling } from './hooks/useCustomJobMutations';
+import { useEndArchiveJob, useJobUnpaidTotal } from './hooks/useEndArchiveJob';
+import { endConfirmBody } from './endArchiveCopy';
 import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
@@ -105,7 +107,6 @@ function JobRow({
 }) {
   const { t, i18n } = useTranslation('deals');
   const update = useUpdateJobBilling(dealId);
-  const end = useEndJob(dealId);
   const pause = useJobPauseBilling(job.id, dealId);
   const resume = useJobResumeBilling(job.id, dealId);
 
@@ -127,6 +128,9 @@ function JobRow({
     job.amount_net != null ? Number(job.amount_net).toFixed(2) : '',
   );
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const endArchive = useEndArchiveJob(dealId);
+  // Το υπόλοιπο το ζητάμε μόνο όταν ανοίξει το παράθυρο — όχι σε κάθε γραμμή.
+  const { unpaid } = useJobUnpaidTotal(job.id, confirmEnd);
   const [confirmPause, setConfirmPause] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleRow[] | null>(null);
@@ -466,7 +470,7 @@ function JobRow({
               variant="outline"
               className="h-7 px-2 text-[11px]"
               onClick={() => setConfirmEnd(true)}
-              disabled={end.isPending}
+              disabled={endArchive.isPending}
             >
               {t('jobs_billing.end')}
             </Button>
@@ -477,12 +481,12 @@ function JobRow({
             open={confirmEnd}
             onOpenChange={setConfirmEnd}
             title={t('jobs_billing.end_confirm_title')}
-            description={t('jobs_billing.end_confirm_body')}
+            description={endConfirmBody(t, unpaid)}
             confirmLabel={t('jobs_billing.end')}
-            pending={end.isPending}
+            pending={endArchive.isPending}
             onConfirm={async () => {
               try {
-                await end.mutateAsync(job.id);
+                await endArchive.mutateAsync(job.id);
                 setConfirmEnd(false);
               } catch (err) {
                 reportError(t, err);

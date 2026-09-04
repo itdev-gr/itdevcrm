@@ -8,11 +8,16 @@ import { i18n } from '@/lib/i18n';
 import type { JobBillingRow, JobsBilling } from './hooks/useJobsBilling';
 
 const updateMutate = vi.fn().mockResolvedValue('job-1');
-const endMutate = vi.fn().mockResolvedValue('job-1');
+const endArchiveMutate = vi.fn().mockResolvedValue({ ok: true, job_id: 'job-1', unpaid_total: 0, notified: 1 });
 
 vi.mock('./hooks/useCustomJobMutations', () => ({
   useUpdateJobBilling: () => ({ mutateAsync: updateMutate, isPending: false }),
-  useEndJob: () => ({ mutateAsync: endMutate, isPending: false }),
+}));
+
+const unpaidTotal: { current: number | null } = { current: null };
+vi.mock('./hooks/useEndArchiveJob', () => ({
+  useEndArchiveJob: () => ({ mutateAsync: endArchiveMutate, isPending: false }),
+  useJobUnpaidTotal: () => ({ unpaid: unpaidTotal.current }),
 }));
 
 vi.mock('./hooks/useDealPayments', () => ({
@@ -606,5 +611,58 @@ describe('JobsBillingPanel due date', () => {
     render(wrap(<JobsBillingPanel dealId="d1" />));
     const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
     expect(within(row).getByText('—')).toBeTruthy();
+  });
+});
+
+describe('JobsBillingPanel end + archive', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    unpaidTotal.current = null;
+  });
+
+  it('opens the confirm dialog without the unpaid warning when there is no balance yet known', async () => {
+    unpaidTotal.current = 0;
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /^end$/i }));
+
+    expect(await screen.findByText('End and archive?')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Billing stops, the service is marked completed and the card moves to Archived. The assignee will be notified.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/unpaid balance/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the unpaid-balance warning in the confirm dialog when the service has an unpaid balance', async () => {
+    unpaidTotal.current = 240.5;
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /^end$/i }));
+
+    expect(
+      await screen.findByText(/WARNING: there is an unpaid balance of 240,50 €/i),
+    ).toBeInTheDocument();
+  });
+
+  it('calls end_and_archive_job on confirm and does not block on an unpaid balance', async () => {
+    unpaidTotal.current = 240.5;
+    billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /^end$/i }));
+    await user.click(await screen.findByRole('button', { name: /^end$/i }));
+
+    await waitFor(() => expect(endArchiveMutate).toHaveBeenCalledTimes(1));
+    expect(endArchiveMutate).toHaveBeenCalledWith('a');
   });
 });

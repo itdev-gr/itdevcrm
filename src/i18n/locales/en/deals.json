@@ -238,8 +238,10 @@
     },
     "convert": "Convert",
     "end": "End",
-    "end_confirm_title": "End this job?",
-    "end_confirm_body": "Billing stops and the job is marked ended. This can't be undone here.",
+    "end_confirm_title": "End and archive?",
+    "end_confirm_body": "Billing stops, the service is marked completed and the card moves to Archived. The assignee will be notified.",
+    "end_confirm_unpaid": "WARNING: there is an unpaid balance of {{amount}} — it stays owed by the client.",
+    "archived_badge": "Archived",
     "pause": {
       "pause": "Pause billing",
       "resume": "Resume billing",
