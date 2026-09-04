@@ -43,6 +43,12 @@ export const queryKeys = {
   myAnnouncements: () => ['my-announcements'] as const,
   assignedTasksOpen: (assigneeId: string | null) =>
     ['assigned-tasks', 'open', assigneeId ?? 'all'] as const,
+  // Sidebar badge: same 'assigned-tasks' / 'user-tasks' prefixes as the full
+  // lists, so every existing broad invalidation refreshes the badge too.
+  assignedTasksBadge: (assigneeId: string | null) =>
+    ['assigned-tasks', 'badge', assigneeId ?? 'all'] as const,
+  userTasksBadge: (assigneeId: string | null) =>
+    ['user-tasks', 'badge', assigneeId ?? 'all'] as const,
   assignedTaskDetail: (taskId: string) => ['assigned-task', taskId] as const,
   assignedTasksForDeal: (dealId: string) =>
     ['assigned-tasks', 'deal', dealId] as const,
