@@ -6,6 +6,7 @@ describe('isToastable', () => {
     expect(isToastable('task_assigned')).toBe(true);
     expect(isToastable('task_comment')).toBe(true);
     expect(isToastable('job_created')).toBe(true);
+    expect(isToastable('job_archived')).toBe(true);
     expect(isToastable('task_confirm_pending')).toBe(true);
   });
 

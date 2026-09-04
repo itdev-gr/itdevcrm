@@ -5,6 +5,7 @@ const TOASTABLE_TYPES: ReadonlySet<string> = new Set([
   'task_assigned',
   'task_comment',
   'job_created',
+  'job_archived',
   'task_confirm_pending',
   'lead_email_reply',
 ]);

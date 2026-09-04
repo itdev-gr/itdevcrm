@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Bell, X, AlertTriangle, AtSign, CheckCircle2 } from 'lucide-react';
+import { Bell, X, AlertTriangle, Archive, AtSign, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useNotifications } from './hooks/useNotifications';
@@ -28,6 +28,8 @@ function NotifIcon({ type }: { type: string }) {
     case 'payment_overdue':
     case 'cadence_task_overdue':
       return <AlertTriangle className={cn(className, 'text-red-600 dark:text-red-400')} />;
+    case 'job_archived':
+      return <Archive className={cn(className, 'text-muted-foreground')} />;
     default:
       return <Bell className={cn(className, 'text-muted-foreground')} />;
   }
