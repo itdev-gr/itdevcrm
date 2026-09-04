@@ -5,7 +5,8 @@
     "badge": "Archived",
     "restore": "Restore",
     "restore_confirm_title": "Restore from archive?",
-    "restore_confirm_body": "The card returns to the board, in the Closed column. Billing does NOT restart — use Resume billing if needed."
+    "restore_confirm_body": "The card returns to the board, in the Closed column. Billing does NOT restart — use Resume billing if needed.",
+    "restore_failed": "Restore did not complete. You may not have permission, or the job was already restored."
   },
   "disconnect": {
     "pill_needs": "Disconnect",

@@ -825,8 +825,12 @@ function JobDetailContent() {
         confirmLabel={t('archive.restore')}
         pending={unarchive.isPending}
         onConfirm={async () => {
-          await unarchive.mutateAsync();
-          setConfirmRestore(false);
+          try {
+            await unarchive.mutateAsync();
+            setConfirmRestore(false);
+          } catch {
+            window.alert(t('archive.restore_failed'));
+          }
         }}
       />
     </div>

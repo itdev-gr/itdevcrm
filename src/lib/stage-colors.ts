@@ -227,6 +227,13 @@ const BY_CODE: Record<string, StageAccent> = {
     columnBorder: 'border-t-red-500',
     dot: 'bg-red-500',
   },
+  // Neutral/grey on purpose — archived work is finished and filed away, not a
+  // problem like the red "blocked" column. See JobsKanbanColumn.tsx.
+  archived: {
+    badge: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+    columnBorder: 'border-t-zinc-400',
+    dot: 'bg-zinc-400',
+  },
 };
 
 const FALLBACKS: StageAccent[] = [
