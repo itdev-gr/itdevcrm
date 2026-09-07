@@ -95,3 +95,23 @@ export function campaignEventFor(
     default: return null;
   }
 }
+
+/** The ROUTING DECISION (review fix I-3): does this event belong to a
+ *  campaign recipient, or must it fall through to the pre-existing
+ *  transactional `email_log` path? Pulled out as its own pure, tested
+ *  function so `index.ts` can be a thin caller — the decision that keeps
+ *  transactional mail flowing through the untouched path cannot silently
+ *  drift out of test coverage the way an inline `if` in `index.ts` could.
+ *
+ *  `matchedRecipientId` is the result of the caller's own fallback lookup
+ *  (`email_campaign_recipients` by `resend_id`) when the tags themselves
+ *  don't already identify a campaign recipient — pass `null` when that
+ *  lookup wasn't run or found nothing. */
+export function routeWebhookEvent(
+  tags: Record<string, string>,
+  matchedRecipientId: string | null,
+): 'campaign' | 'transactional' {
+  if (tags.mkt === '1' && tags.recipient) return 'campaign';
+  if (matchedRecipientId) return 'campaign';
+  return 'transactional';
+}
