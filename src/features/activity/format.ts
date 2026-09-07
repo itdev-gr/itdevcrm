@@ -374,6 +374,9 @@ const EMAIL_TEMPLATE_LABELS: Record<string, string> = {
   reengage_90d: 'Re-engagement email',
   noanswer_day0: 'No-answer follow-up', noanswer_day2: 'No-answer follow-up',
   noanswer_day5: 'No-answer follow-up', noanswer_day10: 'No-answer follow-up',
+  // Retired 2026-09-07 (superseded by the ud_offer_followup cadence), but the
+  // labels stay: hundreds of email_log rows still carry these keys and the
+  // client activity feed must keep rendering them.
   offer_followup_day2: 'Offer follow-up', offer_followup_day5: 'Offer follow-up', offer_followup_day10: 'Offer follow-up',
   scheduled_confirm: 'Appointment confirmation',
   scheduled_reminder: 'Appointment reminder',
