@@ -39,3 +39,59 @@ export function statusForResendEvent(eventType: string): { status: string; stamp
     default: return null; // email.sent / opened / clicked / delivery_delayed — ignore
   }
 }
+
+// --- Campaign attribution (Task 6) ------------------------------------------
+// Additive only: the two functions above are the existing transactional path
+// and are untouched. Everything below is new, used only by the campaign
+// branch in index.ts, and must never throw — a throw here must not be able
+// to take down the transactional email_log fallback that runs after it.
+
+/** Resend has shipped tags in two shapes over time: an array of
+ *  `{name, value}` pairs, and a plain object map `{name: value}`. Accept
+ *  both and flatten to a simple record. Anything else — null, a string, a
+ *  number, an array of malformed entries — returns `{}` rather than
+ *  throwing, so a malformed/unexpected payload never breaks the webhook. */
+export function readTags(data: unknown): Record<string, string> {
+  try {
+    if (data === null || typeof data !== 'object') return {};
+    const tags = (data as { tags?: unknown }).tags;
+    if (tags === null || tags === undefined) return {};
+
+    const out: Record<string, string> = {};
+
+    if (Array.isArray(tags)) {
+      for (const entry of tags) {
+        if (entry === null || typeof entry !== 'object') continue;
+        const { name, value } = entry as { name?: unknown; value?: unknown };
+        if (typeof name === 'string' && typeof value === 'string') out[name] = value;
+      }
+      return out;
+    }
+
+    if (typeof tags === 'object') {
+      for (const [key, value] of Object.entries(tags as Record<string, unknown>)) {
+        if (typeof value === 'string') out[key] = value;
+      }
+      return out;
+    }
+
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+/** Map a Resend event type to the campaign-recipient stamp column it fills.
+ *  Only the three events that Phase 1 handles map to something — everything
+ *  else (including `email.opened` / `email.clicked`, which arrive in Phase 2)
+ *  returns null so it is ignored rather than half-handled. */
+export function campaignEventFor(
+  eventType: string,
+): { stamp: 'delivered_at' | 'bounced_at' | 'complained_at' } | null {
+  switch (eventType) {
+    case 'email.delivered': return { stamp: 'delivered_at' };
+    case 'email.bounced': return { stamp: 'bounced_at' };
+    case 'email.complained': return { stamp: 'complained_at' };
+    default: return null;
+  }
+}
