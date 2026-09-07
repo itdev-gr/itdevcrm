@@ -432,3 +432,9 @@ verify_jwt = false
 # Weekly cron calls it with a WEBDEV_REPORT_SECRET Bearer token, no user JWT.
 [functions.webdev-weekly-report]
 verify_jwt = false
+
+# Marketing campaign drain (its own cron, CAMPAIGN_DRAIN_SECRET Bearer token —
+# deliberately NOT EMAIL_DRAIN_SECRET, so campaign sending can be revoked
+# without taking transactional email down) + admin test-send, no user JWT.
+[functions.send-campaign]
+verify_jwt = false
