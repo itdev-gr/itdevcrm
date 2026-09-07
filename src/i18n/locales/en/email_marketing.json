@@ -221,7 +221,68 @@
   },
   "detail": {
     "title": "Campaign details",
-    "coming_soon": "The campaign dashboard is coming soon."
+    "loading": "Loading…",
+    "not_found": "The campaign was not found.",
+    "back_to_list": "Back to the campaigns list",
+    "subtitle": "Subject: {{subject}}",
+    "no_subject": "(no subject)",
+    "autopause": {
+      "title": "Sending stopped automatically",
+      "body": "The domain-reputation circuit breaker stopped this campaign: {{reason}}"
+    },
+    "kpi": {
+      "target": "Target",
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "bounced": "Bounced",
+      "complained": "Complaints",
+      "unsubscribed": "Unsubscribed",
+      "open_rate": "Open rate",
+      "click_rate": "Click rate",
+      "of_target": "of target",
+      "of_sent": "of sent"
+    },
+    "controls": {
+      "title": "Send controls",
+      "pause": "Pause",
+      "resume": "Resume",
+      "cancel": "Cancel campaign",
+      "none_available": "No actions are available for this status.",
+      "pause_confirm_title": "Pause sending?",
+      "pause_confirm_text": "Sending will stop temporarily — you can resume it later.",
+      "resume_confirm_title": "Resume sending?",
+      "resume_confirm_text": "Sending will start again from where it left off.",
+      "cancel_confirm_title": "Cancel this campaign?",
+      "cancel_confirm_text": "This is final — a cancelled campaign cannot be resumed or restarted.",
+      "errors": {
+        "permission_denied": "You don't have permission for this action.",
+        "campaign_not_found": "The campaign was not found.",
+        "invalid_state": "This action is no longer available — the campaign's status changed. Refresh the page.",
+        "generic": "The action failed."
+      }
+    },
+    "suppression": {
+      "title": "Why recipients were excluded"
+    },
+    "recipients": {
+      "title": "Recipients",
+      "view_button": "View recipients",
+      "drawer_title": "Campaign recipients",
+      "close": "Close",
+      "export_csv": "Export CSV",
+      "loading": "Loading…",
+      "empty": "No recipients in this category.",
+      "count": "{{count}} recipients",
+      "suppressed_because": "Excluded: {{reason}}",
+      "status_filter": {
+        "all": "All",
+        "pending": "Pending",
+        "sending": "Sending",
+        "sent": "Sent",
+        "failed": "Failed",
+        "suppressed": "Suppressed"
+      }
+    }
   },
   "audiences": {
     "title": "Recipient lists",
