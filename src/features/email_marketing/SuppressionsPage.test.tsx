@@ -1,12 +1,19 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, beforeAll, beforeEach, describe, it, expect } from 'vitest';
+import { vi, beforeAll, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import '@/lib/i18n';
 import { i18n } from '@/lib/i18n';
 import { I18nextProvider } from 'react-i18next';
-import type { SuppressionRow, SuppressionsResult } from './hooks/useSuppressions';
+import type { SuppressionRow, SuppressionsResult, SuppressionsParams } from './hooks/useSuppressions';
 
-const { unsuppressMutateAsync } = vi.hoisted(() => ({
+const { unsuppressMutateAsync, useSuppressionsSpy } = vi.hoisted(() => ({
   unsuppressMutateAsync: vi.fn(),
+  // Records every params object SuppressionsPage calls useSuppressions with,
+  // so a test can assert the page's own search/page state logic (the
+  // debounce and the page-reset-on-search-change effect) without needing a
+  // real network round-trip — the actual ilike/range query construction is
+  // covered separately in hooks/useSuppressions.test.tsx against a mocked
+  // supabase client.
+  useSuppressionsSpy: vi.fn(),
 }));
 
 function makeRow(overrides: Partial<SuppressionRow> = {}): SuppressionRow {
@@ -28,7 +35,10 @@ vi.mock('./hooks/useSuppressions', async () => {
   const actual = await vi.importActual<typeof import('./hooks/useSuppressions')>('./hooks/useSuppressions');
   return {
     ...actual,
-    useSuppressions: () => ({ data: result, isLoading: false, error: null }),
+    useSuppressions: (params: SuppressionsParams) => {
+      useSuppressionsSpy(params);
+      return { data: result, isLoading: false, error: null };
+    },
     useUnsuppressEmail: () => ({ mutateAsync: unsuppressMutateAsync, isPending: false }),
   };
 });
@@ -116,5 +126,53 @@ describe('SuppressionsPage', () => {
     render(wrap(<SuppressionsPage />));
 
     expect(screen.getByText('Άγνωστος λόγος (quarantined)')).toBeInTheDocument();
+  });
+
+  // --- Search/paging reach the hook with the right (debounced, reset) state.
+  // The actual server-side ilike/range query construction is a separate,
+  // hook-level concern — see hooks/useSuppressions.test.tsx.
+
+  describe('search debounce and page reset', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('debounces typed search input before it reaches the hook, and resets the page to 0 once it lands', async () => {
+      // Enough total rows that "Επόμενη" (Next) is enabled from page 0.
+      result = { rows: [makeRow()], count: 120 };
+      render(wrap(<SuppressionsPage />));
+
+      // Move off page 0 first, so the reset below is actually observable.
+      fireEvent.click(screen.getByRole('button', { name: 'Επόμενη' }));
+      expect(useSuppressionsSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: '', reason: undefined, page: 1 }),
+      );
+
+      const searchInput = screen.getByPlaceholderText('Αναζήτηση διεύθυνσης email…');
+      fireEvent.change(searchInput, { target: { value: 'bounced' } });
+
+      // Not yet — the search is debounced, so the hook must still see the
+      // old (empty) term and the page the user was already on.
+      expect(useSuppressionsSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: '', page: 1 }),
+      );
+
+      vi.advanceTimersByTime(300);
+
+      // vi.waitFor (not @testing-library/react's own async utilities) —
+      // same reasoning as StepSchedule.test.tsx: the debounced `setSearch`
+      // fires outside any React event handler, so the resulting re-render
+      // (and the page-reset effect it triggers) needs a poll, and RTL's own
+      // utilities poll via a real setTimeout, which never fires under
+      // vi.useFakeTimers().
+      await vi.waitFor(() =>
+        expect(useSuppressionsSpy).toHaveBeenLastCalledWith(
+          expect.objectContaining({ search: 'bounced', reason: undefined, page: 0 }),
+        ),
+      );
+    });
   });
 });

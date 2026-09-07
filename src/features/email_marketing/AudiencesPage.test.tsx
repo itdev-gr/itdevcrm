@@ -99,12 +99,37 @@ describe('AudiencesPage', () => {
     fireEvent.click(confirmButtons[confirmButtons.length - 1]!);
 
     await waitFor(() => expect(deleteMutateAsync).toHaveBeenCalledWith('aud-1'));
-    expect(
-      screen.getByText(
-        'Αυτή η λίστα είναι συνδεδεμένη με μια καμπάνια — πρέπει πρώτα να αποσυνδεθεί από εκείνη την καμπάνια πριν διαγραφεί.',
-      ),
-    ).toBeInTheDocument();
+    // getAllByText, not getByText: the message is deliberately shown twice
+    // while the dialog is still open — once inside the dialog's own
+    // description (replacing the static "cannot be undone" copy, so it's
+    // visible at the moment of failure instead of hidden behind the modal
+    // overlay) and once in the page body (so it survives once the dialog is
+    // later closed).
+    const explanation = await screen.findAllByText(
+      'Αυτή η λίστα είναι συνδεδεμένη με μια καμπάνια — πρέπει πρώτα να αποσυνδεθεί από εκείνη την καμπάνια πριν διαγραφεί.',
+    );
+    expect(explanation.length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('in_use')).not.toBeInTheDocument();
+  });
+
+  it('keeps the failure message visible after the dialog is closed, instead of clearing it', async () => {
+    deleteMutateAsync.mockRejectedValueOnce(new Error('in_use'));
+    render(wrap(<AudiencesPage />));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Διαγραφή' }));
+    const confirmButtons = screen.getAllByRole('button', { name: 'Διαγραφή' });
+    fireEvent.click(confirmButtons[confirmButtons.length - 1]!);
+    await waitFor(() => expect(deleteMutateAsync).toHaveBeenCalledWith('aud-1'));
+    await screen.findAllByText(/συνδεδεμένη με μια καμπάνια/);
+
+    // Cancel/close the still-open confirm dialog.
+    fireEvent.click(screen.getByRole('button', { name: 'Άκυρο' }));
+
+    // The explanatory sentence must still be there — Task 3's
+    // StepAudience.tsx pattern this now matches deliberately does not clear
+    // the error on close, precisely so it isn't wiped in the same state
+    // update that would have revealed it.
+    expect(screen.getByText(/συνδεδεμένη με μια καμπάνια/)).toBeInTheDocument();
   });
 
   it('does not fire audience_delete on the first click — only the confirm dialog opens', () => {

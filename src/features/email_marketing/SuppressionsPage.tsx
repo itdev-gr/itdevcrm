@@ -203,16 +203,22 @@ export function SuppressionsPage() {
       <ConfirmDialog
         open={!!removeTarget}
         onOpenChange={(next) => {
-          if (!next) {
-            setRemoveTarget(null);
-            setRemoveError(null);
-          }
+          // Important-fix: deliberately does NOT clear `removeError` here —
+          // same pattern as Task 3's StepAudience.tsx — so a failure message
+          // survives being visible once the dialog closes instead of being
+          // wiped in the same state update that would have revealed it.
+          if (!next) setRemoveTarget(null);
         }}
         title={t('suppressions.remove.confirm_title', { email: removeTarget?.email_lower ?? '' })}
+        // Important-fix: while the dialog is open, a failed attempt's
+        // translated message REPLACES the static copy inside the dialog
+        // itself, so it's visible at the moment of failure — not just in a
+        // page-body <p> the modal overlay hides.
         description={
-          removeTarget?.reason === 'unsubscribed'
+          removeError ??
+          (removeTarget?.reason === 'unsubscribed'
             ? t('suppressions.remove.confirm_text_unsubscribed')
-            : t('suppressions.remove.confirm_text')
+            : t('suppressions.remove.confirm_text'))
         }
         confirmLabel={t('suppressions.remove.button')}
         pending={unsuppress.isPending}

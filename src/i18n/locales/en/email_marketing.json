@@ -316,6 +316,7 @@
       "pause_all": "Pause all campaigns",
       "pause_all_hint": "Immediately stops every campaign send across the whole system — the emergency stop. This switch takes effect instantly, with no separate save step.",
       "pause_active_notice": "All campaigns are currently paused.",
+      "pause_unknown": "The current pause state is unknown — the settings could not be read. The switch is disabled until the read succeeds again.",
       "pause_failed": "The change failed.",
       "daily_cap": "Daily cap (global)",
       "hourly_cap": "Hourly cap (global)",

@@ -76,7 +76,16 @@ function GlobalControlsCard() {
     });
   }, [settings.data]);
 
-  const paused = settings.data?.paused ?? false;
+  // Minor-1 fix: a failed (not just loading) settings read must not present
+  // as "not paused, feel free to toggle" — `isLoading` goes false once the
+  // query settles into an error, so `data?.paused ?? false` would otherwise
+  // silently lie about the emergency-stop's real state. `settingsUnknown`
+  // covers both "still loading" and "errored" — in either case the real
+  // state genuinely isn't known yet, so the switch shows and reports
+  // "indeterminate" (a visual dash, not a checked/unchecked lie) and stays
+  // disabled rather than ever defaulting to "unpaused".
+  const settingsUnknown = settings.isLoading || settings.isError;
+  const paused: boolean | 'indeterminate' = settingsUnknown ? 'indeterminate' : (settings.data?.paused ?? false);
 
   // The kill switch is the emergency stop for the entire sending system —
   // it fires immediately on click, with no separate "Save" step, unlike the
@@ -118,7 +127,7 @@ function GlobalControlsCard() {
         <Checkbox
           id="marketing-kill-switch"
           checked={paused}
-          disabled={settings.isLoading || update.isPending}
+          disabled={settingsUnknown || update.isPending}
           onCheckedChange={(v) => void handlePauseToggle(v === true)}
           className="mt-0.5"
         />
@@ -131,7 +140,15 @@ function GlobalControlsCard() {
         </div>
       </div>
 
-      {paused ? (
+      {settings.isError ? (
+        <div
+          role="alert"
+          className="mt-3 flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300"
+        >
+          <AlertTriangle className="size-4 shrink-0" />
+          {t('audiences.settings.pause_unknown')}
+        </div>
+      ) : paused === true ? (
         <div
           role="alert"
           className="mt-3 flex items-center gap-2 rounded-lg border border-red-300/70 bg-red-50 px-3 py-2 text-sm text-red-900 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-200"
@@ -291,7 +308,17 @@ export function AudiencesPage() {
                       {formatDate(a.created_at, i18n.language)}
                     </td>
                     <td className={cn(settingsTdClass, 'text-right')}>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(a)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // Minor-2 fix: a stale error from a previous
+                          // delete attempt must not bleed into a fresh
+                          // target's dialog.
+                          setDeleteError(null);
+                          setDeleteTarget(a);
+                        }}
+                      >
                         {t('audiences.delete.button')}
                       </Button>
                     </td>
@@ -306,13 +333,18 @@ export function AudiencesPage() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(next) => {
-          if (!next) {
-            setDeleteTarget(null);
-            setDeleteError(null);
-          }
+          // Important-fix: deliberately does NOT clear `deleteError` here —
+          // same pattern as Task 3's StepAudience.tsx — so a failure message
+          // survives being visible once the dialog closes instead of being
+          // wiped in the same state update that would have revealed it.
+          if (!next) setDeleteTarget(null);
         }}
         title={t('audiences.delete.confirm_title', { name: deleteTarget?.name ?? '' })}
-        description={t('audiences.delete.confirm_text')}
+        // Important-fix: while the dialog is open, a failed attempt's
+        // translated message REPLACES the static "cannot be undone" copy
+        // inside the dialog itself, so it's visible at the moment of
+        // failure — not just in a page-body <p> the modal overlay hides.
+        description={deleteError ?? t('audiences.delete.confirm_text')}
         confirmLabel={t('audiences.delete.button')}
         pending={del.isPending}
         onConfirm={confirmDelete}
