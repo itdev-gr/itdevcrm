@@ -31,8 +31,8 @@ create policy email_suppressions_select on public.email_suppressions
 -- SECURITY DEFINER συναρτήσεις παρακάτω.
 
 -- --- Upsert helper -----------------------------------------------------------
--- Ένα παράπονο spam υπερισχύει πάντα ενός bounce, και ένα μόνιμο bounce
--- υπερισχύει ενός προσωρινού: η αιτία δεν «υποβαθμίζεται» ποτέ.
+-- Η αιτία δεν «υποβαθμίζεται» ποτέ. Ιεραρχία (από υψηλότερη σε χαμηλότερη):
+-- unsubscribed (ρητή απόφαση χρήστη) > complaint (spam) > hard_bounce (bounce).
 create or replace function public.suppress_email(
   p_email text,
   p_reason text,
@@ -50,6 +50,8 @@ begin
   values (v_email, p_reason, p_source, case when p_reason like '%bounce' then 1 else 0 end, now(), now())
   on conflict (email_lower) do update
     set reason = case
+          when public.email_suppressions.reason = 'unsubscribed' then 'unsubscribed'
+          when excluded.reason = 'unsubscribed' then 'unsubscribed'
           when public.email_suppressions.reason = 'complaint' then 'complaint'
           when excluded.reason = 'complaint' then 'complaint'
           when public.email_suppressions.reason = 'hard_bounce' then 'hard_bounce'
