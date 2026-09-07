@@ -213,3 +213,35 @@ export function useResumeCampaign() {
 export function useCancelCampaign() {
   return useLifecycleMutation('campaign_cancel');
 }
+
+// --- marketing_settings_update -------------------------------------------------------
+// The singleton email_marketing_settings row's only writer (Task 4's
+// useEmailMarketingSettings is a plain read-only select — this is the write
+// side, reused rather than duplicated). Carries the global kill switch
+// (`paused`) plus `daily_cap`/`hourly_cap`/`batch_slice`. Only keys present in
+// the patch are applied server-side — omit a key to leave it untouched, so a
+// caller flipping just `paused` never has to know the current caps.
+//
+// The RPC returns `{ok:false, errors:['settings_row_missing']}` when zero
+// rows changed (20260907270000:610-613) — that goes through callRpc's normal
+// `ok:false` → throw path like every other mutation here, so a "true" that
+// isn't real never reaches the UI as a silent success.
+export type MarketingSettingsPatch = Partial<{
+  paused: boolean;
+  daily_cap: number;
+  hourly_cap: number;
+  batch_slice: number;
+}>;
+export type MarketingSettingsUpdateResult = { ok: true };
+
+export function useUpdateMarketingSettings() {
+  const qc = useQueryClient();
+  return useMutation<MarketingSettingsUpdateResult, Error, MarketingSettingsPatch>({
+    mutationFn: captureMutation('email_marketing', 'marketing_settings_update', async (patch) =>
+      callRpc<MarketingSettingsUpdateResult>('marketing_settings_update', { p_patch: patch }),
+    ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.emailMarketingSettings() });
+    },
+  });
+}

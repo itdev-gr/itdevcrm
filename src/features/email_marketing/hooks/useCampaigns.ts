@@ -141,7 +141,12 @@ export function useCampaignStats(id: string | undefined) {
 }
 
 export type EmailMarketingSettingsRow = {
+  /** Global kill switch — when true, nothing sends anywhere in the system.
+   *  The emergency-stop AudiencesPage's settings card exposes. */
+  paused: boolean;
   daily_cap: number;
+  hourly_cap: number;
+  batch_slice: number;
   warmup_ladder: number[];
   /** Date the domain's warm-up ladder began (YYYY-MM-DD), or null if it
    *  hasn't yet — set once, on a campaign's first successful launch
@@ -150,13 +155,15 @@ export type EmailMarketingSettingsRow = {
 };
 
 /** The singleton platform pacing config (email_marketing_settings) — the
- *  live `daily_cap`/`warmup_ladder`/`warmup_started_on` values
- *  `campaign_daily_budget` actually paces sending by
- *  (`supabase/migrations/20260907220000_campaign_queue_ops.sql`). Read
+ *  live `paused`/`daily_cap`/`hourly_cap`/`batch_slice`/`warmup_ladder`/
+ *  `warmup_started_on` values `campaign_daily_budget` actually paces sending
+ *  by (`supabase/migrations/20260907220000_campaign_queue_ops.sql`). Read
  *  directly (admin-only RLS select policy, `20260907200000:158-162`) since
  *  that RPC itself is service-role-only. StepSchedule's completion estimate
  *  uses this instead of a hardcoded mirror of the schema default, so a live
- *  cap/ladder/warm-up-start change is reflected without a code change. */
+ *  cap/ladder/warm-up-start change is reflected without a code change. Also
+ *  the ONE hook AudiencesPage's global-controls card reads from — reused
+ *  rather than duplicated, per task-6-brief.md. */
 export function useEmailMarketingSettings() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   return useQuery({
@@ -165,7 +172,7 @@ export function useEmailMarketingSettings() {
     queryFn: async (): Promise<EmailMarketingSettingsRow> => {
       const { data, error } = await supabase
         .from('email_marketing_settings' as never)
-        .select('daily_cap, warmup_ladder, warmup_started_on')
+        .select('paused, daily_cap, hourly_cap, batch_slice, warmup_ladder, warmup_started_on')
         .eq('id', true)
         .single();
       if (error) throw new Error(error.message);

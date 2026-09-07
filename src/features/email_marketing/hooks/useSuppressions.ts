@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryKeys';
 import { captureMutation } from '@/lib/sentry/captureMutation';
@@ -20,19 +20,44 @@ export type SuppressionRow = {
   note: string | null;
 };
 
-/** The full suppression list (~450 rows), newest activity first. Admin-only. */
-export function useSuppressions() {
+export const SUPPRESSIONS_PAGE_SIZE = 50;
+
+export type SuppressionsParams = {
+  /** Free-text search against `email_lower`, matched server-side with
+   *  `ilike` — the list is ~450 rows and growing, so it is never fetched
+   *  whole and filtered in the browser. */
+  search?: string | undefined;
+  reason?: SuppressionReason | undefined;
+  /** Zero-based page index. */
+  page?: number | undefined;
+};
+
+export type SuppressionsResult = { rows: SuppressionRow[]; count: number };
+
+/** The suppression list (~450 rows and growing), newest activity first,
+ *  searched and paged server-side. Admin-only. */
+export function useSuppressions({ search = '', reason, page = 0 }: SuppressionsParams = {}) {
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const term = search.trim();
+  const from = page * SUPPRESSIONS_PAGE_SIZE;
+  const to = from + SUPPRESSIONS_PAGE_SIZE - 1;
   return useQuery({
-    queryKey: queryKeys.suppressions(),
+    queryKey: queryKeys.suppressions({ search: term, reason, page }),
     enabled: isAdmin,
-    queryFn: async (): Promise<SuppressionRow[]> => {
-      const { data, error } = await supabase
+    // Keeps the current page's rows on screen while the next page/search
+    // term loads, instead of flashing back to a loading state on every click.
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<SuppressionsResult> => {
+      let query = supabase
         .from('email_suppressions' as never)
-        .select('*')
-        .order('last_seen_at', { ascending: false });
+        .select('*', { count: 'exact' })
+        .order('last_seen_at', { ascending: false })
+        .range(from, to);
+      if (term) query = query.ilike('email_lower', `%${term}%`);
+      if (reason) query = query.eq('reason', reason);
+      const { data, error, count } = await query;
       if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as SuppressionRow[];
+      return { rows: (data ?? []) as unknown as SuppressionRow[], count: count ?? 0 };
     },
   });
 }
@@ -55,7 +80,9 @@ export function useUnsuppressEmail() {
       return data as unknown as boolean;
     }),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.suppressions() });
+      // Prefix match (no exact params) so every open page/search/reason
+      // filter's cached query is invalidated, not just one specific one.
+      void qc.invalidateQueries({ queryKey: ['email-suppressions'] });
     },
   });
 }

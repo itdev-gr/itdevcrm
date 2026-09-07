@@ -286,10 +286,83 @@
   },
   "audiences": {
     "title": "Recipient lists",
-    "coming_soon": "List management is coming soon."
+    "description": "Every recipient list, with its consent basis and provenance.",
+    "loading": "Loading…",
+    "empty": "No lists yet.",
+    "provenance_none": "—",
+    "columns": {
+      "provenance": "Provenance",
+      "kind": "Kind",
+      "created": "Created"
+    },
+    "kind": {
+      "import": "File import",
+      "segment": "Segment",
+      "manual": "Manual"
+    },
+    "kind_unknown": "Unknown kind ({{kind}})",
+    "delete": {
+      "button": "Delete",
+      "confirm_title": "Delete the list \"{{name}}\"?",
+      "confirm_text": "This cannot be undone.",
+      "error_in_use": "This list is attached to a campaign — detach it from that campaign first before deleting it.",
+      "error_not_found": "The list was not found.",
+      "error_permission_denied": "You don't have permission to delete lists.",
+      "error_generic": "Deleting the list failed."
+    },
+    "settings": {
+      "title": "Global sending settings",
+      "description": "These apply to every campaign at once — change with care.",
+      "pause_all": "Pause all campaigns",
+      "pause_all_hint": "Immediately stops every campaign send across the whole system — the emergency stop. This switch takes effect instantly, with no separate save step.",
+      "pause_active_notice": "All campaigns are currently paused.",
+      "pause_failed": "The change failed.",
+      "daily_cap": "Daily cap (global)",
+      "hourly_cap": "Hourly cap (global)",
+      "batch_slice": "Send batch size",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "save_failed": "Saving failed.",
+      "save_invalid": "Values must be positive numbers."
+    }
   },
   "suppressions": {
     "title": "Suppressed recipients",
-    "coming_soon": "Suppression management is coming soon."
+    "description": "The global list of addresses that never receive campaigns — search for an address to see why.",
+    "loading": "Loading…",
+    "empty": "No suppressed addresses found.",
+    "search_placeholder": "Search by email address…",
+    "reason_all": "All reasons",
+    "count": "{{count}} addresses",
+    "columns": {
+      "email": "Address",
+      "reason": "Reason",
+      "bounce_count": "Bounce count",
+      "first_seen": "First seen",
+      "last_seen": "Last seen"
+    },
+    "reasons": {
+      "hard_bounce": "Hard bounce (address doesn't exist)",
+      "soft_bounce": "Soft bounce (e.g. inbox full)",
+      "complaint": "Spam complaint",
+      "manual": "Removed manually",
+      "invalid": "Invalid email address",
+      "unsubscribed": "Asked to stop receiving email"
+    },
+    "reason_unknown": "Unknown reason ({{reason}})",
+    "pagination": {
+      "range": "{{from}}–{{to}} of {{count}}",
+      "empty": "0 of 0",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "remove": {
+      "button": "Remove",
+      "confirm_title": "Remove \"{{email}}\" from the suppression list?",
+      "confirm_text": "The address will become eligible to receive campaigns again.",
+      "confirm_text_unsubscribed": "This person explicitly asked to stop receiving email — this isn't a dead mailbox. Removing them will make them eligible to receive campaigns again, against their request. Only proceed if you're sure they changed their mind.",
+      "failed": "Removing it failed."
+    }
   }
 }
