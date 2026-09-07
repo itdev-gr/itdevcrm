@@ -29,7 +29,12 @@ const FIELD_ALIASES: Record<LeadField, string[]> = {
   notes: ['notes', 'note', 'comments', 'σημειώσεις', 'σημειωσεις', 'σχόλια', 'σχολια'],
 };
 
-const MAX_ROWS = 2000;
+// Default cap for the lead-intake path. Callers with a legitimate need for
+// more (the email-marketing audience import, which the owner has said will
+// see multi-thousand-row spreadsheets) can pass a higher `maxRows` — additive
+// only, so every existing call site keeps today's 2,000-row behaviour byte
+// for byte.
+const DEFAULT_MAX_ROWS = 2000;
 
 // Lowercase, trim, and treat underscores as spaces + collapse runs of whitespace, so
 // Meta/Excel headers like "αριθμός_τηλεφώνου" match the space-form aliases above.
@@ -52,9 +57,9 @@ export function mapHeader(header: string): LeadField | null {
 
 export type MapResult = { rows: ImportedLeadRow[]; skipped: number; dropped: number };
 
-export function mapRowsToLeads(raw: Record<string, unknown>[]): MapResult {
-  const limited = raw.slice(0, MAX_ROWS);
-  const dropped = Math.max(0, raw.length - MAX_ROWS);
+export function mapRowsToLeads(raw: Record<string, unknown>[], maxRows: number = DEFAULT_MAX_ROWS): MapResult {
+  const limited = raw.slice(0, maxRows);
+  const dropped = Math.max(0, raw.length - maxRows);
   let skipped = 0;
   const rows: ImportedLeadRow[] = [];
 
@@ -88,7 +93,7 @@ export function mapRowsToLeads(raw: Record<string, unknown>[]): MapResult {
   return { rows, skipped, dropped };
 }
 
-export async function parseLeadFile(file: File): Promise<MapResult> {
+export async function parseLeadFile(file: File, maxRows: number = DEFAULT_MAX_ROWS): Promise<MapResult> {
   const XLSX = await import('xlsx');
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: 'array' });
@@ -96,7 +101,7 @@ export async function parseLeadFile(file: File): Promise<MapResult> {
   const sheet = first ? wb.Sheets[first] : undefined;
   if (!sheet) return { rows: [], skipped: 0, dropped: 0 };
   const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
-  return mapRowsToLeads(raw);
+  return mapRowsToLeads(raw, maxRows);
 }
 
 export const IMPORT_TEMPLATE_HEADERS = ['Name', 'Email', 'Phone', 'Company', 'Website', 'Notes'];

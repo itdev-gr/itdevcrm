@@ -100,4 +100,43 @@ describe('StepContent', () => {
     expect(heading?.textContent).toBe('Τίτλος');
     expect(strong?.textContent).toBe('έντονο');
   });
+
+  it('renders the preview through renderCampaignEmail (not a hand-rolled shell) — the unsubscribe footer is present', () => {
+    render(wrap(<StepContent campaignId="camp-1" />));
+
+    // The greeting and the "Απεγγραφή" unsubscribe link only exist in
+    // renderCampaignEmail's card shell — renderEmailMarkup alone (the body
+    // markup renderer) never emits either. Their presence here proves the
+    // preview goes through the real sender-side renderer.
+    expect(screen.getByText(/Γεια σας, Γιώργος Παπαδόπουλος!/)).toBeInTheDocument();
+    expect(screen.getByText('Απεγγραφή από τα ενημερωτικά email')).toBeInTheDocument();
+  });
+
+  it('flushes a pending debounced save instead of dropping it when the step unmounts (step change)', () => {
+    const { unmount } = render(wrap(<StepContent campaignId="camp-1" />));
+    const subject = screen.getByLabelText('Θέμα');
+
+    fireEvent.change(subject, { target: { value: 'Επείγον θέμα' } });
+
+    // Still inside the 800ms debounce window.
+    expect(updateMutate).not.toHaveBeenCalled();
+
+    // Switching wizard steps unmounts StepContent immediately — the edit
+    // must not be silently discarded (task-3-review.md, Important 2).
+    unmount();
+
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+    expect(updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        campaignId: 'camp-1',
+        patch: expect.objectContaining({ subject: 'Επείγον θέμα' }),
+      }),
+      expect.anything(),
+    );
+
+    // Advancing time past the original debounce window afterwards must not
+    // fire a second save — the timer was cleared, not left dangling.
+    vi.advanceTimersByTime(1000);
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+  });
 });

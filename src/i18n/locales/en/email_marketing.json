@@ -61,7 +61,9 @@
       "hero_image_url": "Image URL",
       "reply_to": "Reply-to",
       "preview": "Preview",
-      "subject_placeholder": "(no subject yet)"
+      "subject_placeholder": "(no subject yet)",
+      "preview_recipient_name": "Jane Doe",
+      "preview_note": "How {{name}} will see it — with the real greeting and the unsubscribe footer."
     },
     "audience": {
       "title": "Recipient lists",
@@ -91,7 +93,8 @@
         "parse_error": "Reading the file failed. Check that it's a valid .xlsx or .csv.",
         "found": "Found {{count}} rows.",
         "skipped": "Skipped {{count}} empty rows.",
-        "dropped": "Ignored {{count}} rows past the limit.",
+        "dropped_warning_title": "The file exceeds the {{limit}}-row limit",
+        "dropped_warning_body": "{{dropped}} rows were ignored — only the first {{limit}} were imported. Split the file into more parts and import the rest separately, or the campaign will only reach part of your list.",
         "preview_title": "Preview of the first 10 rows",
         "col_name": "Name",
         "col_email": "Email",
@@ -108,7 +111,16 @@
         "cancel": "Cancel",
         "close": "Close",
         "import_failed": "Import failed.",
-        "report": "Added {{added}}, invalid {{invalid}}, duplicate {{duplicate}}."
+        "report": "Added {{added}}, invalid {{invalid}}, duplicate {{duplicate}}.",
+        "error_codes": {
+          "permission_denied": "You don't have permission for this action.",
+          "invalid_consent_basis": "Invalid consent basis.",
+          "invalid_kind": "Invalid list type.",
+          "audience_not_found": "The list was not found.",
+          "invalid_rows": "Invalid row data.",
+          "campaign_not_found": "The campaign was not found.",
+          "invalid_state": "The campaign is no longer in draft."
+        }
       }
     }
   },

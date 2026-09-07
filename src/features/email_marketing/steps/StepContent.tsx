@@ -4,12 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { SettingsCard } from '@/components/layout/page-shell';
-// Same shared renderer the send-campaign edge function will use — deliberately
-// importable from Vite as well as Deno (see the file's own header comment) so
-// what the owner approves here is exactly what recipients receive. Never
-// hand-roll a second renderer; src/features/email_automations/templatePreview.ts
-// already establishes this exact import path for the automated-email preview.
-import { renderEmailMarkup } from '../../../../supabase/functions/_shared/emailMarkup.ts';
+// The EXACT function send-campaign/index.ts sends with — not just the body
+// markup renderer, but the full card shell (greeting, hero image, footer +
+// unsubscribe link). Its own header comment says it exists for this UI's
+// preview. Rendering our own shell around renderEmailMarkup was reviewed and
+// rejected (task-3-review.md, Important 1): the sender only emits the hero
+// image when the URL starts with "https://", the real email opens with a
+// greeting, and the footer/unsubscribe link is legally required — none of
+// that can be hand-rolled a second time without the two silently diverging.
+import { renderCampaignEmail } from '../../../../supabase/functions/send-campaign/render.ts';
 import { useCampaign } from '../hooks/useCampaigns';
 import { useUpdateCampaign } from '../hooks/useCampaignMutations';
 
@@ -52,35 +55,69 @@ export function StepContent({ campaignId }: Props) {
     });
   }, [campaign]);
 
+  function buildPatch(next: Fields) {
+    return {
+      subject: next.subject,
+      preheader: next.preheader || null,
+      body_md: next.bodyMd,
+      hero_image_url: next.heroImageUrl || null,
+      reply_to: next.replyTo,
+    };
+  }
+
+  function saveNow(next: Fields) {
+    update.mutate(
+      { campaignId, patch: buildPatch(next) },
+      {
+        onSuccess: () => {
+          setSaveState('saved');
+          setSaveError(null);
+        },
+        onError: () => {
+          setSaveState('idle');
+          setSaveError(t('builder.content.save_failed'));
+        },
+      },
+    );
+  }
+
+  // "Latest" refs so the unmount-flush below (empty deps — must run exactly
+  // once, on unmount) always sees the current campaignId/fields/save fn
+  // without re-subscribing the effect on every render. Synced in an effect
+  // (runs after commit), never during render — mutating a ref while
+  // rendering is unsafe.
+  const saveNowRef = useRef(saveNow);
+  const latestFieldsRef = useRef(fields);
+  useEffect(() => {
+    saveNowRef.current = saveNow;
+    latestFieldsRef.current = fields;
+  });
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  useEffect(
+    () => () => {
+      // A pending debounce is FLUSHED, not dropped, when the step unmounts
+      // (switching wizard steps, navigating away, closing the tab). Losing
+      // the owner's last edit silently — the field just quietly reverting to
+      // the old value next time he opens this step — was the review's
+      // Important 2 finding. `mutate()` is safe to call after unmount in
+      // React Query v5; only the onSuccess/onError setState calls above
+      // become harmless no-ops.
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+        saveNowRef.current(latestFieldsRef.current);
+      }
+    },
+    [],
+  );
 
   function scheduleSave(next: Fields) {
     if (timerRef.current) clearTimeout(timerRef.current);
     setSaveState('saving');
     timerRef.current = setTimeout(() => {
-      update.mutate(
-        {
-          campaignId,
-          patch: {
-            subject: next.subject,
-            preheader: next.preheader || null,
-            body_md: next.bodyMd,
-            hero_image_url: next.heroImageUrl || null,
-            reply_to: next.replyTo,
-          },
-        },
-        {
-          onSuccess: () => {
-            setSaveState('saved');
-            setSaveError(null);
-          },
-          onError: () => {
-            setSaveState('idle');
-            setSaveError(t('builder.content.save_failed'));
-          },
-        },
-      );
+      timerRef.current = null;
+      saveNow(next);
     }, AUTOSAVE_DELAY_MS);
   }
 
@@ -92,7 +129,13 @@ export function StepContent({ campaignId }: Props) {
     });
   }
 
-  const preview = renderEmailMarkup(fields.bodyMd).html;
+  const previewDisplayName = t('builder.content.preview_recipient_name');
+  const preview = renderCampaignEmail({
+    bodyMd: fields.bodyMd,
+    heroImageUrl: fields.heroImageUrl || null,
+    displayName: previewDisplayName,
+    unsubscribeUrl: '#',
+  }).html;
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -176,27 +219,24 @@ export function StepContent({ campaignId }: Props) {
 
       <SettingsCard className="p-5">
         <h2 className="text-base font-semibold">{t('builder.content.preview')}</h2>
-        <div className="mt-3 rounded-lg border border-border/60 bg-muted/25 p-4">
-          {fields.heroImageUrl ? (
-            <img
-              src={fields.heroImageUrl}
-              alt=""
-              className="mb-3 max-h-40 w-full rounded-md object-cover"
-            />
-          ) : null}
-          <div className="text-sm font-semibold">
-            {fields.subject || t('builder.content.subject_placeholder')}
-          </div>
-          {fields.preheader ? (
-            <div className="mt-0.5 text-xs text-muted-foreground">{fields.preheader}</div>
-          ) : null}
-          <div
-            className="mt-3 text-sm [&_h3]:mb-1 [&_h3]:mt-4 [&_h3]:text-base [&_h3]:font-bold [&_p:last-child]:mb-0 [&_p]:mb-2 [&_ul]:list-disc"
-            // Safe: renderEmailMarkup HTML-escapes the source text before
-            // adding its own markup tags.
-            dangerouslySetInnerHTML={{ __html: preview }}
-          />
+        <div className="mt-3 text-sm font-semibold">
+          {fields.subject || t('builder.content.subject_placeholder')}
         </div>
+        {fields.preheader ? (
+          <div className="mt-0.5 text-xs text-muted-foreground">{fields.preheader}</div>
+        ) : null}
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          {t('builder.content.preview_note', { name: previewDisplayName })}
+        </p>
+        <div
+          className="mt-2 overflow-hidden rounded-lg border border-border/60"
+          // Safe: renderCampaignEmail → renderEmailMarkup HTML-escapes the
+          // source text before adding its own markup tags. This is the
+          // SAME html the send-campaign edge function emails — not a second,
+          // hand-rolled shell — so hero-image and footer/unsubscribe
+          // behaviour here always matches what recipients actually receive.
+          dangerouslySetInnerHTML={{ __html: preview }}
+        />
       </SettingsCard>
     </div>
   );

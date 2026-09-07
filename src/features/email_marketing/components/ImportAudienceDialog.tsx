@@ -31,6 +31,24 @@ const CONSENT_OPTIONS: ConsentBasis[] = ['existing_customer', 'inquiry', 'public
 // progress instead of one long silent wait.
 const BATCH_SIZE = 500;
 const PREVIEW_ROWS = 10;
+// parseLeadFile defaults to 2,000 rows (the lead-intake path's ceiling) —
+// too low for the owner's stated use (spreadsheets of thousands of
+// contacts). This path passes a higher, explicit ceiling; the lead-intake
+// call site is untouched and keeps its 2,000-row default.
+const IMPORT_MAX_ROWS = 20000;
+
+// Known ok:false codes from audience_create / audience_add_members /
+// campaign_attach_audience (20260907270000_campaign_authoring_rpcs.sql) —
+// translated instead of shown as a raw RPC error code.
+const KNOWN_IMPORT_ERROR_CODES = new Set([
+  'permission_denied',
+  'invalid_consent_basis',
+  'invalid_kind',
+  'audience_not_found',
+  'invalid_rows',
+  'campaign_not_found',
+  'invalid_state',
+]);
 
 type ParsedFile = { fileName: string; rows: ImportedLeadRow[]; skipped: number; dropped: number };
 type ImportReport = { added: number; invalid: number; duplicate: number };
@@ -83,7 +101,7 @@ export function ImportAudienceDialog({ campaignId, open, onOpenChange }: Props) 
     e.target.value = ''; // allow re-selecting the same file
     if (!file) return;
     try {
-      const res = await parseLeadFile(file);
+      const res = await parseLeadFile(file, IMPORT_MAX_ROWS);
       if (res.rows.length === 0) {
         setParseError(t('builder.audience.import.parse_empty'));
         setParsed(null);
@@ -120,7 +138,12 @@ export function ImportAudienceDialog({ campaignId, open, onOpenChange }: Props) 
         sourceNote: sourceNote.trim() || null,
       });
 
-      const batches = chunkRows(parsed.rows, BATCH_SIZE);
+      // Map to member rows over the FULL file first, so `row` (source_row on
+      // the server) is the true spreadsheet line — chunking AFTER mapping,
+      // instead of mapping per-batch, keeps the index global instead of
+      // restarting at 1 in every batch.
+      const memberRows = parsed.rows.map(toMemberRow);
+      const batches = chunkRows(memberRows, BATCH_SIZE);
       // The report shown at the end is the TRUE server tally, summed across
       // batches — never the file's raw row count, which says nothing about
       // how many rows actually landed (invalid emails, duplicates, etc.).
@@ -129,7 +152,7 @@ export function ImportAudienceDialog({ campaignId, open, onOpenChange }: Props) 
       for (const [i, batch] of batches.entries()) {
         const result = await addMembers.mutateAsync({
           audienceId: created.audience_id,
-          rows: batch.map(toMemberRow),
+          rows: batch,
         });
         totals.added += result.added;
         totals.invalid += result.invalid;
@@ -142,7 +165,15 @@ export function ImportAudienceDialog({ campaignId, open, onOpenChange }: Props) 
       setReport(totals);
       setParsed(null);
     } catch (err) {
-      setImportError((err as Error).message || t('builder.audience.import.import_failed'));
+      // Task 1's callRpc throws the raw RPC error code (e.g.
+      // "invalid_consent_basis") — translate the ones we know about instead
+      // of showing that code verbatim.
+      const code = (err as Error).message;
+      setImportError(
+        KNOWN_IMPORT_ERROR_CODES.has(code)
+          ? t(`builder.audience.import.error_codes.${code}`)
+          : t('builder.audience.import.import_failed'),
+      );
     } finally {
       setImporting(false);
     }
@@ -196,8 +227,21 @@ export function ImportAudienceDialog({ campaignId, open, onOpenChange }: Props) 
                 <p className="text-xs text-muted-foreground">
                   {t('builder.audience.import.found', { count: parsed.rows.length })}
                   {parsed.skipped > 0 ? ` ${t('builder.audience.import.skipped', { count: parsed.skipped })}` : ''}
-                  {parsed.dropped > 0 ? ` ${t('builder.audience.import.dropped', { count: parsed.dropped })}` : ''}
                 </p>
+
+                {parsed.dropped > 0 ? (
+                  <div className="rounded-lg border border-amber-500/60 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-400/40 dark:bg-amber-950/40 dark:text-amber-200">
+                    <p className="font-semibold">
+                      {t('builder.audience.import.dropped_warning_title', { limit: IMPORT_MAX_ROWS })}
+                    </p>
+                    <p className="mt-1">
+                      {t('builder.audience.import.dropped_warning_body', {
+                        dropped: parsed.dropped,
+                        limit: IMPORT_MAX_ROWS,
+                      })}
+                    </p>
+                  </div>
+                ) : null}
 
                 <div>
                   <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">

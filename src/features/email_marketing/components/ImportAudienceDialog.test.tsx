@@ -132,6 +132,70 @@ describe('ImportAudienceDialog', () => {
     ).toBeInTheDocument();
   });
 
+  it('raises parseLeadFile\'s row ceiling for this path (20,000, not the 2,000 lead-intake default)', async () => {
+    render(wrap(<ImportAudienceDialog campaignId="camp-1" open onOpenChange={() => {}} />));
+    await selectFile(makeRows(3));
+
+    expect(parseLeadFile).toHaveBeenCalledWith(expect.any(File), 20000);
+  });
+
+  it('shows a prominent, specific warning — not muted small text — when the file exceeds the row cap', async () => {
+    parseLeadFile.mockReset();
+    parseLeadFile.mockResolvedValueOnce({ rows: makeRows(3), skipped: 0, dropped: 4321 });
+    render(wrap(<ImportAudienceDialog campaignId="camp-1" open onOpenChange={() => {}} />));
+    const file = new File(['x'], 'huge.xlsx');
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(screen.getByText('Το αρχείο ξεπερνά το όριο των 20000 γραμμών')).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/Αγνοήθηκαν 4321 γραμμές/)).toBeInTheDocument();
+  });
+
+  it('records the true spreadsheet row number (source_row) across batch boundaries, not a per-batch restart', async () => {
+    createMutateAsync.mockResolvedValue({ ok: true, audience_id: 'aud-1' });
+    addMembersMutateAsync.mockResolvedValue({ ok: true, added: 1, invalid: 0, duplicate: 0 });
+    attachMutateAsync.mockResolvedValue({ ok: true, campaign_id: 'camp-1', audience_id: 'aud-1' });
+
+    render(wrap(<ImportAudienceDialog campaignId="camp-1" open onOpenChange={() => {}} />));
+    await selectFile(makeRows(1200));
+    await chooseConsentBasis('Υπάρχων πελάτης');
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Εισαγωγή' }));
+
+    await waitFor(() => expect(attachMutateAsync).toHaveBeenCalled());
+
+    type MemberRow = { row?: number };
+    const batch1 = (addMembersMutateAsync.mock.calls[0]?.[0] as { rows: MemberRow[] }).rows;
+    const batch2 = (addMembersMutateAsync.mock.calls[1]?.[0] as { rows: MemberRow[] }).rows;
+    const batch3 = (addMembersMutateAsync.mock.calls[2]?.[0] as { rows: MemberRow[] }).rows;
+
+    // Global spreadsheet line numbers: 1-500, 501-1000, 1001-1200 — NOT
+    // 1-500, 1-500, 1-200 (a per-batch restart).
+    expect(batch1[0]?.row).toBe(1);
+    expect(batch1[499]?.row).toBe(500);
+    expect(batch2[0]?.row).toBe(501);
+    expect(batch2[499]?.row).toBe(1000);
+    expect(batch3[0]?.row).toBe(1001);
+    expect(batch3[199]?.row).toBe(1200);
+  });
+
+  it('translates a known RPC error code instead of showing it verbatim', async () => {
+    createMutateAsync.mockRejectedValue(new Error('invalid_consent_basis'));
+
+    render(wrap(<ImportAudienceDialog campaignId="camp-1" open onOpenChange={() => {}} />));
+    await selectFile(makeRows(2));
+    await chooseConsentBasis('Υπάρχων πελάτης');
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Εισαγωγή' }));
+
+    expect(await screen.findByText('Μη έγκυρη βάση συναίνεσης.')).toBeInTheDocument();
+    expect(screen.queryByText('invalid_consent_basis')).not.toBeInTheDocument();
+  });
+
   it('attaches the newly created audience to the campaign on success', async () => {
     createMutateAsync.mockResolvedValue({ ok: true, audience_id: 'aud-9' });
     addMembersMutateAsync.mockResolvedValue({ ok: true, added: 2, invalid: 0, duplicate: 0 });
