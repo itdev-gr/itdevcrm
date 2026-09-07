@@ -46,8 +46,16 @@ update public.deal_payments dp
    and dp.label ilike '%2/2%' and dp.status <> 'paid';
 ```
 
-`custom`, not `50_50`: the split is 345.00 / 255.65, which is 57.5 % / 42.6 %.
-Recording it as `50_50` would have been a false statement about the agreement.
+`50_50`, on the owner's correction. I first recorded `custom` by reading the
+split back from the payments (345.00 / 255.65 is 57.5 / 42.6, not a half), but
+the agreement with the client *is* 50/50 — the first instalment was simply
+collected at 345.00 rather than 300.00, leaving 255.65 as the remainder. The
+plan field states the agreement; the payment rows state what actually happened.
+That is the right way round, and it is why the two do not match to the euro.
+
+`installment_schedule` is cleared: a custom schedule only applies to
+`plan = 'custom'`. The second instalment's due date lives on the payment row,
+which is what `mark_overdue_payments` actually reads.
 
 `end_date`, not `start_date`: `mark_overdue_payments` keys a `one_time`
 payment's due date on `end_date` (recurring ones use `start_date`), so that is
@@ -63,7 +71,9 @@ instalments on the same date and 3 are spread by 21, 73 and 95 days.
 ## Deliberately NOT changed
 
 - **The €0.65 discrepancy.** 345.00 + 255.65 = 600.65 against a job amount of
-  600.00. The owner was asked and chose to leave the amounts alone, so the
+  600.00. Note this is separate from the 50/50 question: even against a 50/50
+  agreement the collected 345.00 plus the outstanding 255.65 overshoot the
+  600.00 total by 0.65. The owner was asked and chose to leave the amounts alone, so the
   client still owes 255.65. Only `006042-WEBDEV` (1300.00 vs 1180.00) shows a
   comparable gap; the other jobs flagged by a naive sum check are false
   positives, where `one_time_amount` is null and the figure lives in
@@ -85,7 +95,7 @@ wants them done:
 
 ```sql
 select installment_plan, installment_schedule from jobs where code='005690-WEBDEV';
--- custom, [{345.00, 2026-07-16}, {255.65, 2026-09-30}]
+-- 50_50, null
 select dp.label, dp.end_date, dp.amount_net, dp.status
   from deal_payments dp join deal_payment_lines pl on pl.payment_id=dp.id
  where pl.job_id=(select id from jobs where code='005690-WEBDEV');
