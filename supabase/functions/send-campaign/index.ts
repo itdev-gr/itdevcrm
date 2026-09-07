@@ -202,6 +202,47 @@ async function releaseRows(rows: RecipientRow[], errorText: string): Promise<num
   return writeErrors;
 }
 
+/** DO NOT collapse this with releaseChunk/releaseRows above.
+ *
+ *  releaseChunk/releaseRows are for rows whose Resend call actually went out
+ *  (fetch threw, returned a non-429 error, returned a length-mismatched
+ *  body, or the 429 itself) — those are real attempts, so they keep the
+ *  `attempts` increment claim_campaign_recipients already applied.
+ *
+ *  This function is for rows that were claimed but this invocation never
+ *  even built a request for: the untried tail released after a 429 on an
+ *  earlier chunk, and rows abandoned because the invocation lost its drain
+ *  lock lease before it reached them. For those, `attempts` must be given
+ *  back — otherwise a run of transient 429s can exhaust attempts<3 on people
+ *  who were never contacted, after which failExhaustedRecipients marks them
+ *  'failed' and maybeCompleteCampaign reports the campaign 'sent' with them
+ *  silently dropped (I-3). postgrest-js can't express `attempts = attempts -
+ *  1` via a plain `.update()`, so this calls the
+ *  release_unattempted_campaign_recipients RPC (20260907260000) instead. */
+async function releaseChunkUnattempted(chunk: RecipientRow[], errorText: string): Promise<boolean> {
+  if (chunk.length === 0) return true;
+  const ids = chunk.map((r) => r.id);
+  const { error } = await admin.rpc('release_unattempted_campaign_recipients', {
+    p_ids: ids,
+    p_error: errorText.slice(0, 2000),
+  });
+  return logDbError(`releaseChunkUnattempted(${ids.length} rows)`, error);
+}
+
+/** releaseRows's un-attempted counterpart — see releaseChunkUnattempted's
+ *  doc comment for which release path this is for. Batches the same way
+ *  releaseRows does; not strictly required for an RPC call (no query-string
+ *  length limit here), but kept consistent so the two release paths behave
+ *  the same way under a large slice. */
+async function releaseRowsUnattempted(rows: RecipientRow[], errorText: string): Promise<number> {
+  let writeErrors = 0;
+  for (let i = 0; i < rows.length; i += RESEND_CHUNK_SIZE) {
+    const slice = rows.slice(i, i + RESEND_CHUNK_SIZE);
+    if (!(await releaseChunkUnattempted(slice, errorText))) writeErrors += slice.length;
+  }
+  return writeErrors;
+}
+
 /** Mark a successfully-accepted chunk sent, one row per recipient (Resend's
  *  batch response order matches the request array order — checked by the
  *  caller before this is reached). This is bookkeeping for a batch whose
@@ -490,7 +531,9 @@ async function drainLocked(lockToken: string): Promise<Record<string, unknown>> 
         const stillOwned = await extendDrainLock(lockToken);
         if (!stillOwned) {
           const abandoned = rows.slice(i);
-          const releaseErrors = await releaseRows(
+          // Never attempted: no Resend request was ever built for these
+          // rows, so give the attempts increment back (I-3).
+          const releaseErrors = await releaseRowsUnattempted(
             abandoned,
             'not attempted: this invocation lost its drain lock lease mid-send',
           );
@@ -535,13 +578,18 @@ async function drainLocked(lockToken: string): Promise<Record<string, unknown>> 
         // for up to 30 minutes until recover_stale_campaign_claims notices
         // them, during which they count as neither sent nor pending and can
         // strand the campaign the way C-1 described. Released via
-        // releaseRows() (New Important-2): `remaining` can be up to
-        // batch_slice-100 rows, and a single `id=in.(…)` filter with that
-        // many UUIDs risks a 414 at the gateway — releaseRows slices it into
-        // ≤100-id releaseChunk() calls instead of one unbounded one.
+        // releaseRowsUnattempted() (New Important-2, and I-3 below):
+        // `remaining` can be up to batch_slice-100 rows, and a single
+        // `id=in.(…)`-style filter with that many UUIDs risks a 414 at the
+        // gateway — releaseRowsUnattempted slices it into ≤100-id RPC calls
+        // instead of one unbounded one.
         const remaining = rows.slice(i + RESEND_CHUNK_SIZE);
         if (remaining.length > 0) {
-          const releaseErrors = await releaseRows(
+          // Never attempted: this is the untried TAIL after the chunk that
+          // actually got the 429 (that chunk was posted — it keeps its
+          // increment via releaseChunk above). Give the attempts increment
+          // back for these (I-3).
+          const releaseErrors = await releaseRowsUnattempted(
             remaining,
             'not attempted: invocation stopped after a 429 on an earlier chunk',
           );
