@@ -11,6 +11,26 @@ import { useAuthStore } from '@/lib/stores/authStore';
 
 export type CampaignStatus = 'draft' | 'ready' | 'scheduled' | 'sending' | 'paused' | 'sent' | 'cancelled';
 
+/** Statuses the server's `campaign_update` / `campaign_attach_audience` /
+ *  `campaign_detach_audience` RPCs still accept a write against
+ *  (`20260907270000_campaign_authoring_rpcs.sql:103-105`, `:511-513`,
+ *  `:551-553`) — anything else and the write throws `invalid_state`. Shared
+ *  by StepContent, StepAudience and StepSchedule's pacing fields so all
+ *  three freeze their inputs together instead of drifting (final-review.md,
+ *  Important-3). NOT the same set `campaign_launch` accepts — see
+ *  `CAMPAIGN_LAUNCHABLE_STATUSES` below. */
+export const CAMPAIGN_EDITABLE_STATUSES: ReadonlySet<CampaignStatus> = new Set(['draft', 'ready']);
+
+/** Statuses `campaign_launch` actually accepts
+ *  (`20260907280000_warmup_starts_on_first_launch.sql:53-55`). Deliberately
+ *  narrower than `CAMPAIGN_EDITABLE_STATUSES` — a `draft` campaign can still
+ *  have its pacing fields edited, but its recipient list was just
+ *  invalidated (attach/detach/import all reset `prepared_at` to null and
+ *  `status` to `draft` without deleting the old recipient rows), so it is
+ *  NOT launchable until "Υπολογισμός παραληπτών" runs again in step 3
+ *  (final-review.md, Important-1). */
+export const CAMPAIGN_LAUNCHABLE_STATUSES: ReadonlySet<CampaignStatus> = new Set(['ready', 'scheduled']);
+
 export type CampaignRow = {
   id: string;
   name: string;
@@ -181,23 +201,82 @@ export function useEmailMarketingSettings() {
   });
 }
 
+export type CampaignRecipientsPage = { rows: CampaignRecipientRow[]; count: number };
+
+// Fix-pass, Critical-1: PostgREST caps an unranged `select()` at
+// `supabase/config.toml`'s `max_rows` (1000, also the hosted default) and
+// returns the first N rows with NO error — the drawer read that as "the
+// whole list", so a 4,312-recipient campaign silently showed 1,000. This
+// mirrors useSuppressions.ts's already-correct `.range()` + `count: 'exact'`
+// pattern, the one call site in this feature that had skipped it.
+export const CAMPAIGN_RECIPIENTS_PAGE_SIZE = 100;
+
 /** Recipient rows for one campaign, optionally filtered by status
- *  (pending/sending/sent/failed/suppressed) for the detail page's drawer. */
-export function useCampaignRecipients(id: string | undefined, filter?: CampaignRecipientStatus) {
+ *  (pending/sending/sent/failed/suppressed) for the detail page's drawer,
+ *  paged server-side — never the whole table in one unranged request. */
+export function useCampaignRecipients(
+  id: string | undefined,
+  filter?: CampaignRecipientStatus,
+  page = 0,
+) {
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const from = page * CAMPAIGN_RECIPIENTS_PAGE_SIZE;
+  const to = from + CAMPAIGN_RECIPIENTS_PAGE_SIZE - 1;
   return useQuery({
-    queryKey: queryKeys.campaignRecipients(id ?? '', filter),
+    queryKey: queryKeys.campaignRecipients(id ?? '', filter, page),
     enabled: isAdmin && !!id,
-    queryFn: async (): Promise<CampaignRecipientRow[]> => {
+    queryFn: async (): Promise<CampaignRecipientsPage> => {
       let query = supabase
         .from('email_campaign_recipients' as never)
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('campaign_id', id as string)
-        .order('queued_at', { ascending: true });
+        .order('queued_at', { ascending: true })
+        .range(from, to);
       if (filter) query = query.eq('status', filter);
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as CampaignRecipientRow[];
+      return { rows: (data ?? []) as unknown as CampaignRecipientRow[], count: count ?? 0 };
     },
   });
+}
+
+// The largest page PostgREST will ever hand back regardless of what a
+// `.range()` request asks for (`supabase/config.toml`'s `max_rows`) — using
+// it as the drain's own batch size makes every page in the loop below a
+// full page, i.e. the fewest possible round trips.
+const EXPORT_BATCH_SIZE = 1000;
+
+/**
+ * Drains EVERY recipient row for one campaign/filter, paging through with
+ * `.range()` until the server-reported `count` is exhausted — used ONLY by
+ * the drawer's CSV export, which is the record of exactly who was mailed
+ * and must never silently contain fewer rows than were actually sent to
+ * (final-review.md, Critical-1). `onProgress` lets the caller show a
+ * "fetching N of M" indicator instead of a frozen button during a
+ * multi-thousand-row export.
+ */
+export async function fetchAllCampaignRecipients(
+  campaignId: string,
+  filter: CampaignRecipientStatus | undefined,
+  onProgress?: (done: number, total: number) => void,
+): Promise<CampaignRecipientRow[]> {
+  const all: CampaignRecipientRow[] = [];
+  let total = Infinity;
+  for (let from = 0; from < total; from += EXPORT_BATCH_SIZE) {
+    let query = supabase
+      .from('email_campaign_recipients' as never)
+      .select('*', { count: 'exact' })
+      .eq('campaign_id', campaignId)
+      .order('queued_at', { ascending: true })
+      .range(from, from + EXPORT_BATCH_SIZE - 1);
+    if (filter) query = query.eq('status', filter);
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message);
+    total = count ?? 0;
+    const rows = (data ?? []) as unknown as CampaignRecipientRow[];
+    all.push(...rows);
+    onProgress?.(Math.min(all.length, total), total);
+    if (rows.length === 0) break; // Safety valve — never spin forever on an unexpected empty page.
+  }
+  return all;
 }

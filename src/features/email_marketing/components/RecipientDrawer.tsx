@@ -6,6 +6,8 @@ import { SegmentedControl } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import {
   useCampaignRecipients,
+  fetchAllCampaignRecipients,
+  CAMPAIGN_RECIPIENTS_PAGE_SIZE,
   type CampaignRecipientRow,
   type CampaignRecipientStatus,
 } from '../hooks/useCampaigns';
@@ -79,10 +81,18 @@ export function downloadCSV(filename: string, content: string): void {
 export function RecipientDrawer({ open, campaignId, campaignName, onClose }: RecipientDrawerProps) {
   const { t } = useTranslation('email_marketing');
   const [filter, setFilter] = useState<FilterValue>('all');
-  const { data: rows = [], isLoading } = useCampaignRecipients(
-    campaignId,
-    filter === 'all' ? undefined : filter,
-  );
+  const [page, setPage] = useState(0);
+  const { data, isLoading } = useCampaignRecipients(campaignId, filter === 'all' ? undefined : filter, page);
+  const rows = data?.rows ?? [];
+  const count = data?.count ?? 0;
+  const from = count === 0 ? 0 : page * CAMPAIGN_RECIPIENTS_PAGE_SIZE + 1;
+  const to = Math.min(count, page * CAMPAIGN_RECIPIENTS_PAGE_SIZE + rows.length);
+  const hasNext = to < count;
+  const hasPrev = page > 0;
+
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ done: number; total: number } | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -93,16 +103,43 @@ export function RecipientDrawer({ open, campaignId, campaignName, onClose }: Rec
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  // Reset the filter each time the drawer is (re)opened, so a stale
-  // "failed"-only view from a previous session doesn't quietly persist.
+  // Reset the filter/page each time the drawer is (re)opened, so a stale
+  // "failed"-only view (or a page 6 the owner scrolled to last time) from a
+  // previous session doesn't quietly persist.
   useEffect(() => {
-    if (open) setFilter('all');
+    if (open) {
+      setFilter('all');
+      setPage(0);
+    }
   }, [open]);
+
+  // A new status filter invalidates whatever page we were on.
+  useEffect(() => {
+    setPage(0);
+  }, [filter]);
 
   if (!open) return null;
 
-  function handleExport() {
-    downloadCSV(`campaign-${campaignId}-recipients-${filter}.csv`, recipientRowsToCSV(rows));
+  // Fix-pass, Critical-1: the CSV export is the record of exactly who was
+  // mailed, so it must never silently contain fewer rows than the drawer's
+  // own total — draining every page here, NOT exporting `rows` (the one
+  // page currently on screen). A multi-thousand-row drain takes real time,
+  // so this shows progress rather than leaving the button looking frozen.
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    setExportProgress({ done: 0, total: count });
+    try {
+      const all = await fetchAllCampaignRecipients(campaignId, filter === 'all' ? undefined : filter, (done, total) =>
+        setExportProgress({ done, total }),
+      );
+      downloadCSV(`campaign-${campaignId}-recipients-${filter}.csv`, recipientRowsToCSV(all));
+    } catch {
+      setExportError(t('detail.recipients.export_failed'));
+    } finally {
+      setExporting(false);
+      setExportProgress(null);
+    }
   }
 
   return (
@@ -127,11 +164,13 @@ export function RecipientDrawer({ open, campaignId, campaignName, onClose }: Rec
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleExport}
-                disabled={rows.length === 0}
+                onClick={() => void handleExport()}
+                disabled={count === 0 || exporting}
               >
                 <Download className="mr-1.5 size-3.5" />
-                {t('detail.recipients.export_csv')}
+                {exporting && exportProgress
+                  ? t('detail.recipients.exporting', { done: exportProgress.done, total: exportProgress.total })
+                  : t('detail.recipients.export_csv')}
               </Button>
               <Button
                 type="button"
@@ -151,9 +190,8 @@ export function RecipientDrawer({ open, campaignId, campaignName, onClose }: Rec
               options={STATUS_FILTERS.map((f) => ({ value: f, label: t(`detail.recipients.status_filter.${f}`) }))}
             />
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t('detail.recipients.count', { count: rows.length })}
-          </p>
+          {exportError ? <p className="mt-2 text-xs text-red-600 dark:text-red-400">{exportError}</p> : null}
+          <p className="mt-2 text-xs text-muted-foreground">{t('detail.recipients.count', { count })}</p>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
@@ -197,6 +235,30 @@ export function RecipientDrawer({ open, campaignId, campaignName, onClose }: Rec
               ))}
             </ul>
           )}
+        </div>
+
+        <div className="shrink-0 border-t border-border/60 bg-card/95 px-5 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              {count === 0
+                ? t('detail.recipients.pagination.empty')
+                : t('detail.recipients.pagination.range', { from, to, count })}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!hasPrev}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                {t('detail.recipients.pagination.prev')}
+              </Button>
+              <Button type="button" variant="outline" size="sm" disabled={!hasNext} onClick={() => setPage((p) => p + 1)}>
+                {t('detail.recipients.pagination.next')}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </>

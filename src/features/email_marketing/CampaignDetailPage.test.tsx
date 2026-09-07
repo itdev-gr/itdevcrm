@@ -75,7 +75,7 @@ vi.mock('./hooks/useCampaigns', async () => {
     ...actual,
     useCampaign: () => ({ data: campaign, isLoading: false, error: null, refetch: refetchCampaign }),
     useCampaignStats: () => statsState,
-    useCampaignRecipients: () => ({ data: [], isLoading: false }),
+    useCampaignRecipients: () => ({ data: { rows: [], count: 0 }, isLoading: false }),
   };
 });
 vi.mock('./hooks/useCampaignMutations', async () => {

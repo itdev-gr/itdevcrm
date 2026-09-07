@@ -56,6 +56,7 @@
       "markup_hint": "Supported: blank line = new paragraph, \"## Heading\" for a heading, \"- \" for a list, **bold**.",
       "hero_image_url": "Image URL",
       "reply_to": "Reply-to",
+      "locked_notice": "This campaign is now \"{{status}}\" — the email content can no longer be edited.",
       "preview": "Preview",
       "subject_placeholder": "(no subject yet)",
       "preview_recipient_name": "Jane Doe",
@@ -73,6 +74,7 @@
       "detach": "Detach",
       "detach_failed": "Detaching failed.",
       "detach_confirm_title": "Detach list \"{{name}}\" from this campaign?",
+      "locked_notice": "This campaign is now \"{{status}}\" — the recipient lists can no longer be edited.",
       "consent_basis_options": {
         "existing_customer": "Existing customer",
         "inquiry": "Inquiry",
@@ -126,6 +128,7 @@
       "calculating": "Calculating…",
       "loading": "Loading…",
       "no_numbers_yet": "Recipients haven't been calculated for this campaign yet.",
+      "stale_notice": "The recipient list changed since the last calculation (a list was added or removed) — the numbers below are no longer current. Click \"Calculate recipients\" to refresh them.",
       "build_errors": {
         "permission_denied": "You don't have permission to calculate recipients.",
         "campaign_not_found": "The campaign was not found.",
@@ -193,10 +196,13 @@
       "estimate": {
         "stats_loading": "Calculating the recipient count…",
         "stats_error": "Couldn't load the recipient count — try refreshing the page.",
+        "not_ready": "The recipient list needs recalculating in the \"Review\" step before the estimate can be calculated.",
         "no_recipients": "Calculate recipients first, in the \"Review\" step, to see when sending would finish.",
         "unavailable": "The completion estimate can't be calculated.",
         "same_day": "At {{cap}}/day, sending finishes today.",
-        "future": "At {{cap}}/day, sending finishes around {{date}} ({{days}} days)."
+        "same_day_shared": "At {{cap}}/day, sending would finish today — but another campaign is sending right now, so the cap is shared and the real finish may be later.",
+        "future": "At {{cap}}/day, sending finishes around {{date}} ({{days}} days).",
+        "future_shared": "At {{cap}}/day, sending finishes at the earliest around {{date}} ({{days}} days) — another campaign is sending right now, so in practice it may take longer."
       },
       "launch": {
         "title": "Launch",
@@ -204,8 +210,12 @@
         "button": "Launch",
         "confirm_title": "Launch this campaign?",
         "confirm_text": "This will be sent to {{count}} people. It cannot be undone.",
+        "confirm_paused_suffix": "Sending is currently paused globally — nothing will go out until it's resumed.",
         "success": "The campaign has started.",
         "count_unknown": "The recipient count isn't known yet — launching is disabled until it loads.",
+        "not_ready_notice": "This campaign is a draft — the recipient list needs recalculating before it can launch.",
+        "go_to_review": "Go to the \"Review\" step",
+        "paused_notice": "Sending is currently paused globally. The campaign will still be created, but nothing will go out until sending is resumed from \"Recipient lists\".",
         "errors": {
           "permission_denied": "You don't have permission to launch campaigns.",
           "campaign_not_found": "The campaign was not found.",
@@ -270,6 +280,8 @@
       "drawer_title": "Campaign recipients",
       "close": "Close",
       "export_csv": "Export CSV",
+      "exporting": "Exporting… {{done}} of {{total}}",
+      "export_failed": "Exporting failed.",
       "loading": "Loading…",
       "empty": "No recipients in this category.",
       "count": "{{count}} recipients",
@@ -281,6 +293,12 @@
         "sent": "Sent",
         "failed": "Failed",
         "suppressed": "Suppressed"
+      },
+      "pagination": {
+        "range": "{{from}}–{{to}} of {{count}}",
+        "empty": "0 of 0",
+        "prev": "Previous",
+        "next": "Next"
       }
     }
   },

@@ -24,7 +24,7 @@ import { usePauseCampaign, useResumeCampaign, useCancelCampaign } from './hooks/
 import { CampaignStatusBadge } from './components/CampaignStatusBadge';
 import { SuppressionBreakdown } from './components/SuppressionBreakdown';
 import { RecipientDrawer } from './components/RecipientDrawer';
-import { rate, formatRate, openRateDisplay } from './campaignCopy';
+import { rate, formatRate, openRateDisplay, campaignTargetCount } from './campaignCopy';
 
 // Poll interval while a campaign is actively sending — matches the plan
 // (task-5-brief.md): "Ανανέωση κάθε 15 δευτερόλεπτα όσο η κατάσταση είναι
@@ -154,15 +154,13 @@ export function CampaignDetailPage() {
   }
 
   const s = stats.data;
-  // The real send target: every recipient row EXCEPT the ones excluded before
-  // send ('suppressed') — the pool a launched/running/finished campaign was,
-  // is, or will be sending to. Unlike CampaignsListPage's "recipients"
-  // column (which sums every status including suppressed), this mirrors
-  // RecipientFunnel's "final target" concept, just computed live from
-  // campaign_stats instead of a one-time build_campaign_recipients result.
-  const target = s
-    ? Object.entries(s.by_status).reduce((sum, [status, n]) => (status === 'suppressed' ? sum : sum + n), 0)
-    : null;
+  // The real send target — see campaignCopy.ts's campaignTargetCount for the
+  // full reasoning. Fix-pass, Important-2: this is now the SAME helper
+  // StepReview's funnel uses, so the two screens can no longer disagree
+  // about the same campaign's target mid-send. `null` (never a stale
+  // number) when the campaign's last build has been invalidated
+  // (`prepared_at` is null) — Important-1b.
+  const target = campaignTargetCount(s, campaign.prepared_at);
 
   function rateSubtext(numerator: number, denominator: number, suffixKey: string): string {
     return `${formatRate(rate(numerator, denominator))} ${t(suffixKey)}`;

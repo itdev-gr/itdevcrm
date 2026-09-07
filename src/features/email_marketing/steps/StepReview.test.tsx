@@ -11,11 +11,19 @@ const { buildMutateAsync, testSendMutateAsync } = vi.hoisted(() => ({
 
 let statsData: { by_status: Record<string, number>; by_suppression_reason: Record<string, number> } | undefined =
   undefined;
+// prepared_at set by default (matching a normal, already-built campaign) so
+// the campaignTargetCount() fallback resolves in the existing tests below —
+// see the "stale" tests further down for the null-prepared_at case.
+let campaignData: { status: string; prepared_at: string | null } | undefined = {
+  status: 'ready',
+  prepared_at: '2026-09-07T00:00:00Z',
+};
 
 vi.mock('../hooks/useCampaigns', async () => {
   const actual = await vi.importActual<typeof import('../hooks/useCampaigns')>('../hooks/useCampaigns');
   return {
     ...actual,
+    useCampaign: () => ({ data: campaignData, isLoading: false }),
     useCampaignStats: () => ({ data: statsData, isLoading: false }),
   };
 });
@@ -50,6 +58,7 @@ describe('StepReview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     statsData = undefined;
+    campaignData = { status: 'ready', prepared_at: '2026-09-07T00:00:00Z' };
   });
 
   it('shows the built → suppressed → target funnel after "Υπολογισμός παραληπτών"', async () => {
@@ -125,5 +134,48 @@ describe('StepReview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Δοκιμαστικό σε μένα' }));
 
     expect(await screen.findByText('Το δοκιμαστικό εστάλη στο me@itdev.gr.')).toBeInTheDocument();
+  });
+
+  // --- Important-1b/Important-2 fix: a reset campaign must show an honest
+  // "needs recalculating" notice, never a stale funnel number. ---
+
+  it('shows a stale notice instead of the old funnel when prepared_at is null but old recipient rows still exist', () => {
+    // The exact final-review.md scenario: an audience got attached/detached
+    // after the last build, resetting prepared_at to null WITHOUT deleting
+    // the pre-reset email_campaign_recipients rows.
+    statsData = { by_status: { pending: 4312 }, by_suppression_reason: {} };
+    campaignData = { status: 'draft', prepared_at: null };
+    render(wrap(<StepReview campaignId="camp-1" />));
+
+    expect(
+      screen.getByText(/Η λίστα παραληπτών άλλαξε μετά τον τελευταίο υπολογισμό/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('4312')).not.toBeInTheDocument();
+    expect(screen.queryByText('4.312')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('recipient-funnel')).not.toBeInTheDocument();
+  });
+
+  it('shows "no numbers yet" (not the stale notice) for a genuinely never-built campaign', () => {
+    statsData = undefined;
+    campaignData = { status: 'draft', prepared_at: null };
+    render(wrap(<StepReview campaignId="camp-1" />));
+
+    expect(screen.getByText('Δεν έχει γίνει ακόμα υπολογισμός παραληπτών για αυτή την καμπάνια.')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Η λίστα παραληπτών άλλαξε μετά τον τελευταίο υπολογισμό/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('a fresh build in THIS session always wins over the stale check, even if prepared_at has not refetched yet', async () => {
+    buildMutateAsync.mockResolvedValue({ ok: true, built: 120, suppressed: 8, by_reason: {} });
+    campaignData = { status: 'draft', prepared_at: null };
+    render(wrap(<StepReview campaignId="camp-1" />));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Υπολογισμός παραληπτών' }));
+
+    expect(await screen.findByText('120')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Η λίστα παραληπτών άλλαξε μετά τον τελευταίο υπολογισμό/),
+    ).not.toBeInTheDocument();
   });
 });

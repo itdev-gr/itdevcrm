@@ -133,8 +133,17 @@ export const queryKeys = {
   campaigns: () => ['email-campaigns'] as const,
   campaign: (id: string) => ['email-campaign', id] as const,
   campaignStats: (id: string) => ['email-campaign-stats', id] as const,
-  campaignRecipients: (id: string, filter?: string) =>
-    filter ? (['email-campaign-recipients', id, filter] as const) : (['email-campaign-recipients', id] as const),
+  // `filter`/`page` are appended only when the caller supplies them, so
+  // `campaignRecipients(id)` alone stays a strict PREFIX of every
+  // filtered/paged variant below it — useCampaignMutations.ts's
+  // invalidateQueries calls pass just `(id)` on purpose, to invalidate every
+  // open filter/page in one shot rather than tracking each combination.
+  campaignRecipients: (id: string, filter?: string, page?: number) => {
+    const key: (string | number)[] = ['email-campaign-recipients', id];
+    if (filter !== undefined) key.push(filter);
+    if (page !== undefined) key.push(page);
+    return key;
+  },
   audiences: () => ['email-audiences'] as const,
   // Audiences attached to one campaign (StepAudience) — separate from the
   // full audiences() list so attach/detach can invalidate narrowly.

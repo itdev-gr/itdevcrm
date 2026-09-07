@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { SettingsCard } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { useCampaignStats } from '../hooks/useCampaigns';
+import { useCampaign, useCampaignStats } from '../hooks/useCampaigns';
 import { useBuildCampaignRecipients } from '../hooks/useCampaignMutations';
 import { useTestSendCampaign } from '../hooks/useTestSendCampaign';
 import { RecipientFunnel } from '../components/RecipientFunnel';
 import { SuppressionBreakdown } from '../components/SuppressionBreakdown';
+import { campaignTargetCount } from '../campaignCopy';
 
 type Props = { campaignId: string };
 
@@ -50,6 +51,7 @@ function translateTestSendError(message: string | null | undefined, t: TFunction
 export function StepReview({ campaignId }: Props) {
   const { t } = useTranslation('email_marketing');
   const userEmail = useAuthStore((s) => s.user?.email ?? null);
+  const { data: campaign } = useCampaign(campaignId);
   const stats = useCampaignStats(campaignId);
   const build = useBuildCampaignRecipients();
   const testSend = useTestSendCampaign();
@@ -92,14 +94,31 @@ export function StepReview({ campaignId }: Props) {
   // previous session, or before this step remounted) when nothing has been
   // (re)built in THIS session yet — so reopening the wizard on this step
   // never shows a blank slate for a campaign that's actually already 'ready'.
-  const built = buildResult?.built ?? stats.data?.by_status?.pending ?? 0;
+  //
+  // Fix-pass, Important-1b/Important-2: the fallback goes through the SAME
+  // campaignTargetCount() helper CampaignDetailPage uses (sum minus
+  // suppressed, not by_status.pending alone) — the old pending-only fallback
+  // read a shrinking number once sending started and a flat, false "0" on a
+  // finished campaign, reachable just by reopening this step from browser
+  // history. It also returns null (not a stale number) once prepared_at has
+  // been cleared by an attach/detach/import since the last build.
+  const statsTarget = campaignTargetCount(stats.data, campaign?.prepared_at ?? null);
+  const built = buildResult?.built ?? statsTarget ?? 0;
   const suppressedFromStats = Object.values(stats.data?.by_suppression_reason ?? {}).reduce(
     (sum, n) => sum + n,
     0,
   );
   const suppressed = buildResult?.suppressed ?? suppressedFromStats;
   const byReason = buildResult?.byReason ?? stats.data?.by_suppression_reason ?? {};
-  const hasNumbers = buildResult !== null || stats.data !== undefined;
+  const hasNumbers = buildResult !== null || statsTarget !== null;
+  // Recipient rows exist server-side (a build happened at some point) but
+  // prepared_at is null (attach/detach/import since) — the persisted
+  // by_status numbers are real rows, just no longer the campaign's current
+  // build. Showing them as the funnel would be exactly the stale-number
+  // trap Important-1b calls out; showing an honest "needs recalculating"
+  // notice instead.
+  const totalRecipientRows = Object.values(stats.data?.by_status ?? {}).reduce((sum, n) => sum + n, 0);
+  const isStale = buildResult === null && campaign != null && campaign.prepared_at == null && totalRecipientRows > 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -116,8 +135,12 @@ export function StepReview({ campaignId }: Props) {
 
         {buildError ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{buildError}</p> : null}
 
-        {stats.isLoading && !hasNumbers ? (
+        {stats.isLoading && !hasNumbers && !isStale ? (
           <p className="mt-4 text-sm text-muted-foreground">{t('builder.review.loading')}</p>
+        ) : isStale ? (
+          <p className="mt-4 rounded-lg border border-amber-300/60 bg-amber-50 p-2.5 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+            {t('builder.review.stale_notice')}
+          </p>
         ) : hasNumbers ? (
           <div className="mt-4">
             <RecipientFunnel built={built} suppressed={suppressed} />

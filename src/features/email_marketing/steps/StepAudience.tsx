@@ -11,6 +11,7 @@ import {
   settingsTrClass,
 } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
+import { useCampaign, CAMPAIGN_EDITABLE_STATUSES } from '../hooks/useCampaigns';
 import { useCampaignAudiences } from '../hooks/useAudiences';
 import { useDetachAudience } from '../hooks/useCampaignMutations';
 import { ImportAudienceDialog } from '../components/ImportAudienceDialog';
@@ -19,11 +20,23 @@ type Props = { campaignId: string };
 
 export function StepAudience({ campaignId }: Props) {
   const { t } = useTranslation('email_marketing');
+  const { data: campaign } = useCampaign(campaignId);
   const { data: audiences = [], isLoading, error } = useCampaignAudiences(campaignId);
   const detach = useDetachAudience();
   const [importOpen, setImportOpen] = useState(false);
   const [detachTarget, setDetachTarget] = useState<{ id: string; name: string } | null>(null);
   const [detachError, setDetachError] = useState<string | null>(null);
+
+  // Fix-pass, Important-3: campaign_attach_audience/campaign_detach_audience
+  // refuse outside draft|ready, same as campaign_update
+  // (20260907270000:511-513, :551-553). Without this gate, a `sending`
+  // campaign let the owner open the import dialog, upload a 12,000-row
+  // spreadsheet (audience_create + every audience_add_members batch
+  // succeeding), and only THEN fail on the final attach — leaving a
+  // fully-populated orphan audience with no campaign. Blocking the trigger
+  // (and the detach action) up front prevents that dead end entirely.
+  const isEditable = campaign != null && CAMPAIGN_EDITABLE_STATUSES.has(campaign.status);
+  const locked = !isEditable;
 
   const totalRows = audiences.reduce((sum, a) => sum + a.row_count, 0);
 
@@ -48,10 +61,16 @@ export function StepAudience({ campaignId }: Props) {
             {t('builder.audience.total_recipients', { count: totalRows })}
           </p>
         </div>
-        <Button size="sm" onClick={() => setImportOpen(true)}>
+        <Button size="sm" onClick={() => setImportOpen(true)} disabled={locked}>
           + {t('builder.audience.import_button')}
         </Button>
       </div>
+
+      {campaign != null && locked ? (
+        <p className="mt-3 rounded-lg border border-amber-300/60 bg-amber-50 p-2.5 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+          {t('builder.audience.locked_notice', { status: t(`status.${campaign.status}`) })}
+        </p>
+      ) : null}
 
       {detachError ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{detachError}</p> : null}
 
@@ -98,6 +117,7 @@ export function StepAudience({ campaignId }: Props) {
                         variant="ghost"
                         size="sm"
                         onClick={() => setDetachTarget({ id: a.id, name: a.name })}
+                        disabled={locked}
                       >
                         {t('builder.audience.detach')}
                       </Button>

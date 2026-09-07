@@ -13,7 +13,7 @@ import { SettingsCard } from '@/components/layout/page-shell';
 // greeting, and the footer/unsubscribe link is legally required — none of
 // that can be hand-rolled a second time without the two silently diverging.
 import { renderCampaignEmail } from '../../../../supabase/functions/send-campaign/render.ts';
-import { useCampaign } from '../hooks/useCampaigns';
+import { useCampaign, CAMPAIGN_EDITABLE_STATUSES } from '../hooks/useCampaigns';
 import { useUpdateCampaign } from '../hooks/useCampaignMutations';
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -38,6 +38,14 @@ export function StepContent({ campaignId }: Props) {
   const [fields, setFields] = useState<Fields>(EMPTY_FIELDS);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Fix-pass, Important-3: `campaign_update` refuses outside draft|ready
+  // (20260907270000:103-105) — StepSchedule already froze its own pacing
+  // fields on this same rule (`locked`); this step and StepAudience did
+  // not, so typing on a `sending` campaign produced an unexplained red
+  // "save failed" and lost the edit. Same set, same treatment here.
+  const isEditable = campaign != null && CAMPAIGN_EDITABLE_STATUSES.has(campaign.status);
+  const locked = !isEditable;
 
   // Hydrate local state once from the loaded campaign. A ref guard keeps a
   // background refetch (e.g. after the audience step resets prepared_at)
@@ -122,6 +130,7 @@ export function StepContent({ campaignId }: Props) {
   }
 
   function handleChange<K extends keyof Fields>(key: K, value: Fields[K]) {
+    if (locked) return;
     setFields((prev) => {
       const next = { ...prev, [key]: value };
       scheduleSave(next);
@@ -151,6 +160,11 @@ export function StepContent({ campaignId }: Props) {
           </span>
         </div>
         {saveError ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{saveError}</p> : null}
+        {!isLoading && locked ? (
+          <p className="mt-2 rounded-lg border border-amber-300/60 bg-amber-50 p-2.5 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+            {t('builder.content.locked_notice', { status: t(`status.${campaign?.status}`) })}
+          </p>
+        ) : null}
         {isLoading ? (
           <p className="mt-3 text-sm text-muted-foreground">{t('builder.content.loading')}</p>
         ) : (
@@ -164,6 +178,7 @@ export function StepContent({ campaignId }: Props) {
                 className="mt-1 h-8 text-xs"
                 value={fields.subject}
                 onChange={(e) => handleChange('subject', e.target.value)}
+                disabled={locked}
               />
             </div>
             <div>
@@ -175,6 +190,7 @@ export function StepContent({ campaignId }: Props) {
                 className="mt-1 h-8 text-xs"
                 value={fields.preheader}
                 onChange={(e) => handleChange('preheader', e.target.value)}
+                disabled={locked}
               />
             </div>
             <div>
@@ -187,6 +203,7 @@ export function StepContent({ campaignId }: Props) {
                 className="mt-1 font-mono text-xs"
                 value={fields.bodyMd}
                 onChange={(e) => handleChange('bodyMd', e.target.value)}
+                disabled={locked}
               />
               <p className="mt-1 text-[11px] text-muted-foreground">{t('builder.content.markup_hint')}</p>
             </div>
@@ -200,6 +217,7 @@ export function StepContent({ campaignId }: Props) {
                 value={fields.heroImageUrl}
                 onChange={(e) => handleChange('heroImageUrl', e.target.value)}
                 placeholder="https://…"
+                disabled={locked}
               />
             </div>
             <div>
@@ -211,6 +229,7 @@ export function StepContent({ campaignId }: Props) {
                 className="mt-1 h-8 text-xs"
                 value={fields.replyTo}
                 onChange={(e) => handleChange('replyTo', e.target.value)}
+                disabled={locked}
               />
             </div>
           </div>

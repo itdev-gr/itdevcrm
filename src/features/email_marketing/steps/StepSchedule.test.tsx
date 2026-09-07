@@ -57,13 +57,19 @@ let statsState: {
 };
 const DEFAULT_LADDER = [500, 1000, 2000, 3000, 5000, 7500, 10000];
 let settingsState: {
-  data?: { daily_cap: number; warmup_ladder: number[]; warmup_started_on: string | null };
+  data?: { daily_cap: number; warmup_ladder: number[]; warmup_started_on: string | null; paused: boolean };
   isLoading: boolean;
   isError: boolean;
 } = {
-  data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null },
+  data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null, paused: false },
   isLoading: false,
   isError: false,
+};
+// Other campaigns in the account, for the Important-5 "shared daily budget"
+// caveat — empty by default (no other campaign sending).
+let otherCampaignsState: { data?: Array<{ id: string; status: string }>; isLoading: boolean } = {
+  data: [],
+  isLoading: false,
 };
 
 vi.mock('../hooks/useCampaigns', async () => {
@@ -71,6 +77,7 @@ vi.mock('../hooks/useCampaigns', async () => {
   return {
     ...actual,
     useCampaign: () => ({ data: campaign, isLoading: false }),
+    useCampaigns: () => otherCampaignsState,
     useCampaignStats: () => statsState,
     useEmailMarketingSettings: () => settingsState,
   };
@@ -106,10 +113,11 @@ describe('StepSchedule', () => {
     campaign = makeCampaign();
     statsState = { data: { by_status: { pending: 4312 } }, isLoading: false, isError: false };
     settingsState = {
-      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null },
+      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null, paused: false },
       isLoading: false,
       isError: false,
     };
+    otherCampaignsState = { data: [], isLoading: false };
     updateMutateAsync.mockResolvedValue({ ok: true, campaign_id: 'camp-1' });
     launchMutateAsync.mockResolvedValue({ ok: true, campaign_id: 'camp-1', status: 'sending' });
     // Monday 2026-09-07, 10:00 UTC — fixed so the day-by-day estimate (and
@@ -142,7 +150,7 @@ describe('StepSchedule', () => {
     // ladder is already saturated past the 2,000 cap, so sending paces at
     // the full cap from day one instead of climbing 500→1000→2000 again.
     settingsState = {
-      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: '2026-08-28' },
+      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: '2026-08-28', paused: false },
       isLoading: false,
       isError: false,
     };
@@ -303,5 +311,100 @@ describe('StepSchedule', () => {
     expect(screen.getByRole('link', { name: 'Πίσω στη λίστα καμπανιών' })).toBeInTheDocument();
     expect(screen.getByLabelText('Ημερήσιο πλαφόν')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Εκκίνηση' })).toBeDisabled();
+  });
+
+  // --- Important-1a fix: draft is editable but never launchable — the
+  // server's campaign_launch only accepts ready|scheduled. ---
+
+  it('blocks the launch button on a draft campaign, tells the owner why, and offers a way back to Review', () => {
+    campaign = makeCampaign({ status: 'draft', prepared_at: null });
+    statsState = { data: { by_status: {} }, isLoading: false, isError: false };
+    const onGoToReview = vi.fn();
+    render(wrap(<StepSchedule campaignId="camp-1" onGoToReview={onGoToReview} />));
+
+    // The pacing fields stay editable — draft is still in the editable set.
+    expect(screen.getByLabelText('Ημερήσιο πλαφόν')).not.toBeDisabled();
+    // But the launch button is blocked, with an actionable explanation.
+    expect(screen.getByRole('button', { name: 'Εκκίνηση' })).toBeDisabled();
+    expect(
+      screen.getByText('Η καμπάνια είναι πρόχειρη — η λίστα παραληπτών χρειάζεται νέο υπολογισμό πριν την εκκίνηση.'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Μετάβαση στο βήμα «Έλεγχος»' }));
+    expect(onGoToReview).toHaveBeenCalledTimes(1);
+  });
+
+  // --- Important-4 fix: the global pause switch must be visible, never
+  // silently swallow a launch. ---
+
+  it('shows the global-pause notice next to the launch button, and does NOT disable launching', () => {
+    settingsState = {
+      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null, paused: true },
+      isLoading: false,
+      isError: false,
+    };
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+
+    expect(
+      screen.getByText(/Η αποστολή είναι καθολικά σε παύση αυτή τη στιγμή\. Η καμπάνια θα δημιουργηθεί κανονικά/),
+    ).toBeInTheDocument();
+    // Launch stays available — paused is disclosed, not silently enforced.
+    expect(screen.getByRole('button', { name: 'Εκκίνηση' })).not.toBeDisabled();
+  });
+
+  it('appends the pause caveat to the launch confirmation text when sending is globally paused', () => {
+    settingsState = {
+      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null, paused: true },
+      isLoading: false,
+      isError: false,
+    };
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Εκκίνηση' }));
+
+    expect(
+      screen.getByText(
+        'Θα σταλεί σε 4.312 άτομα. Δεν αναιρείται. Η αποστολή είναι καθολικά σε παύση αυτή τη στιγμή — δεν θα σταλεί τίποτα μέχρι να συνεχιστεί.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  // --- Important-5 fix: campaign_daily_budget is shared across ALL
+  // campaigns — the estimate must show an honest floor when another
+  // campaign is already sending, not a precise-looking early date. ---
+
+  it('presents the completion estimate as a floor with a caveat when another campaign is currently sending', () => {
+    otherCampaignsState = {
+      data: [
+        { id: 'camp-1', status: 'ready' }, // this campaign itself — must be excluded
+        { id: 'camp-2', status: 'sending' },
+      ],
+      isLoading: false,
+    };
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+
+    const dailyCap = screen.getByLabelText('Ημερήσιο πλαφόν');
+    fireEvent.change(dailyCap, { target: { value: '500' } });
+
+    expect(
+      screen.getByText(/τρέχει και άλλη καμπάνια αυτή τη στιγμή, οπότε στην πράξη μπορεί να πάρει περισσότερο\.$/),
+    ).toBeInTheDocument();
+  });
+
+  it('does not show the shared-budget caveat when every other campaign is NOT currently sending', () => {
+    otherCampaignsState = {
+      data: [
+        { id: 'camp-2', status: 'draft' },
+        { id: 'camp-3', status: 'sent' },
+      ],
+      isLoading: false,
+    };
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+
+    const dailyCap = screen.getByLabelText('Ημερήσιο πλαφόν');
+    fireEvent.change(dailyCap, { target: { value: '500' } });
+
+    expect(screen.queryByText(/τρέχει και άλλη καμπάνια/)).not.toBeInTheDocument();
+    expect(screen.getByText(/ολοκληρώνεται περίπου στις 17 Σεπτεμβρίου 2026/)).toBeInTheDocument();
   });
 });

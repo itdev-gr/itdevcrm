@@ -7,7 +7,7 @@ import type { CampaignRow } from '../hooks/useCampaigns';
 
 const { updateMutate } = vi.hoisted(() => ({ updateMutate: vi.fn() }));
 
-const campaign: CampaignRow = {
+let campaign: CampaignRow = {
   id: 'camp-1',
   name: 'Test campaign',
   status: 'draft',
@@ -58,6 +58,7 @@ describe('StepContent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    campaign = { ...campaign, status: 'draft' };
   });
 
   afterEach(() => {
@@ -138,5 +139,24 @@ describe('StepContent', () => {
     // fire a second save — the timer was cleared, not left dangling.
     vi.advanceTimersByTime(1000);
     expect(updateMutate).toHaveBeenCalledTimes(1);
+  });
+
+  // --- Important-3 fix: no status lock previously existed on this step —
+  // typing on a non-editable campaign produced an unexplained "save failed"
+  // and lost the edit, instead of freezing the inputs up front. ---
+
+  it('freezes every input and explains why when the campaign is no longer draft/ready (e.g. reopened while sending)', () => {
+    campaign = { ...campaign, status: 'sending' };
+    render(wrap(<StepContent campaignId="camp-1" />));
+
+    expect(screen.getByText(/Η καμπάνια είναι πλέον «Σε αποστολή»/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Θέμα')).toBeDisabled();
+    expect(screen.getByLabelText('Κείμενο')).toBeDisabled();
+
+    // A change event on a disabled field is a no-op in the browser, but this
+    // also pins the handler's own guard for defense in depth.
+    fireEvent.change(screen.getByLabelText('Θέμα'), { target: { value: 'Should not save' } });
+    vi.advanceTimersByTime(1000);
+    expect(updateMutate).not.toHaveBeenCalled();
   });
 });

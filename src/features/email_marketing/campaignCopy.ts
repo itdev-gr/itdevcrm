@@ -38,3 +38,32 @@ export function openRateDisplay(stats: CampaignRateStats, trackingEnabled: boole
   if (!trackingEnabled) return 'δεν μετράται';
   return formatRate(rate(stats.opened ?? 0, stats.sent));
 }
+
+/** Whatever shape the `campaign_stats` RPC's `by_status` breakdown takes. */
+export type CampaignTargetStats = { by_status: Record<string, number> };
+
+/**
+ * The ONE "final send target" derivation for a campaign, from its
+ * `campaign_stats` payload — every recipient row EXCEPT the ones excluded
+ * before send (`status === 'suppressed'`). Before the fix (final-review.md,
+ * Important-2) StepReview derived this from `by_status.pending` alone
+ * (correct only in the instant right after a build — it drains to 0 as
+ * sending progresses, and reads a flat, false "0" once a campaign
+ * finishes) while CampaignDetailPage derived it as `sum − suppressed`
+ * (constant across the whole life of a build, so it reads the same number
+ * before, during and after a send). This is that second, correct
+ * definition, extracted once so the two screens can no longer disagree.
+ *
+ * Returns `null` — never a stale or zero-by-coincidence number — when there
+ * is no stats payload yet, OR when `preparedAt` is `null` (the campaign's
+ * last recipient build has been invalidated: an audience was
+ * attached/detached, imported into, or the segment edited since). An absent
+ * number is honest; a stale one is not (final-review.md, Important-1b).
+ */
+export function campaignTargetCount(
+  stats: CampaignTargetStats | null | undefined,
+  preparedAt: string | null | undefined,
+): number | null {
+  if (!stats || preparedAt == null) return null;
+  return Object.entries(stats.by_status).reduce((sum, [status, n]) => (status === 'suppressed' ? sum : sum + n), 0);
+}

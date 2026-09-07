@@ -86,7 +86,9 @@ export function CampaignBuilderPage() {
       {step === 'content' && <StepContent campaignId={campaignId} />}
       {step === 'audience' && <StepAudience campaignId={campaignId} />}
       {step === 'review' && <StepReview campaignId={campaignId} />}
-      {step === 'schedule' && <StepSchedule campaignId={campaignId} />}
+      {step === 'schedule' && (
+        <StepSchedule campaignId={campaignId} onGoToReview={() => setStep('review')} />
+      )}
     </div>
   );
 }
