@@ -8,7 +8,7 @@
 -- email_pipeline_health() θα έδειχνε μόνιμα "degraded".
 -- =============================================================================
 
-create table public.email_campaigns (
+create table if not exists public.email_campaigns (
   id                uuid primary key default gen_random_uuid(),
   name              text not null,
   status            text not null default 'draft'
@@ -36,7 +36,7 @@ create table public.email_campaigns (
 );
 comment on table public.email_campaigns is 'Μία καμπάνια marketing. Δεν σχετίζεται με τα αυτόματα email.';
 
-create table public.email_audiences (
+create table if not exists public.email_audiences (
   id            uuid primary key default gen_random_uuid(),
   name          text not null,
   kind          text not null default 'import' check (kind in ('import','segment','manual')),
@@ -51,7 +51,7 @@ create table public.email_audiences (
   created_at    timestamptz not null default now()
 );
 
-create table public.email_audience_members (
+create table if not exists public.email_audience_members (
   id           uuid primary key default gen_random_uuid(),
   audience_id  uuid not null references public.email_audiences(id) on delete cascade,
   email_lower  text not null,
@@ -63,13 +63,13 @@ create table public.email_audience_members (
   unique (audience_id, email_lower)
 );
 
-create table public.email_campaign_audiences (
+create table if not exists public.email_campaign_audiences (
   campaign_id uuid not null references public.email_campaigns(id) on delete cascade,
   audience_id uuid not null references public.email_audiences(id) on delete restrict,
   primary key (campaign_id, audience_id)
 );
 
-create table public.email_campaign_recipients (
+create table if not exists public.email_campaign_recipients (
   id                 uuid primary key default gen_random_uuid(),
   campaign_id        uuid not null references public.email_campaigns(id) on delete cascade,
   email_lower        text not null,
@@ -80,7 +80,8 @@ create table public.email_campaign_recipients (
   audience_id        uuid references public.email_audiences(id) on delete set null,
   status             text not null default 'pending'
                      check (status in ('pending','sending','sent','failed','suppressed')),
-  suppression_reason text,
+  suppression_reason text check (suppression_reason is null or suppression_reason in
+    ('invalid','suppressed_list','opted_out','closed_client','internal','fatigue')),
   unsubscribe_token  uuid not null default gen_random_uuid(),
   resend_id          text,
   attempts           int not null default 0,
@@ -103,19 +104,26 @@ create table public.email_campaign_recipients (
 comment on table public.email_campaign_recipients is
   'Είναι ταυτόχρονα η ουρά αποστολής και η γραμμή στοιχείων του κάθε παραλήπτη.';
 
-create index email_campaign_recipients_claim
+create index if not exists email_campaign_recipients_claim
   on public.email_campaign_recipients (campaign_id, queued_at)
   where status = 'pending';
-create index email_campaign_recipients_resend
+create index if not exists email_campaign_recipients_resend
   on public.email_campaign_recipients (resend_id) where resend_id is not null;
-create index email_campaign_recipients_stats
+create index if not exists email_campaign_recipients_stats
   on public.email_campaign_recipients (campaign_id, status);
-create index email_campaign_recipients_reply
+create index if not exists email_campaign_recipients_reply
   on public.email_campaign_recipients (email_lower, sent_at) where sent_at is not null;
+create index if not exists email_campaign_recipients_lead
+  on public.email_campaign_recipients (lead_id) where lead_id is not null;
+create index if not exists email_campaign_recipients_client
+  on public.email_campaign_recipients (client_id) where client_id is not null;
+
+create index if not exists email_campaign_audiences_audience
+  on public.email_campaign_audiences (audience_id);
 
 -- Singleton ρυθμίσεων. Το `id boolean primary key check (id)` επιτρέπει
 -- ακριβώς μία γραμμή.
-create table public.email_marketing_settings (
+create table if not exists public.email_marketing_settings (
   id                 boolean primary key default true check (id),
   paused             boolean not null default false,
   daily_cap          int not null default 500,
@@ -130,7 +138,7 @@ create table public.email_marketing_settings (
 );
 insert into public.email_marketing_settings (id) values (true) on conflict do nothing;
 
-create table public.email_campaign_heartbeat (
+create table if not exists public.email_campaign_heartbeat (
   id         boolean primary key default true check (id),
   ran_at     timestamptz not null default now(),
   sent_count int not null default 0,
@@ -147,6 +155,7 @@ begin
                            'email_marketing_settings','email_campaign_heartbeat']
   loop
     execute format('alter table public.%I enable row level security', t);
+    execute format('drop policy if exists %I on public.%I', t || '_select', t);
     execute format(
       'create policy %I on public.%I for select to authenticated using ((select public.current_user_is_admin()))',
       t || '_select', t);
