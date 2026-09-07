@@ -15,14 +15,24 @@
 // optimism. This version walks forward day by day instead, so it can only
 // finish sending as fast as the real pacer would ever allow.
 //
-// What it deliberately still does NOT model: the live `warmup_started_on`
-// date (whether warm-up has actually begun for the sending domain — if not,
-// the real pacer sits at the ladder's first rung indefinitely, which only
-// makes the true finish date LATER than this function's own estimate, never
-// earlier), the hourly cap, or send-window clock time within a day. Every
-// omitted factor can only push the real finish later — see the day_index
-// comment below for why ladder progression itself is the one factor modeled
-// eagerly (from day 0) rather than pessimistically.
+// Second fix-pass note (task-4-review-2.md, new Important): the first pass
+// above still assumed the warm-up ladder always climbs starting "today".
+// It doesn't, on its own — `warmup_started_on` is nullable with no default
+// (20260907200000_campaign_tables.sql:132), and nothing wrote it until
+// 20260907280000_warmup_starts_on_first_launch.sql (recreates
+// `campaign_launch` to set it to `current_date` on first successful launch,
+// only when still null). Two real states now exist and both must be modeled
+// honestly:
+//   - warm-up already started (N days ago, live `warmup_started_on`): index
+//     the ladder from that real date.
+//   - warm-up not started yet (`warmup_started_on IS NULL`): after the
+//     migration above, launching TODAY is exactly what starts it — so the
+//     estimate assumes day 0 of the ladder is `now`, matching what
+//     `campaign_launch` will actually do the moment the owner clicks
+//     «Εκκίνηση».
+// What it deliberately still does NOT model: the hourly cap, or send-window
+// clock time within a day — both can only push the real finish later, never
+// earlier.
 
 export const DEFAULT_DAILY_CAP = 500; // Mirrors email_marketing_settings.daily_cap's
 // schema default (20260907200000_campaign_tables.sql:129) — used only when
@@ -59,6 +69,11 @@ export type CompletionEstimateParams = {
    *  non-empty — campaign_daily_budget itself returns 0 budget for an empty
    *  ladder (20260907220000:121-124), which this mirrors by returning null. */
   warmupLadder?: readonly number[];
+  /** The live `email_marketing_settings.warmup_started_on` date, or
+   *  `null`/`undefined` when it hasn't been set yet. `null` is treated as
+   *  "warm-up starts today" — see the header comment above for why that is
+   *  the honest assumption post-20260907280000, not an optimistic guess. */
+  warmupStartedOn?: Date | null;
 };
 
 function isoWeekday(d: Date): number {
@@ -66,14 +81,27 @@ function isoWeekday(d: Date): number {
   return day === 0 ? 7 : day;
 }
 
+/** Whole calendar days from `from`'s local date to `to`'s local date
+ *  (can be negative if `to` is earlier). Compares calendar dates, not
+ *  elapsed 24h periods, so it's unaffected by DST shifts or time-of-day. */
+function calendarDaysBetween(from: Date, to: Date): number {
+  const fromUTC = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+  const toUTC = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((toUTC - fromUTC) / 86_400_000);
+}
+
 /**
  * Estimated completion date for a campaign, from its final recipient target,
  * its effective daily cap, its allowed send days, and the platform's
  * warm-up ladder — walking forward day by day (skipping non-send-days, and
- * clamping each send-day's allowance to `min(warmupLadder[dayIndex], dailyCap)`,
- * with `dayIndex` counted from `now` itself and clamped at the ladder's last
- * rung) until the target is exhausted, exactly mirroring how
- * `campaign_daily_budget` paces a live send.
+ * clamping each send-day's allowance to `min(warmupLadder[ladderIdx], dailyCap)`)
+ * until the target is exhausted, exactly mirroring how `campaign_daily_budget`
+ * paces a live send.
+ *
+ * `ladderIdx` is the number of calendar days since warm-up began, clamped at
+ * the ladder's last rung: when `warmupStartedOn` is a real date, counted
+ * from THAT date; when it's null/undefined, counted from `now` (warm-up
+ * begins the day sending actually starts — see the header comment).
  *
  * Returns `null` — never a nonsense date — when there is nothing to
  * estimate: a zero/negative/non-finite target, a non-positive/non-finite
@@ -92,6 +120,7 @@ export function estimateCampaignCompletion(
   if (sendDays.size === 0) return null; // Can never send — no estimate, not a guess.
   const ladder =
     params.warmupLadder && params.warmupLadder.length > 0 ? params.warmupLadder : DEFAULT_WARMUP_LADDER;
+  const warmupStartedOn = params.warmupStartedOn ?? null;
 
   let remaining = targetCount;
   for (let offset = 0; offset < MAX_LOOKAHEAD_DAYS; offset++) {
@@ -99,7 +128,8 @@ export function estimateCampaignCompletion(
     day.setDate(day.getDate() + offset);
     if (!sendDays.has(isoWeekday(day))) continue;
 
-    const ladderIdx = Math.min(offset, ladder.length - 1);
+    const ladderDaysSinceStart = warmupStartedOn ? Math.max(0, calendarDaysBetween(warmupStartedOn, day)) : offset;
+    const ladderIdx = Math.min(ladderDaysSinceStart, ladder.length - 1);
     const allowance = Math.min(ladder[ladderIdx]!, params.dailyCap);
     remaining -= allowance;
     if (remaining <= 0) {

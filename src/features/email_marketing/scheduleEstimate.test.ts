@@ -64,7 +64,9 @@ describe('estimateCampaignCompletion', () => {
   // {500,1000,2000,3000,5000,7500,10000}) and weekdays-only sending. Both
   // reproduce the review's own hand-worked arithmetic exactly, so this
   // arithmetic cannot silently drift back to the flat (and misleadingly
-  // early) division-only estimate. ---
+  // early) division-only estimate. Neither passes `warmupStartedOn`, so both
+  // exercise the "not started yet" branch (see the two tests further below
+  // for the "already started" branch). ---
 
   it('Case A — 10,000 recipients, campaign cap unset (falls back to the 500 default): 20 send-days, weekdays only, finishes Fri 2 Oct 2026 — not the naive ceil(10000/500)=20-CALENDAR-day estimate', () => {
     const result = estimateCampaignCompletion(
@@ -77,13 +79,52 @@ describe('estimateCampaignCompletion', () => {
     expect(result!.days).toBe(26); // 26 calendar days from Mon 7 Sep to Fri 2 Oct, inclusive
   });
 
-  it('Case B — 10,000 recipients, campaign cap raised to 2,000: the warm-up ladder (not the cap) governs the first few days, finishing Tue 15 Sep 2026 — not the naive ceil(10000/2000)=5-day estimate', () => {
+  it('Case B — 10,000 recipients, campaign cap raised to 2,000, warm-up NOT started yet: assumes warm-up begins today (matching what campaign_launch will actually do), finishing Tue 15 Sep 2026 — not the naive ceil(10000/2000)=5-day estimate', () => {
     const result = estimateCampaignCompletion(
       10_000,
-      { dailyCap: 2000, sendDays: WEEKDAYS, warmupLadder: DEFAULT_WARMUP_LADDER },
+      { dailyCap: 2000, sendDays: WEEKDAYS, warmupLadder: DEFAULT_WARMUP_LADDER, warmupStartedOn: null },
       now,
     );
     expect(result).not.toBeNull();
     expect(result!.date.toISOString().slice(0, 10)).toBe('2026-09-15');
+  });
+
+  // --- Second fix-pass (task-4-review-2.md): the ladder can also already be
+  // mid-climb — `warmup_started_on` was set by an earlier campaign's launch
+  // (20260907280000_warmup_starts_on_first_launch.sql). Both real states
+  // must be modeled honestly, not just "assume it starts today" always. ---
+
+  it('warm-up already started 10 days ago: the ladder has already reached its higher rungs, finishing much sooner than the "not started yet" assumption above — Fri 11 Sep 2026, not Tue 15 Sep', () => {
+    const startedOn = new Date(now.getTime());
+    startedOn.setDate(startedOn.getDate() - 10);
+
+    const result = estimateCampaignCompletion(
+      10_000,
+      { dailyCap: 2000, sendDays: WEEKDAYS, warmupLadder: DEFAULT_WARMUP_LADDER, warmupStartedOn: startedOn },
+      now,
+    );
+    expect(result).not.toBeNull();
+    // 10 days in, ladder index is already clamped at the last rung (10000),
+    // so `min(ladder[idx], dailyCap)` = the full 2,000/day cap from day one:
+    // ceil(10000/2000) = 5 send-days, and Mon 7 Sep – Fri 11 Sep has no
+    // weekend to skip.
+    expect(result!.date.toISOString().slice(0, 10)).toBe('2026-09-11');
+    expect(result!.days).toBe(5);
+  });
+
+  it('warm-up already started, but only 1 day ago: the ladder is still climbing, not yet saturated by the cap', () => {
+    const startedOn = new Date(now.getTime());
+    startedOn.setDate(startedOn.getDate() - 1);
+
+    const result = estimateCampaignCompletion(
+      3_000,
+      { dailyCap: 5000, sendDays: WEEKDAYS, warmupLadder: DEFAULT_WARMUP_LADDER, warmupStartedOn: startedOn },
+      now,
+    );
+    // Today (offset 0) is 1 calendar day since warm-up started → ladder
+    // index 1 → 1,000, clamped to the 5,000 cap → allowance 1,000. Still
+    // short of 3,000, so it is NOT same-day despite a cap far above the
+    // target — the ladder, not the cap, is the binding constraint here.
+    expect(result!.days).toBeGreaterThan(1);
   });
 });

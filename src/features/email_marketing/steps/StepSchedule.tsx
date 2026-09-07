@@ -38,6 +38,16 @@ function toHHMM(value: string): string {
   return value.slice(0, 5);
 }
 
+/** Parses a Postgres `date` column ("YYYY-MM-DD", no time/timezone) as a
+ *  LOCAL calendar date — NOT `new Date(s)`, which ISO-8601 date-only parsing
+ *  treats as UTC midnight and can silently roll back a day once converted to
+ *  a timezone behind UTC. */
+function parseDateOnly(value: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
 function parseCapField(value: string): number | null {
   const trimmed = value.trim();
   if (trimmed === '') return null;
@@ -211,10 +221,21 @@ export function StepSchedule({ campaignId }: Props) {
   const liveDailyCap = settings.data?.daily_cap ?? DEFAULT_DAILY_CAP;
   const effectiveDailyCap = parsedDailyCap ?? liveDailyCap;
   const warmupLadder = settings.data?.warmup_ladder ?? DEFAULT_WARMUP_LADDER;
+  // Second fix-pass (task-4-review-2.md): null here (settings not loaded
+  // yet, OR loaded and genuinely still unset) means "assume warm-up starts
+  // today" — the honest assumption once 20260907280000 is applied, since
+  // launching today is exactly what would start it. A real date means the
+  // ladder is already mid-climb and the estimate must index from THAT date,
+  // not from today.
+  const warmupStartedOn = settings.data?.warmup_started_on ? parseDateOnly(settings.data.warmup_started_on) : null;
   const estimate =
     targetCount === null
       ? null
-      : estimateCampaignCompletion(targetCount, { dailyCap: effectiveDailyCap, sendDays: fields.sendDays, warmupLadder }, new Date());
+      : estimateCampaignCompletion(
+          targetCount,
+          { dailyCap: effectiveDailyCap, sendDays: fields.sendDays, warmupLadder, warmupStartedOn },
+          new Date(),
+        );
   const dateFmt = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' });
   const nf = new Intl.NumberFormat(i18n.language);
 

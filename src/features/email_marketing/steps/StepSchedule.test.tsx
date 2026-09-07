@@ -57,10 +57,14 @@ let statsState: {
 };
 const DEFAULT_LADDER = [500, 1000, 2000, 3000, 5000, 7500, 10000];
 let settingsState: {
-  data?: { daily_cap: number; warmup_ladder: number[] };
+  data?: { daily_cap: number; warmup_ladder: number[]; warmup_started_on: string | null };
   isLoading: boolean;
   isError: boolean;
-} = { data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER }, isLoading: false, isError: false };
+} = {
+  data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null },
+  isLoading: false,
+  isError: false,
+};
 
 vi.mock('../hooks/useCampaigns', async () => {
   const actual = await vi.importActual<typeof import('../hooks/useCampaigns')>('../hooks/useCampaigns');
@@ -101,7 +105,11 @@ describe('StepSchedule', () => {
     vi.clearAllMocks();
     campaign = makeCampaign();
     statsState = { data: { by_status: { pending: 4312 } }, isLoading: false, isError: false };
-    settingsState = { data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER }, isLoading: false, isError: false };
+    settingsState = {
+      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: null },
+      isLoading: false,
+      isError: false,
+    };
     updateMutateAsync.mockResolvedValue({ ok: true, campaign_id: 'camp-1' });
     launchMutateAsync.mockResolvedValue({ ok: true, campaign_id: 'camp-1', status: 'sending' });
     // Monday 2026-09-07, 10:00 UTC — fixed so the day-by-day estimate (and
@@ -127,6 +135,28 @@ describe('StepSchedule', () => {
     // calendar days) — this pins that the weekend-skipping model is what's
     // actually wired up, not the old flat estimate.
     expect(screen.getByText(/Με 500\/ημέρα, η αποστολή ολοκληρώνεται περίπου στις 17 Σεπτεμβρίου 2026 \(11 ημέρες\)\./)).toBeInTheDocument();
+  });
+
+  it('uses the LIVE warmup_started_on when the ladder has already begun climbing, not the "assume it starts today" fallback (second fix-pass)', () => {
+    // Warm-up already started 10 days before "now" (2026-09-07) — the
+    // ladder is already saturated past the 2,000 cap, so sending paces at
+    // the full cap from day one instead of climbing 500→1000→2000 again.
+    settingsState = {
+      data: { daily_cap: 500, warmup_ladder: DEFAULT_LADDER, warmup_started_on: '2026-08-28' },
+      isLoading: false,
+      isError: false,
+    };
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+
+    const dailyCap = screen.getByLabelText('Ημερήσιο πλαφόν');
+    fireEvent.change(dailyCap, { target: { value: '2000' } });
+
+    // ceil(4312/2000) = 3 send-days, Mon–Wed (7–9 Sep), no weekend to skip —
+    // finishes noticeably sooner than the "not started yet" assumption
+    // would (which would still be throttled by the ladder's early rungs).
+    expect(
+      screen.getByText('Με 2.000/ημέρα, η αποστολή ολοκληρώνεται περίπου στις 9 Σεπτεμβρίου 2026 (3 ημέρες).'),
+    ).toBeInTheDocument();
   });
 
   it('shows "today" when the daily cap comfortably covers the whole target', () => {
