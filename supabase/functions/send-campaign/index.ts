@@ -47,10 +47,14 @@ const admin = createClient(URL, SERVICE_KEY);
 const RESEND_CHUNK_SIZE = 100;
 const CHUNK_SLEEP_MS = 250; // ≤4 req/s, leaving ≥6/s of Resend's 10/s team cap for transactional mail.
 const RESEND_FETCH_TIMEOUT_MS = 20_000; // Comfortably under the edge function's own wall-clock budget.
-// Must exceed the worst realistic single invocation: up to (batch_slice/100)
-// chunks, each bounded by RESEND_FETCH_TIMEOUT_MS + CHUNK_SLEEP_MS, plus
-// PostgREST round-trips. See the lock migration (20260907240000) for why
-// this is a lease, not a literal Postgres advisory lock.
+// The lease window PER RENEWAL, not a whole-invocation budget: the loop
+// below renews it (extendDrainLock) after every chunk, so this only needs to
+// comfortably exceed the worst realistic SINGLE chunk — one
+// RESEND_FETCH_TIMEOUT_MS fetch, up to 100 parallel per-row writes, and a
+// couple of PostgREST round-trips — not the whole (batch_slice-sized,
+// admin-editable, unbounded) invocation. See the lock migrations
+// (20260907240000, 20260907250000) for why this is a fenced lease, not a
+// literal Postgres advisory lock.
 const DRAIN_LOCK_LEASE_MS = 90_000;
 
 type CampaignRow = {
@@ -164,7 +168,14 @@ async function pickSendableCampaign(): Promise<CampaignRow | null> {
  *  (status back to 'pending', claimed_at cleared); attempts stays as
  *  claim_campaign_recipients already incremented it. Returns whether the
  *  write itself succeeded (I-3) — a caller must not assume the rows are
- *  actually back to 'pending' just because this was called. */
+ *  actually back to 'pending' just because this was called.
+ *
+ *  CALLERS MUST PASS AT MOST RESEND_CHUNK_SIZE (100) ROWS. This builds an
+ *  `id=in.(…)` filter in the request's query string; a few hundred UUIDs
+ *  there runs into the ~8KB request-line limit typical of the gateway in
+ *  front of PostgREST (review fix, New Important-2 — this bit a caller that
+ *  passed it batch_slice-many rows in one call). Anything larger than one
+ *  chunk must go through releaseRows() below, which slices it first. */
 async function releaseChunk(chunk: RecipientRow[], errorText: string): Promise<boolean> {
   if (chunk.length === 0) return true;
   const ids = chunk.map((r) => r.id);
@@ -173,6 +184,22 @@ async function releaseChunk(chunk: RecipientRow[], errorText: string): Promise<b
     .update({ status: 'pending', claimed_at: null, error: errorText.slice(0, 2000) })
     .in('id', ids);
   return logDbError(`releaseChunk(${ids.length} rows)`, error);
+}
+
+/** Release an arbitrary number of rows back to 'pending', in ≤RESEND_CHUNK_SIZE
+ *  (100) -id batches per releaseChunk() call — see that function's doc
+ *  comment for why a single unbounded `id=in.(…)` filter is unsafe. Used
+ *  wherever more than one chunk's worth of already-claimed rows must be
+ *  released at once (a 429's unattempted tail, or rows abandoned because
+ *  this invocation lost its drain lock lease mid-send). Returns the total
+ *  count of rows whose release write failed. */
+async function releaseRows(rows: RecipientRow[], errorText: string): Promise<number> {
+  let writeErrors = 0;
+  for (let i = 0; i < rows.length; i += RESEND_CHUNK_SIZE) {
+    const slice = rows.slice(i, i + RESEND_CHUNK_SIZE);
+    if (!(await releaseChunk(slice, errorText))) writeErrors += slice.length;
+  }
+  return writeErrors;
 }
 
 /** Mark a successfully-accepted chunk sent, one row per recipient (Resend's
@@ -216,27 +243,64 @@ async function writeHeartbeat(sentCount: number, note: string): Promise<void> {
   logDbError('writeHeartbeat', error);
 }
 
-/** Atomic, self-expiring lease so overlapping drain() invocations (the cron
- *  fires every minute, fire-and-forget, and does not wait for the previous
- *  call — see migration 20260907240000 for the full reasoning and why this
- *  is a lease rather than a literal pg_try_advisory_lock). Returns whether
- *  THIS invocation now holds the lease. Fails closed: any error acquiring
+/** Atomic, self-expiring, FENCED lease so overlapping drain() invocations
+ *  (the cron fires every minute, fire-and-forget, and does not wait for the
+ *  previous call — see migration 20260907240000 for the full reasoning and
+ *  why this is a lease rather than a literal pg_try_advisory_lock) can never
+ *  both believe they hold the lock. Mints a fresh random token and writes it
+ *  alongside the expiry (migration 20260907250000); every later
+ *  extend/release call must present this same token, so an invocation whose
+ *  lease was reassigned to someone else (because its own lease expired
+ *  first) can no longer extend or release the NEW owner's lease — the
+ *  New Important-1 bug from fix-2-review.md. Returns the token on success,
+ *  or null if the lease is already held. Fails closed: any error acquiring
  *  the lease is treated as "not acquired", never as "acquired". */
-async function tryAcquireDrainLock(): Promise<boolean> {
+async function tryAcquireDrainLock(): Promise<string | null> {
   const nowIso = new Date().toISOString();
+  const leaseUntilIso = new Date(Date.now() + DRAIN_LOCK_LEASE_MS).toISOString();
+  const token = crypto.randomUUID();
+  const { data, error } = await admin
+    .from('email_campaign_heartbeat')
+    .update({ lock_expires_at: leaseUntilIso, lock_token: token })
+    .eq('id', true)
+    .or(`lock_expires_at.is.null,lock_expires_at.lt.${nowIso}`)
+    .select('id');
+  if (!logDbError('tryAcquireDrainLock', error)) return null;
+  return (data ?? []).length > 0 ? token : null;
+}
+
+/** Pushes this invocation's lease expiry back out, ONLY if `token` still
+ *  matches the lease's current `lock_token` — i.e. only if nothing has
+ *  reassigned the lease since this invocation acquired (or last renewed) it.
+ *  Called after every chunk in the send loop so a legitimately slow drain
+ *  (a large batch_slice, a sluggish Resend) keeps its lock instead of losing
+ *  it mid-send, rather than solving this by guessing a bigger fixed lease
+ *  length. Returns whether the renewal actually landed; the caller MUST
+ *  treat `false` — including a DB error, fail-closed — as "no longer holds
+ *  the lock" and stop sending immediately rather than continue unfenced. */
+async function extendDrainLock(token: string): Promise<boolean> {
   const leaseUntilIso = new Date(Date.now() + DRAIN_LOCK_LEASE_MS).toISOString();
   const { data, error } = await admin
     .from('email_campaign_heartbeat')
     .update({ lock_expires_at: leaseUntilIso })
     .eq('id', true)
-    .or(`lock_expires_at.is.null,lock_expires_at.lt.${nowIso}`)
+    .eq('lock_token', token)
     .select('id');
-  if (!logDbError('tryAcquireDrainLock', error)) return false;
+  if (!logDbError('extendDrainLock', error)) return false; // fail closed: unknown state, treat as lost
   return (data ?? []).length > 0;
 }
 
-async function releaseDrainLock(): Promise<void> {
-  const { error } = await admin.from('email_campaign_heartbeat').update({ lock_expires_at: null }).eq('id', true);
+/** Clears the lease, but ONLY when `token` still matches — so an invocation
+ *  whose lease already expired and was legitimately reassigned to a newer
+ *  invocation matches zero rows here and leaves that newer lease alone,
+ *  instead of the pre-fix unconditional clear that let a stale invocation
+ *  evict a live one. */
+async function releaseDrainLock(token: string): Promise<void> {
+  const { error } = await admin
+    .from('email_campaign_heartbeat')
+    .update({ lock_expires_at: null, lock_token: null })
+    .eq('id', true)
+    .eq('lock_token', token);
   logDbError('releaseDrainLock', error);
 }
 
@@ -327,7 +391,7 @@ async function applyCircuitBreaker(campaignId: string, settings: SettingsRow): P
   return false;
 }
 
-async function drainLocked(): Promise<Record<string, unknown>> {
+async function drainLocked(lockToken: string): Promise<Record<string, unknown>> {
   const { data: settingsRow, error: settingsErr } = await admin
     .from('email_marketing_settings')
     .select('paused, batch_slice, max_bounce_rate, max_complaint_rate')
@@ -387,6 +451,7 @@ async function drainLocked(): Promise<Record<string, unknown>> {
   let failed = 0;
   let dbWriteErrors = 0;
   let stoppedOn429 = false;
+  let lostLock = false;
 
   if (rows.length > 0) {
     // ---------------------------------------------------------------------
@@ -411,6 +476,30 @@ async function drainLocked(): Promise<Record<string, unknown>> {
     // the cross-invocation half.
     // ---------------------------------------------------------------------
     for (let i = 0; i < rows.length; i += RESEND_CHUNK_SIZE) {
+      // Renew the drain lock before every chunk after the first (the first
+      // chunk starts inside the fresh lease tryAcquireDrainLock() just took).
+      // Fixes New Important-1(b): a fixed lease length can't safely bound an
+      // admin-editable batch_slice, so instead of guessing bigger, the lease
+      // is kept alive for as long as this invocation is actually still
+      // working. If the renewal doesn't land — including a DB error,
+      // fail-closed — this invocation no longer has a proven claim on the
+      // lock (another drain may already own it), so it must stop sending
+      // immediately and release every row it hasn't yet attempted, rather
+      // than keep going unfenced.
+      if (i > 0) {
+        const stillOwned = await extendDrainLock(lockToken);
+        if (!stillOwned) {
+          const abandoned = rows.slice(i);
+          const releaseErrors = await releaseRows(
+            abandoned,
+            'not attempted: this invocation lost its drain lock lease mid-send',
+          );
+          dbWriteErrors += releaseErrors;
+          failed += abandoned.length;
+          lostLock = true;
+          break;
+        }
+      }
       const chunk = rows.slice(i, i + RESEND_CHUNK_SIZE);
       const isLastChunk = i + RESEND_CHUNK_SIZE >= rows.length;
       // Sorted so the key is stable regardless of any incidental reordering —
@@ -445,12 +534,18 @@ async function drainLocked(): Promise<Record<string, unknown>> {
         // go back to 'pending' now — otherwise those rows sit at 'sending'
         // for up to 30 minutes until recover_stale_campaign_claims notices
         // them, during which they count as neither sent nor pending and can
-        // strand the campaign the way C-1 described.
+        // strand the campaign the way C-1 described. Released via
+        // releaseRows() (New Important-2): `remaining` can be up to
+        // batch_slice-100 rows, and a single `id=in.(…)` filter with that
+        // many UUIDs risks a 414 at the gateway — releaseRows slices it into
+        // ≤100-id releaseChunk() calls instead of one unbounded one.
         const remaining = rows.slice(i + RESEND_CHUNK_SIZE);
         if (remaining.length > 0) {
-          if (!(await releaseChunk(remaining, 'not attempted: invocation stopped after a 429 on an earlier chunk'))) {
-            dbWriteErrors += remaining.length;
-          }
+          const releaseErrors = await releaseRows(
+            remaining,
+            'not attempted: invocation stopped after a 429 on an earlier chunk',
+          );
+          dbWriteErrors += releaseErrors;
           failed += remaining.length;
         }
         stoppedOn429 = true;
@@ -505,30 +600,33 @@ async function drainLocked(): Promise<Record<string, unknown>> {
   await maybeCompleteCampaign(campaign.id);
 
   let note: string;
-  if (stoppedOn429) note = 'rate_limited_429';
+  if (lostLock) note = 'lost_drain_lock';
+  else if (stoppedOn429) note = 'rate_limited_429';
   else if (dbWriteErrors > 0) note = `db_write_errors:${dbWriteErrors}`;
   else if (rows.length === 0) note = slice <= 0 ? 'no_budget' : 'nothing_to_claim';
   else note = 'ok';
 
   await writeHeartbeat(sent, note);
-  return { ok: true, campaignId: campaign.id, claimed: rows.length, sent, failed, dbWriteErrors, stoppedOn429 };
+  return { ok: true, campaignId: campaign.id, claimed: rows.length, sent, failed, dbWriteErrors, stoppedOn429, lostLock };
 }
 
-/** Acquires the cross-invocation lease before doing any work, and always
- *  releases it afterward (even on an uncaught throw) — see
- *  tryAcquireDrainLock/releaseDrainLock and migration 20260907240000. If the
- *  lease is already held, this is a quiet, expected exit: it means a
- *  previous invocation is still mid-flight (normally because Resend is
- *  slow), not an error. */
+/** Acquires the cross-invocation fenced lease before doing any work, and
+ *  always releases it afterward (even on an uncaught throw) — see
+ *  tryAcquireDrainLock/releaseDrainLock and migrations 20260907240000/
+ *  20260907250000. If the lease is already held, this is a quiet, expected
+ *  exit: it means a previous invocation is still mid-flight (normally
+ *  because Resend is slow), not an error. The token minted here is threaded
+ *  through drainLocked() so its chunk loop can renew the same lease it
+ *  started with (extendDrainLock) — never anyone else's. */
 async function drain(): Promise<Record<string, unknown>> {
-  const gotLock = await tryAcquireDrainLock();
-  if (!gotLock) {
+  const lockToken = await tryAcquireDrainLock();
+  if (!lockToken) {
     return { ok: true, note: 'lock_held', claimed: 0, sent: 0, failed: 0 };
   }
   try {
-    return await drainLocked();
+    return await drainLocked(lockToken);
   } finally {
-    await releaseDrainLock();
+    await releaseDrainLock(lockToken);
   }
 }
 
