@@ -31,10 +31,8 @@ regenerates the payment rows.
 
 ```sql
 update public.jobs
-   set installment_plan = 'custom',
-       installment_schedule = jsonb_build_array(
-         jsonb_build_object('amount_net', 345.00, 'due_date', '2026-07-16'),
-         jsonb_build_object('amount_net', 255.65, 'due_date', '2026-09-30')),
+   set installment_plan = '50_50',
+       installment_schedule = null,
        updated_at = now()
  where code = '005690-WEBDEV';
 
