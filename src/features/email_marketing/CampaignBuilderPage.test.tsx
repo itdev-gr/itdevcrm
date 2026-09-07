@@ -50,6 +50,12 @@ vi.mock('./steps/StepContent', () => ({
 vi.mock('./steps/StepAudience', () => ({
   StepAudience: ({ campaignId }: { campaignId: string }) => <div data-testid="step-audience">{campaignId}</div>,
 }));
+vi.mock('./steps/StepReview', () => ({
+  StepReview: ({ campaignId }: { campaignId: string }) => <div data-testid="step-review">{campaignId}</div>,
+}));
+vi.mock('./steps/StepSchedule', () => ({
+  StepSchedule: ({ campaignId }: { campaignId: string }) => <div data-testid="step-schedule">{campaignId}</div>,
+}));
 
 import { CampaignBuilderPage } from './CampaignBuilderPage';
 
@@ -96,13 +102,14 @@ describe('CampaignBuilderPage', () => {
     expect(screen.queryByTestId('step-content')).not.toBeInTheDocument();
   });
 
-  it('keeps steps 3-4 as navigable placeholders, not implemented', () => {
+  it('switches to steps 3 and 4 (review, schedule)', () => {
     renderAt('/company/email-marketing/camp-1/edit');
 
     fireEvent.click(screen.getByRole('button', { name: '3. Έλεγχος' }));
-    expect(screen.getByText('Ο έλεγχος παραληπτών και το δοκιμαστικό email έρχονται σύντομα.')).toBeInTheDocument();
+    expect(screen.getByTestId('step-review')).toHaveTextContent('camp-1');
 
     fireEvent.click(screen.getByRole('button', { name: '4. Πρόγραμμα' }));
-    expect(screen.getByText('Ο προγραμματισμός και η εκκίνηση έρχονται σύντομα.')).toBeInTheDocument();
+    expect(screen.getByTestId('step-schedule')).toHaveTextContent('camp-1');
+    expect(screen.queryByTestId('step-review')).not.toBeInTheDocument();
   });
 });

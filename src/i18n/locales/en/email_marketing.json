@@ -44,10 +44,6 @@
       "review": "Review",
       "schedule": "Schedule"
     },
-    "steps_coming_soon": {
-      "review": "Recipient review and the test email are coming soon.",
-      "schedule": "Scheduling and launch are coming soon."
-    },
     "content": {
       "title": "Email content",
       "loading": "Loading…",
@@ -120,6 +116,100 @@
           "invalid_rows": "Invalid row data.",
           "campaign_not_found": "The campaign was not found.",
           "invalid_state": "The campaign is no longer in draft."
+        }
+      }
+    },
+    "review": {
+      "title": "Recipient review",
+      "description": "Work out who will receive this campaign before moving on to the send schedule.",
+      "calculate_button": "Calculate recipients",
+      "calculating": "Calculating…",
+      "loading": "Loading…",
+      "no_numbers_yet": "Recipients haven't been calculated for this campaign yet.",
+      "build_errors": {
+        "permission_denied": "You don't have permission to calculate recipients.",
+        "campaign_not_found": "The campaign was not found.",
+        "not_draft": "Calculating recipients is only available while the campaign is a draft.",
+        "generic": "Calculating recipients failed."
+      },
+      "funnel": {
+        "total": "Total candidates",
+        "suppressed": "Excluded",
+        "target": "Final target"
+      },
+      "suppression": {
+        "title": "Why they were excluded",
+        "empty": "No recipients were excluded.",
+        "reasons": {
+          "invalid": "Invalid email address",
+          "suppressed_list": "Already bounced/complained, or asked to unsubscribe",
+          "opted_out": "Has opted out of email",
+          "closed_client": "Client relationship is closed/completed",
+          "internal": "Internal email address (not a real recipient)",
+          "fatigue": "Received another campaign recently"
+        },
+        "reasons_unknown": "Unknown exclusion reason ({{reason}})"
+      },
+      "test_send": {
+        "title": "Test email",
+        "to_label": "Will be sent to {{to}}, with the current content.",
+        "no_email": "Couldn't find the signed-in user's email.",
+        "button": "Send test to me",
+        "sending": "Sending…",
+        "success": "The test email was sent to {{to}}.",
+        "failed_invalid_recipient": "The recipient address is invalid.",
+        "failed_campaign_not_found": "The campaign was not found.",
+        "failed_identity_not_marketing": "The campaign isn't set to the \"marketing\" identity — fix that before testing.",
+        "failed_unauthorized": "You don't have permission to send a test email.",
+        "failed_unavailable": "The test send isn't available right now. Try again later."
+      }
+    },
+    "schedule": {
+      "title": "Send schedule",
+      "loading": "Loading…",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "save_failed": "Saving failed.",
+      "daily_cap": "Daily cap",
+      "daily_cap_placeholder": "e.g. {{default}} (default)",
+      "hourly_cap": "Hourly cap",
+      "hourly_cap_placeholder": "e.g. 200 (default)",
+      "send_window": "Send hours",
+      "send_window_start_label": "Send window start time",
+      "send_window_end_label": "Send window end time",
+      "send_window_to": "to",
+      "send_days": "Send days",
+      "days": {
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun"
+      },
+      "estimate": {
+        "no_recipients": "Calculate recipients first, in the \"Review\" step, to see when sending would finish.",
+        "unavailable": "The completion estimate can't be calculated.",
+        "same_day": "At {{cap}}/day, sending finishes today.",
+        "future": "At {{cap}}/day, sending finishes around {{date}} ({{days}} days)."
+      },
+      "launch": {
+        "title": "Launch",
+        "description": "Launching starts actually emailing real people, following the schedule above.",
+        "button": "Launch",
+        "confirm_title": "Launch this campaign?",
+        "confirm_text": "This will be sent to {{count}} people. It cannot be undone.",
+        "success": "The campaign has started.",
+        "errors": {
+          "permission_denied": "You don't have permission to launch campaigns.",
+          "campaign_not_found": "The campaign was not found.",
+          "invalid_state": "The campaign isn't in a state that allows launching right now.",
+          "not_prepared": "You need to calculate recipients first, in the \"Review\" step.",
+          "empty_subject": "Add a subject to the email before launching, in the \"Content\" step.",
+          "empty_body": "Add body text to the email before launching, in the \"Content\" step.",
+          "no_pending_recipients": "There are no recipients to send to — recalculate recipients in the \"Review\" step.",
+          "generic": "Launching failed."
         }
       }
     }

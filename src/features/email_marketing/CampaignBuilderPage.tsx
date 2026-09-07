@@ -7,13 +7,13 @@ import { useCampaign } from './hooks/useCampaigns';
 import { useCreateCampaign } from './hooks/useCampaignMutations';
 import { StepContent } from './steps/StepContent';
 import { StepAudience } from './steps/StepAudience';
+import { StepReview } from './steps/StepReview';
+import { StepSchedule } from './steps/StepSchedule';
 
 const STEPS = ['content', 'audience', 'review', 'schedule'] as const;
 type Step = (typeof STEPS)[number];
 
-/** Four-step wizard shell: content → audience → review → schedule. Steps 3-4
- *  (StepReview/StepSchedule) are Task 4 — their slots stay in the stepper so
- *  the nav layout doesn't change later, but they render a placeholder. */
+/** Four-step wizard shell: content → audience → review → schedule. */
 export function CampaignBuilderPage() {
   const { t } = useTranslation('email_marketing');
   const navigate = useNavigate();
@@ -85,16 +85,8 @@ export function CampaignBuilderPage() {
 
       {step === 'content' && <StepContent campaignId={campaignId} />}
       {step === 'audience' && <StepAudience campaignId={campaignId} />}
-      {step === 'review' && (
-        <SettingsCard className="p-5">
-          <p className="text-sm text-muted-foreground">{t('builder.steps_coming_soon.review')}</p>
-        </SettingsCard>
-      )}
-      {step === 'schedule' && (
-        <SettingsCard className="p-5">
-          <p className="text-sm text-muted-foreground">{t('builder.steps_coming_soon.schedule')}</p>
-        </SettingsCard>
-      )}
+      {step === 'review' && <StepReview campaignId={campaignId} />}
+      {step === 'schedule' && <StepSchedule campaignId={campaignId} />}
     </div>
   );
 }
