@@ -69,6 +69,14 @@ grant execute on function public.campaign_create(text, text, text, text, text, t
 -- Αλλαγή στο segment αλλάζει ΠΟΙΟΣ θα το λάβει: η ήδη χτισμένη λίστα
 -- παραληπτών είναι πλέον stale, άρα prepared_at μηδενίζει και η κατάσταση
 -- γυρνά σε 'draft'.
+--
+-- Review I-2: πριν το UPDATE, κάθε παρόν κλειδί ελέγχεται ρητά για
+-- εγκυρότητα/cast-ability με pg_input_is_valid (διαθέσιμο από PG16+· το
+-- project τρέχει PG17, supabase/config.toml:36) ώστε ένα κακό patch
+-- ({"daily_cap":"abc"}, {"send_days":null}, {"name":null}, …) να επιστρέψει
+-- {"ok":false,"errors":[...]} με το όνομα του κλειδιού αντί για ακατέργαστο
+-- Postgres cast/NOT NULL σφάλμα. Το UPDATE-statement παρακάτω παραμένει
+-- αναλλοίωτο πέρα από αυτό το πρόσθετο validation block πριν από αυτό.
 create or replace function public.campaign_update(p_campaign_id uuid, p_patch jsonb)
 returns jsonb
 language plpgsql
@@ -77,6 +85,7 @@ set search_path = public
 as $$
 declare
   v_campaign public.email_campaigns;
+  v_errors   text[] := '{}';
 begin
   if not (select public.current_user_is_admin()) then
     return jsonb_build_object('ok', false, 'errors', array['permission_denied']);
@@ -93,6 +102,58 @@ begin
 
   if v_campaign.status not in ('draft', 'ready') then
     return jsonb_build_object('ok', false, 'errors', array['invalid_state']);
+  end if;
+
+  -- Οι στήλες name/subject/body_md/reply_to/send_window_start/
+  -- send_window_end/send_days είναι NOT NULL· ένα ρητό null (ή κενό/λάθος
+  -- τύπου) στο patch για αυτές πρέπει να απορριφθεί καθαρά, όχι να σκάσει
+  -- το UPDATE. daily_cap/hourly_cap/scheduled_at είναι nullable — ρητό null
+  -- είναι έγκυρο, μόνο κακός τύπος απορρίπτεται.
+  if (p_patch ? 'name') and (p_patch ->> 'name' is null or btrim(p_patch ->> 'name') = '') then
+    v_errors := v_errors || 'invalid_name';
+  end if;
+  if (p_patch ? 'subject') and (p_patch ->> 'subject' is null) then
+    v_errors := v_errors || 'invalid_subject';
+  end if;
+  if (p_patch ? 'body_md') and (p_patch ->> 'body_md' is null) then
+    v_errors := v_errors || 'invalid_body_md';
+  end if;
+  if (p_patch ? 'reply_to') and (p_patch ->> 'reply_to' is null or btrim(p_patch ->> 'reply_to') = '') then
+    v_errors := v_errors || 'invalid_reply_to';
+  end if;
+  if (p_patch ? 'daily_cap') and (p_patch ->> 'daily_cap' is not null)
+     and not pg_input_is_valid(p_patch ->> 'daily_cap', 'int4') then
+    v_errors := v_errors || 'invalid_daily_cap';
+  end if;
+  if (p_patch ? 'hourly_cap') and (p_patch ->> 'hourly_cap' is not null)
+     and not pg_input_is_valid(p_patch ->> 'hourly_cap', 'int4') then
+    v_errors := v_errors || 'invalid_hourly_cap';
+  end if;
+  if (p_patch ? 'send_window_start')
+     and (p_patch ->> 'send_window_start' is null
+          or not pg_input_is_valid(p_patch ->> 'send_window_start', 'time')) then
+    v_errors := v_errors || 'invalid_send_window_start';
+  end if;
+  if (p_patch ? 'send_window_end')
+     and (p_patch ->> 'send_window_end' is null
+          or not pg_input_is_valid(p_patch ->> 'send_window_end', 'time')) then
+    v_errors := v_errors || 'invalid_send_window_end';
+  end if;
+  if (p_patch ? 'send_days') and (jsonb_typeof(p_patch -> 'send_days') is distinct from 'array') then
+    v_errors := v_errors || 'invalid_send_days';
+  elsif (p_patch ? 'send_days') and exists (
+    select 1 from jsonb_array_elements_text(p_patch -> 'send_days') x
+     where x is null or not pg_input_is_valid(x, 'int4')
+  ) then
+    v_errors := v_errors || 'invalid_send_days';
+  end if;
+  if (p_patch ? 'scheduled_at') and (p_patch ->> 'scheduled_at' is not null)
+     and not pg_input_is_valid(p_patch ->> 'scheduled_at', 'timestamptz') then
+    v_errors := v_errors || 'invalid_scheduled_at';
+  end if;
+
+  if coalesce(array_length(v_errors, 1), 0) > 0 then
+    return jsonb_build_object('ok', false, 'errors', v_errors);
   end if;
 
   update public.email_campaigns set
@@ -175,6 +236,21 @@ grant execute on function public.campaign_delete(uuid) to authenticated;
 -- επιστροφή σε draft (και άρα δυνατότητα rebuild) πάνω σε καμπάνια που έχει
 -- ήδη γραμμές με sent_at — θα έσβηνε το ιστορικό αποστολής και θα ξανάστελνε
 -- σε όλους.
+--
+-- Review I-1: sent_at γράφεται ΜΟΝΟ αφού επιστρέψει το Resend POST
+-- (send-campaign/index.ts:259) — άρα υπάρχει ζωντανό παράθυρο όπου το drain
+-- έχει ήδη κάνει claim/POST 100 γραμμές αλλά sent_at είναι ακόμα null: ένα
+-- reset εκείνη τη στιγμή θα περνούσε τον παλιό έλεγχο, το επόμενο
+-- build_campaign_recipients θα ΔΙΕΓΡΑΦΕ αυτές τις γραμμές, και οι
+-- markChunkSent γραφές θα έβρισκαν ids που δεν υπάρχουν πια (σιωπηλό no-op) —
+-- ξανά-αποστολή σε πραγματικούς ανθρώπους, χωρίς καν το fatigue rule να το
+-- πιάσει (η απόδειξη διαγράφηκε). Ο ίδιος κίνδυνος υπάρχει χωρίς κανέναν
+-- admin: recover_stale_campaign_claims γυρίζει claimed γραμμές σε 'pending'
+-- με sent_at ακόμα null όταν το status-write απέτυχε μετά την αποστολή
+-- (index.ts:267). Γι' αυτό ο έλεγχος πιάνει claimed_at/attempts/status, όχι
+-- μόνο sent_at· και το campaign status ελέγχεται ξεχωριστά, ώστε ένα reset
+-- να μην είναι ποτέ δυνατό ενώ η καμπάνια είναι ενεργά σε αποστολή ή paused
+-- (must go through campaign_pause/resume/cancel αντί για αυτό).
 create or replace function public.campaign_reset_to_draft(p_campaign_id uuid)
 returns jsonb
 language plpgsql
@@ -182,8 +258,8 @@ security definer
 set search_path = public
 as $$
 declare
-  v_campaign public.email_campaigns;
-  v_has_sent boolean;
+  v_campaign  public.email_campaigns;
+  v_in_flight boolean;
 begin
   if not (select public.current_user_is_admin()) then
     return jsonb_build_object('ok', false, 'errors', array['permission_denied']);
@@ -194,11 +270,17 @@ begin
     return jsonb_build_object('ok', false, 'errors', array['campaign_not_found']);
   end if;
 
+  if v_campaign.status in ('sending', 'paused') then
+    return jsonb_build_object('ok', false, 'errors', array['invalid_state']);
+  end if;
+
   select exists(
     select 1 from public.email_campaign_recipients
-     where campaign_id = p_campaign_id and sent_at is not null
-  ) into v_has_sent;
-  if v_has_sent then
+     where campaign_id = p_campaign_id
+       and (sent_at is not null or claimed_at is not null or attempts > 0
+            or status in ('sending', 'sent', 'failed'))
+  ) into v_in_flight;
+  if v_in_flight then
     return jsonb_build_object('ok', false, 'errors', array['already_sent']);
   end if;
 
@@ -239,11 +321,15 @@ begin
   end if;
 
   -- Ίδιο κλειστό λεξιλόγιο με το CHECK constraint (20260907200000:47).
-  if p_consent_basis not in ('existing_customer', 'inquiry', 'public_b2b', 'purchased', 'other') then
+  -- `x not in (...)` επιστρέφει NULL (όχι true) όταν x είναι NULL, άρα το
+  -- `is null` πρέπει να ελέγχεται ρητά — αλλιώς ένα NULL περνούσε τον έλεγχο
+  -- σιωπηλά και έσκαγε στο NOT NULL/CHECK constraint του insert (review I-3).
+  if p_consent_basis is null
+     or p_consent_basis not in ('existing_customer', 'inquiry', 'public_b2b', 'purchased', 'other') then
     v_errors := v_errors || 'invalid_consent_basis';
   end if;
   -- Ίδιο κλειστό λεξιλόγιο με το CHECK constraint (20260907200000:42).
-  if p_kind not in ('import', 'segment', 'manual') then
+  if p_kind is null or p_kind not in ('import', 'segment', 'manual') then
     v_errors := v_errors || 'invalid_kind';
   end if;
 
@@ -345,6 +431,23 @@ begin
   update public.email_audiences
      set row_count = (select count(*) from public.email_audience_members where audience_id = p_audience_id)
    where id = p_audience_id;
+
+  -- Review I-4: μια καμπάνια που έχει ήδη συνδέσει αυτό το audience μπορεί
+  -- να έχει ήδη χτίσει (status='ready', prepared_at set) τη λίστα
+  -- παραληπτών ΠΡΙΝ από αυτό το import — νέες γραμμές εδώ δεν θα
+  -- εμφανίζονταν ποτέ σε αυτήν χωρίς ρητό rebuild, και ένα launch θα
+  -- έστελνε σιωπηλά μόνο στην παλιά λίστα. Ίδιο reset με το
+  -- campaign_attach_audience/campaign_detach_audience παραπάνω, περιορισμένο
+  -- στο ίδιο επεξεργάσιμο παράθυρο (draft/ready) — μια καμπάνια που ήδη
+  -- στέλνει/έχει σταλεί/είναι paused δεν πρέπει να τραβηχτεί πίσω σε draft
+  -- από ένα άσχετο import.
+  update public.email_campaigns ec
+     set prepared_at = null, status = 'draft', updated_at = now()
+   where ec.status in ('draft', 'ready')
+     and exists (
+       select 1 from public.email_campaign_audiences ca
+        where ca.campaign_id = ec.id and ca.audience_id = p_audience_id
+     );
 
   return jsonb_build_object('ok', true, 'added', v_added, 'invalid', v_invalid, 'duplicate', v_duplicate);
 end;
@@ -469,12 +572,17 @@ grant execute on function public.campaign_detach_audience(uuid, uuid) to authent
 -- Admin-only update του singleton email_marketing_settings (id boolean
 -- primary key check (id), 20260907200000:127) — εφαρμόζει μόνο τα
 -- επιτρεπόμενα κλειδιά. Αυτός είναι και ο global kill switch (`paused`).
+-- Minor (review): ένα emergency-stop RPC δεν επιτρέπεται να απαντήσει
+-- {"ok":true} όταν στην πραγματικότητα δεν ενημερώθηκε καμία γραμμή (π.χ. αν
+-- η singleton γραμμή λείπει) — ελέγχεται το πραγματικό row count.
 create or replace function public.marketing_settings_update(p_patch jsonb)
 returns jsonb
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_rows int;
 begin
   if not (select public.current_user_is_admin()) then
     return jsonb_build_object('ok', false, 'errors', array['permission_denied']);
@@ -498,6 +606,11 @@ begin
     fatigue_days       = case when p_patch ? 'fatigue_days' then (p_patch ->> 'fatigue_days')::int else fatigue_days end,
     updated_at         = now()
   where id = true;
+
+  get diagnostics v_rows = row_count;
+  if v_rows = 0 then
+    return jsonb_build_object('ok', false, 'errors', array['settings_row_missing']);
+  end if;
 
   return jsonb_build_object('ok', true);
 end;
@@ -538,12 +651,19 @@ begin
     return jsonb_build_object('ok', false, 'errors', array['not_draft']);
   end if;
 
-  -- --- ΝΕΟ guard (20260907270000): άμυνα σε βάθος -----------------------------
+  -- --- ΝΕΟ guard (20260907270000, διευρύνθηκε μετά το review finding I-1) ----
   -- Ό,τι κι αν λέει το status, το destructive DELETE+rebuild παρακάτω δεν
-  -- πρέπει ΠΟΤΕ να τρέξει πάνω σε καμπάνια που έχει ήδη γραμμές με sent_at.
+  -- πρέπει ΠΟΤΕ να τρέξει πάνω σε καμπάνια με γραμμές που είναι ήδη σταλμένες
+  -- Η ΣΕ ΕΞΕΛΙΞΗ. sent_at γράφεται ΜΟΝΟ αφού επιστρέψει το Resend POST
+  -- (send-campaign/index.ts:259), άρα ένα guard που κοιτάζει μόνο sent_at
+  -- έχει ζωντανό παράθυρο: claim/POST έγινε ήδη σε έως 100 γραμμές αλλά
+  -- sent_at είναι ακόμα null· ένα rebuild εκείνη τη στιγμή θα τις έσβηνε και
+  -- θα τις ξανάστελνε. Γι' αυτό ελέγχονται και claimed_at/attempts/status.
   if exists (
     select 1 from public.email_campaign_recipients
-     where campaign_id = p_campaign_id and sent_at is not null
+     where campaign_id = p_campaign_id
+       and (sent_at is not null or claimed_at is not null or attempts > 0
+            or status in ('sending', 'sent', 'failed'))
   ) then
     return jsonb_build_object('ok', false, 'errors', array['already_sent']);
   end if;
