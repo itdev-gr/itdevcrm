@@ -127,4 +127,14 @@ export const queryKeys = {
   salesTasksBadge: (userId: string) => ['sales-cadence', 'badge', userId] as const,
   aiChatConversations: () => ['ai-chat', 'conversations'] as const,
   aiChatMessages: (conversationId: string) => ['ai-chat', 'messages', conversationId] as const,
+  // Email marketing (Φάση 1β) — fully separate from queryKeys.emailInbox()/
+  // emailInboxBadge() above, which back the automated-email inbox. Zero
+  // relation between the two features per the owner's standing rule.
+  campaigns: () => ['email-campaigns'] as const,
+  campaign: (id: string) => ['email-campaign', id] as const,
+  campaignStats: (id: string) => ['email-campaign-stats', id] as const,
+  campaignRecipients: (id: string, filter?: string) =>
+    filter ? (['email-campaign-recipients', id, filter] as const) : (['email-campaign-recipients', id] as const),
+  audiences: () => ['email-audiences'] as const,
+  suppressions: () => ['email-suppressions'] as const,
 };
