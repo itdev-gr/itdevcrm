@@ -50,7 +50,8 @@
     "section": {
       "sales": "Πωλήσεις",
       "accounting": "Λογιστήριο",
-      "technical": "Τεχνικό"
+      "technical": "Τεχνικό",
+      "company": "Εταιρεία"
     },
     "documentation": "Τεκμηρίωση",
     "open_menu": "Άνοιγμα μενού"

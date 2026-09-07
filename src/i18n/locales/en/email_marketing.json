@@ -1,0 +1,51 @@
+{
+  "nav": {
+    "link": "Email marketing"
+  },
+  "status": {
+    "draft": "Draft",
+    "ready": "Ready",
+    "scheduled": "Scheduled",
+    "sending": "Sending",
+    "paused": "Paused",
+    "sent": "Sent",
+    "cancelled": "Cancelled"
+  },
+  "list": {
+    "title": "Email campaigns",
+    "description": "Bulk email campaigns — separate from the system's automated emails.",
+    "new_campaign": "New campaign",
+    "new_campaign_default_name": "New campaign",
+    "audiences_link": "Recipient lists",
+    "suppressions_link": "Suppressed",
+    "name": "Name",
+    "status": "Status",
+    "recipients": "Recipients",
+    "sent": "Sent",
+    "delivered": "Delivered",
+    "bounce_rate": "Bounce rate",
+    "created": "Created",
+    "empty": "No campaigns yet. Click \"+ New campaign\" to get started.",
+    "loading": "Loading…"
+  },
+  "errors": {
+    "create_failed": "Creating the campaign failed."
+  },
+  "builder": {
+    "new_title": "New campaign",
+    "edit_title": "Edit campaign",
+    "coming_soon": "The campaign builder is coming soon."
+  },
+  "detail": {
+    "title": "Campaign details",
+    "coming_soon": "The campaign dashboard is coming soon."
+  },
+  "audiences": {
+    "title": "Recipient lists",
+    "coming_soon": "List management is coming soon."
+  },
+  "suppressions": {
+    "title": "Suppressed recipients",
+    "coming_soon": "Suppression management is coming soon."
+  }
+}

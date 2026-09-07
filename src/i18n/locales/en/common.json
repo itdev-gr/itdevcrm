@@ -50,7 +50,8 @@
     "section": {
       "sales": "Sales",
       "accounting": "Accounting",
-      "technical": "Technical"
+      "technical": "Technical",
+      "company": "Company"
     },
     "documentation": "Documentation",
     "open_menu": "Open menu"

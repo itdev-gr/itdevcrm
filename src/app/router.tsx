@@ -204,6 +204,26 @@ const ContractsListPage = lazyPage(
 // Public, unauthenticated onboarding wizard — lives OUTSIDE ShellLayout (no auth,
 // no supabase in its module graph). Talks only to /api/client-intake.
 const IntakePage = lazyPage(() => import('@/features/intake/IntakePage'), 'IntakePage');
+const CampaignsListPage = lazyPage(
+  () => import('@/features/email_marketing/CampaignsListPage'),
+  'CampaignsListPage',
+);
+const CampaignBuilderPage = lazyPage(
+  () => import('@/features/email_marketing/CampaignBuilderPage'),
+  'CampaignBuilderPage',
+);
+const CampaignDetailPage = lazyPage(
+  () => import('@/features/email_marketing/CampaignDetailPage'),
+  'CampaignDetailPage',
+);
+const AudiencesPage = lazyPage(
+  () => import('@/features/email_marketing/AudiencesPage'),
+  'AudiencesPage',
+);
+const SuppressionsPage = lazyPage(
+  () => import('@/features/email_marketing/SuppressionsPage'),
+  'SuppressionsPage',
+);
 
 export const router = createBrowserRouter([
   {
@@ -339,6 +359,27 @@ export const router = createBrowserRouter([
               { path: 'franchise', element: <JobsKanbanPage serviceType="franchise" /> },
               { path: ':serviceType/clients', element: <TechMyClientsPage /> },
               { path: ':serviceType/docs', element: <TechBoardDocsPage /> },
+            ],
+          },
+          {
+            path: 'company',
+            element: (
+              <AdminGuard>
+                <Outlet />
+              </AdminGuard>
+            ),
+            children: [
+              {
+                path: 'email-marketing',
+                children: [
+                  { index: true, element: <CampaignsListPage /> },
+                  { path: 'new', element: <CampaignBuilderPage /> },
+                  { path: 'audiences', element: <AudiencesPage /> },
+                  { path: 'suppressions', element: <SuppressionsPage /> },
+                  { path: ':campaignId', element: <CampaignDetailPage /> },
+                  { path: ':campaignId/edit', element: <CampaignBuilderPage /> },
+                ],
+              },
             ],
           },
           { path: 'clients/:clientId', element: <ClientDetailPage /> },

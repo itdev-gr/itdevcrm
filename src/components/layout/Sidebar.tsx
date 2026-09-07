@@ -16,6 +16,7 @@ import {
   Megaphone,
   Receipt,
   RefreshCw,
+  Send,
   Server,
   Settings,
   Share2,
@@ -169,6 +170,21 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <BarChart3 className="size-4 shrink-0 opacity-80" />
           {t('dashboard.title')}
         </NavLink>
+      )}
+
+      {isAdmin && (
+        <div>
+          <p className={sidebarSectionClass()}>{t('common:nav.section.company')}</p>
+          <div className="space-y-0.5">
+            <NavLink
+              to="/company/email-marketing"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <Send className="size-4 shrink-0 opacity-80" />
+              {t('email_marketing:nav.link')}
+            </NavLink>
+          </div>
+        </div>
       )}
 
       {(isAdmin || isSales) && (
