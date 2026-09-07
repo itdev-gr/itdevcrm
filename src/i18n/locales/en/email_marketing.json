@@ -242,6 +242,8 @@
     },
     "kpi": {
       "target": "Target",
+      "target_unknown": "Not calculated yet",
+      "target_unknown_link": "Calculate it in the \"Review\" step",
       "sent": "Sent",
       "delivered": "Delivered",
       "bounced": "Bounced",

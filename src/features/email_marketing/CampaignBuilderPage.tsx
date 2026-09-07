@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PageHeader, SettingsCard } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,10 @@ import { StepSchedule } from './steps/StepSchedule';
 const STEPS = ['content', 'audience', 'review', 'schedule'] as const;
 type Step = (typeof STEPS)[number];
 
+function isStep(value: string | null): value is Step {
+  return value !== null && (STEPS as readonly string[]).includes(value);
+}
+
 /** Four-step wizard shell: content → audience → review → schedule. */
 export function CampaignBuilderPage() {
   const { t } = useTranslation('email_marketing');
@@ -20,7 +24,18 @@ export function CampaignBuilderPage() {
   const { campaignId } = useParams();
   const createCampaign = useCreateCampaign();
   const [createError, setCreateError] = useState<string | null>(null);
-  const [step, setStep] = useState<Step>('content');
+  // Fix-pass, N-3: an external link (CampaignDetailPage's "not calculated
+  // yet" target tile) can send the owner straight to a specific step via
+  // `?step=review` — read once as the initial step so that link actually
+  // lands where it says it does, instead of always opening on step 1.
+  // Deliberately NOT kept in sync on every click (the step nav buttons
+  // still just call setStep) — this is a one-way entry point, not a
+  // permanent URL-as-state wiring.
+  const [searchParams] = useSearchParams();
+  const [step, setStep] = useState<Step>(() => {
+    const requested = searchParams.get('step');
+    return isStep(requested) ? requested : 'content';
+  });
 
   // The `/new` route has no campaignId yet — create one immediately and move
   // to the `/edit` route, so every step component below always has a real

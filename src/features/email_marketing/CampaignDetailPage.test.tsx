@@ -63,7 +63,7 @@ function makeStats(overrides: Partial<CampaignStatsResult> = {}): CampaignStatsR
 
 let campaign = makeCampaign();
 let statsState: {
-  data?: CampaignStatsResult;
+  data?: CampaignStatsResult | undefined;
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
@@ -163,6 +163,33 @@ describe('CampaignDetailPage', () => {
     // sent (of target), delivered/bounced/complained/unsubscribed (of sent)
     // all have a zero denominator here — five honest em-dashes.
     expect(screen.getAllByText(/^—/).length).toBeGreaterThanOrEqual(5);
+  });
+
+  // --- N-3 fix: a null target (never built, or reset by an
+  // attach/detach/import since) must read as an explicit "not calculated
+  // yet", never as a permanent "…" that looks like it's still loading. ---
+
+  it('shows an explicit "not calculated yet" message with a link back to Review when the target is unknown (prepared_at null)', () => {
+    campaign = makeCampaign({ status: 'draft', prepared_at: null });
+    render(wrap(<CampaignDetailPage />));
+
+    expect(screen.getByText('Δεν έχει υπολογιστεί ακόμα')).toBeInTheDocument();
+    expect(screen.queryByText('…')).not.toBeInTheDocument();
+    const link = screen.getByRole('link', { name: 'Υπολογισμός στο βήμα «Έλεγχος»' });
+    expect(link).toHaveAttribute('href', '/company/email-marketing/camp-1/edit?step=review');
+  });
+
+  it('still shows "…" (not the "not calculated" message) while stats are genuinely still loading', () => {
+    campaign = makeCampaign({ status: 'draft', prepared_at: null });
+    statsState = { data: undefined, isLoading: true, isError: false, refetch: refetchStats };
+    render(wrap(<CampaignDetailPage />));
+
+    // Every KPI tile (not just target) is mid-load here, so several "…"
+    // placeholders render — the point is the "not calculated" message and
+    // its link must NOT be one of them yet.
+    expect(screen.getAllByText('…').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Δεν έχει υπολογιστεί ακόμα')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Υπολογισμός στο βήμα «Έλεγχος»' })).not.toBeInTheDocument();
   });
 
   // --- Cancel is destructive/terminal: must not fire on the first click ----

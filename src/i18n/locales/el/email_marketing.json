@@ -242,6 +242,8 @@
     },
     "kpi": {
       "target": "Στόχος",
+      "target_unknown": "Δεν έχει υπολογιστεί ακόμα",
+      "target_unknown_link": "Υπολογισμός στο βήμα «Έλεγχος»",
       "sent": "Στάλθηκαν",
       "delivered": "Παραδόθηκαν",
       "bounced": "Bounce",

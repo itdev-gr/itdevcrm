@@ -240,10 +240,12 @@ export function useCampaignRecipients(
   });
 }
 
-// The largest page PostgREST will ever hand back regardless of what a
-// `.range()` request asks for (`supabase/config.toml`'s `max_rows`) — using
-// it as the drain's own batch size makes every page in the loop below a
-// full page, i.e. the fewest possible round trips.
+// The requested page size for each drain round trip — NOT assumed to be
+// what actually comes back (see the `from += rows.length` fix-pass note
+// below). Chosen to match PostgREST's own `max_rows` ceiling
+// (`supabase/config.toml`) so a drain against the local/default config
+// takes the fewest possible round trips, but the loop is correct
+// regardless of what the server's real cap turns out to be.
 const EXPORT_BATCH_SIZE = 1000;
 
 /**
@@ -254,6 +256,20 @@ const EXPORT_BATCH_SIZE = 1000;
  * (final-review.md, Critical-1). `onProgress` lets the caller show a
  * "fetching N of M" indicator instead of a frozen button during a
  * multi-thousand-row export.
+ *
+ * Second fix-pass (N-1): the offset advances by `rows.length` — what the
+ * server ACTUALLY returned — never by the constant `EXPORT_BATCH_SIZE`.
+ * Advancing by the constant silently reintroduces C-1 the moment the
+ * hosted project's real `max_rows` is lower than `EXPORT_BATCH_SIZE` (a
+ * separate setting from this repo's `supabase/config.toml`): every page
+ * under-fills, the stride skips the remainder, and the file downloads
+ * short with no error. It also protects a filtered export running during
+ * an active send, where rows can leave the filter between requests and
+ * shift what a fixed offset would land on. After the loop, a short drain
+ * (fewer rows collected than the server's own `count` said existed) throws
+ * instead of silently handing back a plausible-looking partial file — the
+ * export is the GDPR record of exactly who was mailed, so failing loudly
+ * beats a short file with no error.
  */
 export async function fetchAllCampaignRecipients(
   campaignId: string,
@@ -262,7 +278,8 @@ export async function fetchAllCampaignRecipients(
 ): Promise<CampaignRecipientRow[]> {
   const all: CampaignRecipientRow[] = [];
   let total = Infinity;
-  for (let from = 0; from < total; from += EXPORT_BATCH_SIZE) {
+  let from = 0;
+  while (from < total) {
     let query = supabase
       .from('email_campaign_recipients' as never)
       .select('*', { count: 'exact' })
@@ -277,6 +294,10 @@ export async function fetchAllCampaignRecipients(
     all.push(...rows);
     onProgress?.(Math.min(all.length, total), total);
     if (rows.length === 0) break; // Safety valve — never spin forever on an unexpected empty page.
+    from += rows.length; // The server's real page size, NOT the requested EXPORT_BATCH_SIZE.
+  }
+  if (all.length < total) {
+    throw new Error('export_incomplete');
   }
   return all;
 }

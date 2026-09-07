@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -65,7 +65,10 @@ function KpiTile({
 }: {
   label: string;
   value: string;
-  subtext?: string | null;
+  // Fix-pass, N-3: widened from `string | null` to `ReactNode` so the
+  // "target not calculated yet" tile can carry an actual link (to the
+  // builder's Review step), not just a plain caption.
+  subtext?: ReactNode;
   icon: typeof Users;
   accent?: Accent;
 }) {
@@ -225,7 +228,25 @@ export function CampaignDetailPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiTile
           label={t('detail.kpi.target')}
-          value={target === null ? '…' : nf.format(target)}
+          // Fix-pass, N-3: a genuinely null target (never built, or reset by
+          // an attach/detach/import since the last build — reachable from
+          // every row of the campaigns list, not just mid-edit in the
+          // builder) used to render as "…" forever, reading as "still
+          // loading" rather than "not calculated". `stats.isLoading` alone
+          // gets the transient case; anything else null gets an explicit
+          // message plus the same "go calculate it" link the builder
+          // offers (Important-1a).
+          value={stats.isLoading ? '…' : target === null ? t('detail.kpi.target_unknown') : nf.format(target)}
+          subtext={
+            !stats.isLoading && target === null ? (
+              <Link
+                to={`/company/email-marketing/${campaignId}/edit?step=review`}
+                className="font-medium text-primary underline underline-offset-2 dark:text-[#7ad4d4]"
+              >
+                {t('detail.kpi.target_unknown_link')}
+              </Link>
+            ) : null
+          }
           icon={Users}
         />
         <KpiTile
