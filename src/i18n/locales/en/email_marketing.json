@@ -170,8 +170,10 @@
       "saving": "Saving…",
       "saved": "Saved",
       "save_failed": "Saving failed.",
+      "back_to_list": "Back to the campaigns list",
+      "locked_notice": "This campaign is now \"{{status}}\" — the pacing/schedule settings can no longer be edited.",
       "daily_cap": "Daily cap",
-      "daily_cap_placeholder": "e.g. {{default}} (default)",
+      "daily_cap_placeholder": "e.g. {{capDefault}} (default)",
       "hourly_cap": "Hourly cap",
       "hourly_cap_placeholder": "e.g. 200 (default)",
       "send_window": "Send hours",
@@ -189,6 +191,8 @@
         "7": "Sun"
       },
       "estimate": {
+        "stats_loading": "Calculating the recipient count…",
+        "stats_error": "Couldn't load the recipient count — try refreshing the page.",
         "no_recipients": "Calculate recipients first, in the \"Review\" step, to see when sending would finish.",
         "unavailable": "The completion estimate can't be calculated.",
         "same_day": "At {{cap}}/day, sending finishes today.",
@@ -201,10 +205,11 @@
         "confirm_title": "Launch this campaign?",
         "confirm_text": "This will be sent to {{count}} people. It cannot be undone.",
         "success": "The campaign has started.",
+        "count_unknown": "The recipient count isn't known yet — launching is disabled until it loads.",
         "errors": {
           "permission_denied": "You don't have permission to launch campaigns.",
           "campaign_not_found": "The campaign was not found.",
-          "invalid_state": "The campaign isn't in a state that allows launching right now.",
+          "invalid_state": "The campaign isn't in draft or ready state — usually because a list was added or removed after the last recipient calculation. Recalculate recipients in the \"Review\" step and try again.",
           "not_prepared": "You need to calculate recipients first, in the \"Review\" step.",
           "empty_subject": "Add a subject to the email before launching, in the \"Content\" step.",
           "empty_body": "Add body text to the email before launching, in the \"Content\" step.",

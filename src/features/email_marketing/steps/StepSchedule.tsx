@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import type { TFunction } from 'i18next';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SettingsCard } from '@/components/layout/page-shell';
-import { useCampaign, useCampaignStats } from '../hooks/useCampaigns';
+import { useCampaign, useCampaignStats, useEmailMarketingSettings } from '../hooks/useCampaigns';
 import { useUpdateCampaign, useLaunchCampaign } from '../hooks/useCampaignMutations';
-import { DEFAULT_DAILY_CAP, estimateCampaignCompletion } from '../scheduleEstimate';
+import { DEFAULT_DAILY_CAP, DEFAULT_WARMUP_LADDER, estimateCampaignCompletion } from '../scheduleEstimate';
 
 const AUTOSAVE_DELAY_MS = 800;
 const SEND_DAYS = [1, 2, 3, 4, 5, 6, 7] as const; // ISO day-of-week, matches send_days column.
+// campaign_update only accepts these two statuses (20260907270000:103-105) —
+// anything else means the pacing controls (and the launch button) must be
+// frozen, not just the button.
+const EDITABLE_STATUSES = new Set(['draft', 'ready']);
 
 type Fields = {
   dailyCap: string; // kept as raw input text; '' means "use the platform default"
@@ -67,6 +72,7 @@ export function StepSchedule({ campaignId }: Props) {
   const { t, i18n } = useTranslation('email_marketing');
   const { data: campaign, isLoading } = useCampaign(campaignId);
   const stats = useCampaignStats(campaignId);
+  const settings = useEmailMarketingSettings();
   const update = useUpdateCampaign();
   const launch = useLaunchCampaign();
 
@@ -76,6 +82,18 @@ export function StepSchedule({ campaignId }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launched, setLaunched] = useState(false);
+
+  // Once the campaign leaves draft/ready (launched from here, or from
+  // anywhere else — reopening this step later sees it via `campaign.status`
+  // just as readily as the local `launched` flag does), campaign_update
+  // itself refuses every write (20260907270000:103-105). The controls must
+  // be visibly frozen instead of silently failing on the next edit.
+  const isEditable = campaign != null && EDITABLE_STATUSES.has(campaign.status);
+  // `launched` is folded in directly (not just `isEditable`, which reflects
+  // `campaign.status` from the query cache) so the controls lock immediately
+  // on a successful launch in THIS session, without waiting on the
+  // invalidated `campaign` query's refetch to land first.
+  const locked = !isEditable || launched;
 
   // Same hydrate-once-then-never-clobber pattern as StepContent — a
   // background refetch must not overwrite a field the owner is mid-editing.
@@ -102,28 +120,27 @@ export function StepSchedule({ campaignId }: Props) {
     };
   }
 
-  function saveNow(next: Fields) {
-    update.mutate(
-      { campaignId, patch: buildPatch(next) },
-      {
-        onSuccess: () => {
-          setSaveState('saved');
-          setSaveError(null);
-        },
-        onError: () => {
-          setSaveState('idle');
-          setSaveError(t('builder.schedule.save_failed'));
-        },
-      },
-    );
+  // Awaitable save, used both by the debounced timeout (fire-and-forget) and
+  // by the pre-launch flush (awaited — fix-pass, Important-2) so a launch
+  // can know whether the latest edit actually landed before it proceeds.
+  async function saveNowAsync(next: Fields): Promise<void> {
+    try {
+      await update.mutateAsync({ campaignId, patch: buildPatch(next) });
+      setSaveState('saved');
+      setSaveError(null);
+    } catch {
+      setSaveState('idle');
+      setSaveError(t('builder.schedule.save_failed'));
+      throw new Error('save_failed');
+    }
   }
 
-  // Same "latest" ref + unmount-flush idiom as StepContent — a pending
-  // debounced save must be flushed, not dropped, when this step unmounts.
-  const saveNowRef = useRef(saveNow);
+  // "Latest" refs so the unmount-flush/pre-launch-flush below always see the
+  // current fields/save fn without re-subscribing on every render.
+  const saveNowAsyncRef = useRef(saveNowAsync);
   const latestFieldsRef = useRef(fields);
   useEffect(() => {
-    saveNowRef.current = saveNow;
+    saveNowAsyncRef.current = saveNowAsync;
     latestFieldsRef.current = fields;
   });
 
@@ -133,7 +150,7 @@ export function StepSchedule({ campaignId }: Props) {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
-        saveNowRef.current(latestFieldsRef.current);
+        void saveNowAsyncRef.current(latestFieldsRef.current);
       }
     },
     [],
@@ -144,11 +161,12 @@ export function StepSchedule({ campaignId }: Props) {
     setSaveState('saving');
     timerRef.current = setTimeout(() => {
       timerRef.current = null;
-      saveNow(next);
+      void saveNowAsync(next);
     }, AUTOSAVE_DELAY_MS);
   }
 
   function handleChange<K extends keyof Fields>(key: K, value: Fields[K]) {
+    if (locked) return;
     setFields((prev) => {
       const next = { ...prev, [key]: value };
       scheduleSave(next);
@@ -157,6 +175,7 @@ export function StepSchedule({ campaignId }: Props) {
   }
 
   function toggleSendDay(day: number) {
+    if (locked) return;
     setFields((prev) => {
       const has = prev.sendDays.includes(day);
       const nextDays = has ? prev.sendDays.filter((d) => d !== day) : [...prev.sendDays, day].sort();
@@ -171,15 +190,55 @@ export function StepSchedule({ campaignId }: Props) {
   // from campaign_stats (kept fresh: build_campaign_recipients and
   // campaign_launch both invalidate it) rather than anything computed or
   // cached locally in this step.
-  const targetCount = stats.data?.by_status?.pending ?? 0;
+  //
+  // Fix-pass, Critical-1: `null` means "not actually known yet" (the query
+  // hasn't resolved, or failed) — deliberately NEVER collapsed to 0. A cold
+  // cache (direct navigation to this step) or an errored stats fetch must
+  // block the launch, not silently confirm a send to "0 people" while
+  // campaign_launch sends to everyone still pending.
+  const targetCount: number | null = (() => {
+    if (stats.isLoading || stats.isError || !stats.data) return null;
+    return stats.data.by_status.pending ?? 0;
+  })();
+
+  // Fix-pass, Minor-1: the effective cap/ladder now come from the LIVE
+  // email_marketing_settings row when it has loaded, not a hardcoded mirror
+  // of the schema default — so lowering the platform cap is reflected here
+  // without a code change. Falls back to the schema-default constants only
+  // while settings is still loading/erroring (never blocks the estimate on
+  // a second query).
   const parsedDailyCap = parseCapField(fields.dailyCap);
-  const effectiveDailyCap = parsedDailyCap ?? DEFAULT_DAILY_CAP;
-  const estimate = estimateCampaignCompletion(targetCount, effectiveDailyCap);
+  const liveDailyCap = settings.data?.daily_cap ?? DEFAULT_DAILY_CAP;
+  const effectiveDailyCap = parsedDailyCap ?? liveDailyCap;
+  const warmupLadder = settings.data?.warmup_ladder ?? DEFAULT_WARMUP_LADDER;
+  const estimate =
+    targetCount === null
+      ? null
+      : estimateCampaignCompletion(targetCount, { dailyCap: effectiveDailyCap, sendDays: fields.sendDays, warmupLadder }, new Date());
   const dateFmt = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' });
   const nf = new Intl.NumberFormat(i18n.language);
 
   async function confirmLaunch() {
     setLaunchError(null);
+
+    // Fix-pass, Important-2: a pending debounced cap/window/days save must
+    // land before launch — otherwise the campaign launches on whatever was
+    // last PERSISTED, not what the owner just approved in the estimate box,
+    // and the late save then dies against the now-'sending' campaign with an
+    // opaque failure. Flush and await it first; abort the launch (leave the
+    // dialog closed, show the save error) rather than launch against a
+    // schedule that didn't actually save.
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      try {
+        await saveNowAsync(latestFieldsRef.current);
+      } catch {
+        setConfirmOpen(false);
+        return;
+      }
+    }
+
     try {
       await launch.mutateAsync(campaignId);
       setConfirmOpen(false);
@@ -189,6 +248,8 @@ export function StepSchedule({ campaignId }: Props) {
       setLaunchError(translateLaunchError(err instanceof Error ? err.message : '', t));
     }
   }
+
+  const launchDisabled = launch.isPending || locked || targetCount === null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -205,6 +266,15 @@ export function StepSchedule({ campaignId }: Props) {
         </div>
         {saveError ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{saveError}</p> : null}
 
+        {!isLoading && !isEditable ? (
+          <p className="mt-2 rounded-lg border border-amber-300/60 bg-amber-50 p-2.5 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+            {t('builder.schedule.locked_notice', { status: t(`status.${campaign?.status}`) })}{' '}
+            <Link to="/company/email-marketing" className="font-medium underline underline-offset-2">
+              {t('builder.schedule.back_to_list')}
+            </Link>
+          </p>
+        ) : null}
+
         {isLoading ? (
           <p className="mt-3 text-sm text-muted-foreground">{t('builder.schedule.loading')}</p>
         ) : (
@@ -219,9 +289,10 @@ export function StepSchedule({ campaignId }: Props) {
                   type="number"
                   min={1}
                   className="mt-1 h-8 text-xs"
-                  placeholder={t('builder.schedule.daily_cap_placeholder', { default: DEFAULT_DAILY_CAP })}
+                  placeholder={t('builder.schedule.daily_cap_placeholder', { capDefault: liveDailyCap })}
                   value={fields.dailyCap}
                   onChange={(e) => handleChange('dailyCap', e.target.value)}
+                  disabled={locked}
                 />
               </div>
               <div>
@@ -236,6 +307,7 @@ export function StepSchedule({ campaignId }: Props) {
                   placeholder={t('builder.schedule.hourly_cap_placeholder')}
                   value={fields.hourlyCap}
                   onChange={(e) => handleChange('hourlyCap', e.target.value)}
+                  disabled={locked}
                 />
               </div>
             </div>
@@ -249,6 +321,7 @@ export function StepSchedule({ campaignId }: Props) {
                   className="h-8 w-auto text-xs"
                   value={fields.sendWindowStart}
                   onChange={(e) => handleChange('sendWindowStart', e.target.value)}
+                  disabled={locked}
                 />
                 <span className="text-xs text-muted-foreground">{t('builder.schedule.send_window_to')}</span>
                 <Input
@@ -257,6 +330,7 @@ export function StepSchedule({ campaignId }: Props) {
                   className="h-8 w-auto text-xs"
                   value={fields.sendWindowEnd}
                   onChange={(e) => handleChange('sendWindowEnd', e.target.value)}
+                  disabled={locked}
                 />
               </div>
             </div>
@@ -274,6 +348,7 @@ export function StepSchedule({ campaignId }: Props) {
                       variant={active ? 'default' : 'outline'}
                       aria-pressed={active}
                       onClick={() => toggleSendDay(day)}
+                      disabled={locked}
                     >
                       {t(`builder.schedule.days.${day}`)}
                     </Button>
@@ -283,7 +358,13 @@ export function StepSchedule({ campaignId }: Props) {
             </div>
 
             <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
-              {targetCount === 0 ? (
+              {targetCount === null ? (
+                <p className="text-muted-foreground">
+                  {stats.isError
+                    ? t('builder.schedule.estimate.stats_error')
+                    : t('builder.schedule.estimate.stats_loading')}
+                </p>
+              ) : targetCount === 0 ? (
                 <p className="text-muted-foreground">{t('builder.schedule.estimate.no_recipients')}</p>
               ) : estimate === null ? (
                 <p className="text-muted-foreground">{t('builder.schedule.estimate.unavailable')}</p>
@@ -309,7 +390,15 @@ export function StepSchedule({ campaignId }: Props) {
 
         {launchError ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{launchError}</p> : null}
         {launched ? (
-          <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-400">{t('builder.schedule.launch.success')}</p>
+          <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-400">
+            {t('builder.schedule.launch.success')}{' '}
+            <Link to="/company/email-marketing" className="font-medium underline underline-offset-2">
+              {t('builder.schedule.back_to_list')}
+            </Link>
+          </p>
+        ) : null}
+        {!launched && targetCount === null ? (
+          <p className="mt-3 text-sm text-muted-foreground">{t('builder.schedule.launch.count_unknown')}</p>
         ) : null}
 
         <div className="mt-3">
@@ -319,7 +408,7 @@ export function StepSchedule({ campaignId }: Props) {
               setLaunchError(null);
               setConfirmOpen(true);
             }}
-            disabled={launch.isPending}
+            disabled={launchDisabled}
           >
             {t('builder.schedule.launch.button')}
           </Button>
@@ -327,10 +416,10 @@ export function StepSchedule({ campaignId }: Props) {
       </SettingsCard>
 
       <ConfirmDialog
-        open={confirmOpen}
+        open={confirmOpen && targetCount !== null}
         onOpenChange={setConfirmOpen}
         title={t('builder.schedule.launch.confirm_title')}
-        description={t('builder.schedule.launch.confirm_text', { count: nf.format(targetCount) })}
+        description={t('builder.schedule.launch.confirm_text', { count: nf.format(targetCount ?? 0) })}
         confirmLabel={t('builder.schedule.launch.button')}
         pending={launch.isPending}
         onConfirm={confirmLaunch}

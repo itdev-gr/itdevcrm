@@ -140,4 +140,8 @@ export const queryKeys = {
   // full audiences() list so attach/detach can invalidate narrowly.
   campaignAudiences: (id: string) => ['email-campaign-audiences', id] as const,
   suppressions: () => ['email-suppressions'] as const,
+  // Singleton platform pacing config (daily/hourly cap, warm-up ladder) — the
+  // live values campaign_daily_budget actually paces by, read directly since
+  // that RPC itself is service-role-only (revoked from authenticated).
+  emailMarketingSettings: () => ['email-marketing-settings'] as const,
 };
