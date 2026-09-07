@@ -16,6 +16,8 @@ second one had flipped to `overdue` the day after it was created.
 | Installment 1/2 | 345.00 | 427.80 | paid | 16/07/2026 |
 | Installment 2/2 | 255.65 | 317.01 | **overdue** | 16/07/2026 |
 
+End state: 345.00 paid + 255.00 due 30/09/2026 = 600.00 exactly.
+
 `jobs.installment_plan = 'none'`, `installment_schedule = null`.
 
 ## Why this could not be fixed through the UI
@@ -29,6 +31,19 @@ regenerates the payment rows.
 
 ## Changes applied
 
+The €0.65 overshoot (345.00 + 255.65 = 600.65 against the job's 600.00) was
+closed on the owner's instruction by taking it off the **second** instalment:
+255.65 → 255.00, so the two now sum to exactly 600.00. `vat_amount` and
+`amount_gross` are GENERATED columns on both `deal_payments` and
+`deal_payment_lines`, and `sync_payment_line_amounts` copies `amount_net` down
+to the single line, so setting the payment's net was enough — VAT 61.20 and
+gross 316.20 followed on their own. Instalment 1/2 stays at the 345.00 that was
+actually collected.
+
+For the record, `006042-WEBDEV` (1300.00 vs 1180.00) has a comparable gap and
+was not touched; the other jobs a naive sum check flags are false positives,
+where `one_time_amount` is null and the figure lives in `amount_net`.
+
 ```sql
 update public.jobs
    set installment_plan = '50_50',
@@ -38,6 +53,13 @@ update public.jobs
 
 update public.deal_payments dp
    set end_date = date '2026-09-30', status = 'pending', updated_at = now()
+  from public.deal_payment_lines pl
+ where pl.payment_id = dp.id
+   and pl.job_id = (select id from public.jobs where code = '005690-WEBDEV')
+   and dp.label ilike '%2/2%' and dp.status <> 'paid';
+
+update public.deal_payments dp            -- close the 0.65 overshoot
+   set amount_net = 255.00, updated_at = now()
   from public.deal_payment_lines pl
  where pl.payment_id = dp.id
    and pl.job_id = (select id from public.jobs where code = '005690-WEBDEV')
@@ -68,15 +90,7 @@ instalments on the same date and 3 are spread by 21, 73 and 95 days.
 
 ## Deliberately NOT changed
 
-- **The €0.65 discrepancy.** 345.00 + 255.65 = 600.65 against a job amount of
-  600.00. Note this is separate from the 50/50 question: even against a 50/50
-  agreement the collected 345.00 plus the outstanding 255.65 overshoot the
-  600.00 total by 0.65. The owner was asked and chose to leave the amounts alone, so the
-  client still owes 255.65. Only `006042-WEBDEV` (1300.00 vs 1180.00) shows a
-  comparable gap; the other jobs flagged by a naive sum check are false
-  positives, where `one_time_amount` is null and the figure lives in
-  `amount_net`.
-- **Instalment 1/2.** Paid; untouched.
+- **Instalment 1/2.** Paid; untouched throughout.
 - **The client's other overdue rows** (hosting €120 yearly, WEBDEV-2 €30
   monthly). Genuinely overdue, unrelated to this repair.
 
@@ -97,5 +111,5 @@ select installment_plan, installment_schedule from jobs where code='005690-WEBDE
 select dp.label, dp.end_date, dp.amount_net, dp.status
   from deal_payments dp join deal_payment_lines pl on pl.payment_id=dp.id
  where pl.job_id=(select id from jobs where code='005690-WEBDEV');
--- 1/2 16/07/2026 345.00 paid | 2/2 30/09/2026 255.65 pending
+-- 1/2 16/07/2026 345.00 paid | 2/2 30/09/2026 255.00 pending  (sum = 600.00)
 ```
