@@ -53,7 +53,7 @@ type SendInput = {
 const SALES_OWNER_TEMPLATES = [
   'lead_welcome',
   'noanswer_day0', 'noanswer_day2', 'noanswer_day5', 'noanswer_day10',
-  'offer_followup_day2', 'offer_followup_day5', 'offer_followup_day10',
+  'offer_followup_day5', 'offer_followup_day10',
   'reengage_90d',
   'scheduled_confirm', 'scheduled_reminder', 'scheduled_noshow',
 ];
@@ -189,7 +189,7 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
     [
       'lead_welcome',
       'noanswer_day0', 'noanswer_day2', 'noanswer_day5', 'noanswer_day10',
-      'offer_followup_day2', 'offer_followup_day5', 'offer_followup_day10',
+      'offer_followup_day5', 'offer_followup_day10',
       'reengage_90d',
       'scheduled_confirm', 'scheduled_reminder', 'scheduled_noshow',
     ].includes(templateKey) &&
