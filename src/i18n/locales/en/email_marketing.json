@@ -34,7 +34,83 @@
   "builder": {
     "new_title": "New campaign",
     "edit_title": "Edit campaign",
-    "coming_soon": "The campaign builder is coming soon."
+    "coming_soon": "The campaign builder is coming soon.",
+    "creating": "Creating the campaign…",
+    "description": "Content, recipients, review and send schedule — in order.",
+    "steps_nav_label": "Builder steps",
+    "steps": {
+      "content": "Content",
+      "audience": "Recipients",
+      "review": "Review",
+      "schedule": "Schedule"
+    },
+    "steps_coming_soon": {
+      "review": "Recipient review and the test email are coming soon.",
+      "schedule": "Scheduling and launch are coming soon."
+    },
+    "content": {
+      "title": "Email content",
+      "loading": "Loading…",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "save_failed": "Saving failed.",
+      "subject": "Subject",
+      "preheader": "Preheader (inbox preview text)",
+      "body": "Body",
+      "markup_hint": "Supported: blank line = new paragraph, \"## Heading\" for a heading, \"- \" for a list, **bold**.",
+      "hero_image_url": "Image URL",
+      "reply_to": "Reply-to",
+      "preview": "Preview",
+      "subject_placeholder": "(no subject yet)"
+    },
+    "audience": {
+      "title": "Recipient lists",
+      "loading": "Loading…",
+      "empty": "No lists attached yet.",
+      "total_recipients": "{{count}} recipients total",
+      "import_button": "Import from Excel",
+      "name": "Name",
+      "row_count": "Rows",
+      "consent_basis": "Consent basis",
+      "detach": "Detach",
+      "detach_failed": "Detaching failed.",
+      "detach_confirm_title": "Detach list \"{{name}}\" from this campaign?",
+      "consent_basis_options": {
+        "existing_customer": "Existing customer",
+        "inquiry": "Inquiry",
+        "public_b2b": "Public B2B",
+        "purchased": "Purchased list",
+        "other": "Other"
+      },
+      "import": {
+        "title": "Import a list from Excel",
+        "description": "Choose an .xlsx or .csv file. You'll see the first 10 rows before committing to anything.",
+        "choose_file": "Choose file",
+        "change_file": "Change file",
+        "parse_empty": "No rows with a name, email or phone were found in this file.",
+        "parse_error": "Reading the file failed. Check that it's a valid .xlsx or .csv.",
+        "found": "Found {{count}} rows.",
+        "skipped": "Skipped {{count}} empty rows.",
+        "dropped": "Ignored {{count}} rows past the limit.",
+        "preview_title": "Preview of the first 10 rows",
+        "col_name": "Name",
+        "col_email": "Email",
+        "col_phone": "Phone",
+        "col_company": "Company",
+        "name_label": "List name",
+        "consent_label": "Consent basis",
+        "consent_placeholder": "Choose…",
+        "note_label": "Provenance note (optional)",
+        "note_placeholder": "e.g. March 2026 event list",
+        "progress": "Batch {{done}} of {{total}}…",
+        "importing": "Importing…",
+        "confirm": "Import",
+        "cancel": "Cancel",
+        "close": "Close",
+        "import_failed": "Import failed.",
+        "report": "Added {{added}}, invalid {{invalid}}, duplicate {{duplicate}}."
+      }
+    }
   },
   "detail": {
     "title": "Campaign details",

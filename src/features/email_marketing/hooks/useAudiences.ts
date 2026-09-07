@@ -50,6 +50,31 @@ export function useAudiences() {
   });
 }
 
+// email_campaign_audiences has no columns beyond the (campaign_id,
+// audience_id) pair, so this embeds the audience row through the FK.
+type CampaignAudienceJoin = { audience_id: string; email_audiences: AudienceRow | AudienceRow[] | null };
+
+/** Audiences attached to one campaign (StepAudience's list), with the same
+ *  row_count/consent_basis columns as useAudiences() — just filtered down to
+ *  the campaign's own attachments. */
+export function useCampaignAudiences(campaignId: string | undefined) {
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  return useQuery({
+    queryKey: queryKeys.campaignAudiences(campaignId ?? ''),
+    enabled: isAdmin && !!campaignId,
+    queryFn: async (): Promise<AudienceRow[]> => {
+      const { data, error } = await supabase
+        .from('email_campaign_audiences' as never)
+        .select('audience_id, email_audiences(*)')
+        .eq('campaign_id', campaignId as string);
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as unknown as CampaignAudienceJoin[])
+        .map((row) => (Array.isArray(row.email_audiences) ? row.email_audiences[0] : row.email_audiences))
+        .filter((a): a is AudienceRow => a != null);
+    },
+  });
+}
+
 // --- audience_create -----------------------------------------------------------
 export type AudienceCreateInput = {
   name: string;

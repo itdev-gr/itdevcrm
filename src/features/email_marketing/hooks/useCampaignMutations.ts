@@ -141,6 +141,7 @@ export function useAttachAudience() {
     onSuccess: (_data, { campaignId }) => {
       invalidateCampaign(qc, campaignId);
       void qc.invalidateQueries({ queryKey: queryKeys.campaignRecipients(campaignId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.campaignAudiences(campaignId) });
     },
   });
 }
@@ -157,6 +158,7 @@ export function useDetachAudience() {
     onSuccess: (_data, { campaignId }) => {
       invalidateCampaign(qc, campaignId);
       void qc.invalidateQueries({ queryKey: queryKeys.campaignRecipients(campaignId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.campaignAudiences(campaignId) });
     },
   });
 }

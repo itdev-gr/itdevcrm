@@ -136,5 +136,8 @@ export const queryKeys = {
   campaignRecipients: (id: string, filter?: string) =>
     filter ? (['email-campaign-recipients', id, filter] as const) : (['email-campaign-recipients', id] as const),
   audiences: () => ['email-audiences'] as const,
+  // Audiences attached to one campaign (StepAudience) — separate from the
+  // full audiences() list so attach/detach can invalidate narrowly.
+  campaignAudiences: (id: string) => ['email-campaign-audiences', id] as const,
   suppressions: () => ['email-suppressions'] as const,
 };
