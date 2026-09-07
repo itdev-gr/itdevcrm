@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { renderCampaignEmail, campaignTags, unsubscribeHeaders } from './render';
+import {
+  renderCampaignEmail,
+  campaignTags,
+  unsubscribeHeaders,
+  buildCampaignBatchItem,
+  buildUnsubscribeUrl,
+  type CampaignForBatch,
+  type IdentityForBatch,
+  type RecipientForBatch,
+} from './render';
 
 const UNSUB_URL = 'https://www.itdevcrm.com/api/campaign-unsubscribe?r=11111111-1111-1111-1111-111111111111&t=22222222-2222-2222-2222-222222222222';
 
@@ -127,5 +136,55 @@ describe('unsubscribeHeaders', () => {
     expect(headers['List-Unsubscribe']?.startsWith('<')).toBe(true);
     expect(headers['List-Unsubscribe']?.endsWith('>')).toBe(true);
     expect(headers['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
+  });
+});
+
+describe('buildCampaignBatchItem', () => {
+  // Regression guard (review fix pass, task-5-review.md Minor M-5): nothing
+  // previously covered index.ts's outgoing Resend item, so deleting
+  // `tags:`/`headers:` from the builder would have shipped silently — every
+  // campaign email going out with no List-Unsubscribe (a Gmail/Yahoo bulk-
+  // sender violation) and no campaign attribution (the webhook and the
+  // circuit breaker both go dark). These tests fail if either is removed.
+  const APP_BASE = 'https://www.itdevcrm.com';
+  const campaign: CampaignForBatch = {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    subject: 'Νέα προσφορά',
+    body_md: 'Γεια σας.',
+    hero_image_url: null,
+  };
+  const identity: IdentityForBatch = { from: 'IT DEV <news@itdev.gr>', replyTo: 'sales@itdev.gr' };
+  const recipient: RecipientForBatch = {
+    id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    email_lower: 'test@example.com',
+    display_name: 'Νίκος',
+    unsubscribe_token: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  };
+
+  it('includes both List-Unsubscribe headers on the outgoing item', () => {
+    const item = buildCampaignBatchItem(APP_BASE, campaign, identity, recipient);
+    expect(item.headers).toBeDefined();
+    expect(item.headers['List-Unsubscribe']).toBe(
+      `<${buildUnsubscribeUrl(APP_BASE, recipient.id, recipient.unsubscribe_token)}>`,
+    );
+    expect(item.headers['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
+  });
+
+  it('includes exactly the three campaign attribution tags on the outgoing item', () => {
+    const item = buildCampaignBatchItem(APP_BASE, campaign, identity, recipient);
+    expect(item.tags).toEqual([
+      { name: 'mkt', value: '1' },
+      { name: 'campaign', value: campaign.id },
+      { name: 'recipient', value: recipient.id },
+    ]);
+  });
+
+  it('sends from the identity and to the recipient, with the campaign subject', () => {
+    const item = buildCampaignBatchItem(APP_BASE, campaign, identity, recipient);
+    expect(item.from).toBe(identity.from);
+    expect(item.reply_to).toBe(identity.replyTo);
+    expect(item.to).toBe(recipient.email_lower);
+    expect(item.subject).toBe(campaign.subject);
+    expect(item.html).toContain('Νίκος');
   });
 });

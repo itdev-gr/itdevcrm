@@ -112,3 +112,71 @@ export function unsubscribeHeaders(unsubscribeUrl: string): Record<string, strin
     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
   };
 }
+
+// ---------------------------------------------------------------------------
+// Below: the per-recipient Resend batch item builder. Moved here (post
+// review, fix pass 2026-09-07) from send-campaign/index.ts so it can be
+// covered by a vitest test — index.ts's top-level `Deno.env.get(...)` calls
+// mean it can never be safely imported into a Vite/Node test runner, so
+// anything that must be tested has to live in this dual-runtime file
+// instead. This is also exactly the "outgoing item builder" the review
+// (task-5-review.md, Minor M-5) asked to have a regression test: deleting
+// `tags:`/`headers:` below must fail a test, not ship silently.
+
+export type CampaignForBatch = {
+  id: string;
+  subject: string;
+  body_md: string;
+  hero_image_url: string | null;
+};
+
+export type IdentityForBatch = { from: string; replyTo: string };
+
+export type RecipientForBatch = {
+  id: string;
+  email_lower: string;
+  display_name: string | null;
+  unsubscribe_token: string;
+};
+
+export function buildUnsubscribeUrl(appBase: string, recipientId: string, unsubscribeToken: string): string {
+  return `${appBase}/api/campaign-unsubscribe?r=${recipientId}&t=${unsubscribeToken}`;
+}
+
+/** The exact object shape POSTed to Resend for one recipient (one entry of
+ *  the `/emails/batch` array, or the single-item `/emails` test-send body).
+ *  Pure: `appBase` is passed in rather than read from `Deno.env` so this
+ *  stays importable from a plain Node/vitest test. */
+export function buildCampaignBatchItem(
+  appBase: string,
+  campaign: CampaignForBatch,
+  identity: IdentityForBatch,
+  recipient: RecipientForBatch,
+): {
+  from: string;
+  reply_to: string;
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  tags: { name: string; value: string }[];
+  headers: Record<string, string>;
+} {
+  const unsubscribeUrl = buildUnsubscribeUrl(appBase, recipient.id, recipient.unsubscribe_token);
+  const { html, text } = renderCampaignEmail({
+    bodyMd: campaign.body_md,
+    heroImageUrl: campaign.hero_image_url,
+    displayName: recipient.display_name,
+    unsubscribeUrl,
+  });
+  return {
+    from: identity.from,
+    reply_to: identity.replyTo,
+    to: recipient.email_lower,
+    subject: campaign.subject,
+    html,
+    text,
+    tags: campaignTags(campaign.id, recipient.id),
+    headers: unsubscribeHeaders(unsubscribeUrl),
+  };
+}
