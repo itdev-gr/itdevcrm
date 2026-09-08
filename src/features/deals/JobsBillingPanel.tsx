@@ -483,7 +483,10 @@ function JobRow({
               {t('jobs_billing.pause.resume')}
             </Button>
           )}
-          {!rowReadOnly && !ended && (
+          {/* Pause also clears billing_active (so `ended` is true for paused
+              jobs) — but a paused service must still be endable without a
+              detour through Resume, which would start a fresh billing period. */}
+          {!rowReadOnly && (!ended || isPaused) && (
             <Button
               type="button"
               size="sm"

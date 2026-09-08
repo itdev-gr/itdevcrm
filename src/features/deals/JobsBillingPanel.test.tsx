@@ -542,7 +542,8 @@ describe('JobsBillingPanel pause/resume', () => {
 
   it('shows a Paused badge + Resume for a paused job and calls the resume hook', async () => {
     billing.current = {
-      jobs: [makeJob({ id: 'a', title: 'SEO', billing_type: 'recurring_monthly', blocked_reason: 'billing_paused' })],
+      // pause_job_billing clears billing_active too — mirror the real row shape.
+      jobs: [makeJob({ id: 'a', title: 'SEO', billing_type: 'recurring_monthly', blocked_reason: 'billing_paused', billing_active: false })],
       payments: [],
     };
     const user = userEvent.setup();
@@ -662,6 +663,34 @@ describe('JobsBillingPanel end + archive', () => {
     render(wrap(<JobsBillingPanel dealId="d1" />));
 
     const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: /^end$/i }));
+    await user.click(await screen.findByRole('button', { name: /^end$/i }));
+
+    await waitFor(() => expect(endArchiveMutate).toHaveBeenCalledTimes(1));
+    expect(endArchiveMutate).toHaveBeenCalledWith('a');
+  });
+
+  // A paused job also has billing_active = false; that must NOT hide End —
+  // ending it directly is the whole point (no Resume detour, which would
+  // start a fresh billing period).
+  it('still offers End on a paused job and ends it on confirm', async () => {
+    unpaidTotal.current = 0;
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'a',
+          title: 'AI SEO',
+          billing_type: 'recurring_monthly',
+          blocked_reason: 'billing_paused',
+          billing_active: false,
+        }),
+      ],
+      payments: [],
+    };
+    const user = userEvent.setup();
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('AI SEO').closest('tr') as HTMLElement;
     await user.click(within(row).getByRole('button', { name: /^end$/i }));
     await user.click(await screen.findByRole('button', { name: /^end$/i }));
 
