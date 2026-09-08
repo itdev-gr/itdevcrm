@@ -8,6 +8,7 @@ const localStages: StageLite[] = [
   { id: 'ls-new', board: 'local_seo', code: 'new_project', archived: false, position: 10 },
   { id: 'ls-opt', board: 'local_seo', code: 'optimize', archived: false, position: 50 },
   { id: 'ls-done', board: 'local_seo', code: 'done', archived: false, position: 80 },
+  { id: 'ls-closed', board: 'local_seo', code: 'closed', archived: false, position: 110 },
 ];
 const webSeoStages: StageLite[] = [
   { id: 'ws-new', board: 'web_seo', code: 'new_project', archived: false, position: 10 },
@@ -47,6 +48,25 @@ describe('groupJobsForBoard', () => {
     });
     expect(byColumn.get('ws-content')?.map((j) => j.id)).toEqual(['a']);
     expect(blocked.map((j) => j.id)).toEqual(['b']);
+  });
+
+  // Feedback 2026-09-08: a leaving client's billing is paused, so their closed
+  // job is is_blocked — and used to vanish into Blocked, burying the red
+  // "needs disconnect" pin. Closed is terminal: it always wins over the block.
+  it('keeps blocked CLOSED jobs in the Closed column, pinned when they need the disconnect', () => {
+    const closedStage = { id: 'ls-closed', code: 'closed', board: 'local_seo', display_names: {} };
+    const jobs = [
+      job({ id: 'a', stage_id: 'ls-closed', stage: closedStage, is_blocked: true }),
+      job({ id: 'b', stage_id: 'ls-closed', stage: closedStage, disconnected_at: '2026-09-01', is_blocked: true }),
+      job({ id: 'c', stage_id: 'ls-opt', is_blocked: true }),
+    ];
+    const { byColumn, blocked } = groupJobsForBoard({
+      board: 'local_seo', jobs, boardStages: localStages, stageById,
+    });
+    // a needs the disconnect (no disconnected_at) → pinned above b, which the
+    // default id-desc tie-break would otherwise put first.
+    expect(byColumn.get('ls-closed')?.map((j) => j.id)).toEqual(['a', 'b']);
+    expect(blocked.map((j) => j.id)).toEqual(['c']);
   });
 
   it('keeps blocked jobs in their stage column on boards without a Blocked column', () => {

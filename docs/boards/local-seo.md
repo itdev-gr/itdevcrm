@@ -49,6 +49,11 @@ here (see "AI SEO cards" below).
   below.)
 - Blocked cards cannot be dragged, and nothing can be dropped on the Blocked
   column — block/unblock is accounting's call, not a drag action.
+- **Closed always wins over Blocked (2026-09-08):** a job in the terminal
+  **Closed** stage shows in the Closed column even while blocked (a leaving
+  client's billing is usually paused, which used to hide the card — and its red
+  **Disconnect** reminder — in Blocked). It still cannot be dragged while
+  blocked.
 - While the _client_ is blocked, monthly task editing is disabled and
   non-admins cannot move any of that client's jobs.
 

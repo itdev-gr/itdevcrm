@@ -69,7 +69,13 @@ export function JobsKanbanColumn({
             {interactive ? 'Drop jobs here' : '—'}
           </p>
         ) : (
-          jobs.map((j) => <JobsKanbanCard key={j.id} job={j} dragDisabled={!interactive} />)
+          // Blocked cards stay undraggable even when they render inside a
+          // normal column (a blocked job in the terminal Closed stage shows in
+          // Closed, not in the Blocked column) — block/unblock is accounting's
+          // call, not a drag action.
+          jobs.map((j) => (
+            <JobsKanbanCard key={j.id} job={j} dragDisabled={!interactive || j.is_blocked} />
+          ))
         )}
       </div>
     </div>

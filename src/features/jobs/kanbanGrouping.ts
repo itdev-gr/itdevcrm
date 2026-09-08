@@ -85,7 +85,12 @@ export function groupJobsForBoard(args: {
     if (!j.stage_id) continue;
     const jobStage = args.stageById.get(j.stage_id);
     if (!jobStage) continue;
-    if (blockedColumn && j.is_blocked) {
+    // Closed is terminal: nothing is left for a block to hold, and hiding the
+    // card in Blocked buries the Local SEO "needs disconnect" reminder — a
+    // leaving client's billing is almost always paused, so every closed card
+    // was landing in Blocked instead of Closed (feedback 2026-09-08). Closed
+    // cards therefore always render in their own column.
+    if (blockedColumn && j.is_blocked && jobStage.code !== 'closed') {
       blocked.push(j);
       continue;
     }
