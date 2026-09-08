@@ -27,6 +27,13 @@ export type JobBillingRow = {
   /** True once the service was ended via end_and_archive_job (owner decision
    *  2026-09-04): the row stays visible, read-only, for accounting history. */
   archived: boolean;
+  /** Non-null = ended but the archive waits for the Local SEO GBP disconnect
+   *  (decision A, 2026-09-08): the row is read-only like an archived one, with
+   *  an "awaiting disconnect" badge instead of "Archived". */
+  pending_archive_reason: string | null;
+  /** When the Local SEO team disconnected from the client's GBP; drives the
+   *  End dialog's "stays in Closed until disconnected" note. */
+  disconnected_at: string | null;
   /** Set on €0 AI SEO work-card children; top-level billing rows are null. */
   parent_job_id: string | null;
   blocked_reason: string | null;
@@ -113,7 +120,7 @@ export function useJobsBilling(dealId: string) {
       const jobsRes = await supabase
         .from('jobs')
         .select(
-          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason, period_due_date, archived',
+          'id, title, service_type, billing_type, installment_plan, installment_schedule, amount_net, setup_fee, vat_rate, billing_active, billing_only, billing_group_id, status, is_custom, description, parent_job_id, blocked_reason, period_due_date, archived, pending_archive_reason, disconnected_at',
         )
         .eq('deal_id', dealId)
         .order('created_at', { ascending: true });
@@ -143,6 +150,8 @@ export function useJobsBilling(dealId: string) {
         blocked_reason: (j.blocked_reason as string | null) ?? null,
         period_due_date: (j.period_due_date as string | null) ?? null,
         archived: (j.archived as boolean | null) ?? false,
+        pending_archive_reason: (j.pending_archive_reason as string | null) ?? null,
+        disconnected_at: (j.disconnected_at as string | null) ?? null,
       }));
 
       // 2. Payment headers (with totals) for the deal.

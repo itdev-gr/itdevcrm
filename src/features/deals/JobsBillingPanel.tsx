@@ -20,7 +20,7 @@ import {
 } from './hooks/useJobsBilling';
 import { useUpdateJobBilling } from './hooks/useCustomJobMutations';
 import { useEndArchiveJob, useJobUnpaidTotal } from './hooks/useEndArchiveJob';
-import { endConfirmBody } from './endArchiveCopy';
+import { endConfirmBody, endDefersForDisconnect } from './endArchiveCopy';
 import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
@@ -142,7 +142,10 @@ function JobRow({
   // Αρχειοθετημένο = τελείωσε οριστικά: μόνο ανάγνωση, καμία δράση, καμία
   // αλλαγή τιμής ή κύκλου χρέωσης.
   const isArchived = job.archived === true;
-  const rowReadOnly = readOnly || isArchived;
+  // Ended αλλά η αρχειοθέτηση περιμένει το Local SEO disconnect (απόφαση Α,
+  // 2026-09-08): εξίσου read-only, με δικό του badge αντί για «Αρχειοθετημένο».
+  const pendingDisconnect = !isArchived && job.pending_archive_reason != null;
+  const rowReadOnly = readOnly || isArchived || pendingDisconnect;
 
   const canConvertJob =
     !rowReadOnly &&
@@ -260,6 +263,11 @@ function JobRow({
         {isArchived && (
           <span className="ml-1 rounded bg-muted px-1 text-[9px] font-medium uppercase text-muted-foreground">
             {t('jobs_billing.archived_badge')}
+          </span>
+        )}
+        {pendingDisconnect && (
+          <span className="ml-1 rounded bg-red-100 px-1 text-[9px] font-medium uppercase text-red-700 dark:bg-red-950/50 dark:text-red-300">
+            {t('jobs_billing.pending_disconnect_badge')}
           </span>
         )}
       </td>
@@ -493,7 +501,7 @@ function JobRow({
             open={confirmEnd}
             onOpenChange={setConfirmEnd}
             title={t('jobs_billing.end_confirm_title')}
-            description={endConfirmBody(t, unpaid)}
+            description={endConfirmBody(t, unpaid, endDefersForDisconnect(job))}
             confirmLabel={t('jobs_billing.end')}
             pending={endArchive.isPending}
             onConfirm={async () => {

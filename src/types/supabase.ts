@@ -3631,6 +3631,7 @@ export type Database = {
           one_time_amount: number | null
           owner_user_id: string | null
           parent_job_id: string | null
+          pending_archive_reason: string | null
           period_due_date: string | null
           period_start_date: string | null
           recurring_start_date: string | null
@@ -3680,6 +3681,7 @@ export type Database = {
           one_time_amount?: number | null
           owner_user_id?: string | null
           parent_job_id?: string | null
+          pending_archive_reason?: string | null
           period_due_date?: string | null
           period_start_date?: string | null
           recurring_start_date?: string | null
@@ -3729,6 +3731,7 @@ export type Database = {
           one_time_amount?: number | null
           owner_user_id?: string | null
           parent_job_id?: string | null
+          pending_archive_reason?: string | null
           period_due_date?: string | null
           period_start_date?: string | null
           recurring_start_date?: string | null

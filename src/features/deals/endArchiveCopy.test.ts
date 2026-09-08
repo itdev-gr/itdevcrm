@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { endConfirmBody } from './endArchiveCopy';
+import { endConfirmBody, endDefersForDisconnect } from './endArchiveCopy';
 import el from '@/i18n/locales/el/deals.json';
 import en from '@/i18n/locales/en/deals.json';
 
@@ -24,6 +24,33 @@ describe('endConfirmBody', () => {
   it('αρνητικό ή NaN υπόλοιπο δεν προειδοποιεί', () => {
     expect(endConfirmBody(t, -10)).toBe('jobs_billing.end_confirm_body');
     expect(endConfirmBody(t, Number.NaN)).toBe('jobs_billing.end_confirm_body');
+  });
+
+  it('με deferral προσθέτει τη σημείωση για το disconnect (και μετά το ανεξόφλητο)', () => {
+    expect(endConfirmBody(t, 0, true)).toBe(
+      'jobs_billing.end_confirm_body jobs_billing.end_confirm_disconnect_defer',
+    );
+    expect(endConfirmBody(t, 240.5, true)).toBe(
+      'jobs_billing.end_confirm_body jobs_billing.end_confirm_unpaid|240,50 € jobs_billing.end_confirm_disconnect_defer',
+    );
+  });
+});
+
+// Απόφαση Α (2026-09-08): το End αφήνει την κάρτα Local SEO στο Closed μέχρι το
+// GBP disconnect. Το dialog το λέει για local_seo jobs χωρίς disconnected_at
+// και για το AI SEO billing record (το «AI SEO — Local» παιδί του μπορεί να
+// μείνει) — όχι για ήδη-disconnected local_seo ή για άλλα services.
+describe('endDefersForDisconnect', () => {
+  it('local_seo χωρίς disconnect → true, με disconnect → false', () => {
+    expect(endDefersForDisconnect({ department: 'local_seo', billing_only: false, disconnected_at: null })).toBe(true);
+    expect(endDefersForDisconnect({ department: 'local_seo', billing_only: false, disconnected_at: '2026-09-01' })).toBe(false);
+  });
+
+  it('AI SEO billing record → true, άλλα services → false', () => {
+    expect(endDefersForDisconnect({ department: 'ai_seo', billing_only: true, disconnected_at: null })).toBe(true);
+    expect(endDefersForDisconnect({ department: 'ai_seo', billing_only: false, disconnected_at: null })).toBe(false);
+    expect(endDefersForDisconnect({ department: 'web_seo', billing_only: false, disconnected_at: null })).toBe(false);
+    expect(endDefersForDisconnect({ department: 'web_dev', billing_only: true, disconnected_at: null })).toBe(false);
   });
 });
 

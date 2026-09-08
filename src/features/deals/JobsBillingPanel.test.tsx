@@ -64,6 +64,8 @@ function makeJob(over: Partial<JobBillingRow> & { id: string }): JobBillingRow {
     blocked_reason: null,
     period_due_date: null,
     archived: false,
+    pending_archive_reason: null,
+    disconnected_at: null,
     ...over,
   };
 }
@@ -685,6 +687,33 @@ describe('JobsBillingPanel archived services', () => {
     expect(within(row).queryByRole('button', { name: /pause billing/i })).not.toBeInTheDocument();
     expect(within(row).queryByRole('button', { name: /convert/i })).not.toBeInTheDocument();
     // Read-only: no price input, no billing-group combobox.
+    expect(within(row).queryByRole('spinbutton')).not.toBeInTheDocument();
+    expect(within(row).queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  // Απόφαση Α (2026-09-08): End σε local_seo χωρίς disconnect ΔΕΝ αρχειοθετεί
+  // αμέσως — το row μένει ορατό, read-only, με «Εκκρεμεί disconnect» badge.
+  it('shows an ended-awaiting-disconnect service read-only with its own badge', () => {
+    billing.current = {
+      jobs: [
+        makeJob({
+          id: 'j-pending',
+          title: 'Local Seo',
+          department: 'local_seo',
+          archived: false,
+          billing_active: false,
+          pending_archive_reason: 'ended_after_disconnect',
+        }),
+      ],
+      payments: [],
+    };
+    render(wrap(<JobsBillingPanel dealId="d1" />));
+
+    const row = screen.getByText('Local Seo').closest('tr') as HTMLElement;
+    expect(within(row).getByText('Awaiting disconnect')).toBeInTheDocument();
+    expect(within(row).queryByText('Archived')).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: /^end$/i })).not.toBeInTheDocument();
+    // Read-only like an archived row: no price input, no billing-group combobox.
     expect(within(row).queryByRole('spinbutton')).not.toBeInTheDocument();
     expect(within(row).queryByRole('combobox')).not.toBeInTheDocument();
   });

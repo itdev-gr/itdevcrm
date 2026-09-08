@@ -284,6 +284,14 @@ the deal. Each row shows the **title**, **department**, **price + cadence**
 - **End the job.** The **End** button stops the job from billing: it won't
   generate any more recurring periods and its billing fields lock. Use this when
   a single service in a multi-service deal is cancelled but the rest continues.
+  Since 2026-09-04 End also **archives** the service (after a confirmation that
+  shows any unpaid balance). Exception (2026-09-08): a **Local SEO** job that
+  hasn't been disconnected from the client's Google Business Profile is *not*
+  archived immediately — its card stays in the board's **Closed** column with a
+  red **Disconnect** pill (the billing row shows **Awaiting disconnect**), and
+  archiving completes automatically when the Local SEO team presses
+  **Disconnect** on the job page. The same applies to the «AI SEO — Local» work
+  card when an AI SEO package is ended.
 
 ### Adding a custom job (+ Add job)
 

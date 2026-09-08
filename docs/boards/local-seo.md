@@ -66,6 +66,12 @@ here (see "AI SEO cards" below).
   a red **Disconnect** reminder (card + job page) until the team removes our GBP
   access and presses **Disconnect** on the job page; it then reads green
   **Disconnected**.
+- **End waits for the disconnect (2026-09-08):** when accounting **Ends** a
+  Local SEO service (or an AI SEO package with its «AI SEO — Local» card), the
+  card is **not** archived right away — it lands in **Closed**, pinned to the
+  top with the red **Disconnect** pill. Pressing **Disconnect** on the job page
+  completes the archiving automatically and the card leaves the board. **Undo**
+  brings it back to Closed with the red pill.
 
 ## AI SEO cards
 

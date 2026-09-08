@@ -241,7 +241,9 @@
     "end_confirm_title": "End and archive?",
     "end_confirm_body": "Billing stops, the service is marked completed and the card moves to Archived. The assignee will be notified.",
     "end_confirm_unpaid": "WARNING: there is an unpaid balance of {{amount}} — it stays owed by the client.",
+    "end_confirm_disconnect_defer": "The Local SEO card is not archived right away: it stays in Closed until Local SEO disconnects from the client's Google profile, and is archived automatically then.",
     "archived_badge": "Archived",
+    "pending_disconnect_badge": "Awaiting disconnect",
     "pause": {
       "pause": "Pause billing",
       "resume": "Resume billing",
