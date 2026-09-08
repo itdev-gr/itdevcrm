@@ -1,7 +1,7 @@
 {
   "ud": {
-    "nav": "Υπό Ανάπτυξη",
-    "title": "Pipeline Υπό Ανάπτυξη",
+    "nav": "Pipeline Πωλήσεων",
+    "title": "Pipeline Πωλήσεων",
     "tasks": {
       "nav": "Sales Tasks",
       "title": "Sales Tasks",
@@ -103,7 +103,6 @@
     }
   },
   "kanban": {
-    "title": "Pipeline Πωλήσεων",
     "empty_column": "Σύρετε leads εδώ",
     "locked_move": "Μόνο ο Μανώλης μπορεί να μετακινεί leads σε αυτή τη στήλη.",
     "load_more": "Φόρτωση περισσότερων",
@@ -111,21 +110,6 @@
     "card": {
       "value": "Αξία",
       "monthly": "/μήνα"
-    },
-    "shuffle": {
-      "stage_label": "Στήλη προς ανακατανομή",
-      "button": "Ανακατανομή ({{count}})",
-      "confirm_title": "Ανακατανομή leads;",
-      "confirm_body": "Ανάθεση {{count}} lead από τη στήλη «{{stage}}» στην ομάδα πωλήσεων και επαναφορά τους σε New Lead. Κανένας πωλητής δεν παίρνει πίσω lead που ήδη έχει. Δεν αναιρείται.",
-      "confirm_cta": "Ανακατανομή",
-      "done": "Ανακατανεμήθηκαν {{count}} leads.",
-      "errors": {
-        "shuffle_needs_two_reps": "Χρειάζονται τουλάχιστον δύο ενεργοί πωλητές για ανακατανομή.",
-        "permission_denied": "Μόνο διαχειριστές μπορούν να κάνουν ανακατανομή.",
-        "stage_not_shufflable": "Αυτή η στήλη δεν μπορεί να ανακατανεμηθεί.",
-        "unknown_stage": "Η στήλη δεν βρέθηκε.",
-        "invalid_assignee": "Κάποιος από τους επιλεγμένους πωλητές δεν είναι πλέον διαθέσιμος. Δοκιμάστε ξανά."
-      }
     }
   },
   "filters": {

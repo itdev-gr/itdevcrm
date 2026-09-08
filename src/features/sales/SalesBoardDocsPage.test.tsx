@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { SalesBoardDocsPage } from './SalesBoardDocsPage';
 
 describe('SalesBoardDocsPage', () => {
-  it('renders the sales pipeline documentation from docs/boards/sales.md', () => {
+  it('renders the sales pipeline documentation from docs/boards/under-development.md', () => {
     render(<SalesBoardDocsPage />);
     expect(
       screen.getByRole('heading', { level: 1, name: /Sales pipeline/ }),

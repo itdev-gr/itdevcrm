@@ -1,5 +1,5 @@
 import { lazy, type ComponentType } from 'react';
-import { createBrowserRouter, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { RequireGroup } from '@/components/auth/RequireGroup';
 import { AdminGuard } from '@/components/auth/AdminGuard';
 import { ShellLayout } from './ShellLayout';
@@ -91,10 +91,6 @@ const DealDetailPage = lazyPage(() => import('@/features/deals/DealDetailPage'),
 const LeadDetailPage = lazyPage(() => import('@/features/leads/LeadDetailPage'), 'LeadDetailPage');
 const LeadsListPage = lazyPage(() => import('@/features/leads/LeadsListPage'), 'LeadsListPage');
 const LeadIntakePage = lazyPage(() => import('@/features/leads/LeadIntakePage'), 'LeadIntakePage');
-const SalesKanbanPage = lazyPage(
-  () => import('@/features/sales/SalesKanbanPage'),
-  'SalesKanbanPage',
-);
 const SalesBoardDocsPage = lazyPage(
   () => import('@/features/sales/SalesBoardDocsPage'),
   'SalesBoardDocsPage',
@@ -278,7 +274,9 @@ export const router = createBrowserRouter([
             ),
             children: [
               { path: 'clients', element: <ClientsListPage /> },
-              { path: 'kanban', element: <SalesKanbanPage /> },
+              // Το classic kanban αποσύρθηκε 2026-09-08 — το Under Development
+              // board ΕΙΝΑΙ πλέον το sales pipeline. Τα παλιά bookmarks ζουν.
+              { path: 'kanban', element: <Navigate to="/sales/under-development" replace /> },
               { path: 'leads', element: <LeadsListPage /> },
               {
                 path: 'lead-intake',

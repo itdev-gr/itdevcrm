@@ -8,7 +8,7 @@ in Supabase functions (`release_jobs_for_deal`, `block_job`, `unblock_job`,
 
 | Board                 | Route                    | Doc                                                  |
 | --------------------- | ------------------------ | ---------------------------------------------------- |
-| Sales pipeline        | `/sales/kanban`          | [sales.md](sales.md)                                 |
+| Sales pipeline        | `/sales/under-development` | [under-development.md](under-development.md)       |
 | Accounting onboarding | `/accounting/onboarding` | [accounting-onboarding.md](accounting-onboarding.md) |
 | Web SEO               | `/tech/web-seo`          | [web-seo.md](web-seo.md)                             |
 | Local SEO             | `/tech/local-seo`        | [local-seo.md](local-seo.md)                         |

@@ -268,7 +268,10 @@ export function EmailAutomationsPage() {
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">{t('email_automations.sequences')}</h2>
         <div className="space-y-3">
-          {sequences.map((seq) => (
+          {/* Αποσυρμένα sequences (offer_sent 7/9, no_answer + reengage 8/9 —
+              μαζί με το classic sales pipeline) μένουν στη βάση για το ιστορικό
+              των runs, με μηδέν steps· εδώ δεν εμφανίζονται καθόλου. */}
+          {sequences.filter((seq) => seq.steps.length > 0).map((seq) => (
             <SettingsCard key={seq.id} className="overflow-hidden">
               <div className="flex items-center justify-between border-b border-border/60 bg-muted/25 px-4 py-3">
                 <div>

@@ -1,7 +1,7 @@
 {
   "ud": {
-    "nav": "Under Development",
-    "title": "Under Development pipeline",
+    "nav": "Sales Pipeline",
+    "title": "Sales pipeline",
     "tasks": {
       "nav": "Sales Tasks",
       "title": "Sales Tasks",
@@ -103,7 +103,6 @@
     }
   },
   "kanban": {
-    "title": "Sales pipeline",
     "empty_column": "Drop leads here",
     "locked_move": "Only Manolis can move leads into this column.",
     "load_more": "Load more",
@@ -111,21 +110,6 @@
     "card": {
       "value": "Value",
       "monthly": "/mo"
-    },
-    "shuffle": {
-      "stage_label": "Stage to shuffle",
-      "button": "Shuffle ({{count}})",
-      "confirm_title": "Shuffle leads?",
-      "confirm_body": "Reassign {{count}} lead(s) in \"{{stage}}\" across the sales team and reset them to New Lead. No rep gets a lead back that they already own. This can't be undone.",
-      "confirm_cta": "Shuffle",
-      "done": "Shuffled {{count}} lead(s).",
-      "errors": {
-        "shuffle_needs_two_reps": "Need at least two active sales reps to shuffle.",
-        "permission_denied": "Only admins can shuffle leads.",
-        "stage_not_shufflable": "This stage can't be shuffled.",
-        "unknown_stage": "Stage not found.",
-        "invalid_assignee": "One of the chosen sales reps is no longer available. Please try again."
-      }
     }
   },
   "filters": {

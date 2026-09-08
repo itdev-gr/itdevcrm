@@ -195,8 +195,10 @@ function LeadDetailContent() {
 
   // Every stage control on this page works within the LEAD'S OWN board, so an
   // Under Development lead moves between UD stages (never leaks to the classic
-  // board) and its Won drop converts into its own Won column.
-  const leadBoard = stages.find((s) => s.id === lead.stage_id)?.board ?? 'sales';
+  // board) and its Won drop converts into its own Won column. Since 2026-09-08
+  // the UD board IS the sales pipeline, so a stage-less lead falls back there
+  // (the classic board's stages are archived).
+  const leadBoard = stages.find((s) => s.id === lead.stage_id)?.board ?? 'under_development';
   const salesStages = stages
     .filter((s) => s.board === leadBoard && !s.archived)
     .sort((a, b) => a.position - b.position);

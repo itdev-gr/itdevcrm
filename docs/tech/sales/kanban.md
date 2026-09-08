@@ -1,4 +1,14 @@
-# Sales Kanban
+# Sales Kanban (retired 2026-09-08)
+
+> **RETIRED.** The classic sales board was decommissioned on 2026-09-08
+> (migration `20260908150000_retire_classic_sales_pipeline.sql`): all stages
+> except `won` are archived, the `/sales/kanban` page redirects to the Under
+> Development board — which **is** the sales pipeline now — the classic email
+> sequences (`no_answer`, `reengage`, `offer_sent`) were emptied and disabled,
+> and the shuffle RPCs were dropped. `sales/won` stays active forever: every
+> deal carries it in `deals.stage_id` (convert + accounting_create_deal write
+> it). This document is kept for the data that still references the board
+> (archived leads, deals on `won`, activity history).
 
 **Purpose** — The sales pipeline board (`board = 'sales'`): 10 stages from "Unique Lead" (the intake inbox / first column) through to "Won". Reps drag their own leads between stages; certain stage entries are gated and a welcome email fires when a lead enters Unique Lead.
 

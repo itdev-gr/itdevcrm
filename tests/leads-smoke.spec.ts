@@ -14,9 +14,12 @@ async function signIn(page: Page) {
 test.describe('leads smoke', () => {
   test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, 'E2E admin credentials not set');
 
-  test('admin can open the Sales kanban and see Add lead', async ({ page }) => {
+  test('admin can open the sales pipeline (old /sales/kanban redirects) and see Add lead', async ({ page }) => {
     await signIn(page);
+    // The classic kanban was retired 2026-09-08; its URL redirects to the UD
+    // board, which is the sales pipeline now.
     await page.goto('/sales/kanban');
+    await expect(page).toHaveURL(/\/sales\/under-development$/);
     await expect(page.getByRole('button', { name: /add lead|προσθήκη επαφής/i })).toBeVisible();
   });
 

@@ -36,6 +36,7 @@ import { useSalesKanbanRealtime } from '@/features/sales/useSalesKanbanRealtime'
 import { CreateLeadDialog } from '@/features/leads/CreateLeadDialog';
 import { isStageMoveBlocked } from '@/features/sales/stageAccess';
 import { useSalesBoardFilterStore } from '@/features/sales/salesBoardFilterStore';
+import { useSalesBoardSortStore } from '@/features/sales/salesBoardSortStore';
 import { cn } from '@/lib/utils';
 import { useCadenceOverview } from './hooks/useCadenceOverview';
 import type { SortBy } from '@/features/sales/salesKanbanColumns';
@@ -65,9 +66,14 @@ export function UnderDevKanbanPage() {
   const [activeLead, setActiveLead] = useState<LeadRow | null>(null);
   const [search, setSearch] = useState('');
   const [source, setSource] = useState<'' | 'manual' | 'meta' | 'import' | 'franchise'>('');
-  // Local (not the persisted sales-board store) so sorting this board never
-  // silently reorders the classic board and vice versa.
-  const [sortBy, setSortBy] = useState<SortBy>('newest');
+  // Persisted sort (2026-09-08): the classic board is retired, so this IS the
+  // sales board — the store feeds LeadDetailPage's "Next in stage" so it walks
+  // the column in exactly the order the user sees here.
+  const sortBy = useSalesBoardSortStore((s) => (userId ? (s.byUser[userId] ?? 'newest') : 'newest'));
+  const storeSetSortBy = useSalesBoardSortStore((s) => s.setSortBy);
+  const setSortBy = (v: SortBy) => {
+    if (userId) storeSetSortBy(userId, v);
+  };
   const { data: owners = [] } = useAssignableOwners();
 
   const { data: stages = [], isLoading } = usePipelineStages();

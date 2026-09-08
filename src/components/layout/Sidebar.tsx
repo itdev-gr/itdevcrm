@@ -9,7 +9,6 @@ import {
   Columns3,
   FileText,
   Globe,
-  Hammer,
   Home,
   LifeBuoy,
   ListChecks,
@@ -209,9 +208,14 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 <LeadIntakeBadge />
               </NavLink>
             )}
-            <NavLink to="/sales/kanban" className={({ isActive }) => sidebarLinkClass(isActive)}>
+            {/* Το Under Development board ΕΙΝΑΙ το sales pipeline (2026-09-08 —
+                το classic kanban αποσύρθηκε). */}
+            <NavLink
+              to="/sales/under-development"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
               <Columns3 className="size-4 shrink-0 opacity-80" />
-              {t('sales:kanban.title')}
+              {t('sales:ud.nav')}
             </NavLink>
             <NavLink
               to="/sales/docs"
@@ -222,13 +226,6 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             <NavLink to="/contracts" className={({ isActive }) => sidebarLinkClass(isActive)}>
               <FileText className="size-4 shrink-0 opacity-80" />
               {t('contracts:nav.title')}
-            </NavLink>
-            <NavLink
-              to="/sales/under-development"
-              className={({ isActive }) => sidebarLinkClass(isActive)}
-            >
-              <Hammer className="size-4 shrink-0 opacity-80" />
-              {t('sales:ud.nav')}
             </NavLink>
             <NavLink to="/sales/tasks" className={({ isActive }) => sidebarLinkClass(isActive)}>
               <ListChecks className="size-4 shrink-0 opacity-80" />

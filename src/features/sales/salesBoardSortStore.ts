@@ -2,9 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { SortBy } from './salesKanbanColumns';
 
-// Per-user sort preference for the sales kanban — persists across reloads via
-// localStorage so opening a lead and coming back keeps the chosen order. There
-// is only one sales board, so the key is the userId alone.
+// Per-user sort preference for the sales pipeline (the Under Development
+// board since 2026-09-08) — persists across reloads via localStorage so
+// opening a lead and coming back keeps the chosen order, and feeds
+// LeadDetailPage's "Next in stage". There is only one sales board, so the key
+// is the userId alone.
 
 type State = {
   byUser: Record<string, SortBy>;

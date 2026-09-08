@@ -25,8 +25,8 @@ export const DOC_AREAS: DocArea[] = [
     docs: [
       { slug: 'lead-intake', title: 'Lead intake', file: 'sales/lead-intake.md' },
       { slug: 'distribution', title: 'Lead distribution', file: 'sales/distribution.md' },
-      { slug: 'kanban', title: 'Sales kanban & stages', file: 'sales/kanban.md' },
-      { slug: 'under-development', title: 'Under Development pipeline', file: 'sales/under-development.md' },
+      { slug: 'kanban', title: 'Classic sales kanban (retired 2026-09-08)', file: 'sales/kanban.md' },
+      { slug: 'under-development', title: 'Sales pipeline (Under Development board)', file: 'sales/under-development.md' },
       { slug: 'call-comments', title: 'Call auto-comments', file: 'sales/call-comments.md' },
       { slug: 'conversion', title: 'Lead → deal conversion', file: 'sales/conversion.md' },
     ],

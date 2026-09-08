@@ -26,7 +26,7 @@ test.describe('mobile navigation', () => {
     await expect(pipelineLink).toBeVisible();
     await pipelineLink.click();
 
-    await expect(page).toHaveURL(/\/sales\/kanban$/);
+    await expect(page).toHaveURL(/\/sales\/under-development$/);
     // Drawer closed after navigating.
     await expect(pipelineLink).not.toBeVisible();
   });

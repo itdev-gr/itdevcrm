@@ -44,10 +44,10 @@ test.describe('sales flow', () => {
     await expect(page.getByRole('heading', { name: unique })).toBeVisible();
   });
 
-  test('sales kanban renders columns', async ({ page }) => {
+  test('sales pipeline (UD board) renders, old URL redirects', async ({ page }) => {
     await signIn(page);
     await page.goto('/sales/kanban');
-    await expect(page).toHaveURL(/\/sales\/kanban$/);
+    await expect(page).toHaveURL(/\/sales\/under-development$/);
     await expect(
       page.getByRole('heading', { name: /sales pipeline|pipeline πωλήσεων/i }),
     ).toBeVisible();
