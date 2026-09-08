@@ -7,7 +7,7 @@ $SUP_URL = getenv('SUPABASE_URL');
 $SUP_KEY = getenv('SUPABASE_SERVICE_ROLE_KEY');
 if (!$SUP_URL || !$SUP_KEY) { fwrite(STDERR, "missing SUPABASE env\n"); exit(1); }
 
-$EXT = ['101','102','103','104','203','204','205','206','207','208','303','500','501','601'];
+$EXT = ['101','102','103','104','203','204','205','206','207','208','303','304','500','501','601'];
 $isExt = array_flip($EXT);
 $extStartDate = ["601" => "2026-08-25"]; // present on the box; currently unused
 
