@@ -66,6 +66,15 @@ describe('matchesJobSearch', () => {
     expect(matchesJobSearch(full, 'ORTHO HOUSE')).toBe(true);
   });
 
+  // The social_media / ads boards got the search box on 2026-09-08 — their
+  // only per-service Info fields are the notes textareas.
+  it('matches details.social_notes and details.ads_notes', () => {
+    const social = job({ title: 's', details: { social_notes: 'reels καμπάνια Οκτωβρίου' } });
+    const ads = job({ title: 'a', details: { ads_notes: 'google ads budget 300' } });
+    expect(matchesJobSearch(social, 'καμπάνια')).toBe(true);
+    expect(matchesJobSearch(ads, 'budget 300')).toBe(true);
+  });
+
   it('returns false for a non-matching query', () => {
     expect(matchesJobSearch(full, 'zzz-no-such-thing')).toBe(false);
   });

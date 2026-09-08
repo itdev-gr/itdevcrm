@@ -36,6 +36,9 @@ export function jobSearchHaystack(job: JobRow): string {
     d.hosting,
     d.supabase_name,
     d.email,
+    // Social Media / Ads
+    d.social_notes,
+    d.ads_notes,
   ]
     .map(str)
     .join('\n')
