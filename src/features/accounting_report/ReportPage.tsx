@@ -17,6 +17,7 @@ import { ExportMenu } from './components/ExportMenu';
 import { NewExpenseDialog } from './components/NewExpenseDialog';
 import { ExpenseDetailDialog } from './components/ExpenseDetailDialog';
 import { PeriodLockControl } from './components/PeriodLockControl';
+import { ClientFlowSection } from './components/ClientFlowSection';
 
 export function ReportPage() {
   const { t } = useTranslation('accounting_report');
@@ -96,6 +97,8 @@ export function ReportPage() {
       />
 
       {isAdmin && <PeriodLockControl />}
+
+      {isAdmin && <ClientFlowSection />}
 
       <IncomeBreakdown rows={incomeRows} onSelectGroup={openIncomeGroup} />
       <ExpenseBreakdown

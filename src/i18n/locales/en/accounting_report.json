@@ -8,6 +8,14 @@
     "report": "Report",
     "expenses": "Expenses"
   },
+  "client_flow": {
+    "title": "Monthly client flow",
+    "month": "Month",
+    "new_deals": "New deals",
+    "stopped": "Clients stopped",
+    "renewals": "Renewals (clients)",
+    "empty": "None for this month"
+  },
   "range": {
     "this_month": "This month",
     "last_month": "Last month",
