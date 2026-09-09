@@ -128,6 +128,11 @@ export function TransactionDrawer({
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
                           <p className="font-medium leading-snug text-foreground">
+                            {row.deal_code && (
+                              <span className="mr-1.5 font-mono text-xs text-muted-foreground">
+                                {row.deal_code}
+                              </span>
+                            )}
                             {row.counterparty ?? '—'}
                           </p>
                           <div className="mt-2 flex flex-wrap items-center gap-2">

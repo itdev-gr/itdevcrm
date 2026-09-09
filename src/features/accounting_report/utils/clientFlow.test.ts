@@ -5,6 +5,7 @@ const row = (over: Partial<ClientFlowRow>): ClientFlowRow => ({
   kind: 'new_deal',
   client_id: 'c1',
   client_name: 'Alpha',
+  client_code: '000001',
   deal_id: null,
   deal_code: null,
   event_date: '2026-09-05',

@@ -6,6 +6,7 @@ export type ClientFlowRow = {
   kind: ClientFlowKind;
   client_id: string;
   client_name: string;
+  client_code: string | null;
   deal_id: string | null;
   deal_code: string | null;
   event_date: string; // YYYY-MM-DD

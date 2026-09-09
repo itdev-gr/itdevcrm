@@ -135,13 +135,24 @@ export function ClientFlowSection() {
                   key={`${r.kind}:${r.deal_id ?? r.client_id}`}
                   className="flex items-center justify-between gap-3 px-1 py-2 text-sm"
                 >
-                  <span className="truncate">{r.client_name}</span>
-                  <span className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground tabular-nums">
-                    {r.deal_id && r.deal_code && (
-                      <Link to={`/deals/${r.deal_id}`} className="text-primary hover:underline">
-                        {r.deal_code}
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    {r.deal_id ? (
+                      <Link
+                        to={`/deals/${r.deal_id}`}
+                        className="shrink-0 font-mono text-xs text-primary hover:underline"
+                      >
+                        {r.client_code ?? r.deal_code ?? '—'}
                       </Link>
+                    ) : (
+                      r.client_code && (
+                        <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                          {r.client_code}
+                        </span>
+                      )
                     )}
+                    <span className="truncate">{r.client_name}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                     {r.event_date}
                   </span>
                 </li>
