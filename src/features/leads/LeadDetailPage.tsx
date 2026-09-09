@@ -512,7 +512,7 @@ function LeadDetailContent() {
             <EmailThreadList
               scope={{ lead_id: leadId }}
               clientEmail={lead.email ?? ''}
-              newEmailSubject={lead.code ? `${lead.code} - ` : ''}
+              code={lead.code ?? ''}
             />
           </div>
         </TabsContent>

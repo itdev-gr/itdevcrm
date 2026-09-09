@@ -429,7 +429,7 @@ function DealDetailContent() {
             <EmailThreadList
               scope={{ deal_id: deal.id }}
               clientEmail={deal.client?.email ?? ''}
-              newEmailSubject={deal.code ? `${deal.code} - ` : ''}
+              code={deal.code ?? ''}
             />
           </div>
         </TabsContent>

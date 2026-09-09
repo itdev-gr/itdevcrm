@@ -32,7 +32,10 @@ const CATEGORY_LABEL: Record<EmailCategory, { key: string; defaultValue: string 
 type Props = {
   scope: EmailScope;
   clientEmail: string;
-  newEmailSubject?: string;
+  /** Client/lead/deal/job code; SendEmailDialog appends it to the subject as
+   *  " (code)" at send time when it's not already in there (2026-09-09 sales
+   *  convention — replaced the old "<code> - " subject prefill). */
+  code?: string;
 };
 
 type Draft = {
@@ -43,7 +46,7 @@ type Draft = {
   replyTo?: { messageId?: string | null; threadId?: string | null };
 };
 
-export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Props) {
+export function EmailThreadList({ scope, clientEmail, code = '' }: Props) {
   const { t, i18n } = useTranslation('email');
   const locale = i18n.resolvedLanguage === 'el' ? 'el-GR' : 'en-GB';
   const { data: threads = [], isLoading } = useEmailThreads(scope);
@@ -77,10 +80,9 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
         : newest.to_email
       : '';
     const base = thread.subject.replace(/^Re:\s*/i, '');
-    // newEmailSubject looks like "<code> - "; extract the bare code token.
-    const codeToken = newEmailSubject.replace(/\s*-\s*$/, '').trim();
-    const subject =
-      codeToken && !base.includes(codeToken) ? `Re: ${newEmailSubject}${base}` : `Re: ${base}`;
+    // No code handling here: SendEmailDialog appends " (code)" at send time
+    // when the subject doesn't already carry it.
+    const subject = `Re: ${base}`;
     setDraft({
       to: counterparty || clientEmail,
       subject,
@@ -96,7 +98,7 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
         <button
           type="button"
           className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-          onClick={() => setDraft({ to: clientEmail, subject: newEmailSubject ?? '' })}
+          onClick={() => setDraft({ to: clientEmail, subject: '' })}
         >
           <SquarePen className="size-3.5" />
           {t('thread.new_email', { defaultValue: 'New email' })}
@@ -222,6 +224,7 @@ export function EmailThreadList({ scope, clientEmail, newEmailSubject = '' }: Pr
           subject={draft.subject}
           body=""
           {...(draft.replyTo ? { replyTo: draft.replyTo } : {})}
+          code={code}
           onClose={() => setDraft(null)}
           // The send writes its own mirror row server-side, so the message is
           // already there — just refetch instead of making the user wait for

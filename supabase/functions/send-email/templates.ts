@@ -135,7 +135,7 @@ export const TEMPLATES: Record<string, (data: Record<string, unknown>) => Render
   // shadows the built-in (renderDbTemplate) and the hero would be dropped.
   chatgpt_ads_campaign: (d) => {
     const code = String(d.code ?? '').trim();
-    const subject = cleanSubject(`${code} - Νέα Υπηρεσία ChatGPT Ads από την ITDEV`);
+    const subject = cleanSubject(`Νέα Υπηρεσία ChatGPT Ads από την ITDEV (${code})`);
     const hero = `<tr><td><img src="${escapeHtml(CHATGPT_ADS_HERO)}" alt="ChatGPT Ads" width="600" style="width:100%;max-width:600px;height:auto;display:block"/></td></tr>`;
     return {
       subject,
@@ -340,15 +340,20 @@ function interpolate(tpl: string, data: Record<string, unknown>): string {
   return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => String(data[key] ?? ''));
 }
 
-// Subject-line safety net for the "{{code}} - real subject" pattern used by
-// every client-facing template. When an enqueuer forgets to pass {{code}},
-// `interpolate()` leaves a leading " - " behind that ships to the inbox
-// (the nikkas1@ webseo_gsc_access / localseo_gbp_access incident, 2026-06-30).
-// Strip a single leading "- " (with surrounding whitespace) and collapse
-// double spaces so the subject still reads cleanly. Safe to apply to every
-// rendered subject — a legitimate subject won't start with "-".
+// Subject-line safety net for the code placeholder. When an enqueuer forgets
+// to pass {{code}}, `interpolate()` leaves debris behind that ships to the
+// inbox (the nikkas1@ webseo_gsc_access / localseo_gbp_access incident,
+// 2026-06-30). Two shapes exist: the legacy "{{code}} - subject" prefix
+// (rows still in flight in email_outbox) leaves a leading " - ", and the
+// current "subject ({{code}})" suffix (2026-09-09, sales convention on every
+// template) leaves empty "()" parentheses. Strip both and collapse double
+// spaces — a legitimate subject won't start with "-" or carry "()".
 function cleanSubject(s: string): string {
-  return s.replace(/^\s*-\s*/, '').replace(/\s{2,}/g, ' ').trim();
+  return s
+    .replace(/^\s*-\s*/, '')
+    .replace(/\s*\(\s*\)/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 type DbTemplateRow = { subject: string; body: string; client_facing: boolean };

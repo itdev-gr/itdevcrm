@@ -35,9 +35,14 @@ export type SendEmailDialogProps = {
    *  removable chips; never deleted from storage by the dialog. */
   initialAttachments?: EmailAttachmentRef[];
   onSent?: () => void;
+  /** Client/lead/deal/job code. Appended to the subject as " (code)" at send
+   *  time when the typed subject doesn't already carry it — the sales subject
+   *  convention (owner decision 2026-09-09), and what resolve_email_filing
+   *  keys on to file the thread. */
+  code?: string;
 };
 
-export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, replyTo, onClose, initialAttachments, onSent }: SendEmailDialogProps) {
+export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, replyTo, onClose, initialAttachments, onSent, code }: SendEmailDialogProps) {
   const { t } = useTranslation('email');
   const send = useSendEmail();
   const att = useEmailAttachmentStaging(initialAttachments ?? []);
@@ -101,8 +106,13 @@ export function SendEmailDialog({ open, identity, to, subject, body, dedupeKey, 
     }
     if (!subj.trim()) return setError(t('errors.subject_required'));
     if (!htmlToText(text).trim()) return setError(t('errors.body_required'));
+    const trimmedCode = (code ?? '').trim();
+    const finalSubject =
+      trimmedCode && !subj.includes(trimmedCode)
+        ? `${subj.trim()} (${trimmedCode})`
+        : subj.trim();
     try {
-      await send.mutateAsync({ identity, to: toEmail.trim(), subject: subj, body: text, cc, bcc, dedupeKey, attachments: att.refs, replyTo });
+      await send.mutateAsync({ identity, to: toEmail.trim(), subject: finalSubject, body: text, cc, bcc, dedupeKey, attachments: att.refs, replyTo });
       setDone(true);
       void att.cleanup();
       onSent?.();

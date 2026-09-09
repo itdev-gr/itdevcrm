@@ -128,6 +128,10 @@ export function OfferEmailDialog({ offerId, open, onClose }: Props) {
       subject={draft.subject}
       body={draft.html}
       dedupeKey={dedupeKey}
+      // The UD intro already interpolates ({{code}}) into the subject; the
+      // classic intro doesn't — the dialog's append-at-send covers it either
+      // way without double-appending.
+      code={vars.code}
       onClose={onClose}
       onSent={() => {
         if (offer.status === 'draft') updateStatus.mutate('sent');

@@ -767,7 +767,7 @@ function JobDetailContent() {
             <EmailThreadList
               scope={{ job_id: job.id }}
               clientEmail={job.client?.email ?? ''}
-              newEmailSubject={job.code ? `${job.code} - ` : ''}
+              code={job.code ?? ''}
             />
           </div>
         </TabsContent>

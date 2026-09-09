@@ -66,56 +66,41 @@ describe('EmailThreadList', () => {
     expect(screen.getByRole('button', { name: /new email/i })).toBeInTheDocument();
   });
 
-  it('composes a new email prefilled with clientEmail and the newEmailSubject prefix', () => {
+  // The code is no longer prefilled into the subject: the dialog itself
+  // appends " (code)" at send time (2026-09-09 sales convention), so the
+  // list's job is only to forward the `code` prop.
+  it('composes a new email with clientEmail, an empty subject, and the code forwarded', () => {
     ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
     ref.isLoading = false;
     render(
-      <EmailThreadList
-        scope={{ job_id: 'j1' }}
-        clientEmail="c@x.gr"
-        newEmailSubject="000280-WEBDEV - "
-      />,
+      <EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" code="000280-WEBDEV" />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new email/i }));
-    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: '000280-WEBDEV - ' });
+    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: '', code: '000280-WEBDEV' });
   });
 
-  it('composes a new email with an empty subject when no prefix is provided', () => {
+  it('composes a new email with an empty code when none is provided', () => {
     ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
     ref.isLoading = false;
     render(<EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" />);
     fireEvent.click(screen.getByRole('button', { name: /new email/i }));
-    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: '' });
+    expect(dialogProps).toMatchObject({ to: 'c@x.gr', subject: '', code: '' });
   });
 
-  it('replying prefills a Re: subject without doubling the prefix', () => {
-    ref.data = [thread({ key: 't1', category: 'technical', subject: 'Re: 000280-WEBDEV' })];
-    ref.isLoading = false;
-    render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" />);
-    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
-    expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280-WEBDEV' });
-  });
-
-  it('replying prepends the entity code when the base subject lacks it', () => {
+  it('replying prefills a plain Re: subject and forwards the code', () => {
     ref.data = [thread({ key: 's1', category: 'sales', subject: 'Prospect chat' })];
     ref.isLoading = false;
     render(
-      <EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" newEmailSubject="000280 - " />,
+      <EmailThreadList scope={{ deal_id: 'd1' }} clientEmail="c@x.gr" code="000280" />,
     );
     fireEvent.click(screen.getByRole('button', { name: /reply/i }));
-    expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280 - Prospect chat' });
+    expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: Prospect chat', code: '000280' });
   });
 
-  it('replying does not re-prepend the code when the base subject already carries it', () => {
+  it('replying does not double the Re: prefix', () => {
     ref.data = [thread({ key: 't1', category: 'technical', subject: 'Re: 000280-WEBDEV update' })];
     ref.isLoading = false;
-    render(
-      <EmailThreadList
-        scope={{ job_id: 'j1' }}
-        clientEmail="c@x.gr"
-        newEmailSubject="000280-WEBDEV - "
-      />,
-    );
+    render(<EmailThreadList scope={{ job_id: 'j1' }} clientEmail="c@x.gr" code="000280-WEBDEV" />);
     fireEvent.click(screen.getByRole('button', { name: /reply/i }));
     expect(dialogProps).toMatchObject({ to: 'a@x.gr', subject: 'Re: 000280-WEBDEV update' });
   });

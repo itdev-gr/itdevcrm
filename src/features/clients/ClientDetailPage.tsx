@@ -152,7 +152,7 @@ function ClientDetailContent() {
           <EmailThreadList
             scope={{ client_id: clientId }}
             clientEmail={client.email ?? ''}
-            newEmailSubject={client.code ? `${client.code} - ` : ''}
+            code={client.code ?? ''}
           />
         </TabsContent>
         <TabsContent value="tasks" className="pt-4">

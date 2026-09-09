@@ -95,7 +95,9 @@ export function ClientIntakeSection({ job }: { job: JobRow }) {
   const [confirmComplete, setConfirmComplete] = useState(false);
 
   const clientEmail = job.client?.email?.trim() ?? '';
-  const clientName = job.client?.name ?? '';
+  // Greeting = primary contact's first name, falling back to the company name
+  // — the same resolution the automated web-dev emails use (20260909120000).
+  const clientName = job.client?.contact_first_name?.trim() || (job.client?.name ?? '');
   const link = form ? `${PUBLIC_FORM_BASE}${form.token}` : '';
   const isLocked = form?.status === 'locked';
 

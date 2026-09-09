@@ -32,6 +32,36 @@ describe('SendEmailDialog', () => {
     );
   });
 
+  // Owner decision 2026-09-09: every CRM email carries the client code at the
+  // END of the subject (the sales convention), appended at send time.
+  it('appends " (code)" to the subject when the typed subject lacks the code', () => {
+    render(wrap(
+      <SendEmailDialog open identity="sales" to="c@x.gr" subject="Καλημέρα" body="B" code="000042-WEBDEV" onClose={() => {}} />,
+    ));
+    fireEvent.click(screen.getByRole('button', { name: /Αποστολή|Send/ }));
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: 'Καλημέρα (000042-WEBDEV)' }),
+    );
+  });
+
+  it('does not double the code when the subject already carries it', () => {
+    render(wrap(
+      <SendEmailDialog open identity="sales" to="c@x.gr" subject="Re: Καλημέρα (000042-WEBDEV)" body="B" code="000042-WEBDEV" onClose={() => {}} />,
+    ));
+    fireEvent.click(screen.getByRole('button', { name: /Αποστολή|Send/ }));
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: 'Re: Καλημέρα (000042-WEBDEV)' }),
+    );
+  });
+
+  it('leaves the subject untouched when no code is provided', () => {
+    render(wrap(
+      <SendEmailDialog open identity="sales" to="c@x.gr" subject="Καλημέρα" body="B" onClose={() => {}} />,
+    ));
+    fireEvent.click(screen.getByRole('button', { name: /Αποστολή|Send/ }));
+    expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ subject: 'Καλημέρα' }));
+  });
+
   it('shows the connect prompt for a personal send when not connected', () => {
     render(wrap(<SendEmailDialog open identity="personal" to="c@x.gr" subject="S" body="B" onClose={() => {}} />));
     expect(screen.getAllByText(/Connect Google|Συνδέστε το Google/).length).toBeGreaterThan(0);

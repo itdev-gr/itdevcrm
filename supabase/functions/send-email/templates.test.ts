@@ -117,6 +117,24 @@ describe('email templates', () => {
     expect(r.html).toContain('Δεν υπάρχουν ενεργά web dev έργα');
   });
 
+  // The 2026-09-09 convention: "subject ({{code}})" suffix on every
+  // client-facing template. A missing code must not ship dangling "()".
+  it('strips empty parentheses when {{code}} interpolates to empty (suffix shape)', () => {
+    const r = renderDbTemplate(
+      { subject: 'Σας περιμένουμε για την ιστοσελίδα σας ({{code}})', body: 'b', client_facing: true },
+      {},
+    );
+    expect(r.subject).toBe('Σας περιμένουμε για την ιστοσελίδα σας');
+  });
+
+  it('keeps the code suffix intact when data.code is supplied', () => {
+    const r = renderDbTemplate(
+      { subject: 'Καλώς ήρθατε ({{code}})', body: 'b', client_facing: true },
+      { code: '000042-WEBDEV' },
+    );
+    expect(r.subject).toBe('Καλώς ήρθατε (000042-WEBDEV)');
+  });
+
   it('keeps the code prefix intact when data.code is supplied', () => {
     const r = renderDbTemplate(
       { subject: '{{code}} - Καλώς ήρθατε', body: 'b', client_facing: true },
@@ -158,12 +176,12 @@ describe('email templates', () => {
 });
 
 describe('chatgpt_ads_campaign', () => {
-  it('prefixes the subject with the lead code', () => {
+  it('suffixes the subject with the lead code (sales convention)', () => {
     const r = renderTemplate('chatgpt_ads_campaign', { code: '000123' });
-    expect(r.subject).toBe('000123 - Νέα Υπηρεσία ChatGPT Ads από την ITDEV');
+    expect(r.subject).toBe('Νέα Υπηρεσία ChatGPT Ads από την ITDEV (000123)');
   });
 
-  it('drops the orphan dash when code is missing', () => {
+  it('drops the empty parentheses when code is missing', () => {
     const r = renderTemplate('chatgpt_ads_campaign', {});
     expect(r.subject).toBe('Νέα Υπηρεσία ChatGPT Ads από την ITDEV');
   });
