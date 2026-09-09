@@ -182,6 +182,20 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <Send className="size-4 shrink-0 opacity-80" />
               {t('email_marketing:nav.link')}
             </NavLink>
+            <NavLink
+              to="/accounting/report"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <BarChart3 className="size-4 shrink-0 opacity-80" />
+              {t('accounting_report:nav.report')}
+            </NavLink>
+            <NavLink
+              to="/accounting/expenses"
+              className={({ isActive }) => sidebarLinkClass(isActive)}
+            >
+              <Receipt className="size-4 shrink-0 opacity-80" />
+              {t('accounting_report:nav.expenses')}
+            </NavLink>
           </div>
         </div>
       )}
@@ -282,24 +296,6 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             >
               {t('common:nav.documentation')}
             </NavLink>
-            {isAdmin && (
-              <>
-                <NavLink
-                  to="/accounting/report"
-                  className={({ isActive }) => sidebarLinkClass(isActive)}
-                >
-                  <BarChart3 className="size-4 shrink-0 opacity-80" />
-                  {t('accounting_report:nav.report')}
-                </NavLink>
-                <NavLink
-                  to="/accounting/expenses"
-                  className={({ isActive }) => sidebarLinkClass(isActive)}
-                >
-                  <Receipt className="size-4 shrink-0 opacity-80" />
-                  {t('accounting_report:nav.expenses')}
-                </NavLink>
-              </>
-            )}
           </div>
         </div>
       )}
