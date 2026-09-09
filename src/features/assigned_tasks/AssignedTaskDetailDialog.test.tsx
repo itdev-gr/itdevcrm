@@ -6,11 +6,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi, beforeEach, describe, it, expect } from 'vitest';
 import '@/lib/i18n';
 
-const { taskData, authState, resolveMutate, unresolveMutate } = vi.hoisted(() => ({
+const { taskData, authState, resolveMutate, unresolveMutate, directoryMap } = vi.hoisted(() => ({
   taskData: { current: null as Record<string, unknown> | null },
   authState: { current: { userId: 'me', isAdmin: false, groupCodes: ['accounting'] as string[] } },
   resolveMutate: vi.fn().mockResolvedValue({ closed: true, your_side: 'assignee', awaiting: null }),
   unresolveMutate: vi.fn().mockResolvedValue(undefined),
+  directoryMap: { current: new Map<string, { full_name: string | null; email: string }>() },
 }));
 
 vi.mock('./hooks/useAssignedTaskDetail', () => ({
@@ -25,6 +26,9 @@ vi.mock('./hooks/useDealServiceJob', () => ({
 }));
 vi.mock('@/features/tasks/TaskComments', () => ({
   TaskComments: () => <p>COMMENTS_THREAD</p>,
+}));
+vi.mock('@/features/comments/hooks/useProfileDirectory', () => ({
+  useProfileDirectory: () => ({ data: directoryMap.current }),
 }));
 vi.mock('@/lib/stores/authStore', () => ({
   useAuthStore: (sel: (s: Record<string, unknown>) => unknown) =>
@@ -156,5 +160,33 @@ describe('AssignedTaskDetailDialog — non-party accounting viewer', () => {
     render(wrap(<AssignedTaskDetailDialog taskId="t1" onOpenChange={() => {}} />));
     expect(screen.getByRole('button', { name: 'Resolve' })).toBeTruthy();
     expect(screen.getByText('COMMENTS_THREAD')).toBeTruthy();
+  });
+});
+
+// Το self-or-admin RLS των profiles μηδενίζει τα embedded creator/assignee
+// joins για technical viewers — τα ονόματα πρέπει να έρθουν από το
+// profile_directory fallback αντί να κρύβεται η γραμμή «Created by».
+describe('AssignedTaskDetailDialog — technical viewer (null embedded profiles)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authState.current = { userId: 'me', isAdmin: false, groupCodes: ['ai_seo'] };
+    directoryMap.current = new Map([
+      ['another-user', { full_name: 'Sales Manager', email: 'sm@x.gr' }],
+      ['me', { full_name: 'Tech Me', email: 'tech@x.gr' }],
+    ]);
+  });
+
+  it('resolves Created by and Assignee from the staff directory when the embeds are null', () => {
+    taskData.current = task({ assignee_user_id: 'me', assignee: null, creator: null });
+    render(wrap(<AssignedTaskDetailDialog taskId="t1" onOpenChange={() => {}} />));
+    expect(screen.getByText('Sales Manager')).toBeInTheDocument();
+    expect(screen.getByText('Tech Me')).toBeInTheDocument();
+  });
+
+  it('omits the Created by row only when the creator resolves nowhere', () => {
+    directoryMap.current = new Map();
+    taskData.current = task({ assignee_user_id: 'me', assignee: null, creator: null });
+    render(wrap(<AssignedTaskDetailDialog taskId="t1" onOpenChange={() => {}} />));
+    expect(screen.queryByText('Sales Manager')).toBeNull();
   });
 });

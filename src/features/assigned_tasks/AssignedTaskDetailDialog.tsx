@@ -4,7 +4,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useAssignedTaskDetail } from './hooks/useAssignedTaskDetail';
+import { useAssignedTaskDetail, type AssignedTaskCreator } from './hooks/useAssignedTaskDetail';
+import { useProfileDirectory } from '@/features/comments/hooks/useProfileDirectory';
 import { useResolveTask, useUnresolveTask } from '@/features/tasks/hooks/useResolveTask';
 import { resolveAction, awaitingLabelParty } from '@/features/tasks/dualResolve';
 import { DepartmentChip } from './DepartmentChip';
@@ -41,6 +42,22 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const resolve = useResolveTask();
   const unresolve = useUnresolveTask();
 
+  // Το RLS των profiles είναι self-or-admin, οπότε τα embedded creator/assignee
+  // joins γυρνάνε null για technical χρήστες — πέφτουμε στο security-definer
+  // staff directory (ίδιο pattern με τους authors των comments).
+  const { data: directory } = useProfileDirectory();
+  function identityOf(
+    userId: string | null | undefined,
+    embedded: AssignedTaskCreator | null,
+  ): AssignedTaskCreator | null {
+    if (embedded) return embedded;
+    if (!userId) return null;
+    const d = directory?.get(userId);
+    return d ? { user_id: userId, full_name: d.full_name ?? '', email: d.email } : null;
+  }
+  const creator = task ? identityOf(task.created_by_user_id, task.creator) : null;
+  const assignee = task ? identityOf(task.assignee_user_id, task.assignee) : null;
+
   // Accounting can open any task read-only; Resolve + the comment thread stay gated
   // to the task's parties (assignee, creator, or an admin).
   const isParty = !!task && (isAdmin || task.assignee_user_id === meId || task.created_by_user_id === meId);
@@ -59,9 +76,9 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
   const awaiting = dualState ? awaitingLabelParty(dualState) : null;
   const awaitingName =
     awaiting === 'creator'
-      ? task?.creator?.full_name || task?.creator?.email || ''
+      ? creator?.full_name || creator?.email || ''
       : awaiting === 'assignee'
-        ? task?.assignee?.full_name || task?.assignee?.email || ''
+        ? assignee?.full_name || assignee?.email || ''
         : '';
   const primaryLabel =
     resolveKind === 'withdraw'
@@ -105,9 +122,9 @@ export function AssignedTaskDetailDialog({ taskId, onOpenChange }: Props) {
 
   const rows: TaskMetaRow[] = task
     ? [
-        { label: c('tasks_page.assignee_label'), value: task.assignee?.full_name || task.assignee?.email || '—' },
-        ...(task.creator
-          ? [{ label: c('tasks_page.created_by_label'), value: task.creator.full_name || task.creator.email }]
+        { label: c('tasks_page.assignee_label'), value: assignee?.full_name || assignee?.email || '—' },
+        ...(creator
+          ? [{ label: c('tasks_page.created_by_label'), value: creator.full_name || creator.email }]
           : []),
         {
           label: c('tasks_page.created_label'),
