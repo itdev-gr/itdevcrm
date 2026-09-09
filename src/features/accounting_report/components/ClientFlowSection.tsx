@@ -58,7 +58,9 @@ function FlowTile({
  * Owner definitions 2026-09-09 — see migration 20260909120000.
  */
 export function ClientFlowSection() {
-  const { t } = useTranslation('accounting_report');
+  const { t } = useTranslation(['accounting_report', 'deals']);
+  const serviceLabel = (key: string) =>
+    t(`deals:services.types.${key}`, { defaultValue: key });
   const months = monthOptions(new Date());
   const [month, setMonth] = useState(() => months[0]!.value);
   const [panel, setPanel] = useState<Panel | null>(null);
@@ -151,9 +153,24 @@ export function ClientFlowSection() {
                       )
                     )}
                     <span className="truncate">{r.client_name}</span>
+                    {r.services && r.services.length > 0 && (
+                      <span className="hidden truncate text-xs text-muted-foreground sm:inline">
+                        {r.services.map((s) => serviceLabel(s)).join(', ')}
+                      </span>
+                    )}
                   </span>
-                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                    {r.event_date}
+                  <span className="flex shrink-0 items-center gap-3 text-xs tabular-nums">
+                    <span
+                      className={cn(
+                        'font-medium',
+                        Number(r.amount_paid ?? 0) > 0
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-muted-foreground',
+                      )}
+                    >
+                      €{Number(r.amount_paid ?? 0).toFixed(2)}
+                    </span>
+                    <span className="text-muted-foreground">{r.event_date}</span>
                   </span>
                 </li>
               ))}

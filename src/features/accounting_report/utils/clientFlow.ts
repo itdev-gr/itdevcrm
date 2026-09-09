@@ -10,6 +10,8 @@ export type ClientFlowRow = {
   deal_id: string | null;
   deal_code: string | null;
   event_date: string; // YYYY-MM-DD
+  amount_paid: number | string | null; // numeric arrives as string via PostgREST
+  services: string[] | null;
 };
 
 export type ClientFlowGroups = {

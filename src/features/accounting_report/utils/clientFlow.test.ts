@@ -9,6 +9,8 @@ const row = (over: Partial<ClientFlowRow>): ClientFlowRow => ({
   deal_id: null,
   deal_code: null,
   event_date: '2026-09-05',
+  amount_paid: '100.00',
+  services: ['web_dev'],
   ...over,
 });
 

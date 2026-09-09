@@ -26,6 +26,8 @@ const ROWS = [
     deal_id: null,
     deal_code: null,
     event_date: '2026-09-02',
+    amount_paid: '248.00',
+    services: ['local_seo'],
   },
   {
     kind: 'new_deal',
@@ -35,6 +37,8 @@ const ROWS = [
     deal_id: 'd1',
     deal_code: '007001',
     event_date: '2026-09-05',
+    amount_paid: 0,
+    services: ['web_dev', 'hosting'],
   },
   {
     kind: 'stopped_client',
@@ -44,6 +48,8 @@ const ROWS = [
     deal_id: null,
     deal_code: null,
     event_date: '2026-09-10',
+    amount_paid: '1240.00',
+    services: ['ads'],
   },
 ];
 
