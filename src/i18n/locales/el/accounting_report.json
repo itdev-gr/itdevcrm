@@ -29,11 +29,11 @@
     "income": "Σύνολο εσόδων",
     "expense": "Σύνολο εξόδων",
     "net_profit": "Καθαρό κέρδος",
-    "mrr": "MRR",
+    "mrr": "MRR (καθαρά)",
     "net_suffix": "καθαρό",
     "gross_suffix": "μικτό",
     "ytd": "Από αρχή έτους",
-    "mrr_collected_suffix": "εισπράχθηκαν στην περίοδο"
+    "mrr_collected_suffix": "εισπράχθηκαν στην περίοδο (καθαρά)"
   },
   "income_breakdown": {
     "title": "Έσοδα ανά υπηρεσία",

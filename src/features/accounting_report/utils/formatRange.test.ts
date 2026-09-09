@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rangeForPreset, formatIsoDate, periodOf } from './formatRange';
+import { rangeForPreset, formatIsoDate, periodOf, athensToday, ytdRange } from './formatRange';
 
 describe('formatRange', () => {
   it('this_month returns first/last day of the given anchor month', () => {
@@ -28,5 +28,23 @@ describe('formatRange', () => {
 
   it('periodOf extracts YYYY-MM from YYYY-MM-DD', () => {
     expect(periodOf('2026-06-15')).toBe('2026-06');
+  });
+
+  it('athensToday rolls to the next day at Athens midnight, not UTC midnight', () => {
+    // 22:30 UTC on Sep 30 is already Oct 1 in Athens (UTC+3 in summer).
+    expect(athensToday(new Date('2026-09-30T22:30:00Z'))).toBe('2026-10-01');
+    expect(athensToday(new Date('2026-09-30T12:00:00Z'))).toBe('2026-09-30');
+  });
+
+  it('ytdRange runs Jan 1 through Athens-today, not the whole year', () => {
+    expect(ytdRange(new Date('2026-09-09T12:00:00Z'))).toEqual({
+      from: '2026-01-01',
+      to: '2026-09-09',
+    });
+    // Athens midnight crossing carries the year boundary correctly too.
+    expect(ytdRange(new Date('2026-12-31T22:30:00Z'))).toEqual({
+      from: '2027-01-01',
+      to: '2027-01-01',
+    });
   });
 });

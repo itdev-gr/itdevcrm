@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { invalidateFinancialReports } from '@/lib/financialInvalidations';
 
 export function useExpensesRealtime() {
   const qc = useQueryClient();
@@ -13,8 +14,10 @@ export function useExpensesRealtime() {
         () => {
           void qc.invalidateQueries({ queryKey: ['expenses'] });
           void qc.invalidateQueries({ queryKey: ['expense'] });
-          void qc.invalidateQueries({ queryKey: ['accounting-ledger'] });
-          void qc.invalidateQueries({ queryKey: ['accounting-pl-summary'] });
+          // Shared money-surface list — an inline subset here previously left
+          // the MRR tile and dashboard trend stale on expense edits (report
+          // audit 2026-09-09, finding 6j).
+          invalidateFinancialReports(qc);
         },
       )
       .subscribe();

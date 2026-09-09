@@ -7,6 +7,7 @@ export const FINANCIAL_REPORT_KEYS = [
   ['accounting-ledger'],
   ['accounting-pl-summary'],
   ['accounting-mrr'],
+  ['accounting-client-flow'],
   ['dashboard-monthly-pl'],
   ['dashboard-recurring-collected'],
 ] as const;

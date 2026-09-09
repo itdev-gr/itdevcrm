@@ -24,6 +24,9 @@ export function useContractedMRR() {
           .select('id, amount_net, billing_type, clients!inner(archived)')
           .eq('status', 'active')
           .eq('archived', false)
+          // Paused/held clients are not current contracted revenue (owner
+          // decision 2026-09-09, report audit decision 2).
+          .eq('billing_active', true)
           .neq('billing_type', 'one_time')
           .eq('clients.archived', false)
           .order('id', { ascending: true }),

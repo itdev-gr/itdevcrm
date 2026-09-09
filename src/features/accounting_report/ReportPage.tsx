@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/layout/page-shell';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { rangeForPreset, type RangePreset, type DateRange } from './utils/formatRange';
+import { rangeForPreset, ytdRange, type RangePreset, type DateRange } from './utils/formatRange';
 import { useLedger, type LedgerRow } from './hooks/useLedger';
 import { usePLSummary } from './hooks/usePLSummary';
 import { useMRR } from './hooks/useMRR';
@@ -35,8 +35,8 @@ export function ReportPage() {
   }
 
   const summary = usePLSummary(range, { includePendingExpenses });
-  const ytdRange = useMemo(() => rangeForPreset('this_year'), []);
-  const ytdSummary = usePLSummary(ytdRange, { includePendingExpenses });
+  const ytd = useMemo(() => ytdRange(), []);
+  const ytdSummary = usePLSummary(ytd, { includePendingExpenses });
   const collectedMrr = useMRR(range);
   const contractedMrr = useContractedMRR();
   const ledger = useLedger(range);

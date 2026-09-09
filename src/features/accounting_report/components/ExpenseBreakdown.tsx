@@ -51,7 +51,11 @@ export function ExpenseBreakdown({ rows, onSelectGroup, onNewExpense }: ExpenseB
   const groups = useMemo<Group[]>(() => {
     const map = new Map<string, Group>();
     for (const r of rows) {
-      if (r.direction !== 'out' || r.status !== 'paid') continue;
+      // Status filtering is the caller's job: ReportPage already narrows
+      // expenseRows to paid + (opt-in) pending, and a second paid-only guard
+      // here silently dropped the pending rows the toggle includes (report
+      // audit 2026-09-09, finding 4b).
+      if (r.direction !== 'out') continue;
       const k = r.category_key ?? '__unspecified';
       const g = map.get(k) ?? { key: r.category_key, count: 0, net: 0, vat: 0, gross: 0, rows: [] };
       g.count += 1;

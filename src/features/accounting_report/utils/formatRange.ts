@@ -18,6 +18,21 @@ export function periodOf(iso: string): string {
   return iso.slice(0, 7);
 }
 
+/** Today's date in Athens wall-clock time (payments land in Athens days). */
+export function athensToday(now: Date = new Date()): string {
+  return now.toLocaleDateString('en-CA', { timeZone: 'Europe/Athens' });
+}
+
+/**
+ * True year-to-date: Jan 1 → today (Athens). The YTD strip used to show the
+ * WHOLE calendar year, silently including future-dated rows (report audit
+ * 2026-09-09, decision 4).
+ */
+export function ytdRange(now: Date = new Date()): DateRange {
+  const today = athensToday(now);
+  return { from: `${today.slice(0, 4)}-01-01`, to: today };
+}
+
 export function rangeForPreset(preset: RangePreset, anchor: Date = new Date()): DateRange {
   const y = anchor.getUTCFullYear();
   const m = anchor.getUTCMonth();

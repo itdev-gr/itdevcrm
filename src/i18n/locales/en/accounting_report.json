@@ -29,11 +29,11 @@
     "income": "Total income",
     "expense": "Total expenses",
     "net_profit": "Net profit",
-    "mrr": "MRR",
+    "mrr": "MRR (net)",
     "net_suffix": "net",
     "gross_suffix": "gross",
     "ytd": "YTD",
-    "mrr_collected_suffix": "collected in period"
+    "mrr_collected_suffix": "collected in period (net)"
   },
   "income_breakdown": {
     "title": "Income by service",
