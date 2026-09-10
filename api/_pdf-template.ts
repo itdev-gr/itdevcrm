@@ -78,7 +78,8 @@ function isMonthlyItem(item: OfferItem): boolean {
 }
 
 /** Plain template text → paragraphs: blank-line blocks become <p>, single
- *  newlines become <br> (same semantics as the email composer's textToHtml). */
+ *  newlines become <br> (same semantics as the email composer's textToHtml).
+ *  Mirrored in _proforma-pdf-template.ts (self-contained by convention). */
 function textToParagraphs(text: string): string {
   return text
     .split(/\n\s*\n/)
@@ -164,10 +165,13 @@ export function renderOfferHtml(args: Args): string {
     )
     .join('');
 
+  // textToParagraphs (not a bare <p>): the notes are written multiline in the
+  // builder textarea, and a plain <p> swallows the newlines into one run-on
+  // block (owner report 2026-09-10) — same treatment as the service texts.
   const notesSection = args.notes
     ? `<section class="mb-10 bg-white rounded-xl p-6 shadow">
         <h2 class="text-xl font-bold text-gray-900 mb-4">Σημειώσεις</h2>
-        <p class="text-sm text-gray-700">${escapeHtml(args.notes)}</p>
+        <div class="text-sm text-gray-700 space-y-2">${textToParagraphs(args.notes)}</div>
       </section>`
     : '';
 

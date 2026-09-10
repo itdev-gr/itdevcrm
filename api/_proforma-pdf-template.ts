@@ -49,6 +49,18 @@ function escapeHtml(s: string | null | undefined): string {
   return String(s).replace(/[&<>"']/g, (m) => map[m]);
 }
 
+/** Plain text → paragraphs: blank-line blocks become <p>, single newlines
+ *  become <br>. Mirror of _pdf-template.ts textToParagraphs (this file is
+ *  self-contained by convention — see the header comment). */
+function textToParagraphs(text: string): string {
+  return text
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p class="text-sm text-gray-700">${escapeHtml(block).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+
 function formatCurrency(amount: number, currency: string): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 }
@@ -101,10 +113,12 @@ export function renderProFormaHtml(args: Args): string {
     )
     .join('');
 
+  // Same fix as the offer template (2026-09-10): multiline notes must keep
+  // their structure instead of collapsing into one run-on <p>.
   const notesSection = args.notes
     ? `<section class="mb-10 bg-white rounded-xl p-6 shadow">
         <h2 class="text-xl font-bold text-gray-900 mb-4">Σημειώσεις</h2>
-        <p class="text-sm text-gray-700">${escapeHtml(args.notes)}</p>
+        <div class="text-sm text-gray-700 space-y-2">${textToParagraphs(args.notes)}</div>
       </section>`
     : '';
 

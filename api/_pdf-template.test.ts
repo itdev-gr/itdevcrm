@@ -63,6 +63,19 @@ describe('renderOfferHtml service blocks', () => {
     expect(html).not.toContain('>maintenance<');
   });
 
+  // Owner report 2026-09-10: multiline notes were collapsing into one run-on
+  // <p> — the newlines exist in the DB but a bare <p> swallows them in HTML.
+  it('renders multiline notes as separate paragraphs with line breaks', () => {
+    const html = renderOfferHtml({
+      ...baseArgs,
+      notes: '1. Migration — 100€\nΜεταφορά της ιστοσελίδας.\n\n2. Hosting — 120€\nΕτήσια φιλοξενία.',
+    });
+    expect(html).toContain('1. Migration — 100€<br>Μεταφορά της ιστοσελίδας.');
+    expect(html).toContain('<p class="text-sm text-gray-700">2. Hosting — 120€<br>Ετήσια φιλοξενία.</p>');
+    // the two blank-line blocks become two separate <p>, not one glued run.
+    expect(html).not.toContain('Μεταφορά της ιστοσελίδας. 2. Hosting');
+  });
+
   it('renders selected sub-packages under their item, with prices in the table', () => {
     const html = renderOfferHtml({
       ...baseArgs,
