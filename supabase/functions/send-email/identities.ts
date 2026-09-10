@@ -9,19 +9,19 @@ export const IDENTITIES: Record<Identity, { from: string; replyTo: string }> = {
   // automated transactional paths in this file. reply-to is a synced mailbox
   // (sales@) so replies are visible in Φάση 2's reply tracking.
   //
-  // Owner decision 2026-09-07: campaigns send FROM sales@itdev.gr, the same
-  // address the sales sequences use. He was shown both costs and chose it:
-  //   1. Open/click tracking stays dormant. Resend toggles tracking per DOMAIN
-  //      with no per-send override, so enabling it on itdev.gr would put a
-  //      pixel and rewritten links in invoices and contracts too.
-  //   2. Campaign spam complaints now hit the sales ADDRESS, not just the
-  //      domain — they degrade the deliverability of real offers.
+  // Owner decision 2026-09-10 (supersedes 2026-09-07's sales@ choice):
+  // campaigns send FROM offer@itdev.gr; replies keep going to sales@ so the
+  // CRM reply tracking still sees them (offer@ is NOT a synced mailbox).
+  // Campaign spam complaints now hit offer@, no longer the sales address —
+  // the 2026-09-07 deliverability concern (2) is thereby resolved.
   //
-  // DORMANT, NOT REMOVED — the owner may revisit this. Everything tracking
-  // needs is already built and must stay: the open/click columns on
+  // Open/click tracking stays DORMANT, NOT REMOVED. Resend toggles tracking
+  // per DOMAIN with no per-send override, so enabling it on itdev.gr would
+  // put a pixel and rewritten links in invoices and contracts too. Everything
+  // tracking needs is already built and must stay: the open/click columns on
   // email_campaign_recipients, the campaign branch in resend-webhook, and the
   // «δεν μετράται» tiles. Turning it on later = verify a marketing subdomain
   // (e.g. news.itdev.gr) as its own Resend domain, enable tracking only there,
   // and change the `from` below. No code is rebuilt.
-  marketing: { from: 'ITDEV <sales@itdev.gr>', replyTo: 'sales@itdev.gr' },
+  marketing: { from: 'ITDEV <offer@itdev.gr>', replyTo: 'sales@itdev.gr' },
 };
