@@ -76,20 +76,50 @@ describe('renderOfferHtml service blocks', () => {
     expect(html).not.toContain('Μεταφορά της ιστοσελίδας. 2. Hosting');
   });
 
-  it('renders selected sub-packages under their item, with prices in the table', () => {
+  // Owner 2026-09-10: sub-packages get their OWN priced table row — no more
+  // «+ …» lines folded inside the web-dev row.
+  it('renders selected sub-packages as separate priced rows, not "+" lines', () => {
     const html = renderOfferHtml({
       ...baseArgs,
       items: [{
         category: 'web_dev', itemId: 'site', label: 'Ιστοσελίδα', description: '',
         unitPrice: 900, qty: 1, lineTotal: 1000,
         subpackages: [
-          { label: 'Extra σελίδα', price: 50 },
-          { label: 'Μετάφραση', price: 50 },
+          { code: 'extra-page', label: 'Extra σελίδα', price: 50 },
+          { code: 'extra-diglosso', label: 'Μετάφραση', price: 50 },
         ],
       }],
     });
-    expect(html).toContain('Extra σελίδα');
-    expect(html).toContain('Μετάφραση');
-    expect(html).toContain('+ Extra σελίδα (€50.00)');
+    expect(html).not.toContain('+ Extra σελίδα');
+    expect(html).toContain('<p class="text-sm font-medium text-gray-900">Extra σελίδα</p>');
+    expect(html).toContain('<p class="text-sm font-medium text-gray-900">Μετάφραση</p>');
+    // the parent row shows its OWN price (lineTotal minus the extras)
+    expect(html).toContain('€900.00');
+    // each extra carries its own line total
+    const matches = html.match(/€50\.00/g) ?? [];
+    expect(matches.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('re-homes hosting/support sub-packages to their own category rows', () => {
+    const html = renderOfferHtml({
+      ...baseArgs,
+      items: [{
+        category: 'web_dev', itemId: 'web-dev-professional', label: 'Επαγγελματική Ιστοσελίδα', description: '',
+        unitPrice: 400, qty: 1, lineTotal: 755,
+        subpackages: [
+          { code: 'extra-hosting-simple', label: 'Hosting απλό site', price: 120 },
+          { code: 'extra-migration-small', label: 'Migration μικρό site', price: 175 },
+          // παλιά προσφορά χωρίς code — ο χαρακτηρισμός πέφτει στο label
+          { label: 'Μηνιαίο Support απλό site', price: 60 },
+        ],
+      }],
+    });
+    expect(html).toContain('Φιλοξενία');   // hosting category label on the extra's row
+    expect(html).toContain('Υποστήριξη');  // support category label (via label fallback)
+    expect(html).toContain('€60.00 / μήνα');
+    // parent shows 400, not the folded 755
+    expect(html).toContain('€400.00');
+    // migration has no own category — stays under the parent's
+    expect(html).toContain('Migration μικρό site');
   });
 });

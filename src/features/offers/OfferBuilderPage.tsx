@@ -180,7 +180,7 @@ export function OfferBuilderPage() {
         qty: 1,
         lineTotal: unitPrice + subTotal,
         ...(chosenSubs.length > 0
-          ? { subpackages: chosenSubs.map((sp) => ({ label: getSubLabel(sp), price: sp.price })) }
+          ? { subpackages: chosenSubs.map((sp) => ({ code: sp.code, label: getSubLabel(sp), price: sp.price })) }
           : {}),
       });
       nextPrices[key] = unitPrice;
@@ -225,7 +225,7 @@ export function OfferBuilderPage() {
         qty: 1,
         lineTotal: unitPrice + subTotal,
         ...(chosenSubs.length > 0
-          ? { subpackages: chosenSubs.map((sp) => ({ label: getSubLabel(sp), price: sp.price })) }
+          ? { subpackages: chosenSubs.map((sp) => ({ code: sp.code, label: getSubLabel(sp), price: sp.price })) }
           : {}),
       };
     },

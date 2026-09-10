@@ -12,8 +12,10 @@ export type OfferItem = {
   unitPrice: number;
   qty: number;
   lineTotal: number;
-  /** Selected sub-packages (label + price folded into lineTotal). */
-  subpackages?: { label: string; price: number }[];
+  /** Selected sub-packages (label + price folded into lineTotal). `code` is
+   *  the catalog code (stored since 2026-09-10) — older offers carry only
+   *  label + price. */
+  subpackages?: { code?: string; label: string; price: number }[];
 };
 
 export type OfferTotals = {
@@ -145,24 +147,51 @@ export function renderOfferHtml(args: Args): string {
     )
     .join('');
 
+  // Owner 2026-09-10: extras sold as sub-packages (hosting, support, migration
+  // κ.λπ.) get their OWN priced row in the table instead of «+ …» lines inside
+  // the web-dev row. The parent row then shows its own price (lineTotal minus
+  // the extras, which were folded in at build time). Hosting/support extras
+  // are re-homed to their real category column; inference by catalog code with
+  // a label fallback for offers stored before codes existed.
+  const subpackageCategory = (sp: { code?: string; label: string }, parent: string): string => {
+    const key = `${sp.code ?? ''} ${sp.label}`.toLowerCase();
+    if (key.includes('hosting')) return 'hosting';
+    if (key.includes('support')) return 'maintenance';
+    return parent;
+  };
   const itemRows = args.items
-    .map(
-      (item) => `
+    .map((item) => {
+      const subs = item.subpackages ?? [];
+      const subsTotal = subs.reduce((sum, sp) => sum + sp.price, 0);
+      const ownTotal = subsTotal > 0 && item.lineTotal - subsTotal >= 0 ? item.lineTotal - subsTotal : item.lineTotal;
+      const parentRow = `
       <tr>
         <td class="px-4 py-3 text-sm text-gray-900">${escapeHtml(getCategoryLabel(item.category))}</td>
         <td class="px-4 py-3">
           <p class="text-sm font-medium text-gray-900">${escapeHtml(item.label)}</p>
           ${item.description ? `<p class="text-xs text-gray-500">${escapeHtml(item.description)}</p>` : ''}
-          ${(item.subpackages ?? [])
-            .map((sp) => `<p class="text-xs text-gray-500">+ ${escapeHtml(sp.label)}${sp.price > 0 ? ` (${formatCurrency(sp.price, args.currency)})` : ''}</p>`)
-            .join('')}
         </td>
         <td class="px-4 py-3 text-sm text-gray-900 text-right">${item.qty}</td>
         <td class="px-4 py-3 text-sm text-gray-900 text-right">${formatCurrency(item.unitPrice, args.currency)}${isMonthlyItem(item) ? ' / μήνα' : ''}</td>
-        <td class="px-4 py-3 text-sm font-semibold text-gray-900 text-right">${formatCurrency(item.lineTotal, args.currency)}</td>
-      </tr>
-    `
-    )
+        <td class="px-4 py-3 text-sm font-semibold text-gray-900 text-right">${formatCurrency(ownTotal, args.currency)}</td>
+      </tr>`;
+      const subRows = subs
+        .map((sp) => {
+          const monthly = /μηνια|μήνα/i.test(sp.label);
+          return `
+      <tr>
+        <td class="px-4 py-3 text-sm text-gray-900">${escapeHtml(getCategoryLabel(subpackageCategory(sp, item.category)))}</td>
+        <td class="px-4 py-3">
+          <p class="text-sm font-medium text-gray-900">${escapeHtml(sp.label)}</p>
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-900 text-right">1</td>
+        <td class="px-4 py-3 text-sm text-gray-900 text-right">${formatCurrency(sp.price, args.currency)}${monthly ? ' / μήνα' : ''}</td>
+        <td class="px-4 py-3 text-sm font-semibold text-gray-900 text-right">${formatCurrency(sp.price, args.currency)}</td>
+      </tr>`;
+        })
+        .join('');
+      return parentRow + subRows;
+    })
     .join('');
 
   // textToParagraphs (not a bare <p>): the notes are written multiline in the
