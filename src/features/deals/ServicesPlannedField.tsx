@@ -77,6 +77,27 @@ function patchRow(row: PlannedService, patch: Partial<PlannedService>): PlannedS
   return { ...row, ...patch } as PlannedService;
 }
 
+/** Το billing μιας γραμμής ακολουθεί το σχήμα του πακέτου που διαλέχτηκε:
+ *  ένα one-time-only πακέτο (π.χ. «Δημιουργία Google Business Profile»)
+ *  γυρίζει τη γραμμή σε Εφάπαξ — αλλιώς έμενε «Monthly 0€» ενώ το pricing
+ *  summary μετρούσε κανονικά το εφάπαξ ποσό (owner report 2026-09-10).
+ *  Αντίστροφα, ένα monthly-only πακέτο βγάζει τη γραμμή από το Εφάπαξ.
+ *  Πάντα μέσα στα επιτρεπτά του service (hosting/domains μένουν ετήσια,
+ *  franchise εφάπαξ)· αλλιώς το τρέχον billing μένει ως έχει. */
+export function inferBillingForPackage(
+  current: PlannedService['billing_type'],
+  serviceType: PlannedService['service_type'],
+  oneTime: number,
+  monthly: number,
+): PlannedService['billing_type'] {
+  const options = billingOptionsFor(serviceType);
+  if (oneTime > 0 && monthly === 0 && options.includes('one_time')) return 'one_time';
+  if (monthly > 0 && oneTime === 0 && current === 'one_time' && options.includes('recurring_monthly')) {
+    return 'recurring_monthly';
+  }
+  return current;
+}
+
 // ── Per-row sub-component so we can call useServiceSubpackages per row ──────
 
 type RowProps = {
@@ -408,12 +429,17 @@ export function ServicesPlannedField({ value, onChange, disabled, headerLeft }: 
       updateRow(idx, { package_id: null, subpackage_codes: [] });
       return;
     }
+    const oneTime = Number(pkg.default_one_time_amount ?? 0);
+    const monthly = Number(pkg.default_monthly_amount ?? 0);
+    const row = value[idx];
+    const billing = row ? inferBillingForPackage(row.billing_type, row.service_type, oneTime, monthly) : undefined;
     updateRow(idx, {
       package_id: pkg.id,
-      one_time_amount: Number(pkg.default_one_time_amount ?? 0),
-      monthly_amount: Number(pkg.default_monthly_amount ?? 0),
+      one_time_amount: oneTime,
+      monthly_amount: monthly,
       setup_fee: Number(pkg.setup_fee ?? 0),
       subpackage_codes: [],
+      ...(billing && billing !== row?.billing_type ? { billing_type: billing } : {}),
     });
   }
 
