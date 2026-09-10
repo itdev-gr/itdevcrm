@@ -80,7 +80,7 @@ function getCategoryLabel(code: string): string {
 }
 
 const MONTHLY_CATEGORY_CODES = new Set(['local_seo', 'web_seo', 'ai_seo', 'social_media']);
-const NON_MONTHLY_ITEM_IDS = new Set(['extra-video', 'extra-post', 'extra-hosting', 'extra-page']);
+const NON_MONTHLY_ITEM_IDS = new Set(['extra-video', 'extra-post', 'extra-hosting', 'extra-page', 'local-seo-gbp-creation']);
 
 function isMonthlyItem(item: OfferItem): boolean {
   return MONTHLY_CATEGORY_CODES.has(item.category) && !NON_MONTHLY_ITEM_IDS.has(item.itemId);

@@ -100,6 +100,21 @@ describe('renderOfferHtml service blocks', () => {
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
 
+  // Η «Δημιουργία Google Business Profile» είναι εφάπαξ (120€ + ΦΠΑ, owner
+  // 2026-09-10) — δεν πρέπει να κληρονομεί το «/ μήνα» της local_seo κατηγορίας.
+  it('does not suffix the one-time GBP-creation item with "/ μήνα"', () => {
+    const html = renderOfferHtml({
+      ...baseArgs,
+      items: [{
+        category: 'local_seo', itemId: 'local-seo-gbp-creation',
+        label: 'Δημιουργία Google Business Profile', description: '',
+        unitPrice: 120, qty: 1, lineTotal: 120,
+      }],
+    });
+    expect(html).toContain('€120.00');
+    expect(html).not.toContain('€120.00 / μήνα');
+  });
+
   it('re-homes hosting/support sub-packages to their own category rows', () => {
     const html = renderOfferHtml({
       ...baseArgs,
