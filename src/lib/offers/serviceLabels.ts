@@ -12,6 +12,7 @@ export const CATEGORY_LABELS: Record<string, { en: string; el: string }> = {
   maintenance: { en: 'Support', el: 'Υποστήριξη' },
   franchise: { en: 'Franchise', el: 'Franchise' },
   domains: { en: 'Domains', el: 'Domains' },
+  branding: { en: 'Branding', el: 'Branding' },
 };
 
 export const SERVICE_TYPES = Object.keys(CATEGORY_LABELS);

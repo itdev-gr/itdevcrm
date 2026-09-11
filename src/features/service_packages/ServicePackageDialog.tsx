@@ -27,6 +27,7 @@ const SERVICE_TYPES = [
   'maintenance',
   'franchise',
   'domains',
+  'branding',
 ] as const;
 
 type Props = {

@@ -18,6 +18,13 @@ describe('billingOptionsFor', () => {
   it('restricts franchise to one-time only', () => {
     expect(billingOptionsFor('franchise')).toEqual(['one_time']);
   });
+
+  // Branding (Logo branding 150€, owner 2026-09-11) is a one-off sale — it must
+  // never be offered as a monthly subscription.
+  it('restricts branding to one-time only', () => {
+    expect(billingOptionsFor('branding')).toEqual(['one_time']);
+    expect(defaultBillingFor('branding')).toBe('one_time');
+  });
 });
 
 describe('defaultBillingFor', () => {
@@ -44,5 +51,9 @@ describe('inferBillingForPackage', () => {
 
   it('never leaves the service\'s allowed options (hosting stays yearly)', () => {
     expect(inferBillingForPackage('recurring_yearly', 'hosting', 120, 0)).toBe('recurring_yearly');
+  });
+
+  it('keeps the Logo branding package on one-time', () => {
+    expect(inferBillingForPackage('one_time', 'branding', 150, 0)).toBe('one_time');
   });
 });

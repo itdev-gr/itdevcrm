@@ -65,6 +65,10 @@ function formatCurrency(amount: number, currency: string): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 }
 
+// Mirror of src/lib/offers/serviceLabels.ts CATEGORY_LABELS (this file is
+// self-contained by convention — see the header). Kept complete: maintenance,
+// franchise and domains were missing and printed their raw code on pro formas
+// until 2026-09-11.
 const CATEGORY_LABELS: Record<string, string> = {
   web_seo: 'Web SEO',
   local_seo: 'Local SEO',
@@ -73,6 +77,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   ai_seo: 'AI SEO',
   hosting: 'Hosting',
   ads: 'Ads',
+  maintenance: 'Support',
+  franchise: 'Franchise',
+  domains: 'Domains',
+  branding: 'Branding',
 };
 
 function getCategoryLabel(code: string): string {

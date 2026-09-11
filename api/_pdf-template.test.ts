@@ -115,6 +115,24 @@ describe('renderOfferHtml service blocks', () => {
     expect(html).not.toContain('€120.00 / μήνα');
   });
 
+  // Branding is a billing-only service (owner 2026-09-11): it must print under
+  // its own «Branding» heading and, being one-time, carry no «/ μήνα» suffix.
+  it('renders the branding service under its own heading, with no monthly suffix', () => {
+    const html = renderOfferHtml({
+      ...baseArgs,
+      items: [{
+        category: 'branding', itemId: 'logo-branding',
+        label: 'Λογότυπο & Branding', description: '',
+        unitPrice: 150, qty: 1, lineTotal: 150,
+      }],
+    });
+    expect(html).toContain('Branding');
+    expect(html).toContain('€150.00');
+    expect(html).not.toContain('€150.00 / μήνα');
+    // never falls back to printing the raw service code
+    expect(html).not.toContain('>branding<');
+  });
+
   it('re-homes hosting/support sub-packages to their own category rows', () => {
     const html = renderOfferHtml({
       ...baseArgs,
