@@ -35,6 +35,7 @@ function makeCampaign(overrides: Partial<CampaignRow> = {}): CampaignRow {
     send_window_end: '18:00:00',
     send_days: [1, 2, 3, 4, 5],
     scheduled_at: null,
+  warmup_enabled: true,
     prepared_at: '2026-09-07T00:00:00Z',
     started_at: '2026-09-07T08:00:00Z',
     finished_at: null,

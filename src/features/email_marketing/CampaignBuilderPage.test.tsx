@@ -25,6 +25,7 @@ const campaign: CampaignRow = {
   send_window_end: '18:00',
   send_days: [1, 2, 3, 4, 5],
   scheduled_at: null,
+  warmup_enabled: true,
   prepared_at: null,
   started_at: null,
   finished_at: null,

@@ -283,12 +283,12 @@ export function StepSchedule({ campaignId, onGoToReview }: Props) {
       0,
       Math.round((startOfDay(new Date()).getTime() - startOfDay(startedOn).getTime()) / 86_400_000),
     );
-    return warmupLadder[Math.min(dayIndex, warmupLadder.length - 1)];
+    return warmupLadder[Math.min(dayIndex, warmupLadder.length - 1)] ?? null;
   })();
   const effectiveTodayLimit =
-    ladderRungToday === null ? effectiveDailyCap : Math.min(ladderRungToday, effectiveDailyCap);
+    ladderRungToday == null ? effectiveDailyCap : Math.min(ladderRungToday, effectiveDailyCap);
   const effectiveTodayBinding: 'warmup' | 'cap' =
-    ladderRungToday !== null && ladderRungToday < effectiveDailyCap ? 'warmup' : 'cap';
+    ladderRungToday != null && ladderRungToday < effectiveDailyCap ? 'warmup' : 'cap';
 
   const estimate =
     targetCount === null

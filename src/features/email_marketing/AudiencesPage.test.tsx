@@ -35,6 +35,7 @@ let settingsData: EmailMarketingSettingsRow = {
   batch_slice: 300,
   warmup_ladder: [500, 1000],
   warmup_started_on: null,
+    max_bounce_rate: 0.04,
 };
 
 vi.mock('./hooks/useAudiences', async () => {
@@ -85,6 +86,7 @@ describe('AudiencesPage', () => {
       batch_slice: 300,
       warmup_ladder: [500, 1000],
       warmup_started_on: null,
+    max_bounce_rate: 0.04,
     };
   });
 
