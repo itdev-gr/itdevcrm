@@ -370,7 +370,8 @@
       "reason": "Reason",
       "bounce_count": "Bounce count",
       "first_seen": "First seen",
-      "last_seen": "Last seen"
+      "last_seen": "Last seen",
+      "stream": "Source"
     },
     "reasons": {
       "hard_bounce": "Hard bounce (address doesn't exist)",
@@ -392,7 +393,24 @@
       "confirm_title": "Remove \"{{email}}\" from the suppression list?",
       "confirm_text": "The address will become eligible to receive campaigns again.",
       "confirm_text_unsubscribed": "This person explicitly asked to stop receiving email — this isn't a dead mailbox. Removing them will make them eligible to receive campaigns again, against their request. Only proceed if you're sure they changed their mind.",
-      "failed": "Removing it failed."
+      "failed": "Removing it failed.",
+      "note_label": "Why (required)",
+      "note_placeholder": "e.g. they asked to start receiving again"
+    },
+    "stream_all": "All sources",
+    "cancel": "Cancel",
+    "streams": {
+      "marketing": "Marketing",
+      "sales": "Sales",
+      "manual": "Manual"
+    },
+    "add": {
+      "button": "Add address",
+      "title": "Add to the suppression list",
+      "description": "For when someone asks by phone or email to stop receiving mail. The address stops getting campaigns and automated sales email — payment reminders and appointments keep going.",
+      "note_label": "Why (required)",
+      "note_placeholder": "e.g. asked by phone on 11/09",
+      "failed": "Could not add the address. Check it is valid and that you are an admin."
     }
   }
 }

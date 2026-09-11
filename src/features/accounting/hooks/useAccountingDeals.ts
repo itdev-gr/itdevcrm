@@ -11,6 +11,7 @@ export type AccountingDealRow = DealRow & {
     contact_first_name?: string | null;
     contact_last_name?: string | null;
     industry?: string | null;
+    email_optout_state?: 'refused' | 'undeliverable' | null;
   } | null;
   deal_payments?: Array<{
     id: string;
@@ -28,7 +29,7 @@ export function useAccountingDeals() {
       const { data, error } = await supabase
         .from('deals')
         .select(
-          '*, client:clients(id, name, contact_first_name, contact_last_name, industry), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board), deal_payments(id, status, invoice_number, end_date, amount_gross)',
+          '*, client:clients(id, name, contact_first_name, contact_last_name, industry, email_optout_state), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board), deal_payments(id, status, invoice_number, end_date, amount_gross)',
         )
         .not('accounting_stage_id', 'is', null)
         .eq('archived', false)

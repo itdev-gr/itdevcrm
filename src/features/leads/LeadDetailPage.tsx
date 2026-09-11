@@ -49,6 +49,7 @@ import { LeadTasksTab } from './LeadTasksTab';
 import { OfferEmailDialog } from '@/features/offers/OfferEmailDialog';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { formatConvertErrors } from '@/features/leads/convertErrors';
+import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -402,6 +403,7 @@ function LeadDetailContent() {
                 ✓ converted
               </span>
             )}
+            <EmailOptoutBadge state={lead.email_optout_state} className="text-[11px]" />
             {lead.email_opt_out ? (
               <span
                 className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950/50 dark:text-red-300"

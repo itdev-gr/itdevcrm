@@ -11,7 +11,7 @@ export function useDeal(dealId: string) {
       const { data, error } = await supabase
         .from('deals')
         .select(
-          '*, client:clients(id, name, status, contact_first_name, contact_last_name, email, phone, website, industry, country, address, vat_number), stage:pipeline_stages!deals_stage_id_fkey(id, code, board, display_names), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board, display_names)',
+          '*, client:clients(id, name, status, contact_first_name, contact_last_name, email, email_optout_state, phone, website, industry, country, address, vat_number), stage:pipeline_stages!deals_stage_id_fkey(id, code, board, display_names), accounting_stage:pipeline_stages!deals_accounting_stage_id_fkey(id, code, board, display_names)',
         )
         .eq('id', dealId)
         .maybeSingle();

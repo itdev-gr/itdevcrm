@@ -154,8 +154,19 @@ export const queryKeys = {
   // Params keyed in so a different search term/reason filter/page is its own
   // cache entry — SuppressionsPage's list is server-side paged (~450 rows and
   // growing), never fetched whole and filtered client-side.
-  suppressions: (params: { search?: string | undefined; reason?: string | undefined; page?: number | undefined }) =>
-    ['email-suppressions', params.search ?? '', params.reason ?? '', params.page ?? 0] as const,
+  suppressions: (params: {
+    search?: string | undefined;
+    reason?: string | undefined;
+    stream?: string | undefined;
+    page?: number | undefined;
+  }) =>
+    [
+      'email-suppressions',
+      params.search ?? '',
+      params.reason ?? '',
+      params.stream ?? '',
+      params.page ?? 0,
+    ] as const,
   // Singleton platform pacing config (daily/hourly cap, warm-up ladder) — the
   // live values campaign_daily_budget actually paces by, read directly since
   // that RPC itself is service-role-only (revoked from authenticated).

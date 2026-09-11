@@ -257,5 +257,11 @@
       "opted_out": "The client has opted out of emails.",
       "automations_off": "Email automations are switched off for this lead."
     }
+  },
+  "optout": {
+    "refused": "Does not want email",
+    "refused_hint": "This recipient asked not to receive promotional email. Automated sales emails and campaigns stop automatically — payment reminders, appointments and contracts keep going.",
+    "undeliverable": "Email does not work",
+    "undeliverable_hint": "The address permanently rejects mail (it does not exist). Nothing was refused — it needs a correct address."
   }
 }

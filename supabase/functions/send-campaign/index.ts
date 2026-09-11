@@ -705,6 +705,17 @@ async function testSend(campaignId: string, to: string): Promise<{ ok: boolean; 
     return { ok: false, error: 'identity_not_marketing' };
   }
 
+  // …and a real send never reaches an address on the do-not-email list. The
+  // proof path used to be the one way around it (2026-09-11 audit).
+  const { data: suppressed } = await admin
+    .from('email_suppressions')
+    .select('reason')
+    .eq('email_lower', to.trim().toLowerCase())
+    .limit(1);
+  if (suppressed && suppressed.length > 0) {
+    return { ok: false, error: `suppressed:${suppressed[0]!.reason}` };
+  }
+
   const identity = resolveIdentity(campaign);
   const fakeRecipientId = crypto.randomUUID();
   const fakeToken = crypto.randomUUID();

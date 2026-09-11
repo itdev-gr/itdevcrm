@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Calendar, CheckCircle2, Clock, FileText, User } from 'lucide-react';
+import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyableCode } from '@/components/CopyableCode';
 import { useAssignableOwners } from '@/features/leads/hooks/useAssignableOwners';
@@ -78,6 +79,7 @@ export function AccountingKanbanCard({ deal }: { deal: AccountingDealRow }) {
                 {fullName}
               </Link>
             </div>
+            <EmailOptoutBadge state={deal.client?.email_optout_state} />
             {deal.accounting_completed_at && (
               <CheckCircle2 className="size-4 shrink-0 text-emerald-500" aria-hidden />
             )}

@@ -4,6 +4,12 @@ import { queryKeys } from '@/lib/queryKeys';
 import type { Database } from '@/types/supabase';
 
 export type LeadRow = Database['public']['Tables']['leads']['Row'] & {
+  /**
+   * Automatic do-not-email state, maintained by database triggers from
+   * `email_suppressions` (migration 20260911130000) — not yet in the generated
+   * types. Never written from the UI: a guard trigger rejects manual writes.
+   */
+  email_optout_state?: 'refused' | 'undeliverable' | null;
   stage?: { id: string; code: string; board: string; display_names: unknown } | null;
 };
 

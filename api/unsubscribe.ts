@@ -1,4 +1,4 @@
-import { withSentry } from './_sentry.js';
+import { withSentry, captureApiError } from './_sentry.js';
 // Public opt-out endpoint linked from every automated lead email:
 //   GET  /api/unsubscribe?lead=<uuid>&token=<unsubscribe_token>  → confirm page
 //   POST (same URL, from the confirm form)                       → performs opt-out
@@ -70,11 +70,26 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     .update({ email_opt_out: true })
     .eq('id', lead)
     .eq('unsubscribe_token', token)
-    .select('id');
+    .select('id, email');
 
   if (error || !data || data.length === 0) {
     page(res, 400, 'Μη έγκυρος σύνδεσμος', 'Ο σύνδεσμος απεγγραφής δεν είναι έγκυρος ή έχει λήξει.');
     return;
+  }
+
+  // The lead flag alone protects one row. The address goes on the global list
+  // too (2026-09-11) so the opt-out also covers imported campaign lists that
+  // carry the same address without a lead row behind it.
+  const address = data[0]?.email;
+  if (address) {
+    const { error: suppressError } = await admin.rpc('suppress_email', {
+      p_email: address,
+      p_reason: 'unsubscribed',
+      p_source: `lead:${lead}`,
+      p_stream: 'sales',
+      p_note: null,
+    });
+    if (suppressError) captureApiError('unsubscribe', suppressError);
   }
 
   page(

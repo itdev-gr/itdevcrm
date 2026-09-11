@@ -29,6 +29,7 @@ import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { canCreateOffer } from '@/features/offers/canCreateOffer';
 import { CopyableCode } from '@/components/CopyableCode';
+import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
 import { supabase } from '@/lib/supabase';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
@@ -198,6 +199,7 @@ function DealDetailContent() {
                 {tClients('status.blocked')}
               </span>
             )}
+            <EmailOptoutBadge state={deal.client?.email_optout_state} />
             <span
               className="hidden h-3.5 w-px shrink-0 bg-border/50 sm:inline-block"
               aria-hidden="true"

@@ -162,6 +162,35 @@ async function sendOne(input: SendInput): Promise<{ status: 'sent' | 'failed' | 
       return { status: 'skipped' };
     }
   }
+  // Global do-not-email list (2026-09-11). This is the ONE place every queued
+  // and direct send passes through, so it is where the list is enforced for the
+  // sales/automated stream — campaigns enforce it in their own claim step.
+  // Keyed by TEMPLATE, exactly like the closed-client guard is keyed by
+  // identity: only cold/nurture outreach is blocked. Payment reminders,
+  // appointments, contracts, onboarding and internal notifications are
+  // obligations to a customer, not promotion, and always go out.
+  // The address lookup runs first because almost every send is to an address
+  // that is NOT on the list — that way the common path costs one query and the
+  // template classification only runs for the rare hit.
+  if (typeof to === 'string' && to && templateKey) {
+    const { data: suppressed } = await admin
+      .from('email_suppressions')
+      .select('reason')
+      .eq('email_lower', to.trim().toLowerCase())
+      .limit(1);
+    if (suppressed && suppressed.length > 0) {
+      const { data: outreach } = await admin
+        .rpc('email_template_is_outreach', { p_template_key: templateKey });
+      if (outreach === true) {
+        await admin.from('email_log').insert({
+          identity, to_email: to, template_key: templateKey, status: 'failed',
+          dedupe_key: dedupeKey,
+          error: `blocked: suppressed (${suppressed[0]!.reason})`,
+        });
+        return { status: 'skipped' };
+      }
+    }
+  }
   const id = IDENTITIES[identity];
   if (!id) return { status: 'failed', error: `unknown identity ${identity}` };
 

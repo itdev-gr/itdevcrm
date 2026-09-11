@@ -13,6 +13,8 @@ export type DealRow = Database['public']['Tables']['deals']['Row'] & {
     contact_first_name?: string | null;
     contact_last_name?: string | null;
     email?: string | null;
+    /** Automatic do-not-email state, maintained from the suppression list. */
+    email_optout_state?: 'refused' | 'undeliverable' | null;
     phone?: string | null;
     website?: string | null;
     industry?: string | null;

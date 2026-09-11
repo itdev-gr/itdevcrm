@@ -5,8 +5,9 @@ import { i18n } from '@/lib/i18n';
 import { I18nextProvider } from 'react-i18next';
 import type { SuppressionRow, SuppressionsResult, SuppressionsParams } from './hooks/useSuppressions';
 
-const { unsuppressMutateAsync, useSuppressionsSpy } = vi.hoisted(() => ({
+const { unsuppressMutateAsync, addManualMutateAsync, useSuppressionsSpy } = vi.hoisted(() => ({
   unsuppressMutateAsync: vi.fn(),
+  addManualMutateAsync: vi.fn(),
   // Records every params object SuppressionsPage calls useSuppressions with,
   // so a test can assert the page's own search/page state logic (the
   // debounce and the page-reset-on-search-change effect) without needing a
@@ -20,6 +21,7 @@ function makeRow(overrides: Partial<SuppressionRow> = {}): SuppressionRow {
   return {
     email_lower: 'bounced@example.com',
     reason: 'hard_bounce',
+    stream: 'marketing',
     source: 'resend-webhook',
     bounce_count: 3,
     first_seen_at: '2026-06-01T00:00:00Z',
@@ -40,6 +42,7 @@ vi.mock('./hooks/useSuppressions', async () => {
       return { data: result, isLoading: false, error: null };
     },
     useUnsuppressEmail: () => ({ mutateAsync: unsuppressMutateAsync, isPending: false }),
+    useAdminSuppressEmail: () => ({ mutateAsync: addManualMutateAsync, isPending: false }),
   };
 });
 
@@ -70,15 +73,33 @@ describe('SuppressionsPage', () => {
     expect(screen.getByText('Αφαίρεση του «bounced@example.com» από τη λίστα αποκλεισμού;')).toBeInTheDocument();
   });
 
-  it('fires unsuppress_email only after the confirm dialog is confirmed', async () => {
+  it('fires unsuppress_email only after the dialog is confirmed WITH a reason', async () => {
     unsuppressMutateAsync.mockResolvedValueOnce(true);
     render(wrap(<SuppressionsPage />));
 
     fireEvent.click(screen.getByRole('button', { name: 'Αφαίρεση' }));
-    const buttons = screen.getAllByRole('button', { name: 'Αφαίρεση' });
-    fireEvent.click(buttons[buttons.length - 1]!);
+    const confirmButton = () => {
+      const buttons = screen.getAllByRole('button', { name: 'Αφαίρεση' });
+      return buttons[buttons.length - 1]!;
+    };
 
-    await waitFor(() => expect(unsuppressMutateAsync).toHaveBeenCalledWith('bounced@example.com'));
+    // Taking someone off the list re-opens them to email, so the why is
+    // mandatory: the confirm button stays disabled until a note is typed.
+    expect(confirmButton()).toBeDisabled();
+    fireEvent.click(confirmButton());
+    expect(unsuppressMutateAsync).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('Γιατί (υποχρεωτικό)'), {
+      target: { value: 'μου το ζήτησε ο ίδιος' },
+    });
+    fireEvent.click(confirmButton());
+
+    await waitFor(() =>
+      expect(unsuppressMutateAsync).toHaveBeenCalledWith({
+        email: 'bounced@example.com',
+        note: 'μου το ζήτησε ο ίδιος',
+      }),
+    );
   });
 
   it('warns specifically that the person asked to stop when the reason is "unsubscribed"', () => {

@@ -10,9 +10,13 @@ import { useAuthStore } from '@/lib/stores/authStore';
 
 export type SuppressionReason = 'hard_bounce' | 'soft_bounce' | 'complaint' | 'manual' | 'invalid' | 'unsubscribed';
 
+export type SuppressionStream = 'marketing' | 'sales' | 'manual';
+
 export type SuppressionRow = {
   email_lower: string;
   reason: SuppressionReason;
+  /** Which stream the opt-out came from (migration 20260911120000). */
+  stream: SuppressionStream;
   source: string | null;
   bounce_count: number;
   first_seen_at: string;
@@ -28,6 +32,7 @@ export type SuppressionsParams = {
    *  whole and filtered in the browser. */
   search?: string | undefined;
   reason?: SuppressionReason | undefined;
+  stream?: SuppressionStream | undefined;
   /** Zero-based page index. */
   page?: number | undefined;
 };
@@ -36,13 +41,13 @@ export type SuppressionsResult = { rows: SuppressionRow[]; count: number };
 
 /** The suppression list (~450 rows and growing), newest activity first,
  *  searched and paged server-side. Admin-only. */
-export function useSuppressions({ search = '', reason, page = 0 }: SuppressionsParams = {}) {
+export function useSuppressions({ search = '', reason, stream, page = 0 }: SuppressionsParams = {}) {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const term = search.trim();
   const from = page * SUPPRESSIONS_PAGE_SIZE;
   const to = from + SUPPRESSIONS_PAGE_SIZE - 1;
   return useQuery({
-    queryKey: queryKeys.suppressions({ search: term, reason, page }),
+    queryKey: queryKeys.suppressions({ search: term, reason, stream, page }),
     enabled: isAdmin,
     // Keeps the current page's rows on screen while the next page/search
     // term loads, instead of flashing back to a loading state on every click.
@@ -55,6 +60,7 @@ export function useSuppressions({ search = '', reason, page = 0 }: SuppressionsP
         .range(from, to);
       if (term) query = query.ilike('email_lower', `%${term}%`);
       if (reason) query = query.eq('reason', reason);
+      if (stream) query = query.eq('stream', stream);
       const { data, error, count } = await query;
       if (error) throw new Error(error.message);
       return { rows: (data ?? []) as unknown as SuppressionRow[], count: count ?? 0 };
@@ -71,10 +77,14 @@ export function useSuppressions({ search = '', reason, page = 0 }: SuppressionsP
  */
 export function useUnsuppressEmail() {
   const qc = useQueryClient();
-  return useMutation<boolean, Error, string>({
-    mutationFn: captureMutation('email_marketing', 'unsuppress_email', async (email) => {
+  return useMutation<boolean, Error, { email: string; note: string }>({
+    mutationFn: captureMutation('email_marketing', 'unsuppress_email', async ({ email, note }) => {
+      // The note is mandatory server-side (errcode 22023): taking someone off
+      // the list means we start emailing them again, so the why is recorded in
+      // email_suppression_audit with who did it.
       const { data, error } = await supabase.rpc('unsuppress_email' as never, {
         p_email: email,
+        p_note: note,
       } as never);
       if (error) throw new Error(error.message);
       return data as unknown as boolean;
@@ -82,6 +92,29 @@ export function useUnsuppressEmail() {
     onSuccess: () => {
       // Prefix match (no exact params) so every open page/search/reason
       // filter's cached query is invalidated, not just one specific one.
+      void qc.invalidateQueries({ queryKey: ['email-suppressions'] });
+    },
+  });
+}
+
+/**
+ * admin_suppress_email(p_email, p_reason, p_note) — the manual way onto the
+ * list, for when someone asks to stop by phone or by replying to an email.
+ * Admin-only and note-mandatory server-side; the entry lands with
+ * stream='manual' so the list still shows where it came from.
+ */
+export function useAdminSuppressEmail() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { email: string; note: string; reason?: 'manual' | 'unsubscribed' }>({
+    mutationFn: captureMutation('email_marketing', 'admin_suppress_email', async ({ email, note, reason = 'unsubscribed' }) => {
+      const { error } = await supabase.rpc('admin_suppress_email' as never, {
+        p_email: email,
+        p_reason: reason,
+        p_note: note,
+      } as never);
+      if (error) throw new Error(error.message);
+    }),
+    onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['email-suppressions'] });
     },
   });

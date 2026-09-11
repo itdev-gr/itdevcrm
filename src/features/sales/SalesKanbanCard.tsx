@@ -12,6 +12,7 @@ import { SOURCE_BADGE } from '@/lib/stage-colors';
 import { cn } from '@/lib/utils';
 import type { PlannedService } from '@/features/deals/ServicesPlannedField';
 import { CallLink } from '@/components/CallLink';
+import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
 
 export function SalesKanbanCard({
   lead,
@@ -72,6 +73,7 @@ export function SalesKanbanCard({
                 {fullName}
               </Link>
             </div>
+            <EmailOptoutBadge state={lead.email_optout_state} />
             {lead.converted_at && (
               <CheckCircle2 className="size-4 shrink-0 text-emerald-500" aria-hidden />
             )}

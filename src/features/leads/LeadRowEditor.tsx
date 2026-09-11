@@ -12,6 +12,7 @@ import { fieldInputClass, tableSelectClass } from './leadsTableLayout';
 import type { LeadRow } from './hooks/useLeads';
 import type { AssignableOwner } from './hooks/useAssignableOwners';
 import type { StageRow } from '@/features/stages/hooks/usePipelineStages';
+import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
 
 const UNASSIGNED = '__unassigned__';
 const SOURCES = ['manual', 'meta', 'import', 'franchise'] as const;
@@ -144,17 +145,21 @@ export function LeadRowEditor({
         />
       </td>
       <td className={cn(cellClass, sectionBorder)}>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={cn(fieldInputClass, 'font-mono text-xs tracking-tight')}
-          title={email || undefined}
-          spellCheck={false}
-          onBlur={() => {
-            if (email.trim() !== (lead.email ?? '')) void commit({ email: email.trim() || null });
-          }}
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={cn(fieldInputClass, 'font-mono text-xs tracking-tight')}
+            title={email || undefined}
+            spellCheck={false}
+            onBlur={() => {
+              if (email.trim() !== (lead.email ?? '')) void commit({ email: email.trim() || null });
+            }}
+          />
+          {/* Icon-only: the table's column widths are fixed in leadsTableLayout.ts. */}
+          <EmailOptoutBadge state={lead.email_optout_state} className="px-1" />
+        </div>
       </td>
       <td className={cellClass}>
         <Input
