@@ -14,7 +14,14 @@
     },
     "cancel": "Cancel",
     "confirm": "Close deal",
-    "closing": "Closing…"
+    "closing": "Closing…",
+    "consequences": {
+      "jobs": "{{count}} job(s) will be closed and moved to the Closed column.",
+      "billing_stops": "Billing will stop on {{count}} service(s).",
+      "billing_stops_value": "Billing will stop on {{count}} service(s), worth {{amount}} per month.",
+      "open_payments": "{{count}} open invoice(s), {{amount}} — they stay owed.",
+      "loading": "Working out the consequences…"
+    }
   },
   "nav": {
     "onboarding": "Accounting onboarding",

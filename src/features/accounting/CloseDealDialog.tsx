@@ -11,6 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useJobsForDeal } from '@/features/jobs/hooks/useJobsForDeal';
 import { useCloseDeal } from './hooks/useCloseDeal';
+import { useDealClosePreview } from '@/features/deals/hooks/useBillingPreview';
+import { CloseDealConsequences } from '@/features/deals/BillingConsequences';
 
 type Props = {
   dealId: string | null;
@@ -25,6 +27,9 @@ export function CloseDealDialog({ dealId, dealLabel, onClose }: Props) {
 
   const { data: jobs = [], isLoading } = useJobsForDeal(dealId ?? '');
   const close = useCloseDeal();
+  // Since 20260911160000 closing a deal also switches billing off on every
+  // service — the dialog used to say only that cards move to Closed.
+  const { preview } = useDealClosePreview(dealId ?? '', open);
   const activeJobs = useMemo(() => jobs.filter((j) => !j.archived), [jobs]);
 
   function labelFor(j: (typeof activeJobs)[number]): string {
@@ -50,6 +55,7 @@ export function CloseDealDialog({ dealId, dealLabel, onClose }: Props) {
             {dealLabel ? ` · ${dealLabel}` : ''}
           </DialogTitle>
           <DialogDescription>{t('close.description')}</DialogDescription>
+          <CloseDealConsequences preview={preview} />
         </DialogHeader>
 
         <div className="max-h-[55vh] space-y-1 overflow-y-auto">

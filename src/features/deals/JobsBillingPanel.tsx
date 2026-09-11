@@ -19,8 +19,10 @@ import {
   type PaymentWithLines,
 } from './hooks/useJobsBilling';
 import { useUpdateJobBilling } from './hooks/useCustomJobMutations';
-import { useEndArchiveJob, useJobUnpaidTotal } from './hooks/useEndArchiveJob';
-import { endConfirmBody, endDefersForDisconnect } from './endArchiveCopy';
+import { useEndArchiveJob } from './hooks/useEndArchiveJob';
+import { endDefersForDisconnect } from './endArchiveCopy';
+import { useJobBillingPreview } from './hooks/useBillingPreview';
+import { EndConsequences, PauseConsequences, ResumeConsequences } from './BillingConsequences';
 import { useUpdateDealPayment } from './hooks/useDealPayments';
 import { formatDate } from '@/lib/datetime';
 import { formatEur } from '@/lib/countries';
@@ -130,10 +132,11 @@ function JobRow({
   );
   const [confirmEnd, setConfirmEnd] = useState(false);
   const endArchive = useEndArchiveJob(dealId);
-  // Το υπόλοιπο το ζητάμε μόνο όταν ανοίξει το παράθυρο — όχι σε κάθε γραμμή.
-  const { unpaid } = useJobUnpaidTotal(job.id, confirmEnd);
+  // Τα νούμερα ζητούνται μόνο όταν ανοίξει παράθυρο — όχι σε κάθε γραμμή.
   const [confirmPause, setConfirmPause] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
+  // One preview serves all three dialogs; fetched only while one is open.
+  const { preview } = useJobBillingPreview(job.id, confirmEnd || confirmPause || confirmResume);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleRow[] | null>(null);
   const [convertOpen, setConvertOpen] = useState(false);
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -504,7 +507,7 @@ function JobRow({
             open={confirmEnd}
             onOpenChange={setConfirmEnd}
             title={t('jobs_billing.end_confirm_title')}
-            description={endConfirmBody(t, unpaid, endDefersForDisconnect(job))}
+            description={<EndConsequences preview={preview} defersForDisconnect={endDefersForDisconnect(job)} />}
             confirmLabel={t('jobs_billing.end')}
             pending={endArchive.isPending}
             onConfirm={async () => {
@@ -522,7 +525,7 @@ function JobRow({
             open={confirmPause}
             onOpenChange={setConfirmPause}
             title={t('jobs_billing.pause.pause_confirm_title')}
-            description={t('jobs_billing.pause.pause_confirm_body')}
+            description={<PauseConsequences preview={preview} yearly={job.billing_type === 'recurring_yearly'} />}
             confirmLabel={t('jobs_billing.pause.pause')}
             pending={pause.isPending}
             onConfirm={async () => {
@@ -540,7 +543,7 @@ function JobRow({
             open={confirmResume}
             onOpenChange={setConfirmResume}
             title={t('jobs_billing.pause.resume_confirm_title')}
-            description={t('jobs_billing.pause.resume_confirm_body')}
+            description={<ResumeConsequences preview={preview} />}
             confirmLabel={t('jobs_billing.pause.resume')}
             pending={resume.isPending}
             onConfirm={async () => {

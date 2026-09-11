@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatDate } from '@/lib/datetime';
 import { useJobPauseBilling, useJobResumeBilling } from './hooks/useJobBillingPause';
+import { useJobBillingPreview } from '@/features/deals/hooks/useBillingPreview';
+import { PauseConsequences, ResumeConsequences } from '@/features/deals/BillingConsequences';
 
 type Props = {
   jobId: string;
@@ -31,6 +33,9 @@ export function JobBillingPauseCard({
 }: Props) {
   const [confirmPause, setConfirmPause] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
+  // Same consequence figures the deal panel shows — this card used to carry its
+  // own hardcoded English copy, drifted from the panel's, with no numbers.
+  const { preview } = useJobBillingPreview(jobId, confirmPause || confirmResume);
   const pause = useJobPauseBilling(jobId, dealId);
   const resume = useJobResumeBilling(jobId, dealId);
 
@@ -115,9 +120,7 @@ export function JobBillingPauseCard({
         onOpenChange={setConfirmPause}
         title="Pause billing for this service?"
         description={
-          billingType === 'recurring_yearly'
-            ? 'Unpaid payments for this service will be cancelled (kept in history) and no new periods will be generated. NOTE for yearly services: resuming starts a fresh year from the resume day — re-set the real renewal date on the job afterwards.'
-            : 'Unpaid payments for this service will be cancelled (kept in history) and no new periods will be generated. The deal can move to Paid In Full on its other services. Paused months are never back-billed.'
+          <PauseConsequences preview={preview} yearly={billingType === 'recurring_yearly'} />
         }
         confirmLabel="Pause billing"
         pending={pause.isPending}
@@ -128,7 +131,7 @@ export function JobBillingPauseCard({
         open={confirmResume}
         onOpenChange={setConfirmResume}
         title="Resume billing for this service?"
-        description="The job is unblocked and a fresh billing period starts today. The deal will move to Awaiting Payment."
+        description={<ResumeConsequences preview={preview} />}
         confirmLabel="Resume billing"
         pending={resume.isPending}
         onConfirm={onResume}

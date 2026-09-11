@@ -330,10 +330,36 @@
       "status_overdue": "Overdue",
       "mark_paid": "Mark paid",
       "mark_pending": "Mark pending"
+    },
+    "consequences": {
+      "will_cancel": "{{count}} unpaid invoice(s) totalling {{amount}} will be cancelled (kept in history).",
+      "chain": "This affects all {{count}} cards of this service on the deal.",
+      "no_new_periods": "No new billing periods will be generated.",
+      "no_backbill": "Paused months are never back-billed.",
+      "yearly_note": "Yearly service: resuming starts a fresh year from that day — re-set the real renewal date afterwards.",
+      "end_base": "Billing stops, the service is marked completed and the assignee is notified.",
+      "stays_owed": "WARNING: {{amount}} stays owed by the client — it is not written off.",
+      "disconnect_defer": "The card stays in Closed until Local SEO disconnects from the Google profile, and is archived then.",
+      "resume_fresh_period": "A fresh billing period starts today — nothing is back-billed.",
+      "resume_amount": "An invoice of {{amount}} will be created for the new period."
     }
   },
   "empty": "No deals yet.",
   "welcome_email": {
     "send": "Send welcome email"
+  },
+  "billing_fault": {
+    "client": "Client",
+    "service": "Service",
+    "impact": "Impact",
+    "dismiss": "Got it",
+    "open": "Open service",
+    "more": "+{{count}} more waiting",
+    "title": {
+      "billing_off_without_reason": "Billing switched off with no reason",
+      "closed_but_still_billing": "Closed service is still billing",
+      "archived_with_open_payment": "Archived with an open invoice",
+      "unknown": "Billing problem"
+    }
   }
 }

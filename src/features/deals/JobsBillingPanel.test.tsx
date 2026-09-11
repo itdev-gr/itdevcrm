@@ -14,10 +14,16 @@ vi.mock('./hooks/useCustomJobMutations', () => ({
   useUpdateJobBilling: () => ({ mutateAsync: updateMutate, isPending: false }),
 }));
 
-const unpaidTotal: { current: number | null } = { current: null };
 vi.mock('./hooks/useEndArchiveJob', () => ({
   useEndArchiveJob: () => ({ mutateAsync: endArchiveMutate, isPending: false }),
-  useJobUnpaidTotal: () => ({ unpaid: unpaidTotal.current }),
+}));
+
+// The confirm dialogs now spell out the real consequences up front
+// (job_billing_action_preview, 20260911190000) instead of one flat sentence.
+const preview: { current: Record<string, number> | null } = { current: null };
+vi.mock('./hooks/useBillingPreview', () => ({
+  useJobBillingPreview: () => ({ preview: preview.current, isLoading: false }),
+  useDealClosePreview: () => ({ preview: null, isLoading: false }),
 }));
 
 vi.mock('./hooks/useDealPayments', () => ({
@@ -621,11 +627,11 @@ describe('JobsBillingPanel due date', () => {
 describe('JobsBillingPanel end + archive', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    unpaidTotal.current = null;
+    preview.current = null;
   });
 
   it('opens the confirm dialog without the unpaid warning when the balance is zero', async () => {
-    unpaidTotal.current = 0;
+    preview.current = { cancel_count: 0, cancel_gross: 0, unpaid_gross: 0, chain_jobs: 1, monthly_value: 100 };
     billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
     const user = userEvent.setup();
     render(wrap(<JobsBillingPanel dealId="d1" />));
@@ -635,15 +641,15 @@ describe('JobsBillingPanel end + archive', () => {
 
     expect(await screen.findByText('End and archive?')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Billing stops, the service is marked completed and the card moves to Archived. The assignee will be notified.",
-      ),
+      screen.getByText(/Billing stops, the service is marked completed/),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/unpaid balance/i)).not.toBeInTheDocument();
+    // Nothing outstanding → no cancellation line and no "stays owed" warning.
+    expect(screen.queryByText(/will be cancelled/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/stays owed/i)).not.toBeInTheDocument();
   });
 
   it('shows the unpaid-balance warning in the confirm dialog when the service has an unpaid balance', async () => {
-    unpaidTotal.current = 240.5;
+    preview.current = { cancel_count: 2, cancel_gross: 240.5, unpaid_gross: 240.5, chain_jobs: 1, monthly_value: 100 };
     billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
     const user = userEvent.setup();
     render(wrap(<JobsBillingPanel dealId="d1" />));
@@ -651,13 +657,14 @@ describe('JobsBillingPanel end + archive', () => {
     const row = screen.getByText('Hosting').closest('tr') as HTMLElement;
     await user.click(within(row).getByRole('button', { name: /^end$/i }));
 
+    // The figures the action will actually apply, shown before confirming.
     expect(
-      await screen.findByText(/WARNING: there is an unpaid balance of 240,50 €/i),
+      await screen.findByText(/2 unpaid invoice\(s\) totalling 240,50 €/i),
     ).toBeInTheDocument();
   });
 
   it('calls end_and_archive_job on confirm and does not block on an unpaid balance', async () => {
-    unpaidTotal.current = 240.5;
+    preview.current = { cancel_count: 2, cancel_gross: 240.5, unpaid_gross: 240.5, chain_jobs: 1, monthly_value: 100 };
     billing.current = { jobs: [makeJob({ id: 'a', title: 'Hosting' })], payments: [] };
     const user = userEvent.setup();
     render(wrap(<JobsBillingPanel dealId="d1" />));
@@ -674,7 +681,7 @@ describe('JobsBillingPanel end + archive', () => {
   // ending it directly is the whole point (no Resume detour, which would
   // start a fresh billing period).
   it('still offers End on a paused job and ends it on confirm', async () => {
-    unpaidTotal.current = 0;
+    preview.current = { cancel_count: 0, cancel_gross: 0, unpaid_gross: 0, chain_jobs: 1, monthly_value: 100 };
     billing.current = {
       jobs: [
         makeJob({

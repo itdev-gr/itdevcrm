@@ -5,6 +5,7 @@ import { EmailHealthBanner } from '@/features/system_health/EmailHealthBanner';
 import { GmailSyncBanner } from '@/features/system_health/GmailSyncBanner';
 import { BackButton } from '@/components/BackButton';
 import { ScrollRestorer } from '@/components/ScrollRestorer';
+import { BillingFaultPopup } from '@/features/notifications/BillingFaultPopup';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -26,6 +27,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
       <ScrollRestorer rootRef={mainRef} />
+      {/* Centre-screen alert for a billing fault the moment it is created —
+          mounted at the shell so it reaches the accountant on any page. */}
+      <BillingFaultPopup />
       {mobileNavOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div
