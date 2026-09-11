@@ -19,6 +19,9 @@ import { useUpdateCampaign } from '../hooks/useCampaignMutations';
 const AUTOSAVE_DELAY_MS = 800;
 
 type Fields = {
+  /** Internal label — never sent to anyone; it is how the campaign is found
+   *  again in the list, so it is the first field on the step. */
+  name: string;
   subject: string;
   preheader: string;
   bodyMd: string;
@@ -26,7 +29,7 @@ type Fields = {
   replyTo: string;
 };
 
-const EMPTY_FIELDS: Fields = { subject: '', preheader: '', bodyMd: '', heroImageUrl: '', replyTo: '' };
+const EMPTY_FIELDS: Fields = { name: '', subject: '', preheader: '', bodyMd: '', heroImageUrl: '', replyTo: '' };
 
 type Props = { campaignId: string };
 
@@ -55,6 +58,7 @@ export function StepContent({ campaignId }: Props) {
     if (!campaign || hydrated.current) return;
     hydrated.current = true;
     setFields({
+      name: campaign.name,
       subject: campaign.subject,
       preheader: campaign.preheader ?? '',
       bodyMd: campaign.body_md,
@@ -63,8 +67,14 @@ export function StepContent({ campaignId }: Props) {
     });
   }, [campaign]);
 
+  // `campaign_update` rejects a blank name outright (`invalid_name`,
+  // 20260907270000). Rather than fail the whole autosave — which would also
+  // drop the subject/body edit the owner just made — a blank name is simply
+  // left out of the patch and flagged under the field.
   function buildPatch(next: Fields) {
+    const name = next.name.trim();
     return {
+      ...(name ? { name } : {}),
       subject: next.subject,
       preheader: next.preheader || null,
       body_md: next.bodyMd,
@@ -169,6 +179,23 @@ export function StepContent({ campaignId }: Props) {
           <p className="mt-3 text-sm text-muted-foreground">{t('builder.content.loading')}</p>
         ) : (
           <div className="mt-4 space-y-3">
+            <div>
+              <Label htmlFor="sc-name" className="text-xs">
+                {t('builder.content.name')}
+              </Label>
+              <Input
+                id="sc-name"
+                className="mt-1 h-8 text-xs"
+                value={fields.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                disabled={locked}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {fields.name.trim()
+                  ? t('builder.content.name_hint')
+                  : t('builder.content.name_required')}
+              </p>
+            </div>
             <div>
               <Label htmlFor="sc-subject" className="text-xs">
                 {t('builder.content.subject')}

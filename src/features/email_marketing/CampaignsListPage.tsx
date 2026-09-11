@@ -13,10 +13,17 @@ import {
   settingsTrClass,
   settingsTdClass,
 } from '@/components/layout/page-shell';
-import { useCampaigns, useCampaignStats } from './hooks/useCampaigns';
-import { useCreateCampaign } from './hooks/useCampaignMutations';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useCampaigns, useCampaignStats, type CampaignRow } from './hooks/useCampaigns';
+import { useCreateCampaign, useDeleteCampaign } from './hooks/useCampaignMutations';
 import { CampaignStatusBadge } from './components/CampaignStatusBadge';
 import { rate, formatRate } from './campaignCopy';
+
+/** `campaign_delete` only accepts draft/cancelled campaigns, and refuses any
+ *  that ever sent (it would erase the send history the fatigue rule reads).
+ *  The button follows the same rule so the offer is never a dead end; the
+ *  RPC stays the authority and its `already_sent` refusal is surfaced. */
+const DELETABLE_STATUSES = new Set<CampaignRow['status']>(['draft', 'cancelled']);
 
 /** Per-row stats cells. A separate component so each row's `campaign_stats`
  *  RPC call is independently cached/loading — the list itself only needs
@@ -43,7 +50,26 @@ export function CampaignsListPage() {
   const navigate = useNavigate();
   const { data: campaigns = [], isLoading, error } = useCampaigns();
   const createCampaign = useCreateCampaign();
+  const deleteCampaign = useDeleteCampaign();
   const [createError, setCreateError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<CampaignRow | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!pendingDelete) return;
+    setDeleteError(null);
+    try {
+      await deleteCampaign.mutateAsync(pendingDelete.id);
+      setPendingDelete(null);
+    } catch (e) {
+      // The RPC refuses a campaign with send history — say so plainly instead
+      // of a generic failure, since that refusal is deliberate.
+      const msg = (e as Error).message;
+      setDeleteError(
+        msg.includes('already_sent') ? t('errors.delete_already_sent') : t('errors.delete_failed'),
+      );
+    }
+  }
 
   async function handleCreate() {
     setCreateError(null);
@@ -94,12 +120,15 @@ export function CampaignsListPage() {
               <th className={settingsThClass}>{t('list.delivered')}</th>
               <th className={settingsThClass}>{t('list.bounce_rate')}</th>
               <th className={settingsThClass}>{t('list.created')}</th>
+              <th className={settingsThClass}>
+                <span className="sr-only">{t('list.actions')}</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr className={settingsTrClass}>
-                <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={7}>
+                <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={8}>
                   {t('list.loading')}
                 </td>
               </tr>
@@ -107,14 +136,14 @@ export function CampaignsListPage() {
               <tr className={settingsTrClass}>
                 <td
                   className={cn(settingsTdClass, 'text-red-600 dark:text-red-400')}
-                  colSpan={7}
+                  colSpan={8}
                 >
                   {error.message}
                 </td>
               </tr>
             ) : campaigns.length === 0 ? (
               <tr className={settingsTrClass}>
-                <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={7}>
+                <td className={cn(settingsTdClass, 'text-muted-foreground')} colSpan={8}>
                   {t('list.empty')}
                 </td>
               </tr>
@@ -136,12 +165,43 @@ export function CampaignsListPage() {
                   <td className={cn(settingsTdClass, 'whitespace-nowrap text-muted-foreground')}>
                     {formatDate(c.created_at)}
                   </td>
+                  <td className={cn(settingsTdClass, 'text-right')}>
+                    {DELETABLE_STATUSES.has(c.status) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setPendingDelete(c);
+                        }}
+                        className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                      >
+                        {t('list.delete')}
+                      </button>
+                    ) : null}
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </SettingsTableShell>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDelete(null);
+            setDeleteError(null);
+          }
+        }}
+        title={t('list.delete_confirm_title')}
+        description={
+          deleteError ?? t('list.delete_confirm_body', { name: pendingDelete?.name ?? '' })
+        }
+        confirmLabel={t('list.delete')}
+        pending={deleteCampaign.isPending}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

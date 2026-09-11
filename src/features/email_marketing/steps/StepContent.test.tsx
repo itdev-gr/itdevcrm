@@ -159,4 +159,36 @@ describe('StepContent', () => {
     vi.advanceTimersByTime(1000);
     expect(updateMutate).not.toHaveBeenCalled();
   });
+
+  // --- Campaign name (owner request 2026-09-11: campaigns pile up and all
+  // read "New campaign", so they need a findable label). ---
+
+  it('hydrates the campaign name and saves an edit to it', () => {
+    render(wrap(<StepContent campaignId="camp-1" />));
+    const name = screen.getByLabelText('Όνομα καμπάνιας (εσωτερικό)');
+    expect(name).toHaveValue('Test campaign');
+
+    fireEvent.change(name, { target: { value: 'Local SEO — Σεπτέμβριος' } });
+    vi.advanceTimersByTime(1000);
+
+    expect(updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ patch: expect.objectContaining({ name: 'Local SEO — Σεπτέμβριος' }) }),
+      expect.anything(),
+    );
+  });
+
+  // campaign_update rejects a blank name (invalid_name), which would fail the
+  // whole autosave and take the subject/body edit down with it.
+  it('omits a blank name from the patch so the rest of the edit still saves', () => {
+    render(wrap(<StepContent campaignId="camp-1" />));
+
+    fireEvent.change(screen.getByLabelText('Όνομα καμπάνιας (εσωτερικό)'), { target: { value: '   ' } });
+    fireEvent.change(screen.getByLabelText('Θέμα'), { target: { value: 'Κρατιέται' } });
+    vi.advanceTimersByTime(1000);
+
+    const patch = updateMutate.mock.calls.at(-1)?.[0].patch;
+    expect(patch).not.toHaveProperty('name');
+    expect(patch).toMatchObject({ subject: 'Κρατιέται' });
+    expect(screen.getByText(/Το όνομα δεν μπορεί να είναι κενό/)).toBeInTheDocument();
+  });
 });

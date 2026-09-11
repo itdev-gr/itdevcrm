@@ -26,10 +26,16 @@
     "bounce_rate": "Bounce rate",
     "created": "Created",
     "empty": "No campaigns yet. Click \"+ New campaign\" to get started.",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "actions": "Actions",
+    "delete": "Delete",
+    "delete_confirm_title": "Delete this campaign?",
+    "delete_confirm_body": "The campaign \"{{name}}\" and its recipient list will be permanently removed. Campaigns that already sent cannot be deleted."
   },
   "errors": {
-    "create_failed": "Creating the campaign failed."
+    "create_failed": "Creating the campaign failed.",
+    "delete_failed": "The campaign could not be deleted.",
+    "delete_already_sent": "This campaign has already sent emails, so it cannot be deleted — its send history protects those recipients from being emailed again."
   },
   "builder": {
     "new_title": "New campaign",
@@ -60,7 +66,10 @@
       "preview": "Preview",
       "subject_placeholder": "(no subject yet)",
       "preview_recipient_name": "Jane Doe",
-      "preview_note": "How {{name}} will see it — with the real greeting and the unsubscribe footer."
+      "preview_note": "How {{name}} will see it — with the real greeting and the unsubscribe footer.",
+      "name": "Campaign name (internal)",
+      "name_hint": "Only shown in the campaigns list — recipients never see it.",
+      "name_required": "The name cannot be empty — the campaign keeps its previous name until you type one."
     },
     "audience": {
       "title": "Recipient lists",
