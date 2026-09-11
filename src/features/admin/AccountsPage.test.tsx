@@ -130,7 +130,9 @@ describe('AccountsPage', () => {
     render(wrap(<AccountsPage />));
 
     fireEvent.click(screen.getByRole('button', { name: 'Διαγραφή Google Ads' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Διαγραφή', exact: true }));
+    // The dialog's own confirm button — exactly «Διαγραφή», not the row's
+    // «Διαγραφή Google Ads».
+    fireEvent.click(screen.getByRole('button', { name: /^Διαγραφή$/ }));
 
     await waitFor(() => expect(deleteMutateAsync).toHaveBeenCalledWith('acc-1'));
   });
@@ -145,13 +147,12 @@ describe('AccountsPage', () => {
     fireEvent.change(screen.getByLabelText('Τίτλος'), { target: { value: 'Google Ads (νέο)' } });
     fireEvent.click(screen.getByRole('button', { name: 'Αποθήκευση' }));
 
-    await waitFor(() => expect(upsertMutateAsync).toHaveBeenCalled());
     // null = «άσε τον αποθηκευμένο κωδικό ως έχει» (το '' θα τον έσβηνε).
-    expect(upsertMutateAsync.mock.calls[0][0]).toMatchObject({
-      id: 'acc-1',
-      title: 'Google Ads (νέο)',
-      password: null,
-    });
+    await waitFor(() =>
+      expect(upsertMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'acc-1', title: 'Google Ads (νέο)', password: null }),
+      ),
+    );
   });
 
   it('sends the typed password when one is entered', async () => {
@@ -162,8 +163,9 @@ describe('AccountsPage', () => {
     fireEvent.change(screen.getByLabelText('Κωδικός'), { target: { value: 'ν3ος-κωδικός' } });
     fireEvent.click(screen.getByRole('button', { name: 'Αποθήκευση' }));
 
-    await waitFor(() => expect(upsertMutateAsync).toHaveBeenCalled());
-    expect(upsertMutateAsync.mock.calls[0][0]).toMatchObject({ password: 'ν3ος-κωδικός' });
+    await waitFor(() =>
+      expect(upsertMutateAsync).toHaveBeenCalledWith(expect.objectContaining({ password: 'ν3ος-κωδικός' })),
+    );
   });
 
   it('refuses to save without a title', async () => {

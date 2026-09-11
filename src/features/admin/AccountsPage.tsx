@@ -52,7 +52,8 @@ export function AccountsPage() {
   /** Fetches the plaintext once and keeps it for this row; returns it so the
    *  copy button can chain off the same call. */
   async function fetchPassword(row: CompanyAccountRow): Promise<string | null> {
-    if (revealed[row.id] !== undefined) return revealed[row.id];
+    const cached = revealed[row.id];
+    if (cached !== undefined) return cached;
     setRowError(null);
     try {
       const pw = await reveal.mutateAsync(row.id);

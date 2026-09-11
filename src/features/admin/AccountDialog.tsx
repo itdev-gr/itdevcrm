@@ -20,7 +20,13 @@ type Props = {
   initial?: CompanyAccountRow | null;
 };
 
-function AccountForm({ initial, onOpenChange }: { initial?: CompanyAccountRow | null; onOpenChange: (open: boolean) => void }) {
+function AccountForm({
+  initial,
+  onOpenChange,
+}: {
+  initial: CompanyAccountRow | null | undefined;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { t } = useTranslation('admin');
   const upsert = useUpsertCompanyAccount();
   const [title, setTitle] = useState(initial?.title ?? '');
