@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { Calendar, FileText, Lock, Mail } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { DetailTabsList, FilterSelect, detailTabTriggerClass, detailOverviewWithCommentsGridClass, commentsPanelShellClass, commentsPanelHeaderClass, commentsPanelBodyClass, detailHeaderCardClass, detailHeaderControlGroupClass, detailHeaderActionsClass, detailHeaderLabelClass, detailHeaderMainClass, detailHeaderMetaClass, detailHeaderRecordBadgeClass, detailHeaderRowClass, detailHeaderSelectClass, detailHeaderStatusBadgeClass, detailHeaderTitleClass } from '@/components/layout/page-shell';
 import { cn } from '@/lib/utils';
+import { queryKeys } from '@/lib/queryKeys';
 import { effectiveVatRate } from '@/lib/countries';
 import { DealForm } from './DealForm';
 import { DealEmailsBox } from './DealEmailsBox';
@@ -30,6 +32,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { canCreateOffer } from '@/features/offers/canCreateOffer';
 import { CopyableCode } from '@/components/CopyableCode';
 import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
+import { EmailOptoutAction } from '@/features/shared/EmailOptoutAction';
 import { supabase } from '@/lib/supabase';
 import { JobsTab } from '@/features/jobs/JobsTab';
 import { AssignedTasksTab } from '@/features/assigned_tasks/AssignedTasksTab';
@@ -59,6 +62,7 @@ function DealDetailContent() {
   const { t: tClients } = useTranslation('clients');
   const lang = i18n.resolvedLanguage === 'el' ? 'el' : 'en';
   const { data: deal, isLoading, error } = useDeal(dealId);
+  const qcDeal = useQueryClient();
   const moveAccounting = useMoveAccountingStage();
   const markPaid = useMarkPaidInFull();
   const { data: owners = [] } = useAssignableOwners();
@@ -200,6 +204,15 @@ function DealDetailContent() {
               </span>
             )}
             <EmailOptoutBadge state={deal.client?.email_optout_state} />
+            <EmailOptoutAction
+              email={deal.client?.email}
+              state={deal.client?.email_optout_state}
+              onDone={() => {
+                void qcDeal.invalidateQueries({ queryKey: queryKeys.deal(dealId) });
+                void qcDeal.invalidateQueries({ queryKey: queryKeys.accountingDeals() });
+              }}
+              className="h-7 px-2 text-[11px]"
+            />
             <span
               className="hidden h-3.5 w-px shrink-0 bg-border/50 sm:inline-block"
               aria-hidden="true"

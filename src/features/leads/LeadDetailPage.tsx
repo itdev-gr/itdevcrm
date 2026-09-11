@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Trash2, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -45,11 +45,13 @@ import { formatPageTitle, useDocumentTitle } from '@/lib/documentTitle';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { CopyableCode } from '@/components/CopyableCode';
 import { supabase } from '@/lib/supabase';
+import { queryKeys } from '@/lib/queryKeys';
 import { LeadTasksTab } from './LeadTasksTab';
 import { OfferEmailDialog } from '@/features/offers/OfferEmailDialog';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { formatConvertErrors } from '@/features/leads/convertErrors';
 import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
+import { EmailOptoutAction } from '@/features/shared/EmailOptoutAction';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -73,6 +75,7 @@ function LeadDetailContent() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const del = useDeleteLeads();
+  const qc = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Moving to Scheduled goes through a meeting date prompt (mirrors the
   // kanban drag dialog).
@@ -404,6 +407,14 @@ function LeadDetailContent() {
               </span>
             )}
             <EmailOptoutBadge state={lead.email_optout_state} className="text-[11px]" />
+            <EmailOptoutAction
+              email={lead.email}
+              state={lead.email_optout_state}
+              onDone={() => {
+                void qc.invalidateQueries({ queryKey: queryKeys.lead(leadId) });
+                void qc.invalidateQueries({ queryKey: ['leads'] });
+              }}
+            />
             {lead.email_opt_out ? (
               <span
                 className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950/50 dark:text-red-300"

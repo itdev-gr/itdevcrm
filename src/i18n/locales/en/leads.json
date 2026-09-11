@@ -262,6 +262,16 @@
     "refused": "Does not want email",
     "refused_hint": "This recipient asked not to receive promotional email. Automated sales emails and campaigns stop automatically — payment reminders, appointments and contracts keep going.",
     "undeliverable": "Email does not work",
-    "undeliverable_hint": "The address permanently rejects mail (it does not exist). Nothing was refused — it needs a correct address."
+    "undeliverable_hint": "The address permanently rejects mail (it does not exist). Nothing was refused — it needs a correct address.",
+    "action": {
+      "button": "Stop emailing",
+      "title": "Block “{{email}}”",
+      "description": "The address goes on the suppression list: campaigns and automated sales emails stop. Payment reminders, appointments and contracts keep going. Only an admin can undo it.",
+      "note_label": "Why (required)",
+      "note_placeholder": "e.g. replied asking us to stop",
+      "cancel": "Cancel",
+      "confirm": "Block",
+      "failed": "Could not block the address. Admin rights are required."
+    }
   }
 }
