@@ -165,6 +165,7 @@ const SharedMailboxesPage = lazyPage(
   () => import('@/features/admin/SharedMailboxesPage'),
   'SharedMailboxesPage',
 );
+const AccountsPage = lazyPage(() => import('@/features/admin/AccountsPage'), 'AccountsPage');
 const OfferBuilderPage = lazyPage(
   () => import('@/features/offers/OfferBuilderPage'),
   'OfferBuilderPage',
@@ -262,6 +263,7 @@ export const router = createBrowserRouter([
               { path: 'shared-mailboxes', element: <SharedMailboxesPage /> },
               { path: 'contract-templates', element: <ContractTemplatesPage /> },
               { path: 'announcements', element: <AnnouncementsAdminPage /> },
+              { path: 'accounts', element: <AccountsPage /> },
               { path: 'documentation', element: <DocumentationPage /> },
             ],
           },

@@ -12,6 +12,7 @@
     "shared_mailboxes": "Shared mailboxes",
     "contract_templates": "Contract templates",
     "announcements": "Announcements",
+    "accounts": "Accounts",
     "documentation": "Documentation",
     "sales_automations": "Sales automations"
   },
@@ -170,5 +171,55 @@
     "not_connected": "Not connected",
     "syncing": "Syncing",
     "backfilling": "Backfilling history…"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "description": "The company's accounts in one place — visible to admins only. Passwords are stored encrypted.",
+    "add": "Add account",
+    "add_title": "New account",
+    "edit_title": "Edit account",
+    "dialog_description": "Fill in the account's details.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search_placeholder": "Search title, email or notes…",
+    "count": "{{count}} accounts",
+    "count_one": "{{count}} account",
+    "loading": "Loading…",
+    "empty": "No accounts yet. Add the first one.",
+    "no_matches": "No account matches this search.",
+    "reveal": "Show the password for {{title}}",
+    "reveal_short": "Show",
+    "hide": "Hide the password for {{title}}",
+    "hide_short": "Hide",
+    "copy": "Copy the password for {{title}}",
+    "copy_short": "Copy",
+    "copied": "Copied",
+    "edit": "Edit {{title}}",
+    "columns": {
+      "title": "Title",
+      "email": "Email",
+      "password": "Password",
+      "notes": "Notes"
+    },
+    "fields": {
+      "title": "Title",
+      "title_placeholder": "e.g. Google Ads — ITDEV",
+      "email": "Email / username",
+      "password": "Password",
+      "password_unchanged_hint": "Leave blank to keep the stored password.",
+      "password_none_hint": "This account has no password stored yet.",
+      "notes": "Notes"
+    },
+    "delete": {
+      "button": "Delete {{title}}",
+      "confirm_title": "Delete {{title}}?",
+      "confirm_text": "The account and its password are deleted permanently. This cannot be undone.",
+      "confirm_cta": "Delete",
+      "failed": "The account could not be deleted. Please try again."
+    },
+    "errors": {
+      "title_required": "A title is required.",
+      "reveal_failed": "The password could not be shown. Please try again."
+    }
   }
 }

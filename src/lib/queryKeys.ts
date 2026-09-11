@@ -80,6 +80,7 @@ export const queryKeys = {
   clientUserTasks: (clientId: string) => ['client-user-tasks', clientId] as const,
   leadTasks: (leadId: string) => ['lead-tasks', leadId] as const,
   servicePackages: () => ['service-packages'] as const,
+  companyAccounts: () => ['company-accounts'] as const,
   serviceSubpackages: (parentId: string) => ['service-subpackages', parentId] as const,
   jobsByService: (serviceType: string) => ['jobs', 'service', serviceType] as const,
   archivedJobsByService: (serviceType: string) => ['jobs', 'service', serviceType, 'archived'] as const,

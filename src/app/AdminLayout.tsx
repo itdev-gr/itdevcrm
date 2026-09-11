@@ -15,6 +15,7 @@ const SETTINGS_TABS = [
   { to: '/admin/shared-mailboxes', key: 'shared_mailboxes' },
   { to: '/admin/contract-templates', key: 'contract_templates' },
   { to: '/admin/announcements', key: 'announcements' },
+  { to: '/admin/accounts', key: 'accounts' },
   { to: '/admin/documentation', key: 'documentation' },
 ] as const;
 
