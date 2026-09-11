@@ -12,6 +12,9 @@ const FORM_LABELS: readonly [RegExp, string][] = [
   [/local[\s_-]*seo/i, 'Local SEO'],
   [/web[\s_-]*seo/i, 'Web SEO'],
   [/ai[\s_-]*seo/i, 'AI SEO'],
+  // Added 2026-09-11: the Social Media form was missing, so those leads kept the
+  // raw «🧲 SOCIAL MEDIA LEAD FORM (ITDEV)» and nobody could tell what they were.
+  [/social[\s_-]*media/i, 'Social Media'],
   [/website/i, 'Website'],
 ];
 

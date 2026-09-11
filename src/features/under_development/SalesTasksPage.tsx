@@ -20,6 +20,7 @@ import {
   type CadenceOpenTask,
 } from './hooks/useCadenceOverview';
 import { useUpcomingMeetings, type MeetingLead } from './hooks/useUpcomingMeetings';
+import { leadNameWithService, type LeadServiceInput } from '@/lib/leadService';
 
 type Group = 'meetings' | 'decision' | 'overdue' | 'today' | 'upcoming';
 const GROUP_ORDER: Group[] = ['meetings', 'decision', 'overdue', 'today', 'upcoming'];
@@ -134,7 +135,9 @@ export function SalesTasksPage() {
   const openLead = (leadId: string) => navigate(`/leads/${leadId}`);
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
-  const leadCell = (lead: { id: string; code: string | null; title: string; company_name: string | null }) => (
+  const leadCell = (
+    lead: { id: string; code: string | null; company_name: string | null } & LeadServiceInput,
+  ) => (
     <span className="flex min-w-0 items-baseline gap-1.5">
       {lead.code && (
         <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{lead.code}</span>
@@ -144,7 +147,7 @@ export function SalesTasksPage() {
         onClick={stop}
         className="truncate text-sm font-medium hover:text-[#157777] hover:underline dark:hover:text-[#7ad4d4]"
       >
-        {lead.title}
+        {leadNameWithService(lead)}
       </Link>
       {lead.company_name && (
         <span className="hidden truncate text-xs text-muted-foreground sm:inline">

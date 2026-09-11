@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import type { PlannedService } from '@/features/deals/ServicesPlannedField';
 import { CallLink } from '@/components/CallLink';
 import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
+import { leadBaseName, leadServiceLabel } from '@/lib/leadService';
 
 export function SalesKanbanCard({
   lead,
@@ -39,7 +40,11 @@ export function SalesKanbanCard({
     : undefined;
 
   const contactName = [lead.contact_first_name, lead.contact_last_name].filter(Boolean).join(' ');
-  const fullName = contactName || lead.company_name || lead.title;
+  const fullName = leadBaseName(lead);
+  // «ΟΝΟΜΑ ΕΠΩΝΥΜΟ (SERVICE)» — the card used to drop the service label that
+  // lead.title already carried, so a glance at the board said nothing about
+  // what kind of lead this is (owner 2026-09-11).
+  const serviceLabel = leadServiceLabel(lead);
   const industryDisplay = industryLabel(lead.industry, lang);
   const subtitleParts = [contactName ? lead.company_name : null, industryDisplay].filter(Boolean);
   const companyAndCategory = subtitleParts.join(' · ');
@@ -69,8 +74,18 @@ export function SalesKanbanCard({
                   {lead.source ?? 'manual'}
                 </span>
               </div>
-              <Link to={`/leads/${lead.id}`} className="block truncate text-sm font-semibold hover:text-[#157777] dark:hover:text-[#7ad4d4]">
-                {fullName}
+              <Link
+                to={`/leads/${lead.id}`}
+                className="flex min-w-0 items-baseline gap-1 text-sm font-semibold hover:text-[#157777] dark:hover:text-[#7ad4d4]"
+              >
+                <span className="truncate">{fullName}</span>
+                {/* shrink-0: a long Greek name must never truncate away the one
+                    thing that says what this lead is. */}
+                {serviceLabel && (
+                  <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                    ({serviceLabel})
+                  </span>
+                )}
               </Link>
             </div>
             <EmailOptoutBadge state={lead.email_optout_state} />

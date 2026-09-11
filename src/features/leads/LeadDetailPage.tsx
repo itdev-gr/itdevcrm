@@ -51,6 +51,7 @@ import { OfferEmailDialog } from '@/features/offers/OfferEmailDialog';
 import { EmailThreadList } from '@/features/email/EmailThreadList';
 import { formatConvertErrors } from '@/features/leads/convertErrors';
 import { EmailOptoutBadge } from '@/features/shared/EmailOptoutBadge';
+import { leadNameWithService } from '@/lib/leadService';
 import { EmailOptoutAction } from '@/features/shared/EmailOptoutAction';
 
 const UNASSIGNED = '__unassigned__';
@@ -302,7 +303,7 @@ function LeadDetailContent() {
       <div className={detailHeaderCardClass}>
         <div className={detailHeaderRowClass}>
           <div className={detailHeaderMainClass}>
-            <h1 className={detailHeaderTitleClass}>{lead.title}</h1>
+            <h1 className={detailHeaderTitleClass}>{leadNameWithService(lead)}</h1>
             <span className={cn(detailHeaderRecordBadgeClass, 'bg-primary/10 text-primary')}>
               Lead
             </span>

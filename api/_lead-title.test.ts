@@ -32,6 +32,9 @@ describe('leadTitle', () => {
     );
     expect(leadTitle('Α Β', 'WEB SEO CAMPAIGN v2', false)).toBe('Α Β (Web SEO)');
     expect(leadTitle('Α Β', 'ai seo φόρμα 2026', false)).toBe('Α Β (AI SEO)');
+    // 2026-09-11: the Social Media form used to fall through and keep its raw
+    // name, which is why nobody could tell those leads apart on the board.
+    expect(leadTitle('Α Β', '🧲 SOCIAL MEDIA LEAD FORM (ITDEV)', false)).toBe('Α Β (Social Media)');
   });
 
   it('unknown form names stay raw; SEO forms win over the website keyword', () => {

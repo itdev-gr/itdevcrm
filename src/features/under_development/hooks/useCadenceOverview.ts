@@ -16,10 +16,19 @@ export type CadenceLeadLite = {
   archived: boolean;
   converted_at: string | null;
   scheduled_for: string | null;
+  contact_first_name: string | null;
+  contact_last_name: string | null;
+  source: string | null;
+  services_planned: unknown;
 };
 
+// contact names + source + services_planned feed leadNameWithService() so the
+// call sheet reads «ΟΝΟΜΑ ΕΠΩΝΥΜΟ (SERVICE)» like the board does. `notes` is
+// deliberately NOT here: the ended-runs query below drains every finished run,
+// and each notes block is a few hundred bytes — the title already carries the
+// label for the Meta leads this page mostly shows.
 const LEAD_EMBED =
-  'lead:leads(id, title, code, company_name, phone, stage_id, owner_user_id, archived, converted_at, scheduled_for)';
+  'lead:leads(id, title, code, company_name, phone, stage_id, owner_user_id, archived, converted_at, scheduled_for, contact_first_name, contact_last_name, source, services_planned)';
 
 export type CadenceOpenTask = {
   id: string;
