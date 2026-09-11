@@ -13,7 +13,7 @@ import { SettingsCard } from '@/components/layout/page-shell';
 // greeting, and the footer/unsubscribe link is legally required — none of
 // that can be hand-rolled a second time without the two silently diverging.
 import { renderCampaignEmail } from '../../../../supabase/functions/send-campaign/render.ts';
-import { useCampaign, CAMPAIGN_EDITABLE_STATUSES } from '../hooks/useCampaigns';
+import { useCampaign, useCampaignStats, CAMPAIGN_LIVE_EDITABLE_STATUSES } from '../hooks/useCampaigns';
 import { useUpdateCampaign } from '../hooks/useCampaignMutations';
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -42,13 +42,18 @@ export function StepContent({ campaignId }: Props) {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Fix-pass, Important-3: `campaign_update` refuses outside draft|ready
-  // (20260907270000:103-105) — StepSchedule already froze its own pacing
-  // fields on this same rule (`locked`); this step and StepAudience did
-  // not, so typing on a `sending` campaign produced an unexplained red
-  // "save failed" and lost the edit. Same set, same treatment here.
-  const isEditable = campaign != null && CAMPAIGN_EDITABLE_STATUSES.has(campaign.status);
+  // Content is editable while the campaign is in flight (20260911140000) —
+  // the sender re-reads subject/body/hero/reply_to on every one-minute tick,
+  // so a mid-send fix (a typo, a wrong price) reaches everyone not yet
+  // emailed. Only the terminal statuses freeze it.
+  const isEditable = campaign != null && CAMPAIGN_LIVE_EDITABLE_STATUSES.has(campaign.status);
   const locked = !isEditable;
+
+  // Already-emailed recipients got the PREVIOUS version — an edit cannot
+  // reach them. Said plainly, because it is the one thing that makes a
+  // mid-flight content edit different from editing a draft.
+  const stats = useCampaignStats(campaignId);
+  const alreadySent = stats.data?.sent ?? 0;
 
   // Hydrate local state once from the loaded campaign. A ref guard keeps a
   // background refetch (e.g. after the audience step resets prepared_at)
@@ -173,6 +178,11 @@ export function StepContent({ campaignId }: Props) {
         {!isLoading && locked ? (
           <p className="mt-2 rounded-lg border border-amber-300/60 bg-amber-50 p-2.5 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
             {t('builder.content.locked_notice', { status: t(`status.${campaign?.status}`) })}
+          </p>
+        ) : null}
+        {!isLoading && !locked && alreadySent > 0 ? (
+          <p className="mt-2 rounded-lg border border-amber-300/60 bg-amber-50 p-2.5 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+            {t('builder.content.live_edit_notice', { count: alreadySent })}
           </p>
         ) : null}
         {isLoading ? (

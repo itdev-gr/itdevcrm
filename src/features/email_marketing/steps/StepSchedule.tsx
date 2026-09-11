@@ -12,7 +12,7 @@ import {
   useCampaigns,
   useCampaignStats,
   useEmailMarketingSettings,
-  CAMPAIGN_EDITABLE_STATUSES,
+  CAMPAIGN_LIVE_EDITABLE_STATUSES,
   CAMPAIGN_LAUNCHABLE_STATUSES,
 } from '../hooks/useCampaigns';
 import { useUpdateCampaign, useLaunchCampaign } from '../hooks/useCampaignMutations';
@@ -28,6 +28,9 @@ type Fields = {
   sendWindowStart: string; // "HH:MM"
   sendWindowEnd: string;
   sendDays: number[];
+  /** true = the warm-up ladder caps the daily volume; false = send exactly
+   *  `dailyCap` every day (owner's «κλιμακωτό ή ό,τι του πω»). */
+  warmupEnabled: boolean;
 };
 
 const EMPTY_FIELDS: Fields = {
@@ -36,6 +39,7 @@ const EMPTY_FIELDS: Fields = {
   sendWindowStart: '09:00',
   sendWindowEnd: '18:00',
   sendDays: [1, 2, 3, 4, 5],
+  warmupEnabled: true,
 };
 
 function toHHMM(value: string): string {
@@ -50,6 +54,12 @@ function parseDateOnly(value: string): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (!m) return null;
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+/** Midnight local, so the day difference is whole days regardless of the
+ *  clock time either date carries. */
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 function parseCapField(value: string): number | null {
@@ -110,17 +120,15 @@ export function StepSchedule({ campaignId, onGoToReview }: Props) {
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launched, setLaunched] = useState(false);
 
-  // Once the campaign leaves draft/ready (launched from here, or from
-  // anywhere else — reopening this step later sees it via `campaign.status`
-  // just as readily as the local `launched` flag does), campaign_update
-  // itself refuses every write (20260907270000:103-105). The controls must
-  // be visibly frozen instead of silently failing on the next edit.
-  const isEditable = campaign != null && CAMPAIGN_EDITABLE_STATUSES.has(campaign.status);
-  // `launched` is folded in directly (not just `isEditable`, which reflects
-  // `campaign.status` from the query cache) so the controls lock immediately
-  // on a successful launch in THIS session, without waiting on the
-  // invalidated `campaign` query's refetch to land first.
-  const locked = !isEditable || launched;
+  // Pacing is editable while the campaign is in flight (20260911140000):
+  // campaign_daily_budget is recomputed from the row on every one-minute
+  // tick, so raising a cap mid-send takes effect on the next batch with no
+  // relaunch. Only the terminal statuses freeze these controls — and
+  // `launched` is deliberately NOT folded in here any more (it still gates
+  // the launch button below), since locking the fields the moment the owner
+  // launches is exactly what left him unable to speed a campaign up.
+  const isEditable = campaign != null && CAMPAIGN_LIVE_EDITABLE_STATUSES.has(campaign.status);
+  const locked = !isEditable;
 
   // Fix-pass, Important-1a: `campaign_launch` only accepts ready|scheduled —
   // a NARROWER set than the draft|ready the pacing fields stay editable
@@ -145,6 +153,7 @@ export function StepSchedule({ campaignId, onGoToReview }: Props) {
       sendWindowStart: toHHMM(campaign.send_window_start),
       sendWindowEnd: toHHMM(campaign.send_window_end),
       sendDays: campaign.send_days,
+      warmupEnabled: campaign.warmup_enabled,
     });
   }, [campaign]);
 
@@ -155,6 +164,7 @@ export function StepSchedule({ campaignId, onGoToReview }: Props) {
       send_window_start: next.sendWindowStart,
       send_window_end: next.sendWindowEnd,
       send_days: next.sendDays,
+      warmup_enabled: next.warmupEnabled,
     };
   }
 
@@ -262,12 +272,36 @@ export function StepSchedule({ campaignId, onGoToReview }: Props) {
   // ladder is already mid-climb and the estimate must index from THAT date,
   // not from today.
   const warmupStartedOn = settings.data?.warmup_started_on ? parseDateOnly(settings.data.warmup_started_on) : null;
+  // Today's REAL ceiling, mirroring campaign_daily_budget's
+  // `least(ladder[day], cap)` (20260911140000) — and which of the two binds.
+  // Without this, raising the cap under a lower ladder rung looks like a
+  // silent no-op, which is exactly how this whole change came about.
+  const ladderRungToday = (() => {
+    if (!fields.warmupEnabled || warmupLadder.length === 0) return null;
+    const startedOn = warmupStartedOn ?? new Date();
+    const dayIndex = Math.max(
+      0,
+      Math.round((startOfDay(new Date()).getTime() - startOfDay(startedOn).getTime()) / 86_400_000),
+    );
+    return warmupLadder[Math.min(dayIndex, warmupLadder.length - 1)];
+  })();
+  const effectiveTodayLimit =
+    ladderRungToday === null ? effectiveDailyCap : Math.min(ladderRungToday, effectiveDailyCap);
+  const effectiveTodayBinding: 'warmup' | 'cap' =
+    ladderRungToday !== null && ladderRungToday < effectiveDailyCap ? 'warmup' : 'cap';
+
   const estimate =
     targetCount === null
       ? null
       : estimateCampaignCompletion(
           targetCount,
-          { dailyCap: effectiveDailyCap, sendDays: fields.sendDays, warmupLadder, warmupStartedOn },
+          {
+            dailyCap: effectiveDailyCap,
+            sendDays: fields.sendDays,
+            warmupLadder,
+            warmupStartedOn,
+            warmupEnabled: fields.warmupEnabled,
+          },
           new Date(),
         );
   const dateFmt = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' });
@@ -328,7 +362,11 @@ export function StepSchedule({ campaignId, onGoToReview }: Props) {
   // campaign even though its pacing fields remain editable — see the
   // isLaunchableStatus comment above for why draft and launchable are
   // deliberately different sets.
-  const launchDisabled = launch.isPending || locked || !isLaunchableStatus || targetCount === null;
+  // `launched` still gates the LAUNCH action (a second launch in the same
+  // session must be impossible before the invalidated query refetches) —
+  // it just no longer freezes the pacing fields alongside it.
+  const launchDisabled =
+    launch.isPending || locked || launched || !isLaunchableStatus || targetCount === null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -358,6 +396,46 @@ export function StepSchedule({ campaignId, onGoToReview }: Props) {
           <p className="mt-3 text-sm text-muted-foreground">{t('builder.schedule.loading')}</p>
         ) : (
           <div className="mt-4 space-y-4">
+            {/* Owner 2026-09-11: the ladder used to be an invisible ceiling —
+                raising the daily cap under it changed nothing, silently. It
+                is now an explicit choice, with the binding factor named. */}
+            <div>
+              <Label className="text-xs">{t('builder.schedule.pacing_mode')}</Label>
+              <div className="mt-1 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={fields.warmupEnabled ? 'default' : 'outline'}
+                  className="h-8 text-xs"
+                  onClick={() => handleChange('warmupEnabled', true)}
+                  disabled={locked}
+                >
+                  {t('builder.schedule.pacing_warmup')}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={fields.warmupEnabled ? 'outline' : 'default'}
+                  className="h-8 text-xs"
+                  onClick={() => handleChange('warmupEnabled', false)}
+                  disabled={locked}
+                >
+                  {t('builder.schedule.pacing_fixed')}
+                </Button>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {fields.warmupEnabled
+                  ? t('builder.schedule.pacing_warmup_hint', { ladder: warmupLadder.join(' → ') })
+                  : t('builder.schedule.pacing_fixed_hint')}
+              </p>
+              <p className="mt-1 text-[11px] font-medium text-foreground">
+                {t('builder.schedule.effective_today', {
+                  limit: nf.format(effectiveTodayLimit),
+                  reason: t(`builder.schedule.effective_reason_${effectiveTodayBinding}`),
+                })}
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="ss-daily-cap" className="text-xs">

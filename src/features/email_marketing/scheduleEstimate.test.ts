@@ -127,4 +127,29 @@ describe('estimateCampaignCompletion', () => {
     // target — the ladder, not the cap, is the binding constraint here.
     expect(result!.days).toBeGreaterThan(1);
   });
+
+  // warmup_enabled=false (20260911140000): the ladder is skipped entirely and
+  // every send-day is worth the full cap — the owner's "send what I tell it".
+  it('ignores the warm-up ladder when the campaign opted out of the ramp', () => {
+    const now = new Date(2026, 8, 14); // Monday
+    const laddered = estimateCampaignCompletion(
+      4000,
+      { dailyCap: 2000, sendDays: WEEKDAYS, warmupLadder: DEFAULT_WARMUP_LADDER, warmupStartedOn: now },
+      now,
+    );
+    const flat = estimateCampaignCompletion(
+      4000,
+      {
+        dailyCap: 2000,
+        sendDays: WEEKDAYS,
+        warmupLadder: DEFAULT_WARMUP_LADDER,
+        warmupStartedOn: now,
+        warmupEnabled: false,
+      },
+      now,
+    );
+    // Ladder rungs 500 then 1000 leave 2500 for day 3; a flat 2000/day is done on day 2.
+    expect(flat!.days).toBe(2);
+    expect(laddered!.days).toBeGreaterThan(flat!.days);
+  });
 });

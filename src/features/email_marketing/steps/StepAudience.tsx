@@ -68,7 +68,8 @@ export function StepAudience({ campaignId }: Props) {
 
       {campaign != null && locked ? (
         <p className="mt-3 rounded-lg border border-amber-300/60 bg-amber-50 p-2.5 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
-          {t('builder.audience.locked_notice', { status: t(`status.${campaign.status}`) })}
+          {t('builder.audience.locked_notice', { status: t(`status.${campaign.status}`) })}{' '}
+          {t('builder.audience.locked_why')}
         </p>
       ) : null}
 

@@ -74,6 +74,11 @@ export type CompletionEstimateParams = {
    *  "warm-up starts today" — see the header comment above for why that is
    *  the honest assumption post-20260907280000, not an optimistic guess. */
   warmupStartedOn?: Date | null;
+  /** false = the campaign opted out of the ramp (email_campaigns.warmup_enabled,
+   *  20260911140000): every send-day's allowance is simply `dailyCap`, exactly
+   *  as campaign_daily_budget skips the `least(ladder, cap)` clamp. Defaults to
+   *  true so every existing caller keeps today's laddered behaviour. */
+  warmupEnabled?: boolean;
 };
 
 function isoWeekday(d: Date): number {
@@ -128,9 +133,12 @@ export function estimateCampaignCompletion(
     day.setDate(day.getDate() + offset);
     if (!sendDays.has(isoWeekday(day))) continue;
 
-    const ladderDaysSinceStart = warmupStartedOn ? Math.max(0, calendarDaysBetween(warmupStartedOn, day)) : offset;
-    const ladderIdx = Math.min(ladderDaysSinceStart, ladder.length - 1);
-    const allowance = Math.min(ladder[ladderIdx]!, params.dailyCap);
+    let allowance = params.dailyCap;
+    if (params.warmupEnabled !== false) {
+      const ladderDaysSinceStart = warmupStartedOn ? Math.max(0, calendarDaysBetween(warmupStartedOn, day)) : offset;
+      const ladderIdx = Math.min(ladderDaysSinceStart, ladder.length - 1);
+      allowance = Math.min(ladder[ladderIdx]!, params.dailyCap);
+    }
     remaining -= allowance;
     if (remaining <= 0) {
       return { days: offset + 1, date: day };

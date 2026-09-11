@@ -58,7 +58,7 @@ function GlobalControlsCard() {
 
   const [pauseError, setPauseError] = useState<string | null>(null);
 
-  const [caps, setCaps] = useState({ dailyCap: '', hourlyCap: '', batchSlice: '' });
+  const [caps, setCaps] = useState({ dailyCap: '', hourlyCap: '', batchSlice: '', maxBouncePct: '' });
   const [capsSaveState, setCapsSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [capsError, setCapsError] = useState<string | null>(null);
 
@@ -73,6 +73,8 @@ function GlobalControlsCard() {
       dailyCap: String(settings.data.daily_cap),
       hourlyCap: String(settings.data.hourly_cap),
       batchSlice: String(settings.data.batch_slice),
+      // Stored 0..1, shown as a percentage — nobody reasons about 0.07.
+      maxBouncePct: String(Math.round(settings.data.max_bounce_rate * 1000) / 10),
     });
   }, [settings.data]);
 
@@ -104,13 +106,26 @@ function GlobalControlsCard() {
     const dailyCap = Number(caps.dailyCap);
     const hourlyCap = Number(caps.hourlyCap);
     const batchSlice = Number(caps.batchSlice);
+    const maxBouncePct = Number(caps.maxBouncePct);
     if (![dailyCap, hourlyCap, batchSlice].every((n) => Number.isFinite(n) && n > 0)) {
       setCapsError(t('audiences.settings.save_invalid'));
       return;
     }
+    // A ceiling of 0 would auto-pause on the first bounce; anything at or
+    // above 100% disables the breaker entirely. Both are foot-guns on a
+    // shared sending domain, so neither is accepted.
+    if (!Number.isFinite(maxBouncePct) || maxBouncePct <= 0 || maxBouncePct >= 100) {
+      setCapsError(t('audiences.settings.save_invalid_bounce'));
+      return;
+    }
     setCapsSaveState('saving');
     try {
-      await update.mutateAsync({ daily_cap: dailyCap, hourly_cap: hourlyCap, batch_slice: batchSlice });
+      await update.mutateAsync({
+        daily_cap: dailyCap,
+        hourly_cap: hourlyCap,
+        batch_slice: batchSlice,
+        max_bounce_rate: maxBouncePct / 100,
+      });
       setCapsSaveState('saved');
     } catch {
       setCapsSaveState('idle');
@@ -158,7 +173,7 @@ function GlobalControlsCard() {
         </div>
       ) : null}
 
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div>
           <Label htmlFor="ms-daily-cap" className="text-xs">
             {t('audiences.settings.daily_cap')}
@@ -197,6 +212,24 @@ function GlobalControlsCard() {
             value={caps.batchSlice}
             onChange={(e) => setCaps((prev) => ({ ...prev, batchSlice: e.target.value }))}
           />
+        </div>
+        <div>
+          <Label htmlFor="ms-max-bounce" className="text-xs">
+            {t('audiences.settings.max_bounce_rate')}
+          </Label>
+          <Input
+            id="ms-max-bounce"
+            type="number"
+            min={0.1}
+            max={99}
+            step={0.1}
+            className="mt-1 h-8 text-xs"
+            value={caps.maxBouncePct}
+            onChange={(e) => setCaps((prev) => ({ ...prev, maxBouncePct: e.target.value }))}
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {t('audiences.settings.max_bounce_rate_hint')}
+          </p>
         </div>
       </div>
 

@@ -11,15 +11,31 @@ import { useAuthStore } from '@/lib/stores/authStore';
 
 export type CampaignStatus = 'draft' | 'ready' | 'scheduled' | 'sending' | 'paused' | 'sent' | 'cancelled';
 
-/** Statuses the server's `campaign_update` / `campaign_attach_audience` /
- *  `campaign_detach_audience` RPCs still accept a write against
- *  (`20260907270000_campaign_authoring_rpcs.sql:103-105`, `:511-513`,
- *  `:551-553`) — anything else and the write throws `invalid_state`. Shared
- *  by StepContent, StepAudience and StepSchedule's pacing fields so all
- *  three freeze their inputs together instead of drifting (final-review.md,
- *  Important-3). NOT the same set `campaign_launch` accepts — see
- *  `CAMPAIGN_LAUNCHABLE_STATUSES` below. */
+/** Statuses `campaign_attach_audience` / `campaign_detach_audience` accept
+ *  (`20260907270000_campaign_authoring_rpcs.sql:511-513`, `:551-553`), and
+ *  the only ones where a `segment` patch is allowed. Deliberately NARROW:
+ *  all three of those writes null `prepared_at` and force `status` back to
+ *  `draft`, which on a campaign that has already sent leaves it unable to
+ *  rebuild (`build_campaign_recipients` → `already_sent`) or relaunch
+ *  (`campaign_launch` → `not_prepared`) — i.e. permanently bricked. So the
+ *  recipient list stays frozen once sending starts, even though everything
+ *  else is now live-editable (see `CAMPAIGN_LIVE_EDITABLE_STATUSES`). */
 export const CAMPAIGN_EDITABLE_STATUSES: ReadonlySet<CampaignStatus> = new Set(['draft', 'ready']);
+
+/** Statuses `campaign_update` accepts for everything EXCEPT `segment`
+ *  (`20260911140000_campaign_live_edit_and_pacing_mode.sql`). Content and
+ *  pacing are editable while a campaign is in flight — the sender re-reads
+ *  the row on every one-minute tick with no caching
+ *  (`send-campaign/index.ts:153-164`, `:474-477`), so an edit lands on the
+ *  next batch without a relaunch. Used by StepContent and StepSchedule;
+ *  StepAudience stays on the narrow set above. */
+export const CAMPAIGN_LIVE_EDITABLE_STATUSES: ReadonlySet<CampaignStatus> = new Set([
+  'draft',
+  'ready',
+  'scheduled',
+  'sending',
+  'paused',
+]);
 
 /** Statuses `campaign_launch` actually accepts
  *  (`20260907280000_warmup_starts_on_first_launch.sql:53-55`). Deliberately
@@ -48,6 +64,8 @@ export type CampaignRow = {
   send_window_end: string;
   send_days: number[];
   scheduled_at: string | null;
+  /** false = ignore the warm-up ladder, send exactly `daily_cap` per day. */
+  warmup_enabled: boolean;
   prepared_at: string | null;
   started_at: string | null;
   finished_at: string | null;
@@ -172,6 +190,9 @@ export type EmailMarketingSettingsRow = {
    *  hasn't yet — set once, on a campaign's first successful launch
    *  (20260907280000_warmup_starts_on_first_launch.sql), never before. */
   warmup_started_on: string | null;
+  /** Campaign bounce ceiling — above it the circuit breaker auto-pauses the
+   *  campaign (`send-campaign/index.ts` applyCircuitBreaker). */
+  max_bounce_rate: number;
 };
 
 /** The singleton platform pacing config (email_marketing_settings) — the
@@ -192,7 +213,7 @@ export function useEmailMarketingSettings() {
     queryFn: async (): Promise<EmailMarketingSettingsRow> => {
       const { data, error } = await supabase
         .from('email_marketing_settings' as never)
-        .select('paused, daily_cap, hourly_cap, batch_slice, warmup_ladder, warmup_started_on')
+        .select('paused, daily_cap, hourly_cap, batch_slice, warmup_ladder, warmup_started_on, max_bounce_rate')
         .eq('id', true)
         .single();
       if (error) throw new Error(error.message);

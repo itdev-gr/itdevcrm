@@ -231,6 +231,10 @@ export type MarketingSettingsPatch = Partial<{
   daily_cap: number;
   hourly_cap: number;
   batch_slice: number;
+  /** Bounce ceiling for the auto-pause circuit breaker (0.07 = 7%). The RPC
+   *  has always accepted it (20260907270000:604); it had no UI, so raising it
+   *  meant a hand-written UPDATE against production. */
+  max_bounce_rate: number;
 }>;
 export type MarketingSettingsUpdateResult = { ok: true };
 

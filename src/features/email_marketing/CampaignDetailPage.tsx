@@ -199,6 +199,15 @@ export function CampaignDetailPage() {
           description={t('detail.subtitle', { subject: campaign.subject || t('detail.no_subject') })}
         >
           <CampaignStatusBadge status={campaign.status} />
+          {/* The only way back into the builder for a campaign already in
+              flight — content and pacing are live-editable (20260911140000)
+              but there was no route to them once the wizard was left. */}
+          <Link
+            to={`/company/email-marketing/${campaignId}/edit`}
+            className="text-sm font-medium text-primary hover:underline dark:text-[#7ad4d4]"
+          >
+            {t('detail.edit')}
+          </Link>
           <Link
             to="/company/email-marketing"
             className="text-sm font-medium text-primary hover:underline dark:text-[#7ad4d4]"

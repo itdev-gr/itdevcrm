@@ -69,7 +69,8 @@
       "preview_note": "How {{name}} will see it — with the real greeting and the unsubscribe footer.",
       "name": "Campaign name (internal)",
       "name_hint": "Only shown in the campaigns list — recipients never see it.",
-      "name_required": "The name cannot be empty — the campaign keeps its previous name until you type one."
+      "name_required": "The name cannot be empty — the campaign keeps its previous name until you type one.",
+      "live_edit_notice": "This campaign is already sending. Changes reach only those not yet emailed — the {{count}} already sent got the previous version."
     },
     "audience": {
       "title": "Recipient lists",
@@ -128,7 +129,8 @@
           "campaign_not_found": "The campaign was not found.",
           "invalid_state": "The campaign is no longer in draft."
         }
-      }
+      },
+      "locked_why": "The recipient list is the only thing that stays frozen: changing it on a campaign that has already sent would permanently break it. Content and pacing remain editable."
     },
     "review": {
       "title": "Recipient review",
@@ -235,7 +237,15 @@
           "no_pending_recipients": "There are no recipients to send to — recalculate recipients in the \"Review\" step.",
           "generic": "Launching failed."
         }
-      }
+      },
+      "pacing_mode": "Send rate",
+      "pacing_warmup": "Gradual ramp-up",
+      "pacing_fixed": "Fixed rate",
+      "pacing_warmup_hint": "Climbs on its own each day: {{ladder}}. The daily cap below acts as a ceiling.",
+      "pacing_fixed_hint": "Sends exactly the daily cap every day, with no ramp-up.",
+      "effective_today": "Today's effective limit: {{limit}} emails — {{reason}}",
+      "effective_reason_warmup": "set by the ramp-up",
+      "effective_reason_cap": "set by the daily cap"
     }
   },
   "detail": {
@@ -311,7 +321,8 @@
         "prev": "Previous",
         "next": "Next"
       }
-    }
+    },
+    "edit": "Edit"
   },
   "audiences": {
     "title": "Recipient lists",
@@ -354,7 +365,10 @@
       "saving": "Saving…",
       "saved": "Saved",
       "save_failed": "Saving failed.",
-      "save_invalid": "Values must be positive numbers."
+      "save_invalid": "Values must be positive numbers.",
+      "max_bounce_rate": "Bounce ceiling (%)",
+      "max_bounce_rate_hint": "Above this, the campaign auto-pauses to protect the sending domain’s reputation.",
+      "save_invalid_bounce": "The bounce ceiling must be between 0 and 100."
     }
   },
   "suppressions": {

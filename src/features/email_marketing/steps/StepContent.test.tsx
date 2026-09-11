@@ -5,7 +5,10 @@ import { i18n } from '@/lib/i18n';
 import { I18nextProvider } from 'react-i18next';
 import type { CampaignRow } from '../hooks/useCampaigns';
 
-const { updateMutate } = vi.hoisted(() => ({ updateMutate: vi.fn() }));
+const { updateMutate, sentCount } = vi.hoisted(() => ({
+  updateMutate: vi.fn(),
+  sentCount: { current: 0 },
+}));
 
 let campaign: CampaignRow = {
   id: 'camp-1',
@@ -24,6 +27,7 @@ let campaign: CampaignRow = {
   send_window_end: '18:00',
   send_days: [1, 2, 3, 4, 5],
   scheduled_at: null,
+  warmup_enabled: true,
   prepared_at: null,
   started_at: null,
   finished_at: null,
@@ -35,7 +39,11 @@ let campaign: CampaignRow = {
 
 vi.mock('../hooks/useCampaigns', async () => {
   const actual = await vi.importActual<typeof import('../hooks/useCampaigns')>('../hooks/useCampaigns');
-  return { ...actual, useCampaign: () => ({ data: campaign, isLoading: false }) };
+  return {
+    ...actual,
+    useCampaign: () => ({ data: campaign, isLoading: false }),
+    useCampaignStats: () => ({ data: { sent: sentCount.current }, isLoading: false }),
+  };
 });
 vi.mock('../hooks/useCampaignMutations', async () => {
   const actual = await vi.importActual<typeof import('../hooks/useCampaignMutations')>(
@@ -59,6 +67,7 @@ describe('StepContent', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     campaign = { ...campaign, status: 'draft' };
+    sentCount.current = 0;
   });
 
   afterEach(() => {
@@ -141,15 +150,14 @@ describe('StepContent', () => {
     expect(updateMutate).toHaveBeenCalledTimes(1);
   });
 
-  // --- Important-3 fix: no status lock previously existed on this step —
-  // typing on a non-editable campaign produced an unexplained "save failed"
-  // and lost the edit, instead of freezing the inputs up front. ---
+  // --- Live editing (owner 2026-09-11). Content stays editable while the
+  // campaign is in flight — the sender re-reads it every tick — so only the
+  // terminal statuses freeze the inputs. ---
 
-  it('freezes every input and explains why when the campaign is no longer draft/ready (e.g. reopened while sending)', () => {
-    campaign = { ...campaign, status: 'sending' };
+  it('freezes every input and explains why once the campaign is finished', () => {
+    campaign = { ...campaign, status: 'sent' };
     render(wrap(<StepContent campaignId="camp-1" />));
 
-    expect(screen.getByText(/Η καμπάνια είναι πλέον «Σε αποστολή»/)).toBeInTheDocument();
     expect(screen.getByLabelText('Θέμα')).toBeDisabled();
     expect(screen.getByLabelText('Κείμενο')).toBeDisabled();
 
@@ -158,6 +166,37 @@ describe('StepContent', () => {
     fireEvent.change(screen.getByLabelText('Θέμα'), { target: { value: 'Should not save' } });
     vi.advanceTimersByTime(1000);
     expect(updateMutate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the content editable while the campaign is sending, and saves the edit', () => {
+    campaign = { ...campaign, status: 'sending' };
+    render(wrap(<StepContent campaignId="camp-1" />));
+
+    expect(screen.getByLabelText('Θέμα')).not.toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Θέμα'), { target: { value: 'Διορθωμένο θέμα' } });
+    vi.advanceTimersByTime(1000);
+
+    expect(updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ patch: expect.objectContaining({ subject: 'Διορθωμένο θέμα' }) }),
+      expect.anything(),
+    );
+  });
+
+  // The one thing that makes a live content edit different from a draft one:
+  // it cannot reach anyone already emailed.
+  it('warns that already-emailed recipients got the previous version', () => {
+    campaign = { ...campaign, status: 'sending' };
+    sentCount.current = 300;
+    render(wrap(<StepContent campaignId="camp-1" />));
+
+    expect(screen.getByText(/οι 300 που έχουν ήδη λάβει/)).toBeInTheDocument();
+  });
+
+  it('does not show that warning before anything has been sent', () => {
+    campaign = { ...campaign, status: 'ready' };
+    render(wrap(<StepContent campaignId="camp-1" />));
+
+    expect(screen.queryByText(/έχουν ήδη λάβει/)).toBeNull();
   });
 
   // --- Campaign name (owner request 2026-09-11: campaigns pile up and all

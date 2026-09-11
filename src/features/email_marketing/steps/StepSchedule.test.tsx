@@ -300,17 +300,58 @@ describe('StepSchedule', () => {
       '/company/email-marketing',
     );
     expect(screen.getByRole('button', { name: 'Εκκίνηση' })).toBeDisabled();
-    expect(screen.getByLabelText('Ημερήσιο πλαφόν')).toBeDisabled();
+    // The pacing fields deliberately STAY editable after launch (owner
+    // 2026-09-11) — locking them on launch is what left a running campaign
+    // impossible to speed up. Only the launch action itself locks.
+    expect(screen.getByLabelText('Ημερήσιο πλαφόν')).not.toBeDisabled();
   });
 
-  it('freezes the pacing controls and shows the locked notice when the campaign is already past draft/ready (e.g. reopened while sending)', () => {
+  it('keeps the pacing editable while the campaign is sending, and saves the change', () => {
     campaign = makeCampaign({ status: 'sending' });
     render(wrap(<StepSchedule campaignId="camp-1" />));
 
-    expect(screen.getByText(/Η καμπάνια είναι πλέον «Σε αποστολή»/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Πίσω στη λίστα καμπανιών' })).toBeInTheDocument();
+    const dailyCap = screen.getByLabelText('Ημερήσιο πλαφόν');
+    expect(dailyCap).not.toBeDisabled();
+    // Launching again is still impossible — it is already sending.
+    expect(screen.getByRole('button', { name: 'Εκκίνηση' })).toBeDisabled();
+
+    fireEvent.change(dailyCap, { target: { value: '2000' } });
+    vi.advanceTimersByTime(1000);
+    expect(updateMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ patch: expect.objectContaining({ daily_cap: 2000 }) }),
+    );
+  });
+
+  it('freezes the pacing controls once the campaign is finished', () => {
+    campaign = makeCampaign({ status: 'sent' });
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+
+    expect(screen.getByText(/Η καμπάνια είναι πλέον/)).toBeInTheDocument();
     expect(screen.getByLabelText('Ημερήσιο πλαφόν')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Εκκίνηση' })).toBeDisabled();
+  });
+
+  // --- Pacing mode (owner 2026-09-11: «κλιμακωτό ή ό,τι του πω»). ---
+
+  it('switches to a fixed rate and saves warmup_enabled=false', () => {
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Σταθερός ρυθμός' }));
+    vi.advanceTimersByTime(1000);
+
+    expect(updateMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ patch: expect.objectContaining({ warmup_enabled: false }) }),
+    );
+  });
+
+  // The trap this whole change came from: with the ladder binding, raising
+  // the cap alone did nothing and the screen said nothing either.
+  it('names which of the two ceilings is binding today', () => {
+    render(wrap(<StepSchedule campaignId="camp-1" />));
+    expect(screen.getByText(/Ισχύον όριο σήμερα/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Σταθερός ρυθμός' }));
+    expect(screen.getByText(/το καθορίζει το ημερήσιο όριο/)).toBeInTheDocument();
   });
 
   // --- Important-1a fix: draft is editable but never launchable — the
