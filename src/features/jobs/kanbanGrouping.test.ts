@@ -307,4 +307,44 @@ describe('groupJobsForBoard sortBy', () => {
     });
     expect(blocked.map((j) => j.id)).toEqual(['b', 'a']);
   });
+
+  // --- "Σε παύση" column (owner 2026-09-11). A deliberate billing pause and an
+  // automatic unpaid-account hold used to share the generic Blocked column, so
+  // ten paused services were indistinguishable from debtors. ---
+
+  it('separates a billing pause from an ordinary block', () => {
+    const jobs = [
+      job({ id: 'held', stage_id: 'ls-opt', is_blocked: true, blocked_reason: 'account_on_hold' }),
+      job({ id: 'paused', stage_id: 'ls-opt', is_blocked: true, blocked_reason: 'billing_paused' }),
+      job({ id: 'normal', stage_id: 'ls-opt' }),
+    ];
+    const { byColumn, blocked, paused } = groupJobsForBoard({
+      board: 'local_seo', jobs, boardStages: localStages, stageById,
+    });
+    expect(paused.map((j) => j.id)).toEqual(['paused']);
+    expect(blocked.map((j) => j.id)).toEqual(['held']);
+    expect(byColumn.get('ls-opt')!.map((j) => j.id)).toEqual(['normal']);
+  });
+
+  // web_dev carries no Blocked column, but its billing can still be paused —
+  // before this the card just sat in its working lane.
+  it('gives a paused job its own column even on boards with no Blocked column', () => {
+    const jobs = [job({ id: 'p', service_type: 'web_dev', stage_id: 'wd-brief', is_blocked: true, blocked_reason: 'billing_paused' })];
+    const { byColumn, paused } = groupJobsForBoard({
+      board: 'web_dev', jobs, boardStages: webDevStages, stageById,
+    });
+    expect(paused.map((j) => j.id)).toEqual(['p']);
+    expect(byColumn.get('wd-brief')).toEqual([]);
+  });
+
+  // Same exception the Blocked column already makes: a closed card stays in
+  // Closed so the Local SEO disconnect reminder is never buried (2026-09-08).
+  it('leaves a paused card in Closed rather than moving it to Paused', () => {
+    const jobs = [job({ id: 'c', stage_id: 'ls-closed', is_blocked: true, blocked_reason: 'billing_paused' })];
+    const { byColumn, paused } = groupJobsForBoard({
+      board: 'local_seo', jobs, boardStages: localStages, stageById,
+    });
+    expect(paused).toEqual([]);
+    expect(byColumn.get('ls-closed')!.map((j) => j.id)).toEqual(['c']);
+  });
 });

@@ -75,10 +75,11 @@ export function groupJobsForBoard(args: {
   boardStages: StageLite[];
   stageById: Map<string, StageLite>;
   sortBy?: SortBy;
-}): { byColumn: Map<string, JobRow[]>; blocked: JobRow[] } {
+}): { byColumn: Map<string, JobRow[]>; blocked: JobRow[]; paused: JobRow[] } {
   const colByCode = new Map(args.boardStages.map((s) => [s.code, s]));
   const byColumn = new Map<string, JobRow[]>(args.boardStages.map((s) => [s.id, []]));
   const blocked: JobRow[] = [];
+  const paused: JobRow[] = [];
   const blockedColumn = hasBlockedColumn(args.board);
 
   for (const j of args.jobs) {
@@ -90,9 +91,21 @@ export function groupJobsForBoard(args: {
     // leaving client's billing is almost always paused, so every closed card
     // was landing in Blocked instead of Closed (feedback 2026-09-08). Closed
     // cards therefore always render in their own column.
-    if (blockedColumn && j.is_blocked && jobStage.code !== 'closed') {
-      blocked.push(j);
-      continue;
+    if (jobStage.code !== 'closed') {
+      // A deliberate billing pause and an automatic unpaid-account hold are
+      // different decisions, and lumping both under "Blocked" left ten paused
+      // services indistinguishable from debtors (audit 2026-09-11). Paused
+      // cards get their own column on EVERY board — a pause can hit any billed
+      // service, including web_dev/hosting, which carry no Blocked column.
+      // stage_id is untouched, so Resume returns the card exactly where it was.
+      if (j.blocked_reason === 'billing_paused') {
+        paused.push(j);
+        continue;
+      }
+      if (blockedColumn && j.is_blocked) {
+        blocked.push(j);
+        continue;
+      }
     }
     const code = jobStage.code;
     const col = colByCode.get(code);
@@ -102,5 +115,6 @@ export function groupJobsForBoard(args: {
   const cmp = compareJobs(args.sortBy ?? 'newest');
   for (const arr of byColumn.values()) arr.sort(cmp);
   blocked.sort(cmp);
-  return { byColumn, blocked };
+  paused.sort(cmp);
+  return { byColumn, blocked, paused };
 }

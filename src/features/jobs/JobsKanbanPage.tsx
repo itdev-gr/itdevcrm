@@ -124,7 +124,7 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
     .filter((s) => s.board === serviceType && !s.archived)
     .sort((a, b) => a.position - b.position);
 
-  const { byColumn: jobsByStage, blocked: blockedJobs } = groupJobsForBoard({
+  const { byColumn: jobsByStage, blocked: blockedJobs, paused: pausedJobs } = groupJobsForBoard({
     board: serviceType,
     jobs: filteredJobs,
     boardStages,
@@ -247,11 +247,21 @@ export function JobsKanbanPage({ serviceType }: { serviceType: ServiceType }) {
               interactive={false}
             />
           )}
+          {pausedJobs.length > 0 && (
+            <JobsKanbanColumn
+              stageId="__paused__"
+              stageCode="paused"
+              stageIndex={boardStages.length + 1}
+              stageLabel={lang === 'el' ? 'Σε παύση' : 'Paused'}
+              jobs={pausedJobs}
+              interactive={false}
+            />
+          )}
           {showArchivedColumn(isAdmin, archivedJobs) && (
             <JobsKanbanColumn
               stageId="__archived__"
               stageCode="archived"
-              stageIndex={boardStages.length + 1}
+              stageIndex={boardStages.length + 2}
               stageLabel={lang === 'el' ? 'Αρχειοθετημένα' : 'Archived'}
               jobs={archivedJobs}
               interactive={false}
